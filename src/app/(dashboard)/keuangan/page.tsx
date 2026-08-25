@@ -107,7 +107,7 @@ export default function KeuanganPage() {
         toast.success(editTrxId ? "Transaksi berhasil diubah!" : "Transaksi berhasil dicatat!");
         setIsModalOpen(false);
         setEditTrxId(null);
-        setNewTrx({ ...newTrx, keterangan: "", nominal: "", vol: "", satuan: "", penanggung_jawab: "", status: "Lunas", fileData: "", fileName: "", mimeType: "", bukti_url: "" }); // reset form
+        setNewTrx({ ...newTrx, keterangan: "", nominal: "", vol: "", satuan: "", penanggung_jawab: "", status: "Lunas", fileData: "", fileName: "", mimeType: "" }); // reset form
         fetchTransactions(); // Refresh data
       } else {
         toast.error(resData.message);

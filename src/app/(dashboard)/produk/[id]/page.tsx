@@ -88,6 +88,7 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
     target_penjualan: "",
     sudah_terjual: "",
     keterangan: "",
+    foto_produk: "",
     fileData: "",
     fileName: "",
     mimeType: ""
@@ -279,13 +280,7 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
       });
       const data = await res.json();
       if (data.success) {
-        setProduk(prev => {
-          if(!prev) return prev;
-          return {
-            ...prev,
-            varian: prev.varian?.map(v => v.id_varian === id_varian ? {...v, jumlah: newJumlah} : v)
-          }
-        });
+        mutate();
       } else {
         toast.error(data.message);
       }
@@ -351,7 +346,7 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
       if (data.success) {
         toast.success("Distribusi berhasil disimpan!");
         setIsDistribusiModalOpen(false);
-        setDistribusiFormData({ nama_penerima: "", items: {} });
+        setDistribusiFormData({ nama_penerima: "", tanggal: new Date().toISOString().split('T')[0], items: {} });
         mutate();
       } else {
         toast.error(data.message);
