@@ -102,6 +102,17 @@ export default function LoginPage() {
             </div>
           </div>
 
+          {/* Info Box untuk Demo Login Panitia */}
+          <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-4 text-center mt-2 -mb-2">
+            <p className="text-sm font-medium text-blue-800 mb-2">
+              Masuk sebagai Panitia
+            </p>
+            <div className="flex justify-center gap-6 text-xs text-blue-600 font-mono bg-white py-2 px-4 rounded-lg shadow-sm border border-blue-100/50">
+              <div><span className="text-slate-500 font-sans mr-1">Username:</span>panitia</div>
+              <div><span className="text-slate-500 font-sans mr-1">Password:</span>panitia</div>
+            </div>
+          </div>
+
           {/* Form Section */}
           <form onSubmit={handleSubmit} className="flex flex-col gap-5">
             {/* Username Input */}
