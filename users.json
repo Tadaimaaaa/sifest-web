@@ -1,0 +1,492 @@
+[
+  {
+    "name": "Dr. Rini Sovia, S.Kom, M.Kom",
+    "nim": "",
+    "division": "Pelindung",
+    "position": "Dekan FILKOM",
+    "role_id": "ROLE-005"
+  },
+  {
+    "name": "Hadi Syahputra, S.Kom, M.Kom",
+    "nim": "",
+    "division": "Penasihat",
+    "position": "Wakil Dekan III FILKOM",
+    "role_id": "ROLE-005"
+  },
+  {
+    "name": "Dr. Eva Rianti, S.Kom, M.Kom",
+    "nim": "",
+    "division": "Pembina",
+    "position": "Ka. Prodi Sistem Informasi",
+    "role_id": "ROLE-005"
+  },
+  {
+    "name": "Farras Amar Zaim Fasha Khoeroni",
+    "nim": "23101152610332",
+    "division": "Steering Committee",
+    "position": "Bupati",
+    "role_id": "ROLE-002"
+  },
+  {
+    "name": "Ahlazzikri Azamuddin",
+    "nim": "23101152610322",
+    "division": "Steering Committee",
+    "position": "Wakil Bupati",
+    "role_id": "ROLE-002"
+  },
+  {
+    "name": "Angelicca Rehuel Saphira",
+    "nim": "23101152610165",
+    "division": "Steering Committee",
+    "position": "Sekretaris Umum",
+    "role_id": "ROLE-002"
+  },
+  {
+    "name": "Fasya Maida Elvina",
+    "nim": "24101152610012",
+    "division": "Steering Committee",
+    "position": "Bendahara Umum",
+    "role_id": "ROLE-002"
+  },
+  {
+    "name": "Neil Firdaus",
+    "nim": "24101152610176",
+    "division": "Organazing Committee",
+    "position": "Penanggung Jawab Proker",
+    "role_id": "ROLE-003"
+  },
+  {
+    "name": "Dilan Afri Jones",
+    "nim": "22101152610011",
+    "division": "Organazing Committee",
+    "position": "Ketua Pelaksana Proker",
+    "role_id": "ROLE-003"
+  },
+  {
+    "name": "Helsi Serlina Aprila Saputri",
+    "nim": "24101152610054",
+    "division": "Organazing Committee",
+    "position": "Sekretaris",
+    "role_id": "ROLE-003"
+  },
+  {
+    "name": "Zhara Delvia Putri",
+    "nim": "24101152610261",
+    "division": "Organazing Committee",
+    "position": "Bendahara",
+    "role_id": "ROLE-003"
+  },
+  {
+    "name": "Fachratun Rahima",
+    "nim": "25101152610292",
+    "division": "Organazing Committee",
+    "position": "Bendahara",
+    "role_id": "ROLE-003"
+  },
+  {
+    "name": "Reifan Mardatilla",
+    "nim": "24101152610069",
+    "division": "Divisi Kesekretariatan",
+    "position": "Koordinator",
+    "role_id": "ROLE-004"
+  },
+  {
+    "name": "Hanafi Nur Imansyah",
+    "nim": "25101152610089",
+    "division": "Divisi Kesekretariatan",
+    "position": "Anggota",
+    "role_id": "ROLE-004"
+  },
+  {
+    "name": "Muhammad Ahda Ahlieya Akbar",
+    "nim": "25101152610097",
+    "division": "Divisi Kesekretariatan",
+    "position": "Anggota",
+    "role_id": "ROLE-004"
+  },
+  {
+    "name": "Zaskia Lestari",
+    "nim": "25101152610361",
+    "division": "Divisi Kesekretariatan",
+    "position": "Anggota",
+    "role_id": "ROLE-004"
+  },
+  {
+    "name": "Rindu Rahma Aulia",
+    "nim": "25101152610305",
+    "division": "Divisi Kesekretariatan",
+    "position": "Anggota",
+    "role_id": "ROLE-004"
+  },
+  {
+    "name": "Faradiva Putri",
+    "nim": "22101152610429",
+    "division": "Divisi Kesekretariatan",
+    "position": "Anggota",
+    "role_id": "ROLE-004"
+  },
+  {
+    "name": "Dimas Ade Putra",
+    "nim": "24101152610233",
+    "division": "Divisi Acara Inti",
+    "position": "Koordinator",
+    "role_id": "ROLE-004"
+  },
+  {
+    "name": "Febrila Mardatrisna",
+    "nim": "25101152610295",
+    "division": "Divisi Acara Inti",
+    "position": "Anggota",
+    "role_id": "ROLE-004"
+  },
+  {
+    "name": "Naila Fauziah",
+    "nim": "24101152610249",
+    "division": "Divisi Acara Inti",
+    "position": "Anggota",
+    "role_id": "ROLE-004"
+  },
+  {
+    "name": "Raditya Al Qardhawi",
+    "nim": "24101152610315",
+    "division": "Divisi Humas",
+    "position": "Koordinator",
+    "role_id": "ROLE-004"
+  },
+  {
+    "name": "Habibi Abdullah Hulwe",
+    "nim": "24101152610164",
+    "division": "Divisi Humas",
+    "position": "Anggota",
+    "role_id": "ROLE-004"
+  },
+  {
+    "name": "Try Anggara Yofa",
+    "nim": "24101152610222",
+    "division": "Divisi Humas",
+    "position": "Anggota",
+    "role_id": "ROLE-004"
+  },
+  {
+    "name": "Aulia Angie Anugrah",
+    "nim": "25101152610325",
+    "division": "Divisi Humas",
+    "position": "Anggota",
+    "role_id": "ROLE-004"
+  },
+  {
+    "name": "Asyifa Ray Yanaf",
+    "nim": "25101152610324",
+    "division": "Divisi Humas",
+    "position": "Anggota",
+    "role_id": "ROLE-004"
+  },
+  {
+    "name": "Okta Khairul Ramadhan",
+    "nim": "24101152610177",
+    "division": "Divisi Logistik",
+    "position": "Koordinator",
+    "role_id": "ROLE-004"
+  },
+  {
+    "name": "Fathir Febrian R",
+    "nim": "25101152610055",
+    "division": "Divisi Logistik",
+    "position": "Anggota",
+    "role_id": "ROLE-004"
+  },
+  {
+    "name": "Muhammad Adib",
+    "nim": "25101152610222",
+    "division": "Divisi Logistik",
+    "position": "Anggota",
+    "role_id": "ROLE-004"
+  },
+  {
+    "name": "Ardian Gunawan",
+    "nim": "25101152610200",
+    "division": "Divisi Logistik",
+    "position": "Anggota",
+    "role_id": "ROLE-004"
+  },
+  {
+    "name": "Daffa Arif Akbar",
+    "nim": "25101152610008",
+    "division": "Divisi Logistik",
+    "position": "Anggota",
+    "role_id": "ROLE-004"
+  },
+  {
+    "name": "M. Fachrouzy Novemjasta",
+    "nim": "25101152610216",
+    "division": "Divisi Logistik",
+    "position": "Anggota",
+    "role_id": "ROLE-004"
+  },
+  {
+    "name": "Najwa Syauqi Lianoz",
+    "nim": "23101152610307",
+    "division": "Divisi Logistik",
+    "position": "Anggota",
+    "role_id": "ROLE-004"
+  },
+  {
+    "name": "Nayshilla Maori Devandra",
+    "nim": "25101152610345",
+    "division": "Divisi Logistik",
+    "position": "Anggota",
+    "role_id": "ROLE-004"
+  },
+  {
+    "name": "Alya Yumi Khalisa",
+    "nim": "25101152610284",
+    "division": "Divisi Logistik",
+    "position": "Anggota",
+    "role_id": "ROLE-004"
+  },
+  {
+    "name": "Salsabila Amanda",
+    "nim": "24101152610071",
+    "division": "Divisi Medis",
+    "position": "Koordinator",
+    "role_id": "ROLE-004"
+  },
+  {
+    "name": "Miqdad Al Mahdi",
+    "nim": "25101152610219",
+    "division": "Divisi Medis",
+    "position": "Anggota",
+    "role_id": "ROLE-004"
+  },
+  {
+    "name": "Fajar Akbar",
+    "nim": "25101152610126",
+    "division": "Divisi Medis",
+    "position": "Anggota",
+    "role_id": "ROLE-004"
+  },
+  {
+    "name": "Aqilah Kaskia",
+    "nim": "24101152610045",
+    "division": "Divisi Medis",
+    "position": "Anggota",
+    "role_id": "ROLE-004"
+  },
+  {
+    "name": "Feni Deska Yandra",
+    "nim": "25101152610328",
+    "division": "Divisi Medis",
+    "position": "Anggota",
+    "role_id": "ROLE-004"
+  },
+  {
+    "name": "Rizky Dwi Darmawan",
+    "nim": "24101152610256",
+    "division": "Divisi Publikasi dan Dokumentasi",
+    "position": "Koordinator",
+    "role_id": "ROLE-004"
+  },
+  {
+    "name": "Ahmad Fauzi Baehaqi",
+    "nim": "25101152610083",
+    "division": "Divisi Publikasi dan Dokumentasi",
+    "position": "Anggota",
+    "role_id": "ROLE-004"
+  },
+  {
+    "name": "Hafizh Meldy Rantisi",
+    "nim": "24101152610305",
+    "division": "Divisi Publikasi dan Dokumentasi",
+    "position": "Anggota",
+    "role_id": "ROLE-004"
+  },
+  {
+    "name": "M. Rafli Hamdi",
+    "nim": "24101152610095",
+    "division": "Divisi Publikasi dan Dokumentasi",
+    "position": "Anggota",
+    "role_id": "ROLE-004"
+  },
+  {
+    "name": "Nikesha Primaputri Faryl",
+    "nim": "24101152610250",
+    "division": "Divisi Publikasi dan Dokumentasi",
+    "position": "Anggota",
+    "role_id": "ROLE-004"
+  },
+  {
+    "name": "Aisysifa Dwiyanti",
+    "nim": "25101152610280",
+    "division": "Divisi Publikasi dan Dokumentasi",
+    "position": "Anggota",
+    "role_id": "ROLE-004"
+  },
+  {
+    "name": "Syahla Nafisah Arisma",
+    "nim": "25101152610358",
+    "division": "Divisi Publikasi dan Dokumentasi",
+    "position": "Anggota",
+    "role_id": "ROLE-004"
+  },
+  {
+    "name": "Susan Nashwa Hanoon",
+    "nim": "25101152610356",
+    "division": "Divisi Publikasi dan Dokumentasi",
+    "position": "Anggota",
+    "role_id": "ROLE-004"
+  },
+  {
+    "name": "Zaki Fadlurrahaman",
+    "nim": "25101152610114",
+    "division": "Event MTQ",
+    "position": "Ketua Pelaksana",
+    "role_id": "ROLE-003"
+  },
+  {
+    "name": "Indah Sri Yuliwarti",
+    "nim": "24101152610277",
+    "division": "Event MTQ",
+    "position": "Sekretaris dan Bendahara",
+    "role_id": "ROLE-004"
+  },
+  {
+    "name": "Waala Munafsi",
+    "nim": "25101152610110",
+    "division": "Event MTQ",
+    "position": "Koordinator Acara",
+    "role_id": "ROLE-004"
+  },
+  {
+    "name": "Prima Halip A. H",
+    "nim": "25101152610188",
+    "division": "Event MTQ",
+    "position": "Anggota",
+    "role_id": "ROLE-004"
+  },
+  {
+    "name": "Ivory Najwa Syaufani",
+    "nim": "24101152610167",
+    "division": "Event MTQ",
+    "position": "Anggota",
+    "role_id": "ROLE-004"
+  },
+  {
+    "name": "Alif Fathul Ataulah",
+    "nim": "22101152610127",
+    "division": "Event Bazar Ekonomi Kreatif",
+    "position": "Ketua Pelaksana",
+    "role_id": "ROLE-003"
+  },
+  {
+    "name": "Zahwa Alwa Khairani",
+    "nim": "25101152610320",
+    "division": "Event Bazar Ekonomi Kreatif",
+    "position": "Sekretaris dan Bendahara",
+    "role_id": "ROLE-004"
+  },
+  {
+    "name": "Muhammad Aqil",
+    "nim": "25101152610067",
+    "division": "Event Bazar Ekonomi Kreatif",
+    "position": "Koordinator Acara",
+    "role_id": "ROLE-004"
+  },
+  {
+    "name": "Saskia Aprilia Putri",
+    "nim": "25101152610307",
+    "division": "Event Bazar Ekonomi Kreatif",
+    "position": "Anggota",
+    "role_id": "ROLE-004"
+  },
+  {
+    "name": "Mailisya Zahara Rab Yusna",
+    "nim": "25101152610339",
+    "division": "Event Bazar Ekonomi Kreatif",
+    "position": "Anggota",
+    "role_id": "ROLE-004"
+  },
+  {
+    "name": "Kevin Reviano Darma Putra",
+    "nim": "24101152610309",
+    "division": "Event Turnamen Futsal",
+    "position": "Ketua Pelaksana",
+    "role_id": "ROLE-003"
+  },
+  {
+    "name": "Sefiolla Saputri",
+    "nim": "25101152610352",
+    "division": "Event Turnamen Futsal",
+    "position": "Sekretaris dan Bendahara",
+    "role_id": "ROLE-004"
+  },
+  {
+    "name": "Muhammad Rafadil Nafischi",
+    "nim": "25101152610227",
+    "division": "Event Turnamen Futsal",
+    "position": "Koordinator Acara",
+    "role_id": "ROLE-004"
+  },
+  {
+    "name": "Anggian Doli Pratama Hutapea",
+    "nim": "25101152610199",
+    "division": "Event Turnamen Futsal",
+    "position": "Anggota",
+    "role_id": "ROLE-004"
+  },
+  {
+    "name": "Wahyu Febrian Wiratama",
+    "nim": "23101152610438",
+    "division": "Event Seminar Nasional",
+    "position": "Ketua Pelaksana",
+    "role_id": "ROLE-003"
+  },
+  {
+    "name": "Dinda Fadillah C",
+    "nim": "24101152610048",
+    "division": "Event Seminar Nasional",
+    "position": "Sekretaris dan Bendahara",
+    "role_id": "ROLE-004"
+  },
+  {
+    "name": "Nur Wahid Hafizi",
+    "nim": "24101152610065",
+    "division": "Event Seminar Nasional",
+    "position": "Koordinator Acara",
+    "role_id": "ROLE-004"
+  },
+  {
+    "name": "Nabilla Widya Putri D",
+    "nim": "25101152610264",
+    "division": "Event Seminar Nasional",
+    "position": "Anggota",
+    "role_id": "ROLE-004"
+  },
+  {
+    "name": "Ihsanul Al Fikri",
+    "nim": "25101152610027",
+    "division": "Event Esport Competition",
+    "position": "Ketua Pelaksana",
+    "role_id": "ROLE-003"
+  },
+  {
+    "name": "Nayla Syaheeda",
+    "nim": "25101152610344",
+    "division": "Event Esport Competition",
+    "position": "Sekretaris dan Bendahara",
+    "role_id": "ROLE-004"
+  },
+  {
+    "name": "Razzaaq Pratama",
+    "nim": "24101152610254",
+    "division": "Event Esport Competition",
+    "position": "Koordinator Acara",
+    "role_id": "ROLE-004"
+  },
+  {
+    "name": "Raihan Firdaus",
+    "nim": "25101152610191",
+    "division": "Event Esport Competition",
+    "position": "Anggota",
+    "role_id": "ROLE-004"
+  }
+]
