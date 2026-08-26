@@ -112,16 +112,26 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
     items: {} as Record<string, number>
   });
 
-  const BUNDLES = [
+  type BundleType = {
+    id: string;
+    nama: string;
+    harga: number;
+    maxItems?: number;
+    minItems?: number;
+    isDynamic?: boolean;
+  };
+
+  const BUNDLES: BundleType[] = [
     { id: 'chill', nama: 'Paket Chill', harga: 15000, maxItems: 1 },
     { id: 'bestie', nama: 'Paket Bestie', harga: 27000, maxItems: 2 },
     { id: 'trio', nama: 'Paket Trio', harga: 39000, maxItems: 3 },
     { id: 'heboh', nama: 'Paket Heboh', harga: 50000, maxItems: 4 },
+    { id: 'borongan', nama: 'Paket Borongan', harga: 12500, minItems: 5, isDynamic: true },
   ];
   const MODAL_SATUAN = 9000;
 
   const [isBundleModalOpen, setIsBundleModalOpen] = useState(false);
-  const [selectedBundle, setSelectedBundle] = useState<typeof BUNDLES[0] | null>(null);
+  const [selectedBundle, setSelectedBundle] = useState<BundleType | null>(null);
   const [bundleItems, setBundleItems] = useState<Record<string, number>>({});
   const [isBundleSubmitting, setIsBundleSubmitting] = useState(false);
 
@@ -381,9 +391,16 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
     
     // Validasi kuota varian
     const totalSelected = Object.values(bundleItems).reduce((sum, val) => sum + val, 0);
-    if (totalSelected !== selectedBundle.maxItems) {
-      toast.error(`Harus memilih tepat ${selectedBundle.maxItems} barang!`);
-      return;
+    if (selectedBundle.isDynamic) {
+      if (totalSelected < (selectedBundle.minItems || 0)) {
+        toast.error(`Minimal pembelian ${selectedBundle.minItems} barang!`);
+        return;
+      }
+    } else {
+      if (totalSelected !== selectedBundle.maxItems) {
+        toast.error(`Harus memilih tepat ${selectedBundle.maxItems} barang!`);
+        return;
+      }
     }
 
     setIsBundleSubmitting(true);
@@ -396,7 +413,8 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
         return { id_varian, nama_varian: v?.nama_varian || "", jumlah: qty };
       });
 
-    const total_modal = selectedBundle.maxItems * MODAL_SATUAN;
+    const finalHarga = selectedBundle.isDynamic ? totalSelected * selectedBundle.harga : selectedBundle.harga;
+    const total_modal = selectedBundle.isDynamic ? totalSelected * MODAL_SATUAN : (selectedBundle.maxItems || 0) * MODAL_SATUAN;
     
     try {
       const payload = {
@@ -404,7 +422,7 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
         id_produk: produk.id_produk,
         id_paket: selectedBundle.id,
         nama_paket: selectedBundle.nama,
-        total_harga: selectedBundle.harga,
+        total_harga: finalHarga,
         total_modal: total_modal,
         items
       };
@@ -716,10 +734,10 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
                   <div key={bundle.id} className="border border-slate-100 rounded-xl p-3 flex flex-col justify-between hover:border-blue-200 hover:bg-blue-50/50 transition-colors group">
                     <div>
                       <p className="font-bold text-slate-800">{bundle.nama}</p>
-                      <p className="text-xs text-slate-500 mb-3">{bundle.maxItems} Varian Barang</p>
+                      <p className="text-xs text-slate-500 mb-3">{bundle.isDynamic ? `Minimal ${bundle.minItems} Varian Barang` : `${bundle.maxItems} Varian Barang`}</p>
                     </div>
                     <div className="flex items-center justify-between">
-                      <p className="font-black text-blue-600">{formatRupiah(bundle.harga)}</p>
+                      <p className="font-black text-blue-600">{bundle.isDynamic ? `${formatRupiah(bundle.harga)}/pcs` : formatRupiah(bundle.harga)}</p>
                       <button
                         onClick={() => {
                           setSelectedBundle(bundle);
@@ -1022,7 +1040,9 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
             <div className="border-b border-slate-100 px-6 py-4 flex items-center justify-between shrink-0 bg-blue-50">
               <div>
                 <h2 className="text-lg font-bold text-slate-800">Kasir: {selectedBundle.nama}</h2>
-                <p className="text-xs text-blue-600 font-medium mt-0.5">Pilih {selectedBundle.maxItems} barang yang terjual</p>
+                <p className="text-xs text-blue-600 font-medium mt-0.5">
+                  {selectedBundle.isDynamic ? `Pilih minimal ${selectedBundle.minItems} barang` : `Pilih ${selectedBundle.maxItems} barang yang terjual`}
+                </p>
               </div>
               <button onClick={() => setIsBundleModalOpen(false)} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-white rounded-full transition-colors">
                 <X className="w-5 h-5" />
@@ -1068,7 +1088,7 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
                             <span className="w-8 text-center text-base font-black text-slate-800">{qty}</span>
                             <button
                               type="button"
-                              disabled={totalSelected >= selectedBundle.maxItems || qty >= varItem.jumlah}
+                              disabled={(!selectedBundle.isDynamic && totalSelected >= (selectedBundle.maxItems || 0)) || qty >= varItem.jumlah}
                               onClick={() => setBundleItems(prev => ({ ...prev, [varItem.id_varian]: qty + 1 }))}
                               className="w-8 h-8 rounded-md bg-white border border-slate-200 text-slate-600 flex items-center justify-center hover:bg-slate-100 transition-colors font-bold shadow-sm disabled:opacity-30 disabled:cursor-not-allowed"
                             >
@@ -1085,14 +1105,26 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
               <div className="pt-4 border-t border-slate-100 flex justify-end gap-3 sticky bottom-0 bg-white">
                 <div className="flex-1">
                   <p className="text-xs text-slate-500 font-semibold">Total Terpilih:</p>
-                  <p className={`text-lg font-black ${Object.values(bundleItems).reduce((sum, val) => sum + val, 0) === selectedBundle.maxItems ? 'text-emerald-600' : 'text-slate-700'}`}>
-                    {Object.values(bundleItems).reduce((sum, val) => sum + val, 0)} / {selectedBundle.maxItems}
+                  <p className={`text-lg font-black ${
+                    selectedBundle.isDynamic 
+                      ? (Object.values(bundleItems).reduce((sum, val) => sum + val, 0) >= (selectedBundle.minItems || 0) ? 'text-emerald-600' : 'text-slate-700')
+                      : (Object.values(bundleItems).reduce((sum, val) => sum + val, 0) === selectedBundle.maxItems ? 'text-emerald-600' : 'text-slate-700')
+                  }`}>
+                    {Object.values(bundleItems).reduce((sum, val) => sum + val, 0)} {selectedBundle.isDynamic ? `(Min. ${selectedBundle.minItems})` : `/ ${selectedBundle.maxItems}`}
                   </p>
+                  {selectedBundle.isDynamic && (
+                     <p className="text-xs font-bold text-blue-600 mt-1">Total: {formatRupiah(Object.values(bundleItems).reduce((sum, val) => sum + val, 0) * selectedBundle.harga)}</p>
+                  )}
                 </div>
                 <button type="button" onClick={() => setIsBundleModalOpen(false)} className="px-5 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-xl transition-colors">Batal</button>
                 <button 
                   type="submit" 
-                  disabled={isBundleSubmitting || Object.values(bundleItems).reduce((sum, val) => sum + val, 0) !== selectedBundle.maxItems} 
+                  disabled={
+                    isBundleSubmitting || 
+                    (selectedBundle.isDynamic 
+                      ? Object.values(bundleItems).reduce((sum, val) => sum + val, 0) < (selectedBundle.minItems || 0)
+                      : Object.values(bundleItems).reduce((sum, val) => sum + val, 0) !== selectedBundle.maxItems)
+                  } 
                   className="px-6 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-colors flex items-center justify-center min-w-[120px] shadow-md shadow-blue-500/20"
                 >
                   {isBundleSubmitting ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : 'Catat Penjualan'}
