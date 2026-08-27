@@ -615,7 +615,7 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
                       {hasAccess && (
                         <button
                           onClick={() => handleDeleteVarian(varItem.id_varian)}
-                          className="w-7 h-7 rounded-lg bg-white border border-rose-100 text-rose-500 flex items-center justify-center hover:bg-rose-50 transition-colors opacity-0 group-hover:opacity-100 shadow-sm ml-1"
+                          className="w-7 h-7 rounded-lg bg-white border border-rose-100 text-rose-500 flex items-center justify-center hover:bg-rose-50 transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100 shadow-sm ml-1"
                           title="Hapus Varian"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -678,7 +678,7 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
                         {hasAccess && (
                           <button
                             onClick={() => handleDeleteDistribusi(dist.id_dist)}
-                            className="w-7 h-7 rounded-lg bg-white border border-rose-100 text-rose-500 flex items-center justify-center hover:bg-rose-50 transition-colors opacity-0 group-hover:opacity-100 shadow-sm"
+                            className="w-7 h-7 rounded-lg bg-white border border-rose-100 text-rose-500 flex items-center justify-center hover:bg-rose-50 transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100 shadow-sm"
                             title="Hapus Distribusi"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -784,7 +784,7 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
                         {hasAccess && (
                           <button
                             onClick={() => handleDeletePenjualanBundle(sale.id_penjualan)}
-                            className="w-7 h-7 rounded-lg bg-white border border-rose-100 text-rose-500 flex items-center justify-center hover:bg-rose-50 transition-colors opacity-0 group-hover:opacity-100 shadow-sm"
+                            className="w-7 h-7 rounded-lg bg-white border border-rose-100 text-rose-500 flex items-center justify-center hover:bg-rose-50 transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100 shadow-sm"
                             title="Batalkan Penjualan"
                           >
                             <Trash2 className="w-3.5 h-3.5" />

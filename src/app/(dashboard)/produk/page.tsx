@@ -206,7 +206,7 @@ export default function ProdukSponsorPage() {
                     {hasAccess && (
                       <button
                         onClick={(e) => confirmDelete(e, prd.id_produk)}
-                        className="absolute top-2 left-2 p-1.5 bg-white/90 backdrop-blur text-rose-500 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity shadow-sm hover:bg-rose-50 z-10"
+                        className="absolute top-2 left-2 p-1.5 bg-white/90 backdrop-blur text-rose-500 rounded-lg opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity shadow-sm hover:bg-rose-50 z-10"
                         title="Hapus"
                       >
                         <Trash2 className="w-3 h-3" />
