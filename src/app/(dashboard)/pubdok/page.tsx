@@ -32,6 +32,7 @@ type RequestDesain = {
   id: string;
   pemohon: string;
   divisi: string;
+  event: string;
   deskripsi: string;
   kebutuhan: string;
   deadline: string;
