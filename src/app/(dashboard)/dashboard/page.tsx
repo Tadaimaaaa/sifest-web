@@ -10,6 +10,7 @@ import FullPageLoader from "@/components/FullPageLoader";
 
 import { fetcher } from "@/lib/api";
 import useSWR from "swr";
+import { FinanceChart, SponsorChart } from "@/components/dashboard/DashboardCharts";
 
 export default function DashboardPage() {
   const [userName, setUserName] = useState("Admin");
@@ -39,6 +40,8 @@ export default function DashboardPage() {
     aktivitasHariIni: 0
   };
   const recentLogs = resData?.data?.recentLogs || [];
+  const financeAnalytics = resData?.data?.financeAnalytics || [];
+  const sponsorAnalytics = resData?.data?.sponsorAnalytics || [];
 
   const statCards = [
     { name: "Total Panitia", value: stats.totalPanitia, icon: Users, color: "text-blue-600", bg: "bg-blue-100" },
@@ -77,6 +80,18 @@ export default function DashboardPage() {
             </div>
           );
         })}
+      </div>
+
+      {/* Analytics Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden p-5">
+          <h2 className="font-semibold text-slate-800 mb-4">Statistik Keuangan</h2>
+          <FinanceChart data={financeAnalytics} />
+        </div>
+        <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden p-5">
+          <h2 className="font-semibold text-slate-800 mb-4">Sebaran Status Sponsor</h2>
+          <SponsorChart data={sponsorAnalytics} />
+        </div>
       </div>
 
       {/* Recent Activity */}
