@@ -20,6 +20,7 @@ export function Sidebar() {
   const pathname = usePathname();
 
   const [userData, setUserData] = useState({ name: "User", position: "Panitia", seed: "Admin" });
+  const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
     try {
@@ -33,14 +34,36 @@ export function Sidebar() {
         });
       }
     } catch (e) {}
+
+    const toggleHandler = () => setIsOpen(prev => !prev);
+    window.addEventListener('toggle-mobile-sidebar', toggleHandler);
+    return () => window.removeEventListener('toggle-mobile-sidebar', toggleHandler);
   }, []);
 
+  // Tutup sidebar saat route berubah (di mobile)
+  useEffect(() => {
+    setIsOpen(false);
+  }, [pathname]);
+
   return (
-    <aside className="hidden md:flex flex-col w-64 bg-white border-r border-slate-200 h-screen sticky top-0 print:hidden">
-      <div className="p-6 flex items-center gap-3">
-        <div className="w-10 h-10 flex-shrink-0">
-          <img src="/logo-sifest.png" alt="SI FEST Logo" className="w-full h-full object-contain" />
-        </div>
+    <>
+      {/* Overlay Backdrop untuk Mobile */}
+      {isOpen && (
+        <div 
+          className="md:hidden fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 transition-opacity"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
+
+      {/* Sidebar Component */}
+      <aside className={clsx(
+        "fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200 h-screen flex flex-col transition-transform duration-300 ease-in-out md:relative md:translate-x-0 print:hidden",
+        isOpen ? "translate-x-0" : "-translate-x-full"
+      )}>
+        <div className="p-6 flex items-center gap-3">
+          <div className="w-10 h-10 flex-shrink-0">
+            <img src="/logo-sifest.png" alt="SI FEST Logo" className="w-full h-full object-contain" />
+          </div>
         <div>
           <h2 className="font-bold text-slate-800 text-lg leading-tight">SI FEST</h2>
           <p className="text-xs text-slate-500">Management</p>
@@ -94,5 +117,6 @@ export function Sidebar() {
         </button>
       </div>
     </aside>
+    </>
   );
 }

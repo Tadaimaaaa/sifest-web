@@ -55,6 +55,8 @@ function doPost(e) {
         return Produk.addPenjualanBundle(body, Auth.validateToken(body.token));
       case 'deletePenjualanBundleProduk':
         return Produk.deletePenjualanBundle(body, Auth.validateToken(body.token));
+      case 'getActivityLogs':
+        return ActivityLogs.getLogs(Auth.validateToken(body.session_token));
       default:
         return Response.error('NOT_FOUND', 'Action not found.');
     }
@@ -82,8 +84,6 @@ function doGet(e) {
         return Produk.getProduk();
       case 'getProdukById':
         return Produk.getProdukById(e.parameter.id);
-      case 'getActivityLogs':
-        return ActivityLogs.getLogs();
       default:
         return Response.success('SI FEST Management API is Active.', null);
     }

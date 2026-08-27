@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Users, Activity, Target, Sparkles, AlertCircle } from "lucide-react";
 import { SCRIPT_URL } from "@/lib/api";
 import Cookies from "js-cookie";
+import Link from "next/link";
 import { toast } from "sonner";
 import FullPageLoader from "@/components/FullPageLoader";
 
@@ -83,7 +84,7 @@ export default function DashboardPage() {
         <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
           <div className="p-5 border-b border-slate-100 flex justify-between items-center">
             <h2 className="font-semibold text-slate-800">Aktivitas Terakhir</h2>
-            <button className="text-sm text-blue-600 font-medium hover:text-blue-700">Lihat Semua</button>
+            <Link href="/logs" className="text-sm text-blue-600 font-medium hover:text-blue-700">Lihat Semua</Link>
           </div>
           
           {recentLogs.length === 0 ? (
