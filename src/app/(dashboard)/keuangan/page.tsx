@@ -276,8 +276,6 @@ export default function KeuanganPage() {
           </p>
         </div>
         <div className="flex items-center gap-3 w-full sm:w-auto print:hidden">
-          {canPrint && (
-            <>
               <a 
                 href="https://docs.google.com/spreadsheets/d/1KTpEz85NNMhap8VSzSszSptX_DLdUcPj/edit?usp=sharing&ouid=101548209300972862261&rtpof=true&sd=true"
                 target="_blank"
@@ -287,6 +285,8 @@ export default function KeuanganPage() {
                 <FileText className="w-4 h-4" />
                 RAB
               </a>
+          {canPrint && (
+            <>
               <button 
                 onClick={() => window.print()}
                 className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors border border-slate-200 shadow-sm"
