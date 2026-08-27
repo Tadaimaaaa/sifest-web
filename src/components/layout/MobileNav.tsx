@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Users, Handshake, Mail, Package } from "lucide-react";
+import { LayoutDashboard, Users, Handshake, Mail, Package, Wallet } from "lucide-react";
 import clsx from "clsx";
 
 const mobileItems = [
   { name: "Home", href: "/dashboard", icon: LayoutDashboard },
   { name: "Panitia", href: "/users", icon: Users },
+  { name: "Keuangan", href: "/keuangan", icon: Wallet },
   { name: "Sponsor", href: "/sponsor", icon: Handshake },
   { name: "Surat", href: "/surat", icon: Mail },
   { name: "Produk", href: "/produk", icon: Package },
