@@ -34,7 +34,7 @@ function seedPanitia() {
     ],
     [
       Utils.generateId('USR'), 'Ahlazzikri Azamuddin', '23101152610322', 'ahlazzikri322', 
-      passHash, salt, 'ahlazzikri322@sifest.com', '', 'Steering Committee', 'Wakil Bupati', 'ROLE-002', 'ACTIVE', '', new Date(), new Date()
+      passHash, salt, 'ahlazzikri322@sifest.com', '', 'Steering Committee', 'Wakil Bupati', 'ROLE-001', 'ACTIVE', '', new Date(), new Date()
     ],
     [
       Utils.generateId('USR'), 'Angelicca Rehuel Saphira', '23101152610165', 'angelicca165', 
@@ -301,4 +301,71 @@ function seedPanitia() {
   usersSheet.getRange(usersSheet.getLastRow() + 1, 1, data.length, data[0].length).setValues(data);
 
   return 'Berhasil menambahkan ' + data.length + ' panitia ke database!';
+}
+
+function seedPubdokData() {
+  const ss = Utils.getSpreadsheet();
+  
+  // Pastikan sheetnya sudah dibuat dulu sebelum di-seed
+  if (typeof setupPubdokSheets === 'function') {
+    setupPubdokSheets();
+  }
+  // Seed Planner
+  const plannerSheet = ss.getSheetByName('Pubdok_Planner');
+  if (plannerSheet && plannerSheet.getLastRow() <= 1) {
+    const planners = [
+      ['PLN-001', 'Coming Soon SI FEST 2026', 'Instagram', 'Draft', 'Siap-siap menantikan acara IT terbesar tahun ini...', '-', 'Rizky', new Date()],
+      ['PLN-002', 'Oprec Panitia SI FEST', 'Instagram', 'Posted', 'Open Recruitment Panitia SI FEST 2026 resmi dibuka!', 'https://drive.google.com/open?id=123', 'Amanda', new Date()],
+      ['PLN-003', 'Teaser Futsal Competition', 'Tiktok', 'Ready', 'Futsal is back! Siapkan tim terbaikmu.', '-', 'Budi', new Date()]
+    ];
+    plannerSheet.getRange(plannerSheet.getLastRow() + 1, 1, planners.length, planners[0].length).setValues(planners);
+  }
+
+  // Seed Assets
+  const assetSheet = ss.getSheetByName('Pubdok_Assets');
+  if (assetSheet && assetSheet.getLastRow() <= 1) {
+    const assets = [
+      ['AST-001', 'Logo Resmi SI FEST 2026', 'Logo', 'https://drive.google.com/open?id=logo1', 'Logo transparan PNG'],
+      ['AST-002', 'Template Poster Webinar', 'Template', 'https://drive.google.com/open?id=template1', 'PSD Template Poster'],
+      ['AST-003', 'Dokumentasi Rapat Perdana', 'Foto', 'https://drive.google.com/open?id=foto1', 'Foto dokumentasi panitia']
+    ];
+    assetSheet.getRange(assetSheet.getLastRow() + 1, 1, assets.length, assets[0].length).setValues(assets);
+  }
+
+  // Seed Requests
+  const requestSheet = ss.getSheetByName('Pubdok_Requests');
+  if (requestSheet && requestSheet.getLastRow() <= 1) {
+    const requests = [
+      ['REQ-001', 'Farras Amar Zaim', 'Seminar Nasional', 'Desain sertifikat pemateri', 'Sertifikat', '15 Sep 2026', 'Selesai', 'https://drive.google.com/open?id=serti1'],
+      ['REQ-002', 'Ihsanul Al Fikri', 'Esport Competition', 'Poster pendaftaran Mobile Legends', 'Poster', '10 Sep 2026', 'Dikerjakan', '-'],
+      ['REQ-003', 'Ahlazzikri Azamuddin', 'Danus', 'Desain stiker jualan', 'Lainnya', 'Secepatnya', 'Menunggu', '-']
+    ];
+    requestSheet.getRange(requestSheet.getLastRow() + 1, 1, requests.length, requests[0].length).setValues(requests);
+  }
+
+  return 'Seed data Pubdok berhasil ditambahkan!';
+}
+
+function clearPubdokData() {
+  const ss = Utils.getSpreadsheet();
+  const sheetsToClear = ['Pubdok_Planner', 'Pubdok_Assets', 'Pubdok_Requests'];
+  let clearedCount = 0;
+  
+  sheetsToClear.forEach(sheetName => {
+    const sheet = ss.getSheetByName(sheetName);
+    if (sheet) {
+      const lastRow = sheet.getLastRow();
+      if (lastRow > 1) {
+        // Hapus semua baris setelah header (baris 2 ke bawah)
+        sheet.deleteRows(2, lastRow - 1);
+        clearedCount++;
+      }
+    }
+  });
+
+  if (clearedCount === 0) {
+    return 'Data Pubdok sudah kosong, tidak ada yang perlu dihapus.';
+  }
+  
+  return 'Berhasil menghapus seluruh data dummy Pubdok dari ' + clearedCount + ' tabel!';
 }

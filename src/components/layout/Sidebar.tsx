@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Users, Handshake, Mail, Package, LogOut, Wallet } from "lucide-react";
+import { LayoutDashboard, Users, Handshake, Mail, Package, LogOut, Wallet, Camera } from "lucide-react";
 import clsx from "clsx";
 import { useState, useEffect } from "react";
 import Cookies from "js-cookie";
@@ -14,12 +14,13 @@ const navItems = [
   { name: "Data Sponsor", href: "/sponsor", icon: Handshake },
   { name: "Surat Masuk & Keluar", href: "/surat", icon: Mail },
   { name: "Produk Sponsor", href: "/produk", icon: Package },
+  { name: "Pubdok", href: "/pubdok", icon: Camera },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
 
-  const [userData, setUserData] = useState({ name: "User", position: "Panitia", seed: "Admin" });
+  const [userData, setUserData] = useState({ name: "User", position: "Panitia", seed: "Admin", role_id: "" });
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
@@ -30,7 +31,8 @@ export function Sidebar() {
         setUserData({
           name: user.name || "User",
           position: user.position || user.division || "Panitia",
-          seed: user.name || "Admin"
+          seed: user.name || "Admin",
+          role_id: user.role_id || user.role || ""
         });
       }
     } catch (e) {}
@@ -90,6 +92,21 @@ export function Sidebar() {
             </Link>
           );
         })}
+        
+        {userData.role_id === 'ROLE-001' && (
+          <Link
+            href="/logs"
+            className={clsx(
+              "flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium text-sm mt-4 border border-slate-200",
+              pathname.startsWith('/logs')
+                ? "bg-slate-800 text-white border-transparent"
+                : "text-slate-700 bg-slate-50 hover:bg-slate-100"
+            )}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={clsx("w-5 h-5", pathname.startsWith('/logs') ? "text-slate-300" : "text-slate-500")}><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+            Log Aktivitas
+          </Link>
+        )}
       </nav>
 
       <div className="p-4 border-t border-slate-200">

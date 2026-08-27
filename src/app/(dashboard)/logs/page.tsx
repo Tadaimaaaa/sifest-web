@@ -18,7 +18,7 @@ export default function LogsPage() {
       const userData = Cookies.get("user_data");
       if (userData) {
         const user = JSON.parse(userData);
-        if (user.role === "SuperAdmin") {
+        if (user.role === "ROLE-001" || user.role_id === "ROLE-001") {
           setIsSuperAdmin(true);
         } else {
           // If not superadmin, redirect them back

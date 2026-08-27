@@ -407,8 +407,8 @@ export default function KeuanganPage() {
                   </td>
                 </tr>
               ) : (
-                filteredTransactions.map((trx) => (
-                  <tr key={trx.trx_id} className="hover:bg-slate-50/50 transition-colors">
+                filteredTransactions.map((trx, index) => (
+                  <tr key={`${trx.trx_id}-${index}`} className="hover:bg-slate-50/50 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <p className="font-bold text-slate-700">{trx.no || "-"}</p>
                       <p className="text-xs text-slate-400 mt-0.5">{trx.trx_id}</p>

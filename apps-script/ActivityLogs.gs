@@ -1,8 +1,19 @@
 const ActivityLogs = {
   sheetName: 'Activity_Logs',
   
+  _ensureSheetExists: function() {
+    const ss = Utils.getSpreadsheet();
+    let sheet = ss.getSheetByName(this.sheetName);
+    if (!sheet) {
+      sheet = ss.insertSheet(this.sheetName);
+      sheet.appendRow(['log_id', 'user_id', 'target_user_id', 'user_role', 'module', 'action', 'description', 'old_value', 'new_value', 'created_at']);
+      sheet.getRange("A1:J1").setFontWeight("bold").setBackground("#f3f4f6");
+    }
+    return sheet;
+  },
+  
   log: function(userId, targetUserId, userRole, module, action, description, oldValue, newValue) {
-    const sheet = Utils.getSheet(this.sheetName);
+    const sheet = this._ensureSheetExists();
     const logId = Utils.generateId('LOG');
     const now = new Date();
     
@@ -22,11 +33,12 @@ const ActivityLogs = {
   },
 
   getLogs: function(authUser) {
-    if (!authUser || authUser.role !== 'SuperAdmin') {
+    // Only ROLE-001 (SuperAdmin) can view logs
+    if (!authUser || authUser.role_id !== 'ROLE-001') {
       return Response.error('UNAUTHORIZED', 'Hanya SuperAdmin yang dapat melihat log aktivitas.');
     }
 
-    const sheet = Utils.getSheet(this.sheetName);
+    const sheet = this._ensureSheetExists();
     const data = sheet.getDataRange().getValues();
     const logs = [];
     

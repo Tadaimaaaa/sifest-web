@@ -57,6 +57,27 @@ function doPost(e) {
         return Produk.deletePenjualanBundle(body, Auth.validateToken(body.token));
       case 'getActivityLogs':
         return ActivityLogs.getLogs(Auth.validateToken(body.session_token));
+        
+      // Pubdok Routes
+      case 'addPubdokPlanner':
+        return Pubdok.addPlanner(body, Auth.validateToken(body.token));
+      case 'editPubdokPlanner':
+        return Pubdok.editPlanner(body, Auth.validateToken(body.token));
+      case 'deletePubdokPlanner':
+        return Pubdok.deletePlanner(body, Auth.validateToken(body.token));
+      case 'addPubdokAsset':
+        return Pubdok.addAsset(body, Auth.validateToken(body.token));
+      case 'deletePubdokAsset':
+        return Pubdok.deleteAsset(body, Auth.validateToken(body.token));
+      case 'addPubdokRequest':
+        return Pubdok.addRequest(body, Auth.validateToken(body.token));
+      case 'editPubdokRequestStatus':
+        return Pubdok.editRequestStatus(body, Auth.validateToken(body.token));
+      case 'accPubdokRequest':
+        return Pubdok.accRequest(body, Auth.validateToken(body.token));
+      case 'deletePubdokRequest':
+        return Pubdok.deleteRequest(body, Auth.validateToken(body.token));
+        
       default:
         return Response.error('NOT_FOUND', 'Action not found.');
     }
@@ -84,10 +105,47 @@ function doGet(e) {
         return Produk.getProduk();
       case 'getProdukById':
         return Produk.getProdukById(e.parameter.id);
+      case 'getPubdok':
+        return Pubdok.getPubdokData();
       default:
         return Response.success('SI FEST Management API is Active.', null);
     }
   } catch (error) {
     return Response.error('INTERNAL_ERROR', error.toString());
   }
+}
+
+// ==========================================
+// ==========================================
+// FUNGSI SETUP OTOMATIS
+// Pilih fungsi ini di menu dropdown lalu klik "Run" / "Jalankan"
+// ==========================================
+function setupPubdokSheets() {
+  const ss = Utils.getSpreadsheet();
+  
+  // 1. Setup Pubdok_Planner
+  let plannerSheet = ss.getSheetByName('Pubdok_Planner');
+  if (!plannerSheet) {
+    plannerSheet = ss.insertSheet('Pubdok_Planner');
+    plannerSheet.appendRow(['ID', 'Judul Konten', 'Platform', 'Jadwal', 'Status', 'Caption', 'Link Asset', 'PIC']);
+    plannerSheet.getRange("A1:H1").setFontWeight("bold").setBackground("#d9ead3");
+  }
+
+  // 2. Setup Pubdok_Assets
+  let assetSheet = ss.getSheetByName('Pubdok_Assets');
+  if (!assetSheet) {
+    assetSheet = ss.insertSheet('Pubdok_Assets');
+    assetSheet.appendRow(['ID', 'Nama Asset', 'Kategori', 'Link Drive', 'Keterangan', 'Ditambahkan Oleh']);
+    assetSheet.getRange("A1:F1").setFontWeight("bold").setBackground("#c9daf8");
+  }
+
+  // 3. Setup Pubdok_Requests
+  let reqSheet = ss.getSheetByName('Pubdok_Requests');
+  if (!reqSheet) {
+    reqSheet = ss.insertSheet('Pubdok_Requests');
+    reqSheet.appendRow(['ID', 'Pemohon', 'Divisi', 'Deskripsi Kebutuhan', 'Jenis', 'Deadline', 'Status', 'Link Hasil']);
+    reqSheet.getRange("A1:H1").setFontWeight("bold").setBackground("#fff2cc");
+  }
+
+  Logger.log("Berhasil! 3 Sheet Pubdok sudah dibuat secara otomatis.");
 }
