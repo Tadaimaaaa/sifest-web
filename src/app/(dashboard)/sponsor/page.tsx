@@ -158,7 +158,8 @@ export default function SponsorPage() {
     };
 
     try {
-      const res = await fetch(SCRIPT_URL, {
+      const actionParam = editingSponsor ? "editSponsor" : "addSponsor";
+      const res = await fetch(`${SCRIPT_URL}?action=${actionParam}`, {
         method: "POST",
         body: JSON.stringify(payload),
       });
@@ -185,7 +186,7 @@ export default function SponsorPage() {
     setIsLoading(true);
     const token = Cookies.get("session_token");
     try {
-      const res = await fetch(SCRIPT_URL, {
+      const res = await fetch(`${SCRIPT_URL}?action=deleteSponsor`, {
         method: "POST",
         body: JSON.stringify({ action: "deleteSponsor", token, id_sponsor: id }),
       });

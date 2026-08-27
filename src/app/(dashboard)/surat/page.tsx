@@ -176,7 +176,8 @@ export default function SuratPage() {
     };
 
     try {
-      const res = await fetch(SCRIPT_URL, {
+      const actionParam = editingSurat ? "editSurat" : "addSurat";
+      const res = await fetch(`${SCRIPT_URL}?action=${actionParam}`, {
         method: "POST",
         body: JSON.stringify(payload),
       });
@@ -203,7 +204,7 @@ export default function SuratPage() {
     setIsLoading(true);
     const token = Cookies.get("session_token");
     try {
-      const res = await fetch(SCRIPT_URL, {
+      const res = await fetch(`${SCRIPT_URL}?action=deleteSurat`, {
         method: "POST",
         body: JSON.stringify({ action: "deleteSurat", token, id_surat: id }),
       });
