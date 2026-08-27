@@ -38,10 +38,12 @@ export function FinanceChart({ data }: { data: any[] }) {
     return `Rp ${value}`;
   };
 
+  const chartData = data.length === 1 ? [{ name: '', income: 0, expense: 0 }, ...data] : data;
+
   return (
     <div className="h-72 w-full">
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+        <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
           <defs>
             <linearGradient id="colorIncome" x1="0" y1="0" x2="0" y2="1">
               <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
