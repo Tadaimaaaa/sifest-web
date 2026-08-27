@@ -130,6 +130,10 @@ const Keuangan = {
       body.status || 'Lunas'
     ]);
     
+    let logBody = { ...body };
+    delete logBody.fileData;
+    delete logBody.token;
+
     ActivityLogs.log(
       user.user_id, 
       null, 
@@ -138,7 +142,7 @@ const Keuangan = {
       'ADD_TRANSACTION', 
       `Menambahkan ${jenisText} sebesar Rp${nominal} untuk ${body.kategori}`,
       null,
-      body
+      logBody
     );
     
     return Response.success('Transaksi berhasil ditambahkan.', { trx_id: trxId });
@@ -337,6 +341,10 @@ const Keuangan = {
       sheet.getRange(rowIndex, 1, remainingData.length, 14).setValues(remainingData);
     }
     
+    let logBody = { ...body };
+    delete logBody.fileData;
+    delete logBody.token;
+
     ActivityLogs.log(
       user.user_id, 
       null, 
@@ -345,7 +353,7 @@ const Keuangan = {
       'EDIT_TRANSACTION', 
       `Mengubah transaksi ${body.trx_id} (Sebelumnya: Rp${oldData.nominal}, Sekarang: Rp${nominal})`,
       oldData,
-      body
+      logBody
     );
     
     return Response.success('Transaksi berhasil diubah dan Saldo Akhir disesuaikan.');
