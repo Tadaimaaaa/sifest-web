@@ -7,6 +7,7 @@ import { SCRIPT_URL } from "@/lib/api";
 import Cookies from "js-cookie";
 import { toast } from "sonner";
 import FullPageLoader from "@/components/FullPageLoader";
+import Swal from "sweetalert2";
 
 type Sponsor = {
   id_sponsor: string;
@@ -181,9 +182,24 @@ export default function SponsorPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Apakah Anda yakin ingin menghapus data sponsor ini?")) return;
+    const result = await Swal.fire({
+      title: 'Hapus Data Sponsor?',
+      text: "Data yang dihapus tidak dapat dikembalikan!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#94a3b8',
+      confirmButtonText: 'Ya, Hapus!',
+      cancelButtonText: 'Batal',
+      reverseButtons: true
+    });
+
+    if (!result.isConfirmed) return;
     
-    setIsLoading(true);
+    // Optimistic UI Update
+    const previousSponsors = [...sponsors];
+    setSponsors(sponsors.filter(s => s.id_sponsor !== id));
+    
     const token = Cookies.get("session_token");
     try {
       const res = await fetch(`${SCRIPT_URL}?action=deleteSponsor`, {
@@ -192,15 +208,14 @@ export default function SponsorPage() {
       });
       const data = await res.json();
       if (data.success) {
-        toast.success(data.message);
-        fetchSponsors();
+        toast.success("Data sponsor berhasil dihapus");
       } else {
         toast.error(data.message);
-        setIsLoading(false);
+        setSponsors(previousSponsors); // Rollback
       }
     } catch (error) {
       toast.error("Terjadi kesalahan jaringan");
-      setIsLoading(false);
+      setSponsors(previousSponsors); // Rollback
     }
   };
 

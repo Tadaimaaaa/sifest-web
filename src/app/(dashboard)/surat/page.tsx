@@ -1,12 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Search, X, Trash2, Tag, Mail, Inbox, Send, CalendarClock, Download, RefreshCcw, Link, FileText, ExternalLink } from "lucide-react";
+import { Plus, Search, X, Trash2, Tag, Mail, Inbox, Send, CalendarClock, Download, RefreshCcw, Link, FileText, ExternalLink, Loader2 } from "lucide-react";
 import * as XLSX from 'xlsx';
 import { SCRIPT_URL } from "@/lib/api";
 import Cookies from "js-cookie";
 import { toast } from "sonner";
 import FullPageLoader from "@/components/FullPageLoader";
+import Swal from "sweetalert2";
 
 type Surat = {
   id_surat: string;
@@ -199,9 +200,24 @@ export default function SuratPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Apakah Anda yakin ingin menghapus arsip surat ini?")) return;
+    const result = await Swal.fire({
+      title: 'Hapus Arsip Surat?',
+      text: "Data yang dihapus tidak dapat dikembalikan!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#94a3b8',
+      confirmButtonText: 'Ya, Hapus!',
+      cancelButtonText: 'Batal',
+      reverseButtons: true
+    });
+
+    if (!result.isConfirmed) return;
     
-    setIsLoading(true);
+    // Optimistic UI Update (Biarkan loading terasa sangat cepat)
+    const previousSurat = [...surat];
+    setSurat(surat.filter(s => s.id_surat !== id));
+    
     const token = Cookies.get("session_token");
     try {
       const res = await fetch(`${SCRIPT_URL}?action=deleteSurat`, {
@@ -210,15 +226,14 @@ export default function SuratPage() {
       });
       const data = await res.json();
       if (data.success) {
-        toast.success(data.message);
-        fetchSurat();
+        toast.success("Arsip surat berhasil dihapus");
       } else {
         toast.error(data.message);
-        setIsLoading(false);
+        setSurat(previousSurat); // Rollback if failed
       }
     } catch (error) {
       toast.error("Terjadi kesalahan jaringan");
-      setIsLoading(false);
+      setSurat(previousSurat); // Rollback if failed
     }
   };
 

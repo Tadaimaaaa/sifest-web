@@ -6,6 +6,7 @@ import * as XLSX from 'xlsx';
 import { SCRIPT_URL } from "@/lib/api";
 import Cookies from "js-cookie";
 import { toast } from "sonner";
+import Swal from "sweetalert2";
 import FullPageLoader from "@/components/FullPageLoader";
 
 const getDriveThumbnail = (url: string) => {
@@ -140,7 +141,23 @@ export default function KeuanganPage() {
   };
 
   const handleDelete = async (trx_id: string) => {
-    if (!confirm("Apakah Anda yakin ingin menghapus transaksi ini?")) return;
+    const result = await Swal.fire({
+      title: 'Hapus Transaksi?',
+      text: "Data yang dihapus tidak dapat dikembalikan!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#94a3b8',
+      confirmButtonText: 'Ya, Hapus!',
+      cancelButtonText: 'Batal',
+      reverseButtons: true
+    });
+
+    if (!result.isConfirmed) return;
+    
+    // Optimistic UI Update
+    const previousTransactions = [...transactions];
+    setTransactions(transactions.filter(t => t.trx_id !== trx_id));
     
     try {
       const token = Cookies.get("session_token") || "";
@@ -153,12 +170,13 @@ export default function KeuanganPage() {
       const resData = await response.json();
       if (resData.success) {
         toast.success("Transaksi dihapus.");
-        setTransactions(transactions.filter(t => t.trx_id !== trx_id));
       } else {
         toast.error(resData.message);
+        setTransactions(previousTransactions); // Rollback
       }
     } catch (error) {
       toast.error("Gagal menghapus data.");
+      setTransactions(previousTransactions); // Rollback
     }
   };
 
