@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 // Rute yang butuh perlindungan login (tidak bisa diakses publik)
-const protectedRoutes = ['/dashboard', '/users', '/sponsor', '/surat', '/produk', '/activity', '/settings'];
+const protectedRoutes = ['/dashboard', '/users', '/sponsor', '/surat', '/produk', '/activity', '/settings', '/sifest'];
 
 export function proxy(request: NextRequest) {
   const token = request.cookies.get('session_token')?.value;

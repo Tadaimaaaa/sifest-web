@@ -9,6 +9,7 @@ import Cookies from "js-cookie";
 
 const navItems = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { name: "Pendaftar", href: "/sifest/registrations", icon: Users },
   { name: "Data Panitia", href: "/users", icon: Users },
   { name: "Data Keuangan", href: "/keuangan", icon: Wallet },
   { name: "Data Sponsor", href: "/sponsor", icon: Handshake },
