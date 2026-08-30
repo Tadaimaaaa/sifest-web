@@ -1,6 +1,7 @@
 import { getRegistrationById } from '@/lib/sifest/registrations';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import { cookies } from 'next/headers';
 import { ArrowLeft, User, Calendar, CreditCard, Clock } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -51,8 +52,38 @@ export default async function RegistrationDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const { id } = await params;
-  const registration = await getRegistrationById(id);
+  const resolvedParams = await params;
+  
+  const cookieStore = await cookies();
+  const userDataCookie = cookieStore.get('user_data')?.value;
+  let roleId = "ROLE-004";
+  if (userDataCookie) {
+    try {
+      const user = JSON.parse(decodeURIComponent(userDataCookie));
+      roleId = user.role_id || user.role || "ROLE-004";
+    } catch(e) {}
+  }
+
+  if (roleId !== "ROLE-001" && roleId !== "SUPER_ADMIN") {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 px-4 text-center h-[70vh]">
+        <div className="w-24 h-24 mb-6 rounded-full bg-slate-100 flex items-center justify-center shadow-inner">
+          <span className="text-4xl">🍕</span>
+        </div>
+        <h2 className="text-2xl font-bold text-slate-800 mb-3">Fitur Terkunci</h2>
+        <p className="text-slate-600 max-w-md mb-6 leading-relaxed">
+          Maaf, fitur ini sedang dalam tahap pengembangan khusus dan sementara <strong>hanya bisa diakses oleh Super Admin</strong>.
+          <br /><br />
+          <span className="text-sm italic text-slate-500">"Belikan admin martabak dulu hehe, sabar yaa masih di develop!"</span>
+        </p>
+        <Link href="/dashboard" className="px-6 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors">
+          Kembali ke Dashboard
+        </Link>
+      </div>
+    );
+  }
+
+  const registration = await getRegistrationById(resolvedParams.id);
 
   if (!registration) {
     notFound();
