@@ -678,7 +678,14 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
           {/* Distribusi Multi (Alokasi) */}
           <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden mt-4">
             <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-              <h3 className="text-sm font-bold text-slate-700">📋 Riwayat Distribusi</h3>
+              <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                📋 Riwayat Distribusi
+                {produk.distribusi && produk.distribusi.length > 0 && (
+                  <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-[10px] font-black rounded-md">
+                    Total: {produk.distribusi.reduce((sum, dist) => sum + (dist.items?.reduce((itemSum, item) => itemSum + (item.jumlah || 0), 0) || 0), 0)} pcs
+                  </span>
+                )}
+              </h3>
               {hasAccess && (
                 <button
                   onClick={() => setIsDistribusiModalOpen(true)}
