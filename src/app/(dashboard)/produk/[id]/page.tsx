@@ -135,6 +135,7 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
   const [bundleItems, setBundleItems] = useState<Record<string, number>>({});
   const [isBundleSubmitting, setIsBundleSubmitting] = useState(false);
   const [isDetailVarianOpen, setIsDetailVarianOpen] = useState(false);
+  const [terjualOleh, setTerjualOleh] = useState("ara");
 
   const formatRupiah = (angka: number) => {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka || 0);
@@ -425,6 +426,7 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
         nama_paket: selectedBundle.nama,
         total_harga: finalHarga,
         total_modal: total_modal,
+        terjual_oleh: terjualOleh,
         items
       };
       
@@ -794,6 +796,7 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
                         onClick={() => {
                           setSelectedBundle(bundle);
                           setBundleItems({});
+                          setTerjualOleh("ara");
                           setIsBundleModalOpen(true);
                         }}
                         className="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-colors"
@@ -1089,16 +1092,32 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
       {isBundleModalOpen && selectedBundle && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="border-b border-slate-100 px-6 py-4 flex items-center justify-between shrink-0 bg-blue-50">
-              <div>
-                <h2 className="text-lg font-bold text-slate-800">Kasir: {selectedBundle.nama}</h2>
-                <p className="text-xs text-blue-600 font-medium mt-0.5">
-                  {selectedBundle.isDynamic ? `Pilih minimal ${selectedBundle.minItems} barang` : `Pilih ${selectedBundle.maxItems} barang yang terjual`}
-                </p>
+            <div className="border-b border-slate-100 px-6 py-4 flex flex-col gap-3 shrink-0 bg-blue-50">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-lg font-bold text-slate-800">Kasir: {selectedBundle.nama}</h2>
+                  <p className="text-xs text-blue-600 font-medium mt-0.5">
+                    {selectedBundle.isDynamic ? `Pilih minimal ${selectedBundle.minItems} barang` : `Pilih ${selectedBundle.maxItems} barang yang terjual`}
+                  </p>
+                </div>
+                <button onClick={() => setIsBundleModalOpen(false)} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-white rounded-full transition-colors">
+                  <X className="w-5 h-5" />
+                </button>
               </div>
-              <button onClick={() => setIsBundleModalOpen(false)} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-white rounded-full transition-colors">
-                <X className="w-5 h-5" />
-              </button>
+              
+              <div className="flex items-center gap-3 mt-1">
+                <label className="text-sm font-semibold text-slate-700 whitespace-nowrap">Terjual Oleh:</label>
+                <select
+                  value={terjualOleh}
+                  onChange={(e) => { setTerjualOleh(e.target.value); setBundleItems({}); }}
+                  className="flex-1 px-3 py-2 bg-white border border-slate-200 rounded-lg text-sm font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                >
+                  <option value="ara">Ara (Stok Utama)</option>
+                  {produk.distribusi?.map(dist => (
+                    <option key={dist.id_dist} value={dist.nama_penerima}>{dist.nama_penerima} (Distributor)</option>
+                  ))}
+                </select>
+              </div>
             </div>
             
             <form onSubmit={handleAddPenjualanBundle} className="flex-1 overflow-y-auto p-6 space-y-6">
@@ -1110,11 +1129,20 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
                 ) : (
                   <div className="space-y-3">
                     {produk.varian.map((varItem) => {
+                      let maxStock = varItem.jumlah;
+                      if (terjualOleh !== "ara") {
+                        const dist = produk.distribusi?.find(d => d.nama_penerima === terjualOleh);
+                        const distItem = dist?.items?.find(i => i.id_varian === varItem.id_varian);
+                        maxStock = distItem?.jumlah || 0;
+                      }
+
+                      if (terjualOleh !== "ara" && maxStock === 0) return null;
+
                       const qty = bundleItems[varItem.id_varian] || 0;
                       const totalSelected = Object.values(bundleItems).reduce((sum, val) => sum + val, 0);
                       
                       return (
-                        <div key={varItem.id_varian} className="flex items-center justify-between bg-white border border-slate-200 p-3 rounded-xl shadow-sm hover:border-blue-200 transition-colors">
+                        <div key={varItem.id_varian} className={`flex items-center justify-between bg-white border border-slate-200 p-3 rounded-xl shadow-sm transition-colors ${maxStock === 0 ? 'opacity-50 grayscale' : 'hover:border-blue-200'}`}>
                           <div className="flex items-center gap-3">
                             {varItem.foto && varItem.foto !== "-" ? (
                               <img src={getDriveThumbnail(varItem.foto) || varItem.foto} alt="" className="w-10 h-10 rounded-lg border object-cover" />
@@ -1125,22 +1153,25 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
                             )}
                             <div>
                               <p className="text-sm font-bold text-slate-800">{varItem.nama_varian}</p>
-                              <p className="text-xs text-slate-400">Sisa Stok: {varItem.jumlah}</p>
+                              <p className={`text-xs ${maxStock === 0 ? 'text-rose-500 font-semibold' : 'text-slate-400'}`}>
+                                {terjualOleh !== "ara" ? `Stok Distributor: ${maxStock}` : `Sisa Stok: ${maxStock}`}
+                              </p>
                             </div>
                           </div>
                           
                           <div className="flex items-center gap-3 bg-slate-50 rounded-lg p-1 border border-slate-200">
                             <button
                               type="button"
+                              disabled={qty <= 0}
                               onClick={() => setBundleItems(prev => ({ ...prev, [varItem.id_varian]: Math.max(0, qty - 1) }))}
-                              className="w-8 h-8 rounded-md bg-white border border-slate-200 text-slate-600 flex items-center justify-center hover:bg-slate-100 transition-colors font-bold shadow-sm"
+                              className="w-8 h-8 rounded-md bg-white border border-slate-200 text-slate-600 flex items-center justify-center hover:bg-slate-100 transition-colors font-bold shadow-sm disabled:opacity-30 disabled:cursor-not-allowed"
                             >
                               <Minus className="w-3.5 h-3.5" />
                             </button>
                             <span className="w-8 text-center text-base font-black text-slate-800">{qty}</span>
                             <button
                               type="button"
-                              disabled={(!selectedBundle.isDynamic && totalSelected >= (selectedBundle.maxItems || 0)) || qty >= varItem.jumlah}
+                              disabled={(!selectedBundle.isDynamic && totalSelected >= (selectedBundle.maxItems || 0)) || qty >= maxStock}
                               onClick={() => setBundleItems(prev => ({ ...prev, [varItem.id_varian]: qty + 1 }))}
                               className="w-8 h-8 rounded-md bg-white border border-slate-200 text-slate-600 flex items-center justify-center hover:bg-slate-100 transition-colors font-bold shadow-sm disabled:opacity-30 disabled:cursor-not-allowed"
                             >
