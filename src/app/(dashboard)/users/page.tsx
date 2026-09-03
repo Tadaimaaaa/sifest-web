@@ -122,6 +122,8 @@ export default function UsersPage() {
         return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">Bendahara</span>;
       case 'ROLE-007':
         return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">Pubdok</span>;
+      case 'ROLE-008':
+        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-700">Humas</span>;
       default:
         return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700">Panitia</span>;
     }
@@ -187,6 +189,7 @@ export default function UsersPage() {
             <option value="ROLE-004">Panitia Biasa</option>
             <option value="ROLE-005">Sekretaris</option>
             <option value="ROLE-007">Pubdok</option>
+            <option value="ROLE-008">Humas</option>
           </select>
           <select 
             value={statusFilter}
@@ -302,6 +305,7 @@ export default function UsersPage() {
                   <option value="ROLE-004">Panitia Biasa</option>
                   <option value="ROLE-005">Sekretaris</option>
                   <option value="ROLE-007">Pubdok</option>
+                  <option value="ROLE-008">Humas</option>
                 </select>
               </div>
 
