@@ -721,25 +721,25 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
           </div>
 
           {/* Price & Terjual */}
-          <div className="flex flex-wrap gap-3">
-            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-5 w-fit pr-10">
+          <div className="flex items-stretch gap-3 overflow-x-auto pb-2 -mb-2">
+            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 md:p-5 w-fit pr-10 shrink-0 flex flex-col justify-center">
               <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-1">Harga Jual Satuan</p>
-              <p className="text-3xl font-black text-slate-800">{formatRupiah(produk.harga_satuan)}</p>
+              <p className="text-2xl md:text-3xl font-black text-slate-800">{formatRupiah(produk.harga_satuan)}</p>
             </div>
-            <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl p-5 text-white shadow-lg shadow-orange-500/20 w-fit pr-10">
+            <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl p-4 md:p-5 text-white shadow-lg shadow-orange-500/20 w-fit pr-10 shrink-0 flex flex-col justify-center">
               <p className="text-orange-100 text-xs font-bold uppercase tracking-wider mb-1">Total Terjual</p>
-              <p className="text-3xl font-black">{totalPcsTerjual} <span className="text-lg font-medium opacity-80">pcs</span></p>
+              <p className="text-2xl md:text-3xl font-black">{totalPcsTerjual} <span className="text-sm md:text-lg font-medium opacity-80">pcs</span></p>
             </div>
             <button 
               onClick={() => setIsDetailVarianOpen(true)}
-              className="bg-white border border-slate-200 rounded-2xl p-5 w-fit hover:border-blue-300 hover:bg-blue-50 transition-colors flex items-center justify-center gap-4 cursor-pointer group shadow-sm"
+              className="bg-white border border-slate-200 rounded-2xl p-4 md:p-5 w-fit hover:border-blue-300 hover:bg-blue-50 transition-colors flex items-center justify-center gap-3 md:gap-4 cursor-pointer group shadow-sm shrink-0"
             >
-              <div className="w-12 h-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center group-hover:scale-110 group-hover:bg-blue-600 group-hover:text-white transition-all">
-                <Target className="w-6 h-6" />
+              <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center group-hover:scale-110 group-hover:bg-blue-600 group-hover:text-white transition-all shrink-0">
+                <Target className="w-5 h-5 md:w-6 md:h-6" />
               </div>
-              <div className="text-left pr-4">
-                <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-0.5">Rincian</p>
-                <p className="text-lg font-black text-slate-800 group-hover:text-blue-700 transition-colors">Lihat Detail</p>
+              <div className="text-left pr-2 md:pr-4">
+                <p className="text-[10px] md:text-xs text-slate-500 font-bold uppercase tracking-wider mb-0.5">Rincian</p>
+                <p className="text-base md:text-lg font-black text-slate-800 group-hover:text-blue-700 transition-colors whitespace-nowrap">Lihat Detail</p>
               </div>
             </button>
           </div>
