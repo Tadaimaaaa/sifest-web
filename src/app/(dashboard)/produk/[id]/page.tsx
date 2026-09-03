@@ -750,7 +750,6 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
                   </div>
                 ))}
               </div>
-              </div>
             )}
           </div>
 
