@@ -199,6 +199,40 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka || 0);
   };
 
+  const getWeeklyRecap = () => {
+    if (!produk?.penjualan_bundle) return [];
+    const weeksMap: Record<string, { totalPcs: number, totalPendapatan: number, dateForSort: number }> = {};
+    
+    produk.penjualan_bundle.forEach(sale => {
+      const d = new Date(sale.tanggal);
+      const day = d.getDay();
+      const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+      const startOfWeek = new Date(d);
+      startOfWeek.setDate(diff);
+      startOfWeek.setHours(0,0,0,0);
+      
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(startOfWeek.getDate() + 6);
+      endOfWeek.setHours(23,59,59,999);
+      
+      const weekLabel = `${startOfWeek.toLocaleDateString('id-ID', {day: 'numeric', month: 'short'})} - ${endOfWeek.toLocaleDateString('id-ID', {day: 'numeric', month: 'short'})}`;
+      
+      if (!weeksMap[weekLabel]) {
+        weeksMap[weekLabel] = { totalPcs: 0, totalPendapatan: 0, dateForSort: startOfWeek.getTime() };
+      }
+      
+      weeksMap[weekLabel].totalPendapatan += sale.total_harga || 0;
+      const pcs = sale.items.reduce((sum, item) => sum + (item.jumlah || 0), 0);
+      weeksMap[weekLabel].totalPcs += pcs;
+    });
+
+    return Object.entries(weeksMap)
+      .sort((a, b) => b[1].dateForSort - a[1].dateForSort)
+      .map(([label, data]) => ({ label, ...data }));
+  };
+
+  const weeklyRecap = getWeeklyRecap();
+
   useEffect(() => {
     try {
       const userDataStr = Cookies.get("user_data");
@@ -870,66 +904,104 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
             </div>
           )}
 
-          {/* Riwayat Penjualan Bundle */}
-          <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden mt-4">
-            <div className="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
-              <h3 className="text-sm font-bold text-slate-700">🧾 Riwayat Penjualan Bundle</h3>
-              {produk.penjualan_bundle && produk.penjualan_bundle.length > 0 && (
-                <button
-                  onClick={handleExportPenjualanBundle}
-                  className="px-3 py-1.5 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5 shadow-sm"
-                >
-                  <Download className="w-3.5 h-3.5" /> Export Excel
-                </button>
-              )}
-            </div>
-            {!produk.penjualan_bundle || produk.penjualan_bundle.length === 0 ? (
-              <div className="p-6 text-center text-slate-500 text-sm">Belum ada riwayat penjualan.</div>
-            ) : (
-              <div className="divide-y divide-slate-100 max-h-[300px] overflow-y-auto">
-                {[...(produk.penjualan_bundle || [])].sort((a, b) => new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime()).map(sale => (
-                  <div key={sale.id_penjualan} className="p-4 hover:bg-slate-50 transition-colors group">
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                          <p className="text-sm font-bold text-slate-800">{sale.nama_paket}</p>
-                          {sale.terjual_oleh && sale.terjual_oleh !== "Ara" && (
-                            <span className="px-2 py-0.5 bg-purple-100 text-purple-700 text-[10px] font-bold rounded-md whitespace-nowrap">
-                              Oleh: {sale.terjual_oleh}
-                            </span>
-                          )}
-                          {sale.metode_pembayaran && (
-                            <span className={`px-2 py-0.5 text-[10px] font-bold rounded-md whitespace-nowrap ${sale.metode_pembayaran === 'Transfer' ? 'bg-orange-100 text-orange-700' : 'bg-emerald-100 text-emerald-700'}`}>
-                              {sale.metode_pembayaran}
-                            </span>
+          {/* Grid Riwayat dan Rekap */}
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 mt-4">
+            {/* Riwayat Penjualan Bundle */}
+            <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col">
+              <div className="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center shrink-0">
+                <h3 className="text-sm font-bold text-slate-700">🧾 Riwayat Penjualan Bundle</h3>
+                {produk.penjualan_bundle && produk.penjualan_bundle.length > 0 && (
+                  <button
+                    onClick={handleExportPenjualanBundle}
+                    className="px-3 py-1.5 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5 shadow-sm"
+                  >
+                    <Download className="w-3.5 h-3.5" /> Export Excel
+                  </button>
+                )}
+              </div>
+              {!produk.penjualan_bundle || produk.penjualan_bundle.length === 0 ? (
+                <div className="p-6 text-center text-slate-500 text-sm flex-1 flex items-center justify-center">Belum ada riwayat penjualan.</div>
+              ) : (
+                <div className="divide-y divide-slate-100 max-h-[400px] overflow-y-auto">
+                  {[...(produk.penjualan_bundle || [])].sort((a, b) => new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime()).map(sale => (
+                    <div key={sale.id_penjualan} className="p-4 hover:bg-slate-50 transition-colors group">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                            <p className="text-sm font-bold text-slate-800">{sale.nama_paket}</p>
+                            {sale.terjual_oleh && sale.terjual_oleh !== "Ara" && (
+                              <span className="px-2 py-0.5 bg-purple-100 text-purple-700 text-[10px] font-bold rounded-md whitespace-nowrap">
+                                Oleh: {sale.terjual_oleh}
+                              </span>
+                            )}
+                            {sale.metode_pembayaran && (
+                              <span className={`px-2 py-0.5 text-[10px] font-bold rounded-md whitespace-nowrap ${sale.metode_pembayaran === 'Transfer' ? 'bg-orange-100 text-orange-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                                {sale.metode_pembayaran}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-slate-400">{new Date(sale.tanggal).toLocaleString('id-ID')}</p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <p className="text-sm font-black text-emerald-600">+{formatRupiah(sale.total_harga)}</p>
+                          {hasAccess && (
+                            <button
+                              onClick={() => handleDeletePenjualanBundle(sale.id_penjualan)}
+                              className="w-7 h-7 rounded-lg bg-white border border-rose-100 text-rose-500 flex items-center justify-center hover:bg-rose-50 transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100 shadow-sm"
+                              title="Batalkan Penjualan"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
                           )}
                         </div>
-                        <p className="text-xs text-slate-400">{new Date(sale.tanggal).toLocaleString('id-ID')}</p>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <p className="text-sm font-black text-emerald-600">+{formatRupiah(sale.total_harga)}</p>
-                        {hasAccess && (
-                          <button
-                            onClick={() => handleDeletePenjualanBundle(sale.id_penjualan)}
-                            className="w-7 h-7 rounded-lg bg-white border border-rose-100 text-rose-500 flex items-center justify-center hover:bg-rose-50 transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100 shadow-sm"
-                            title="Batalkan Penjualan"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        )}
+                      <div className="flex flex-wrap gap-1.5 mt-2">
+                        {sale.items.map(item => (
+                          <span key={item.id_varian} className="inline-flex items-center px-2 py-1 bg-slate-100 text-slate-600 rounded text-[10px] font-bold">
+                            {item.jumlah}x {item.nama_varian}
+                          </span>
+                        ))}
                       </div>
                     </div>
-                    <div className="flex flex-wrap gap-1.5 mt-2">
-                      {sale.items.map(item => (
-                        <span key={item.id_varian} className="inline-flex items-center px-2 py-1 bg-slate-100 text-slate-600 rounded text-[10px] font-bold">
-                          {item.jumlah}x {item.nama_varian}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Rekapan Perminggu */}
+            <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col">
+              <div className="p-4 border-b border-slate-100 bg-slate-50 flex items-center gap-2 shrink-0">
+                <Calendar className="w-4 h-4 text-blue-600" />
+                <h3 className="text-sm font-bold text-slate-700">Rekap Penjualan per Minggu</h3>
               </div>
-            )}
+              
+              {!weeklyRecap || weeklyRecap.length === 0 ? (
+                <div className="p-6 text-center text-slate-500 text-sm flex-1 flex items-center justify-center">Belum ada data penjualan.</div>
+              ) : (
+                <div className="divide-y divide-slate-100 max-h-[400px] overflow-y-auto">
+                  {weeklyRecap.map((week, idx) => (
+                    <div key={idx} className="p-4 hover:bg-slate-50 transition-colors">
+                      <div className="flex items-center justify-between mb-3">
+                        <p className="text-sm font-bold text-slate-800">{week.label}</p>
+                        <span className="px-2.5 py-1 bg-blue-50 text-blue-700 text-xs font-bold rounded-lg">
+                          Minggu ke-{weeklyRecap.length - idx}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="bg-white border border-slate-100 p-3 rounded-xl">
+                          <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Total Terjual</p>
+                          <p className="text-sm font-black text-slate-800">{week.totalPcs} <span className="text-xs font-medium text-slate-500">pcs</span></p>
+                        </div>
+                        <div className="bg-white border border-slate-100 p-3 rounded-xl">
+                          <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider mb-1">Pendapatan</p>
+                          <p className="text-sm font-black text-emerald-600">{formatRupiah(week.totalPendapatan)}</p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
 
