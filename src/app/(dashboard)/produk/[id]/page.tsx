@@ -203,22 +203,25 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
     if (!produk?.penjualan_bundle) return [];
     const weeksMap: Record<string, { totalPcs: number, totalPendapatan: number, dateForSort: number }> = {};
     
+    // Titik awal perhitungan: 25 Agustus 2026, 00:00:00
+    const startDate = new Date(2026, 7, 25, 0, 0, 0);
+    
     produk.penjualan_bundle.forEach(sale => {
       const d = new Date(sale.tanggal);
-      const day = d.getDay();
-      const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-      const startOfWeek = new Date(d);
-      startOfWeek.setDate(diff);
-      startOfWeek.setHours(0,0,0,0);
       
-      const endOfWeek = new Date(startOfWeek);
-      endOfWeek.setDate(startOfWeek.getDate() + 6);
-      endOfWeek.setHours(23,59,59,999);
+      const diffTime = d.getTime() - startDate.getTime();
+      let diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+      if (diffDays < 0) diffDays = 0; // Jika ada transaksi sebelum 25 Agt, masukkan ke periode 1
       
-      const weekLabel = `${startOfWeek.toLocaleDateString('id-ID', {day: 'numeric', month: 'short'})} - ${endOfWeek.toLocaleDateString('id-ID', {day: 'numeric', month: 'short'})}`;
+      const periodIndex = Math.floor(diffDays / 10);
+      
+      const periodStart = new Date(startDate.getTime() + periodIndex * 10 * 24 * 60 * 60 * 1000);
+      const periodEnd = new Date(periodStart.getTime() + 9 * 24 * 60 * 60 * 1000);
+      
+      const weekLabel = `${periodStart.toLocaleDateString('id-ID', {day: 'numeric', month: 'short'})} - ${periodEnd.toLocaleDateString('id-ID', {day: 'numeric', month: 'short'})}`;
       
       if (!weeksMap[weekLabel]) {
-        weeksMap[weekLabel] = { totalPcs: 0, totalPendapatan: 0, dateForSort: startOfWeek.getTime() };
+        weeksMap[weekLabel] = { totalPcs: 0, totalPendapatan: 0, dateForSort: periodIndex };
       }
       
       weeksMap[weekLabel].totalPendapatan += sale.total_harga || 0;
@@ -228,7 +231,7 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
 
     return Object.entries(weeksMap)
       .sort((a, b) => b[1].dateForSort - a[1].dateForSort)
-      .map(([label, data]) => ({ label, ...data }));
+      .map(([label, data]) => ({ label, ...data, periodIndex: data.dateForSort + 1 }));
   };
 
   const weeklyRecap = getWeeklyRecap();
@@ -984,7 +987,7 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
                       <div className="flex items-center justify-between mb-3">
                         <p className="text-sm font-bold text-slate-800">{week.label}</p>
                         <span className="px-2.5 py-1 bg-blue-50 text-blue-700 text-xs font-bold rounded-lg">
-                          Minggu ke-{weeklyRecap.length - idx}
+                          Periode ke-{week.periodIndex}
                         </span>
                       </div>
                       <div className="grid grid-cols-2 gap-3">
