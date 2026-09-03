@@ -191,7 +191,7 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
     return dists.filter(d => d.items && d.items.length > 0);
   };
 
-  const remainingDistribusi = getRemainingDistributions();
+  const remainingDistribusi = getRemainingDistributions().sort((a, b) => new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime());
 
   const formatRupiah = (angka: number) => {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka || 0);
@@ -882,7 +882,7 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
               <div className="p-6 text-center text-slate-500 text-sm">Belum ada riwayat penjualan.</div>
             ) : (
               <div className="divide-y divide-slate-100 max-h-[300px] overflow-y-auto">
-                {produk.penjualan_bundle.map(sale => (
+                {[...(produk.penjualan_bundle || [])].sort((a, b) => new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime()).map(sale => (
                   <div key={sale.id_penjualan} className="p-4 hover:bg-slate-50 transition-colors group">
                     <div className="flex justify-between items-start mb-2">
                       <div>
