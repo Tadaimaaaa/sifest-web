@@ -129,6 +129,7 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
     { id: 'trio', nama: 'Paket Trio', harga: 39000, maxItems: 3 },
     { id: 'heboh', nama: 'Paket Heboh', harga: 50000, maxItems: 4 },
     { id: 'borongan', nama: 'Paket Borongan', harga: 12500, minItems: 5, isDynamic: true },
+    { id: 'toko', nama: 'Paket Toko', harga: 13000, isDynamic: true, minItems: 1 },
   ];
   const MODAL_SATUAN = 9000;
 
