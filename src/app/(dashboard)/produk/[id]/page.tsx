@@ -159,6 +159,39 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
     }
   };
 
+  const getRemainingDistributions = () => {
+    if (!produk?.distribusi) return [];
+    const dists = JSON.parse(JSON.stringify(produk.distribusi)) as Distribusi[];
+    
+    const salesMap: Record<string, Record<string, number>> = {};
+    produk.penjualan_bundle?.forEach(sale => {
+      if (sale.terjual_oleh && sale.terjual_oleh !== "Ara") {
+        if (!salesMap[sale.terjual_oleh]) salesMap[sale.terjual_oleh] = {};
+        sale.items?.forEach(item => {
+          salesMap[sale.terjual_oleh][item.id_varian] = (salesMap[sale.terjual_oleh][item.id_varian] || 0) + item.jumlah;
+        });
+      }
+    });
+
+    dists.forEach(dist => {
+      const sellerSales = salesMap[dist.nama_penerima];
+      if (sellerSales && dist.items) {
+        dist.items.forEach(item => {
+          if (sellerSales[item.id_varian] > 0) {
+            const deduct = Math.min(item.jumlah, sellerSales[item.id_varian]);
+            item.jumlah -= deduct;
+            sellerSales[item.id_varian] -= deduct;
+          }
+        });
+        dist.items = dist.items.filter(i => i.jumlah > 0);
+      }
+    });
+
+    return dists.filter(d => d.items && d.items.length > 0);
+  };
+
+  const remainingDistribusi = getRemainingDistributions();
+
   const formatRupiah = (angka: number) => {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka || 0);
   };
@@ -703,10 +736,10 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
           <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden mt-4">
             <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
               <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2">
-                📋 Riwayat Distribusi
-                {produk.distribusi && produk.distribusi.length > 0 && (
+                📋 Stok di Tangan Distributor
+                {remainingDistribusi && remainingDistribusi.length > 0 && (
                   <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-[10px] font-black rounded-md">
-                    Total: {produk.distribusi.reduce((sum, dist) => sum + (dist.items?.reduce((itemSum, item) => itemSum + (item.jumlah || 0), 0) || 0), 0)} pcs
+                    Total: {remainingDistribusi.reduce((sum, dist) => sum + (dist.items?.reduce((itemSum, item) => itemSum + (item.jumlah || 0), 0) || 0), 0)} pcs
                   </span>
                 )}
               </h3>
@@ -720,13 +753,13 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
               )}
             </div>
             
-            {!produk.distribusi || produk.distribusi.length === 0 ? (
+            {!remainingDistribusi || remainingDistribusi.length === 0 ? (
               <div className="p-6 text-center text-slate-500 text-sm">
-                Belum ada data riwayat distribusi barang.
+                Tidak ada stok di tangan distributor saat ini.
               </div>
             ) : (
               <div className="divide-y divide-slate-100 max-h-[300px] overflow-y-auto">
-                {produk.distribusi.map((dist) => (
+                {remainingDistribusi.map((dist) => (
                   <div key={dist.id_dist} className="p-4 hover:bg-slate-50 transition-colors group">
                     <div className="flex items-center justify-between mb-2">
                       <p className="text-sm font-bold text-slate-800">{dist.nama_penerima}</p>
