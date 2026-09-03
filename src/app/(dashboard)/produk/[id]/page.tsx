@@ -721,7 +721,7 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
           </div>
 
           {/* Price & Terjual */}
-          <div className="flex items-stretch gap-3 overflow-x-auto pb-2 -mb-2">
+          <div className="flex items-stretch gap-3 overflow-x-auto pb-2 -mb-2 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:'none'] [scrollbar-width:'none']">
             <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 md:p-5 w-fit pr-10 shrink-0 flex flex-col justify-center">
               <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider mb-1">Harga Jual Satuan</p>
               <p className="text-2xl md:text-3xl font-black text-slate-800">{formatRupiah(produk.harga_satuan)}</p>
