@@ -695,13 +695,16 @@ const Produk = {
       
       const saleToDelete = existingPenjualan.find(s => s.id_penjualan === body.id_penjualan);
       if (saleToDelete && saleToDelete.items) {
-        saleToDelete.items.forEach(item => {
-          const vIndex = existingVarian.findIndex(v => v.id_varian === item.id_varian);
-          if (vIndex !== -1) {
-            existingVarian[vIndex].jumlah += item.jumlah;
-          }
-        });
-        sheet.getRange(rowIndex, 10).setValue(JSON.stringify(existingVarian)); // Restore Varian stock
+        const terjual_oleh = saleToDelete.terjual_oleh || "Ara";
+        if (terjual_oleh === "Ara") {
+          saleToDelete.items.forEach(item => {
+            const vIndex = existingVarian.findIndex(v => v.id_varian === item.id_varian);
+            if (vIndex !== -1) {
+              existingVarian[vIndex].jumlah += item.jumlah;
+            }
+          });
+          sheet.getRange(rowIndex, 10).setValue(JSON.stringify(existingVarian)); // Restore Varian stock
+        }
       }
       
       const newPenjualanList = existingPenjualan.filter(s => s.id_penjualan !== body.id_penjualan);
