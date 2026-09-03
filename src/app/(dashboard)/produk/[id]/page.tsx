@@ -134,6 +134,7 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
   const [selectedBundle, setSelectedBundle] = useState<BundleType | null>(null);
   const [bundleItems, setBundleItems] = useState<Record<string, number>>({});
   const [isBundleSubmitting, setIsBundleSubmitting] = useState(false);
+  const [isDetailVarianOpen, setIsDetailVarianOpen] = useState(false);
 
   const formatRupiah = (angka: number) => {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka || 0);
@@ -527,6 +528,16 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
     return sum + (sale.items?.reduce((itemSum, item) => itemSum + (item.jumlah || 0), 0) || 0);
   }, 0) || 0;
 
+  const varianTerjual: Record<string, { nama: string; jumlah: number }> = {};
+  produk.penjualan_bundle?.forEach(sale => {
+    sale.items?.forEach(item => {
+      if (!varianTerjual[item.id_varian]) {
+        varianTerjual[item.id_varian] = { nama: item.nama_varian, jumlah: 0 };
+      }
+      varianTerjual[item.id_varian].jumlah += (item.jumlah || 0);
+    });
+  });
+
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Breadcrumb / Back */}
@@ -714,6 +725,18 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
               <p className="text-orange-100 text-xs font-bold uppercase tracking-wider mb-1">Total Terjual</p>
               <p className="text-3xl font-black">{totalPcsTerjual} <span className="text-lg font-medium opacity-80">pcs</span></p>
             </div>
+            <button 
+              onClick={() => setIsDetailVarianOpen(true)}
+              className="bg-white border border-slate-200 rounded-2xl p-5 w-fit hover:border-blue-300 hover:bg-blue-50 transition-colors flex items-center justify-center gap-4 cursor-pointer group shadow-sm"
+            >
+              <div className="w-12 h-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center group-hover:scale-110 group-hover:bg-blue-600 group-hover:text-white transition-all">
+                <Target className="w-6 h-6" />
+              </div>
+              <div className="text-left pr-4">
+                <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-0.5">Rincian</p>
+                <p className="text-lg font-black text-slate-800 group-hover:text-blue-700 transition-colors">Lihat Detail</p>
+              </div>
+            </button>
           </div>
 
           {/* Bundle Stats Box Premium */}
@@ -1140,6 +1163,42 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Detail Varian Terjual Modal */}
+      {isDetailVarianOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="border-b border-slate-100 px-6 py-4 flex items-center justify-between shrink-0 bg-amber-50">
+              <div>
+                <h2 className="text-lg font-bold text-slate-800">Detail Varian Terjual</h2>
+                <p className="text-xs text-amber-600 font-medium mt-0.5">Total Keseluruhan: {totalPcsTerjual} pcs</p>
+              </div>
+              <button onClick={() => setIsDetailVarianOpen(false)} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-white rounded-full transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-6 space-y-3">
+              {Object.keys(varianTerjual).length === 0 ? (
+                <div className="text-sm text-slate-500 bg-slate-50 p-4 rounded-xl border border-slate-200 text-center">
+                  Belum ada varian yang terjual.
+                </div>
+              ) : (
+                Object.values(varianTerjual).sort((a,b) => b.jumlah - a.jumlah).map((item, idx) => (
+                  <div key={idx} className="flex items-center justify-between bg-white border border-slate-200 p-3 rounded-xl shadow-sm hover:border-amber-200 transition-colors">
+                    <p className="text-sm font-bold text-slate-800">{item.nama}</p>
+                    <span className="px-3 py-1 bg-amber-100 text-amber-700 text-sm font-black rounded-lg shadow-sm border border-amber-200">{item.jumlah} pcs</span>
+                  </div>
+                ))
+              )}
+            </div>
+            
+            <div className="pt-4 border-t border-slate-100 flex justify-end px-6 pb-6 bg-white">
+              <button type="button" onClick={() => setIsDetailVarianOpen(false)} className="w-full px-5 py-2.5 text-sm font-bold text-white bg-slate-800 hover:bg-slate-900 rounded-xl transition-colors shadow-lg">Tutup Rincian</button>
+            </div>
           </div>
         </div>
       )}
