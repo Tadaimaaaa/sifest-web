@@ -202,7 +202,12 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
 
   const getWeeklyRecap = () => {
     if (!produk?.penjualan_bundle) return [];
-    const weeksMap: Record<string, { totalPcs: number, totalPendapatan: number, dateForSort: number }> = {};
+    const weeksMap: Record<string, { 
+      totalPcs: number, 
+      totalPendapatan: number, 
+      dateForSort: number,
+      varianTerjual: Record<string, { nama: string, jumlah: number }>
+    }> = {};
     
     // Titik awal perhitungan: 25 Agustus 2026, 00:00:00
     const startDate = new Date(2026, 7, 25, 0, 0, 0);
@@ -222,12 +227,20 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
       const weekLabel = `${periodStart.toLocaleDateString('id-ID', {day: 'numeric', month: 'short'})} - ${periodEnd.toLocaleDateString('id-ID', {day: 'numeric', month: 'short'})}`;
       
       if (!weeksMap[weekLabel]) {
-        weeksMap[weekLabel] = { totalPcs: 0, totalPendapatan: 0, dateForSort: periodIndex };
+        weeksMap[weekLabel] = { totalPcs: 0, totalPendapatan: 0, dateForSort: periodIndex, varianTerjual: {} };
       }
       
       weeksMap[weekLabel].totalPendapatan += sale.total_harga || 0;
-      const pcs = sale.items.reduce((sum, item) => sum + (item.jumlah || 0), 0);
-      weeksMap[weekLabel].totalPcs += pcs;
+      
+      sale.items.forEach(item => {
+        const qty = item.jumlah || 0;
+        weeksMap[weekLabel].totalPcs += qty;
+        
+        if (!weeksMap[weekLabel].varianTerjual[item.id_varian]) {
+          weeksMap[weekLabel].varianTerjual[item.id_varian] = { nama: item.nama_varian, jumlah: 0 };
+        }
+        weeksMap[weekLabel].varianTerjual[item.id_varian].jumlah += qty;
+      });
     });
 
     return Object.entries(weeksMap)
@@ -772,7 +785,7 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
                         Periode ke-{week.periodIndex}
                       </span>
                     </div>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-2 gap-3 mb-3">
                       <div className="bg-white border border-slate-100 p-3 rounded-xl">
                         <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Total Terjual</p>
                         <p className="text-sm font-black text-slate-800">{week.totalPcs} <span className="text-xs font-medium text-slate-500">pcs</span></p>
@@ -782,6 +795,19 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
                         <p className="text-sm font-black text-emerald-600">{formatRupiah(week.totalPendapatan)}</p>
                       </div>
                     </div>
+                    {Object.values(week.varianTerjual).length > 0 && (
+                      <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
+                        <p className="text-[10px] font-bold text-slate-500 mb-2 uppercase tracking-wider">Detail Varian Terjual</p>
+                        <div className="space-y-1.5">
+                          {Object.values(week.varianTerjual).sort((a, b) => b.jumlah - a.jumlah).map((v, i) => (
+                            <div key={i} className="flex items-center justify-between text-xs">
+                              <span className="text-slate-600 font-medium truncate pr-2">{v.nama}</span>
+                              <span className="font-bold text-slate-800 shrink-0">{v.jumlah} pcs</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
