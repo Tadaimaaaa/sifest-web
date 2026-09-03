@@ -1141,11 +1141,11 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
                     setTerjualOleh(e.target.value);
                     setBundleItems({}); // Reset selected items when changing seller
                   }}
-                  className="w-full border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  className="w-full border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm text-slate-900 bg-white"
                 >
-                  <option value="Ara">Ara (Stok Utama)</option>
+                  <option value="Ara" className="text-slate-900 bg-white">Ara (Stok Utama)</option>
                   {distributorNames.map(name => (
-                    <option key={name} value={name}>{name}</option>
+                    <option key={name} value={name} className="text-slate-900 bg-white">{name}</option>
                   ))}
                 </select>
               </div>
