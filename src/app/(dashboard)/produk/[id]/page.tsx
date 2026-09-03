@@ -528,11 +528,16 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
     return sum + (sale.items?.reduce((itemSum, item) => itemSum + (item.jumlah || 0), 0) || 0);
   }, 0) || 0;
 
-  const varianTerjual: Record<string, { nama: string; jumlah: number }> = {};
+  const varianTerjual: Record<string, { nama: string; jumlah: number; foto?: string }> = {};
   produk.penjualan_bundle?.forEach(sale => {
     sale.items?.forEach(item => {
       if (!varianTerjual[item.id_varian]) {
-        varianTerjual[item.id_varian] = { nama: item.nama_varian, jumlah: 0 };
+        const variantData = produk.varian?.find(v => v.id_varian === item.id_varian);
+        varianTerjual[item.id_varian] = { 
+          nama: item.nama_varian, 
+          jumlah: 0,
+          foto: variantData?.foto
+        };
       }
       varianTerjual[item.id_varian].jumlah += (item.jumlah || 0);
     });
@@ -1189,8 +1194,17 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
               ) : (
                 Object.values(varianTerjual).sort((a,b) => b.jumlah - a.jumlah).map((item, idx) => (
                   <div key={idx} className="flex items-center justify-between bg-white border border-slate-200 p-3 rounded-xl shadow-sm hover:border-amber-200 transition-colors">
-                    <p className="text-sm font-bold text-slate-800">{item.nama}</p>
-                    <span className="px-3 py-1 bg-amber-100 text-amber-700 text-sm font-black rounded-lg shadow-sm border border-amber-200">{item.jumlah} pcs</span>
+                    <div className="flex items-center gap-3">
+                      {item.foto && item.foto !== "-" ? (
+                        <img src={getDriveThumbnail(item.foto) || item.foto} alt={item.nama} className="w-10 h-10 rounded-lg border object-cover" />
+                      ) : (
+                        <div className="w-10 h-10 rounded-lg border bg-slate-100 flex items-center justify-center text-slate-400">
+                          <Package className="w-5 h-5" />
+                        </div>
+                      )}
+                      <p className="text-sm font-bold text-slate-800">{item.nama}</p>
+                    </div>
+                    <span className="px-3 py-1 bg-amber-100 text-amber-700 text-sm font-black rounded-lg shadow-sm border border-amber-200 shrink-0">{item.jumlah} pcs</span>
                   </div>
                 ))
               )}
