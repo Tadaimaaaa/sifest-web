@@ -523,6 +523,9 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
   const totalPendapatan = produk.penjualan_bundle?.reduce((sum, item) => sum + (item.total_harga || 0), 0) || 0;
   const totalModal = produk.penjualan_bundle?.reduce((sum, item) => sum + (item.total_modal || 0), 0) || 0;
   const untungBersih = totalPendapatan - totalModal;
+  const totalPcsTerjual = produk.penjualan_bundle?.reduce((sum, sale) => {
+    return sum + (sale.items?.reduce((itemSum, item) => itemSum + (item.jumlah || 0), 0) || 0);
+  }, 0) || 0;
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -708,18 +711,22 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
           </div>
 
           {/* Bundle Stats Box Premium */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div className="bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl p-5 text-white shadow-lg shadow-emerald-500/20">
-              <p className="text-emerald-100 text-xs font-bold uppercase tracking-wider mb-1">Pendapatan</p>
-              <p className="text-2xl font-black">{formatRupiah(totalPendapatan)}</p>
+          <div className="grid grid-cols-2 xl:grid-cols-4 gap-3">
+            <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl p-4 xl:p-5 text-white shadow-lg shadow-orange-500/20">
+              <p className="text-orange-100 text-[10px] sm:text-xs font-bold uppercase tracking-wider mb-1">Terjual</p>
+              <p className="text-xl sm:text-2xl font-black">{totalPcsTerjual} <span className="text-sm font-medium opacity-80">pcs</span></p>
             </div>
-            <div className="bg-white border border-slate-200 rounded-2xl p-5 shadow-sm">
-              <p className="text-slate-400 text-xs font-bold uppercase tracking-wider mb-1">Modal Dasar</p>
-              <p className="text-2xl font-black text-slate-700">{formatRupiah(totalModal)}</p>
+            <div className="bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl p-4 xl:p-5 text-white shadow-lg shadow-emerald-500/20">
+              <p className="text-emerald-100 text-[10px] sm:text-xs font-bold uppercase tracking-wider mb-1">Pendapatan</p>
+              <p className="text-xl sm:text-2xl font-black">{formatRupiah(totalPendapatan)}</p>
             </div>
-            <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl p-5 text-white shadow-lg shadow-blue-500/20">
-              <p className="text-blue-100 text-xs font-bold uppercase tracking-wider mb-1">Laba Bersih</p>
-              <p className="text-2xl font-black">{formatRupiah(untungBersih)}</p>
+            <div className="bg-white border border-slate-200 rounded-2xl p-4 xl:p-5 shadow-sm">
+              <p className="text-slate-400 text-[10px] sm:text-xs font-bold uppercase tracking-wider mb-1">Modal</p>
+              <p className="text-xl sm:text-2xl font-black text-slate-700">{formatRupiah(totalModal)}</p>
+            </div>
+            <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl p-4 xl:p-5 text-white shadow-lg shadow-blue-500/20">
+              <p className="text-blue-100 text-[10px] sm:text-xs font-bold uppercase tracking-wider mb-1">Laba Bersih</p>
+              <p className="text-xl sm:text-2xl font-black">{formatRupiah(untungBersih)}</p>
             </div>
           </div>
 
