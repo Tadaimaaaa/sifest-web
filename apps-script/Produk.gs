@@ -623,13 +623,17 @@ const Produk = {
       const validItems = body.items.filter(item => item.jumlah > 0);
       if (validItems.length === 0) return Response.error('BAD_REQUEST', 'Tidak ada item varian yang terjual.');
 
-      // Deduct stock
-      validItems.forEach(item => {
-        const vIndex = existingVarian.findIndex(v => v.id_varian === item.id_varian);
-        if (vIndex !== -1) {
-          existingVarian[vIndex].jumlah = Math.max(0, existingVarian[vIndex].jumlah - item.jumlah);
-        }
-      });
+      const terjual_oleh = body.terjual_oleh || "Ara";
+
+      // Kurangi stok utama HANYA jika terjual_oleh adalah "Ara"
+      if (terjual_oleh === "Ara") {
+        validItems.forEach(item => {
+          const vIndex = existingVarian.findIndex(v => v.id_varian === item.id_varian);
+          if (vIndex !== -1) {
+            existingVarian[vIndex].jumlah = Math.max(0, existingVarian[vIndex].jumlah - item.jumlah);
+          }
+        });
+      }
 
       const newSale = {
         id_penjualan: 'SALE-' + new Date().getTime(),
@@ -638,6 +642,7 @@ const Produk = {
         total_harga: Number(body.total_harga) || 0,
         total_modal: Number(body.total_modal) || 0,
         tanggal: new Date().toISOString(),
+        terjual_oleh: terjual_oleh,
         items: validItems
       };
       
