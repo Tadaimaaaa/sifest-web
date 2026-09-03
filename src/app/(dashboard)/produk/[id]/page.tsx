@@ -796,9 +796,14 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
                       </div>
                     </div>
                     {Object.values(week.varianTerjual).length > 0 && (
-                      <div className="bg-slate-50 rounded-xl p-3 border border-slate-100">
-                        <p className="text-[10px] font-bold text-slate-500 mb-2 uppercase tracking-wider">Detail Varian Terjual</p>
-                        <div className="space-y-1.5">
+                      <details className="group bg-slate-50 rounded-xl border border-slate-100 overflow-hidden">
+                        <summary className="p-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider cursor-pointer list-none [&::-webkit-details-marker]:hidden flex justify-between items-center hover:bg-slate-100 transition-colors">
+                          <span>Lihat Detail Varian</span>
+                          <span className="group-open:rotate-180 transition-transform text-slate-400">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                          </span>
+                        </summary>
+                        <div className="p-3 pt-0 space-y-2 bg-slate-50">
                           {Object.values(week.varianTerjual).sort((a, b) => b.jumlah - a.jumlah).map((v, i) => (
                             <div key={i} className="flex items-center justify-between text-xs">
                               <span className="text-slate-600 font-medium truncate pr-2">{v.nama}</span>
@@ -806,7 +811,7 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
                             </div>
                           ))}
                         </div>
-                      </div>
+                      </details>
                     )}
                   </div>
                 ))}
