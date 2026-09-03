@@ -201,7 +201,7 @@ export default function KeuanganPage() {
     return matchSearch && matchType && matchMonth;
   });
 
-  const KATEGORI_INCOME = ["Sponsorship", "Dana Usaha", "Pendaftaran", "Donatur", "Lainnya"];
+  const KATEGORI_INCOME = ["Sponsorship", "Dana Usaha", "Dana Produk", "Pendaftaran", "Donatur", "Lainnya"];
   const KATEGORI_EXPENSE = ["Logistik", "Konsumsi", "Acara", "Humas", "Pubdok", "Kesekretariatan", "Operasional", "Lainnya"];
   const currentCategories = newTrx.jenis === "INCOME" ? KATEGORI_INCOME : KATEGORI_EXPENSE;
 
