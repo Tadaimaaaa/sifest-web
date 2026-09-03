@@ -60,7 +60,7 @@ export function Sidebar() {
 
       {/* Sidebar Component */}
       <aside className={clsx(
-        "fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200 h-screen flex flex-col transition-transform duration-300 ease-in-out md:relative md:translate-x-0 print:hidden",
+        "fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200 h-screen flex flex-col transition-transform duration-300 ease-in-out md:sticky md:top-0 md:translate-x-0 print:hidden",
         isOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         <div className="p-6 flex items-center gap-3">
