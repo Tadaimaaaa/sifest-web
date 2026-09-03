@@ -724,12 +724,12 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3 lg:gap-4">
             <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 md:p-5 flex flex-col justify-center shadow-sm">
               <p className="text-[10px] md:text-xs text-slate-500 font-semibold uppercase tracking-wider mb-1">Harga Satuan</p>
-              <p className="text-xl md:text-2xl font-black text-slate-800">{formatRupiah(produk.harga_satuan)}</p>
+              <p className="text-lg xl:text-xl 2xl:text-2xl font-black tracking-tight text-slate-800">{formatRupiah(produk.harga_satuan)}</p>
             </div>
             
             <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl p-4 md:p-5 text-white shadow-lg shadow-orange-500/20 flex flex-col justify-center">
               <p className="text-orange-100 text-[10px] md:text-xs font-bold uppercase tracking-wider mb-1">Total Terjual</p>
-              <p className="text-xl md:text-2xl font-black">{totalPcsTerjual} <span className="text-xs md:text-sm font-medium opacity-80">pcs</span></p>
+              <p className="text-lg xl:text-xl 2xl:text-2xl font-black tracking-tight">{totalPcsTerjual} <span className="text-xs md:text-sm font-medium opacity-80">pcs</span></p>
             </div>
             
             <button 
@@ -741,23 +741,23 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
               </div>
               <div className="text-left">
                 <p className="text-[10px] md:text-xs text-slate-500 font-bold uppercase tracking-wider mb-0.5">Rincian</p>
-                <p className="text-sm md:text-base font-black text-slate-800 group-hover:text-blue-700 transition-colors whitespace-nowrap">Lihat Detail</p>
+                <p className="text-sm md:text-base font-black tracking-tight text-slate-800 group-hover:text-blue-700 transition-colors whitespace-nowrap">Lihat Detail</p>
               </div>
             </button>
 
             <div className="bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl p-4 md:p-5 text-white shadow-lg shadow-emerald-500/20 flex flex-col justify-center">
               <p className="text-emerald-100 text-[10px] md:text-xs font-bold uppercase tracking-wider mb-1">Pendapatan</p>
-              <p className="text-xl md:text-2xl font-black truncate">{formatRupiah(totalPendapatan)}</p>
+              <p className="text-lg xl:text-xl 2xl:text-2xl font-black tracking-tight">{formatRupiah(totalPendapatan)}</p>
             </div>
             
             <div className="bg-white border border-slate-200 rounded-2xl p-4 md:p-5 shadow-sm flex flex-col justify-center">
               <p className="text-slate-400 text-[10px] md:text-xs font-bold uppercase tracking-wider mb-1">Modal Dasar</p>
-              <p className="text-xl md:text-2xl font-black text-slate-700 truncate">{formatRupiah(totalModal)}</p>
+              <p className="text-lg xl:text-xl 2xl:text-2xl font-black tracking-tight text-slate-700">{formatRupiah(totalModal)}</p>
             </div>
             
             <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl p-4 md:p-5 text-white shadow-lg shadow-blue-500/20 flex flex-col justify-center col-span-2 md:col-span-1">
               <p className="text-blue-100 text-[10px] md:text-xs font-bold uppercase tracking-wider mb-1">Laba Bersih</p>
-              <p className="text-xl md:text-2xl font-black truncate">{formatRupiah(untungBersih)}</p>
+              <p className="text-lg xl:text-xl 2xl:text-2xl font-black tracking-tight">{formatRupiah(untungBersih)}</p>
             </div>
           </div>
 
