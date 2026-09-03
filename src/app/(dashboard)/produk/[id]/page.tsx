@@ -165,10 +165,11 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
     
     const salesMap: Record<string, Record<string, number>> = {};
     produk.penjualan_bundle?.forEach(sale => {
-      if (sale.terjual_oleh && sale.terjual_oleh !== "Ara") {
-        if (!salesMap[sale.terjual_oleh]) salesMap[sale.terjual_oleh] = {};
+      const seller = sale.terjual_oleh;
+      if (seller && seller !== "Ara") {
+        if (!salesMap[seller]) salesMap[seller] = {};
         sale.items?.forEach(item => {
-          salesMap[sale.terjual_oleh][item.id_varian] = (salesMap[sale.terjual_oleh][item.id_varian] || 0) + item.jumlah;
+          salesMap[seller][item.id_varian] = (salesMap[seller][item.id_varian] || 0) + item.jumlah;
         });
       }
     });
