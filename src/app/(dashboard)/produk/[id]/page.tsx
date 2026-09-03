@@ -36,6 +36,7 @@ interface PenjualanBundle {
   total_modal: number;
   tanggal: string;
   terjual_oleh?: string;
+  metode_pembayaran?: string;
   items: {
     id_varian: string;
     nama_varian: string;
