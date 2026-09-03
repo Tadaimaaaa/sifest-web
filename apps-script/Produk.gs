@@ -643,6 +643,7 @@ const Produk = {
         total_modal: Number(body.total_modal) || 0,
         tanggal: new Date().toISOString(),
         terjual_oleh: terjual_oleh,
+        metode_pembayaran: body.metode_pembayaran || "Cash",
         items: validItems
       };
       

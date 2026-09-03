@@ -137,6 +137,7 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
   const [isBundleSubmitting, setIsBundleSubmitting] = useState(false);
   const [isDetailVarianOpen, setIsDetailVarianOpen] = useState(false);
   const [terjualOleh, setTerjualOleh] = useState<string>("Ara");
+  const [metodePembayaran, setMetodePembayaran] = useState<string>("Cash");
 
   const distributorNames = Array.from(new Set(produk?.distribusi?.map(d => d.nama_penerima) || []));
 
@@ -483,6 +484,7 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
         total_harga: finalHarga,
         total_modal: total_modal,
         terjual_oleh: terjualOleh,
+        metode_pembayaran: metodePembayaran,
         items
       };
       
@@ -852,6 +854,8 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
                         onClick={() => {
                           setSelectedBundle(bundle);
                           setBundleItems({});
+                          setTerjualOleh("Ara");
+                          setMetodePembayaran("Cash");
                           setIsBundleModalOpen(true);
                         }}
                         className="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-colors"
@@ -886,11 +890,16 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
                   <div key={sale.id_penjualan} className="p-4 hover:bg-slate-50 transition-colors group">
                     <div className="flex justify-between items-start mb-2">
                       <div>
-                        <div className="flex items-center gap-2 mb-0.5">
+                        <div className="flex items-center gap-2 mb-0.5 flex-wrap">
                           <p className="text-sm font-bold text-slate-800">{sale.nama_paket}</p>
                           {sale.terjual_oleh && sale.terjual_oleh !== "Ara" && (
                             <span className="px-2 py-0.5 bg-purple-100 text-purple-700 text-[10px] font-bold rounded-md whitespace-nowrap">
                               Oleh: {sale.terjual_oleh}
+                            </span>
+                          )}
+                          {sale.metode_pembayaran && (
+                            <span className={`px-2 py-0.5 text-[10px] font-bold rounded-md whitespace-nowrap ${sale.metode_pembayaran === 'Transfer' ? 'bg-orange-100 text-orange-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                              {sale.metode_pembayaran}
                             </span>
                           )}
                         </div>
@@ -1167,21 +1176,34 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
             </div>
             
             <form onSubmit={handleAddPenjualanBundle} className="flex-1 overflow-y-auto p-6 space-y-6">
-              <div className="mb-6 bg-slate-50 border border-slate-200 rounded-xl p-4">
-                <label className="block text-sm font-bold text-slate-700 mb-2">Terjual Oleh</label>
-                <select 
-                  value={terjualOleh} 
-                  onChange={(e) => {
-                    setTerjualOleh(e.target.value);
-                    setBundleItems({}); // Reset selected items when changing seller
-                  }}
-                  className="w-full border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm text-slate-900 bg-white"
-                >
-                  <option value="Ara" className="text-slate-900 bg-white">Ara (Stok Utama)</option>
-                  {distributorNames.map(name => (
-                    <option key={name} value={name} className="text-slate-900 bg-white">{name}</option>
-                  ))}
-                </select>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
+                  <label className="block text-sm font-bold text-slate-700 mb-2">Terjual Oleh</label>
+                  <select 
+                    value={terjualOleh} 
+                    onChange={(e) => {
+                      setTerjualOleh(e.target.value);
+                      setBundleItems({}); // Reset selected items when changing seller
+                    }}
+                    className="w-full border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm text-slate-900 bg-white"
+                  >
+                    <option value="Ara" className="text-slate-900 bg-white">Ara (Stok Utama)</option>
+                    {distributorNames.map(name => (
+                      <option key={name} value={name} className="text-slate-900 bg-white">{name}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
+                  <label className="block text-sm font-bold text-slate-700 mb-2">Metode Bayar</label>
+                  <select 
+                    value={metodePembayaran} 
+                    onChange={(e) => setMetodePembayaran(e.target.value)}
+                    className="w-full border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm text-slate-900 bg-white"
+                  >
+                    <option value="Cash" className="text-slate-900 bg-white">Cash (Tunai)</option>
+                    <option value="Transfer" className="text-slate-900 bg-white">Transfer</option>
+                  </select>
+                </div>
               </div>
 
               <div>
