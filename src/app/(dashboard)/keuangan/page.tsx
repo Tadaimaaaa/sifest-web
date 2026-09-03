@@ -199,7 +199,7 @@ export default function KeuanganPage() {
     const matchMonth = monthFilter ? trxMonth === monthFilter : true;
 
     return matchSearch && matchType && matchMonth;
-  }).sort((a, b) => new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime());
+  }).sort((a, b) => Number(b.no) - Number(a.no));
 
   const KATEGORI_INCOME = ["Sponsorship", "Dana Usaha", "Dana Produk", "Pendaftaran", "Donatur", "Lainnya"];
   const KATEGORI_EXPENSE = ["Logistik", "Konsumsi", "Acara", "Humas", "Pubdok", "Kesekretariatan", "Operasional", "Lainnya"];
