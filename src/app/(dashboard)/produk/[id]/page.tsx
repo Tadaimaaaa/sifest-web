@@ -255,7 +255,7 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
       const userDataStr = Cookies.get("user_data");
       if (userDataStr) {
         const user = JSON.parse(userDataStr);
-        setHasAccess(["ROLE-001", "ROLE-006"].includes(user.role || ""));
+        setHasAccess(["ROLE-001", "ROLE-006", "ROLE-009"].includes(user.role || ""));
       }
     } catch {}
   }, []);

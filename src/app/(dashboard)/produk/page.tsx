@@ -57,7 +57,7 @@ export default function ProdukSponsorPage() {
   useEffect(() => {
     try {
       const ud = Cookies.get("user_data");
-      if (ud) setHasAccess(["ROLE-001", "ROLE-006"].includes(JSON.parse(ud).role || ""));
+      if (ud) setHasAccess(["ROLE-001", "ROLE-006", "ROLE-009"].includes(JSON.parse(ud).role || ""));
     } catch {}
   }, []);
 
