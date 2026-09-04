@@ -333,23 +333,85 @@ export default function EsportDashboard() {
             </div>
           </div>
         </div>
-        <div className="p-8 flex items-center justify-center min-h-[300px] bg-slate-50/50 relative overflow-hidden">
+        <div className="p-8 w-full overflow-x-auto bg-slate-50/50 relative">
           <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.02)_1px,transparent_1px)] bg-[size:40px_40px]"></div>
           
-          <div className="text-center relative z-10 w-full">
-            {teams.length < 2 ? (
-              <div className="py-12">
-                <Gamepad2 className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-                <h3 className="text-slate-600 font-semibold mb-2">Bracket Generator</h3>
-                <p className="text-slate-500 text-sm max-w-sm mx-auto">Sistem akan secara otomatis menyusun bagan pertandingan ketika minimal ada 2 tim yang terdaftar.</p>
+          <div className="relative z-10 min-w-[1000px] h-[800px] flex gap-12 px-4 py-4">
+            {/* Round 1 (16 Teams) */}
+            <div className="flex flex-col justify-around w-48 shrink-0 relative">
+              <div className="absolute -top-6 text-xs font-bold text-slate-400 uppercase tracking-widest text-center w-full">Round of 16</div>
+              {Array(8).fill(0).map((_, i) => (
+                <div key={`r1-${i}`} className="w-full bg-white border border-slate-200 shadow-sm rounded-lg overflow-hidden flex flex-col text-xs relative z-10">
+                  <div className="px-3 py-2 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                    <span className="font-semibold text-slate-400">TBD</span>
+                    <span className="text-slate-300">-</span>
+                  </div>
+                  <div className="px-3 py-2 flex justify-between items-center bg-white">
+                    <span className="font-semibold text-slate-400">TBD</span>
+                    <span className="text-slate-300">-</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Quarterfinals */}
+            <div className="flex flex-col justify-around w-48 shrink-0 relative">
+              <div className="absolute -top-6 text-xs font-bold text-slate-400 uppercase tracking-widest text-center w-full">Quarterfinals</div>
+              {Array(4).fill(0).map((_, i) => (
+                <div key={`qf-${i}`} className="w-full bg-white border border-slate-200 shadow-sm rounded-lg overflow-hidden flex flex-col text-xs relative z-10">
+                  <div className="px-3 py-2 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                    <span className="font-semibold text-slate-400">TBD</span>
+                    <span className="text-slate-300">-</span>
+                  </div>
+                  <div className="px-3 py-2 flex justify-between items-center bg-white">
+                    <span className="font-semibold text-slate-400">TBD</span>
+                    <span className="text-slate-300">-</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Semifinals */}
+            <div className="flex flex-col justify-around w-48 shrink-0 relative">
+              <div className="absolute -top-6 text-xs font-bold text-slate-400 uppercase tracking-widest text-center w-full">Semifinals</div>
+              {Array(2).fill(0).map((_, i) => (
+                <div key={`sf-${i}`} className="w-full bg-white border border-slate-200 shadow-sm rounded-lg overflow-hidden flex flex-col text-xs relative z-10">
+                  <div className="px-3 py-2 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                    <span className="font-semibold text-slate-400">TBD</span>
+                    <span className="text-slate-300">-</span>
+                  </div>
+                  <div className="px-3 py-2 flex justify-between items-center bg-white">
+                    <span className="font-semibold text-slate-400">TBD</span>
+                    <span className="text-slate-300">-</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Final */}
+            <div className="flex flex-col justify-around w-48 shrink-0 relative">
+              <div className="absolute -top-6 text-xs font-bold text-slate-400 uppercase tracking-widest text-center w-full">Grand Final</div>
+              <div className="w-full bg-white border border-amber-300 shadow-md rounded-lg overflow-hidden flex flex-col text-xs relative z-10">
+                <div className="bg-amber-100 text-amber-700 text-[10px] font-bold text-center py-1 uppercase tracking-wider">Final Match</div>
+                <div className="px-3 py-2 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                  <span className="font-semibold text-slate-400">TBD</span>
+                  <span className="text-slate-300">-</span>
+                </div>
+                <div className="px-3 py-2 flex justify-between items-center bg-white">
+                  <span className="font-semibold text-slate-400">TBD</span>
+                  <span className="text-slate-300">-</span>
+                </div>
               </div>
-            ) : (
-              <div className="py-8 opacity-50 flex flex-col items-center">
-                <Trophy className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-                <h3 className="text-slate-600 font-semibold mb-2">Fitur Bagan Dalam Pengembangan</h3>
-                <p className="text-slate-500 text-sm max-w-sm mx-auto">Bagan pertandingan 1v1 akan ditampilkan di sini.</p>
+            </div>
+
+            {/* Winner */}
+            <div className="flex flex-col justify-center w-48 shrink-0 relative pl-4">
+              <div className="p-4 bg-gradient-to-r from-amber-100 to-amber-50 border border-amber-200 rounded-xl flex flex-col items-center justify-center gap-2 shadow-sm text-center">
+                <Trophy className="w-8 h-8 text-amber-500 mb-1" />
+                <span className="text-[10px] font-bold text-amber-700 uppercase tracking-widest">Champion</span>
+                <span className="font-bold text-slate-800 text-lg">TBD</span>
               </div>
-            )}
+            </div>
           </div>
         </div>
       </div>
