@@ -510,7 +510,21 @@ export default function BazaarDashboard() {
                   <label className="block text-sm font-semibold text-slate-700 mb-1.5">Kategori Jualan</label>
                   <select 
                     value={formDataTenant.kategori}
-                    onChange={(e) => setFormDataTenant({...formDataTenant, kategori: e.target.value})}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === "Panitia/Internal") {
+                        setFormDataTenant({
+                          ...formDataTenant, 
+                          kategori: val,
+                          nama_brand: formDataTenant.nama_brand || "Panitia",
+                          pic: formDataTenant.pic || "Internal",
+                          kontak: formDataTenant.kontak || "-",
+                          status_bayar: "Lunas"
+                        });
+                      } else {
+                        setFormDataTenant({...formDataTenant, kategori: val});
+                      }
+                    }}
                     className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
                   >
                     <option value="Makanan">Makanan</option>
