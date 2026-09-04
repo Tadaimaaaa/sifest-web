@@ -75,7 +75,7 @@ export default function EsportDashboard() {
         setTeams(dataTeams.data);
         
         // Initialize bracket with padded teams up to 16
-        const initialBracket = [...dataTeams.data];
+        const initialBracket: (Team | null)[] = [...dataTeams.data];
         while (initialBracket.length < 16) {
           initialBracket.push(null);
         }
