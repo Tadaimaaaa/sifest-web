@@ -555,12 +555,41 @@ export default function BazaarDashboard() {
                   {tenants[formDataTenant.id_tenda] && (
                     <button 
                       type="button"
-                      onClick={() => {
+                      disabled={isSavingTenant}
+                      onClick={async () => {
                         if (confirm("Kosongkan data tenda ini?")) {
-                          setFormDataTenant({...formDataTenant, nama_brand: "", pic: "", kontak: "", status_bayar: "Kosong"});
+                          // Bypass form submit untuk langsung mengosongkan
+                          const emptyData = {...formDataTenant, nama_brand: "", pic: "", kontak: "", status_bayar: "Kosong"};
+                          setFormDataTenant(emptyData);
+                          
+                          // Trigger save langsung (pakai setTimeout agar state update dulu, atau panggil manual fetch)
+                          setIsSavingTenant(true);
+                          try {
+                            const token = Cookies.get("session_token");
+                            const payload = { action: "saveBazaarTenant", token, ...emptyData };
+                            const res = await fetch(`${SCRIPT_URL}?action=saveBazaarTenant`, {
+                              method: "POST",
+                              body: JSON.stringify(payload),
+                            });
+                            const data = await res.json();
+                            if (data.success) {
+                              toast.success(`Tenda ${emptyData.id_tenda} berhasil dikosongkan!`);
+                              const newTenants = { ...tenants };
+                              delete newTenants[emptyData.id_tenda];
+                              setTenants(newTenants);
+                              setIsModalOpen(false);
+                            } else {
+                              toast.error(data.message || "Gagal mengosongkan tenda.");
+                            }
+                          } catch (error: any) {
+                            console.error(error);
+                            toast.error(`Gagal: ${error.message || error}`);
+                          } finally {
+                            setIsSavingTenant(false);
+                          }
                         }
                       }}
-                      className="px-4 py-2.5 text-sm font-semibold text-rose-600 hover:bg-rose-50 rounded-xl transition-colors"
+                      className="px-4 py-2.5 text-sm font-semibold text-rose-600 hover:bg-rose-50 rounded-xl transition-colors disabled:opacity-50"
                     >
                       Kosongkan Tenda
                     </button>
