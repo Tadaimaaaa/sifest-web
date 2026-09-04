@@ -219,6 +219,17 @@ export default function SponsorPage() {
     }
   };
 
+  const formatDateForInput = (dateStr: string) => {
+    if (!dateStr || dateStr === "-") return "";
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return "";
+      return d.toISOString().split('T')[0];
+    } catch {
+      return "";
+    }
+  };
+
   const openEditModal = (spn: Sponsor) => {
     setEditingSponsor(spn);
     setFormData({
@@ -226,8 +237,8 @@ export default function SponsorPage() {
       pic: spn.pic,
       kontak: spn.kontak,
       email: spn.email,
-      tgl_proposal: spn.tgl_proposal,
-      tgl_followup: spn.tgl_followup,
+      tgl_proposal: formatDateForInput(spn.tgl_proposal),
+      tgl_followup: formatDateForInput(spn.tgl_followup),
       status: spn.status,
       keterangan: spn.keterangan,
       catatan: spn.catatan
@@ -514,12 +525,12 @@ export default function SponsorPage() {
 
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-1.5">Tgl Pemberian Proposal</label>
-                  <input type="text" value={formData.tgl_proposal} onChange={(e) => setFormData({...formData, tgl_proposal: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" placeholder="Misal: Selasa, 11 Agt 2026" />
+                  <input type="date" value={formData.tgl_proposal} onChange={(e) => setFormData({...formData, tgl_proposal: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" />
                 </div>
 
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-1.5">Tgl Follow Up</label>
-                  <input type="text" value={formData.tgl_followup} onChange={(e) => setFormData({...formData, tgl_followup: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" placeholder="Kapan akan ditanya lagi?" />
+                  <input type="date" value={formData.tgl_followup} onChange={(e) => setFormData({...formData, tgl_followup: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" />
                 </div>
 
                 <div className="sm:col-span-2">
