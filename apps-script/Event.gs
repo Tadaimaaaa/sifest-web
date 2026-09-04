@@ -1,6 +1,6 @@
 const Event = {
   getEvent: function(id_event) {
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var ss = Utils.getSpreadsheet();
     var sheet = ss.getSheetByName("DataEvent");
     
     if (!sheet) {
@@ -29,7 +29,7 @@ const Event = {
     var id_event = payload.id_event;
     if (!id_event) return Response.error('BAD_REQUEST', 'ID Event wajib diisi');
     
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var ss = Utils.getSpreadsheet();
     var sheet = ss.getSheetByName("DataEvent");
     
     if (!sheet) {
@@ -78,7 +78,7 @@ const Event = {
   },
 
   getBazaarTenants: function() {
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var ss = Utils.getSpreadsheet();
     var sheet = ss.getSheetByName("Bazaar");
     
     if (!sheet) {
@@ -112,7 +112,7 @@ const Event = {
     var id_tenda = payload.id_tenda;
     if (!id_tenda) return Response.error('BAD_REQUEST', 'ID Tenda wajib diisi');
     
-    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var ss = Utils.getSpreadsheet();
     var sheet = ss.getSheetByName("Bazaar");
     
     if (!sheet) {
