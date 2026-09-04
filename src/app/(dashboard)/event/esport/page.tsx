@@ -8,6 +8,7 @@ import Cookies from "js-cookie";
 import { toast } from "sonner";
 import FullPageLoader from "@/components/FullPageLoader";
 import { getEsportRegistrations } from "./actions";
+import { Loader2, Shuffle } from "lucide-react";
 
 type Team = {
   id_tim: string;
@@ -45,6 +46,10 @@ export default function EsportDashboard() {
 
   // TEAM STATE (Read Only)
   const [teams, setTeams] = useState<Team[]>([]);
+  
+  // BRACKET STATE
+  const [shuffledTeams, setShuffledTeams] = useState<(Team | null)[]>(Array(16).fill(null));
+  const [isSpinning, setIsSpinning] = useState(false);
 
   useEffect(() => {
     const role = Cookies.get("user_role");
@@ -68,6 +73,13 @@ export default function EsportDashboard() {
       const dataTeams = await getEsportRegistrations();
       if (dataTeams.success && dataTeams.data) {
         setTeams(dataTeams.data);
+        
+        // Initialize bracket with padded teams up to 16
+        const initialBracket = [...dataTeams.data];
+        while (initialBracket.length < 16) {
+          initialBracket.push(null);
+        }
+        setShuffledTeams(initialBracket.slice(0, 16));
       }
     } catch (error) {
       console.error("Gagal mengambil data esport:", error);
@@ -103,6 +115,28 @@ export default function EsportDashboard() {
     } finally {
       setIsSavingEvent(false);
     }
+  };
+
+  // Bracket Spinning Effect
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isSpinning) {
+      interval = setInterval(() => {
+        setShuffledTeams(prev => {
+          const newArr = [...prev];
+          for (let i = newArr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [newArr[i], newArr[j]] = [newArr[j], newArr[i]];
+          }
+          return newArr;
+        });
+      }, 50); // 50ms fast shuffle
+    }
+    return () => clearInterval(interval);
+  }, [isSpinning]);
+
+  const toggleSpin = () => {
+    setIsSpinning(!isSpinning);
   };
 
   if (isLoading) return <FullPageLoader message="Memuat informasi E-Sport..." fullScreen={false} />;
@@ -322,40 +356,70 @@ export default function EsportDashboard() {
 
       {/* SECTION 3: Turnamen Bracket Viewer (Visual Only) */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden relative">
-        <div className="p-6 border-b border-slate-100 bg-slate-50/50">
+        <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center border border-amber-100">
               <Trophy className="w-5 h-5 text-amber-600" />
             </div>
             <div>
               <h2 className="text-lg font-bold text-slate-800">Bagan Pertandingan</h2>
-              <p className="text-xs text-slate-500">Preview Bracket Turnamen</p>
+              <p className="text-xs text-slate-500">Preview Bracket Turnamen & Pengundian</p>
             </div>
           </div>
+          {hasAccess && (
+            <button 
+              onClick={toggleSpin}
+              className={`px-6 py-2.5 text-white text-sm font-bold rounded-xl shadow-sm transition-all flex items-center gap-2 ${
+                isSpinning 
+                  ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-500/20 animate-pulse' 
+                  : 'bg-blue-600 hover:bg-blue-700 shadow-blue-500/20'
+              }`}
+            >
+              {isSpinning ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Stop Pengundian!
+                </>
+              ) : (
+                <>
+                  <Shuffle className="w-4 h-4" />
+                  Acak Tim (Spin)
+                </>
+              )}
+            </button>
+          )}
         </div>
         <div className="p-8 w-full overflow-x-auto bg-slate-50/50 relative">
           <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.02)_1px,transparent_1px)] bg-[size:40px_40px]"></div>
           
           <div className="relative z-10 min-w-[1000px] h-[800px] flex gap-12 px-4 py-4">
             {/* Round 1 (16 Teams) */}
-            <div className="flex flex-col justify-around w-48 shrink-0 relative">
+            <div className="flex flex-col justify-around w-56 shrink-0 relative">
               <div className="absolute -top-6 text-xs font-bold text-slate-400 uppercase tracking-widest text-center w-full">Round of 16</div>
-              {Array(8).fill(0).map((_, i) => (
-                <div key={`r1-${i}`} className="w-full bg-white border border-slate-200 shadow-sm rounded-lg overflow-hidden flex flex-col text-xs relative z-10">
-                  <div className="px-3 py-2 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                    <span className="font-semibold text-slate-400">TBD</span>
-                    <span className="text-slate-300">-</span>
+              {Array(8).fill(0).map((_, i) => {
+                const team1 = shuffledTeams[i * 2];
+                const team2 = shuffledTeams[i * 2 + 1];
+                return (
+                  <div key={`r1-${i}`} className="w-full bg-white border border-slate-200 shadow-sm rounded-lg overflow-hidden flex flex-col text-xs relative z-10">
+                    <div className="px-3 py-2 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                      <span className={`font-semibold ${team1 ? 'text-slate-800' : 'text-slate-400'}`}>
+                        {team1 ? team1.nama_tim : 'TBD (BYE)'}
+                      </span>
+                      <span className="text-slate-300">-</span>
+                    </div>
+                    <div className="px-3 py-2 flex justify-between items-center bg-white">
+                      <span className={`font-semibold ${team2 ? 'text-slate-800' : 'text-slate-400'}`}>
+                        {team2 ? team2.nama_tim : 'TBD (BYE)'}
+                      </span>
+                      <span className="text-slate-300">-</span>
+                    </div>
                   </div>
-                  <div className="px-3 py-2 flex justify-between items-center bg-white">
-                    <span className="font-semibold text-slate-400">TBD</span>
-                    <span className="text-slate-300">-</span>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Quarterfinals */}
-            <div className="flex flex-col justify-around w-48 shrink-0 relative">
+            <div className="flex flex-col justify-around w-56 shrink-0 relative">
               <div className="absolute -top-6 text-xs font-bold text-slate-400 uppercase tracking-widest text-center w-full">Quarterfinals</div>
               {Array(4).fill(0).map((_, i) => (
                 <div key={`qf-${i}`} className="w-full bg-white border border-slate-200 shadow-sm rounded-lg overflow-hidden flex flex-col text-xs relative z-10">
@@ -372,7 +436,7 @@ export default function EsportDashboard() {
             </div>
 
             {/* Semifinals */}
-            <div className="flex flex-col justify-around w-48 shrink-0 relative">
+            <div className="flex flex-col justify-around w-56 shrink-0 relative">
               <div className="absolute -top-6 text-xs font-bold text-slate-400 uppercase tracking-widest text-center w-full">Semifinals</div>
               {Array(2).fill(0).map((_, i) => (
                 <div key={`sf-${i}`} className="w-full bg-white border border-slate-200 shadow-sm rounded-lg overflow-hidden flex flex-col text-xs relative z-10">
@@ -389,7 +453,7 @@ export default function EsportDashboard() {
             </div>
 
             {/* Final */}
-            <div className="flex flex-col justify-around w-48 shrink-0 relative">
+            <div className="flex flex-col justify-around w-56 shrink-0 relative">
               <div className="absolute -top-6 text-xs font-bold text-slate-400 uppercase tracking-widest text-center w-full">Grand Final</div>
               <div className="w-full bg-white border border-amber-300 shadow-md rounded-lg overflow-hidden flex flex-col text-xs relative z-10">
                 <div className="bg-amber-100 text-amber-700 text-[10px] font-bold text-center py-1 uppercase tracking-wider">Final Match</div>
@@ -405,7 +469,7 @@ export default function EsportDashboard() {
             </div>
 
             {/* Winner */}
-            <div className="flex flex-col justify-center w-48 shrink-0 relative pl-4">
+            <div className="flex flex-col justify-center w-56 shrink-0 relative pl-4">
               <div className="p-4 bg-gradient-to-r from-amber-100 to-amber-50 border border-amber-200 rounded-xl flex flex-col items-center justify-center gap-2 shadow-sm text-center">
                 <Trophy className="w-8 h-8 text-amber-500 mb-1" />
                 <span className="text-[10px] font-bold text-amber-700 uppercase tracking-widest">Champion</span>
