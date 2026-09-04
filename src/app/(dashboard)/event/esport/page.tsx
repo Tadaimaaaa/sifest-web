@@ -7,7 +7,7 @@ import { SCRIPT_URL } from "@/lib/api";
 import Cookies from "js-cookie";
 import { toast } from "sonner";
 import FullPageLoader from "@/components/FullPageLoader";
-import Swal from 'sweetalert2';
+import { getEsportRegistrations } from "./actions";
 
 type Team = {
   id_tim: string;
@@ -43,18 +43,8 @@ export default function EsportDashboard() {
   });
   const [formDataEvent, setFormDataEvent] = useState<EventData>(eventData);
 
-  // TEAM STATE
+  // TEAM STATE (Read Only)
   const [teams, setTeams] = useState<Team[]>([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isSavingTeam, setIsSavingTeam] = useState(false);
-  const [formDataTeam, setFormDataTeam] = useState<Team>({
-    id_tim: "",
-    nama_tim: "",
-    kapten: "",
-    kontak: "",
-    status_bayar: "Belum Bayar"
-  });
-  const [isEditingTeam, setIsEditingTeam] = useState(false);
 
   useEffect(() => {
     const role = Cookies.get("user_role");
@@ -74,9 +64,8 @@ export default function EsportDashboard() {
         setFormDataEvent(dataEvent.data);
       }
 
-      // 2. Fetch Teams
-      const resTeams = await fetch(`${SCRIPT_URL}?action=getEsportTeams`);
-      const dataTeams = await resTeams.json();
+      // 2. Fetch Teams from Supabase (Official Web Registrations)
+      const dataTeams = await getEsportRegistrations();
       if (dataTeams.success && dataTeams.data) {
         setTeams(dataTeams.data);
       }
@@ -114,93 +103,6 @@ export default function EsportDashboard() {
     } finally {
       setIsSavingEvent(false);
     }
-  };
-
-  const handleSaveTeam = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!hasAccess) return;
-
-    setIsSavingTeam(true);
-    try {
-      const token = Cookies.get("session_token");
-      const payload = { 
-        action: "saveEsportTeam", 
-        token, 
-        ...formDataTeam,
-        id_tim: formDataTeam.id_tim || `MLBB-${new Date().getTime()}`
-      };
-
-      const res = await fetch(`${SCRIPT_URL}?action=saveEsportTeam`, {
-        method: "POST",
-        body: JSON.stringify(payload),
-      });
-      
-      const data = await res.json();
-      if (data.success) {
-        toast.success(`Data tim ${payload.nama_tim} berhasil disimpan!`);
-        setIsModalOpen(false);
-        fetchData(); 
-      } else {
-        toast.error(data.message || "Gagal menyimpan data tim.");
-      }
-    } catch (error: any) {
-      toast.error(`Gagal menyimpan: ${error.message || error}`);
-    } finally {
-      setIsSavingTeam(false);
-    }
-  };
-
-  const handleDeleteTeam = async (id_tim: string) => {
-    const result = await Swal.fire({
-      title: 'Hapus Tim?',
-      text: "Data tim yang dihapus tidak dapat dikembalikan!",
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonColor: '#ef4444',
-      cancelButtonColor: '#94a3b8',
-      confirmButtonText: 'Ya, Hapus!',
-      cancelButtonText: 'Batal',
-      reverseButtons: true
-    });
-
-    if (!result.isConfirmed) return;
-    
-    try {
-      const token = Cookies.get("session_token");
-      const payload = { action: "deleteEsportTeam", token, id_tim };
-      const res = await fetch(`${SCRIPT_URL}?action=deleteEsportTeam`, {
-        method: "POST",
-        body: JSON.stringify(payload),
-      });
-      
-      const data = await res.json();
-      if (data.success) {
-        toast.success("Tim berhasil dihapus");
-        fetchData();
-      } else {
-        toast.error(data.message || "Gagal menghapus tim");
-      }
-    } catch (error: any) {
-      toast.error(`Gagal menghapus: ${error.message || error}`);
-    }
-  };
-
-  const openAddModal = () => {
-    setFormDataTeam({
-      id_tim: "",
-      nama_tim: "",
-      kapten: "",
-      kontak: "",
-      status_bayar: "Belum Bayar"
-    });
-    setIsEditingTeam(false);
-    setIsModalOpen(true);
-  };
-
-  const openEditModal = (team: Team) => {
-    setFormDataTeam(team);
-    setIsEditingTeam(true);
-    setIsModalOpen(true);
   };
 
   if (isLoading) return <FullPageLoader message="Memuat informasi E-Sport..." fullScreen={false} />;
@@ -354,17 +256,11 @@ export default function EsportDashboard() {
             </div>
             <div>
               <h2 className="text-lg font-bold text-slate-800">Daftar Tim Bertanding</h2>
-              <p className="text-xs text-slate-500">{teams.length} Tim Terdaftar</p>
+              <p className="text-xs text-slate-500">
+                {teams.length} Tim Terdaftar (Data sinkron dengan Pendaftar Official Web)
+              </p>
             </div>
           </div>
-          {hasAccess && (
-            <button 
-              onClick={openAddModal}
-              className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white text-sm font-bold rounded-xl shadow-sm shadow-rose-500/20 transition-all flex items-center gap-2"
-            >
-              <Plus className="w-4 h-4" /> Registrasi Tim
-            </button>
-          )}
         </div>
         
         <div className="overflow-x-auto">
@@ -375,7 +271,6 @@ export default function EsportDashboard() {
                 <th className="px-6 py-4 font-semibold">Kapten</th>
                 <th className="px-6 py-4 font-semibold">Kontak WA</th>
                 <th className="px-6 py-4 font-semibold">Status Bayar</th>
-                {hasAccess && <th className="px-6 py-4 font-semibold text-right">Aksi</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -417,24 +312,6 @@ export default function EsportDashboard() {
                         {team.status_bayar}
                       </span>
                     </td>
-                    {hasAccess && (
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <button 
-                            onClick={() => openEditModal(team)}
-                            className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                          >
-                            <Edit3 className="w-4 h-4" />
-                          </button>
-                          <button 
-                            onClick={() => handleDeleteTeam(team.id_tim)}
-                            className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
-                    )}
                   </tr>
                 ))
               )}
@@ -476,96 +353,6 @@ export default function EsportDashboard() {
           </div>
         </div>
       </div>
-
-      {/* Modal Add/Edit Tim */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={() => setIsModalOpen(false)} />
-          <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden relative z-10 shadow-xl animate-in zoom-in-95 duration-200">
-            
-            <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-rose-50 rounded-xl flex items-center justify-center border border-rose-100">
-                  <Gamepad2 className="w-5 h-5 text-rose-600" />
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-slate-800">{isEditingTeam ? 'Edit Tim' : 'Registrasi Tim'}</h3>
-                  <p className="text-xs text-slate-500">Data pendaftaran turnamen</p>
-                </div>
-              </div>
-            </div>
-
-            <form onSubmit={handleSaveTeam} className="p-6 space-y-5">
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Nama Tim (Squad)</label>
-                <input 
-                  type="text" 
-                  required
-                  value={formDataTeam.nama_tim}
-                  onChange={(e) => setFormDataTeam({...formDataTeam, nama_tim: e.target.value})}
-                  className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500"
-                  placeholder="Contoh: RRQ Hoshi"
-                />
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-1.5"><User className="w-3.5 h-3.5 text-slate-400" /> Kapten</label>
-                  <input 
-                    type="text" 
-                    required
-                    value={formDataTeam.kapten}
-                    onChange={(e) => setFormDataTeam({...formDataTeam, kapten: e.target.value})}
-                    className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500"
-                    placeholder="Nama Kapten"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-2 flex items-center gap-1.5"><Phone className="w-3.5 h-3.5 text-slate-400" /> No. WA</label>
-                  <input 
-                    type="text" 
-                    required
-                    value={formDataTeam.kontak}
-                    onChange={(e) => setFormDataTeam({...formDataTeam, kontak: e.target.value})}
-                    className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500"
-                    placeholder="0812xxx"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Status Pembayaran</label>
-                <select 
-                  value={formDataTeam.status_bayar}
-                  onChange={(e) => setFormDataTeam({...formDataTeam, status_bayar: e.target.value})}
-                  className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 font-medium"
-                >
-                  <option value="Belum Bayar">Belum Bayar (Merah)</option>
-                  <option value="DP">DP (Biru)</option>
-                  <option value="Lunas">Lunas (Hijau)</option>
-                </select>
-              </div>
-
-              <div className="flex justify-end gap-3 pt-6 mt-2 border-t border-slate-100">
-                <button 
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-5 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-50 rounded-xl transition-colors"
-                >
-                  Batal
-                </button>
-                <button 
-                  type="submit"
-                  disabled={isSavingTeam}
-                  className="px-6 py-2.5 bg-rose-600 hover:bg-rose-700 text-white text-sm font-bold rounded-xl shadow-sm shadow-rose-500/20 transition-all flex items-center gap-2 disabled:opacity-50"
-                >
-                  {isSavingTeam ? "Menyimpan..." : <><Save className="w-4 h-4" /> Simpan Data</>}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
