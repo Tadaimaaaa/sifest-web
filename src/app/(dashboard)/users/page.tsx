@@ -126,6 +126,16 @@ export default function UsersPage() {
         return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-700">Humas</span>;
       case 'ROLE-009':
         return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-cyan-100 text-cyan-700">Promosi</span>;
+      case 'ROLE-010':
+        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700">MTQ</span>;
+      case 'ROLE-011':
+        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">Seminar</span>;
+      case 'ROLE-012':
+        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">Futsal</span>;
+      case 'ROLE-013':
+        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-100 text-rose-700">E-Sport</span>;
+      case 'ROLE-014':
+        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">Bazaar</span>;
       default:
         return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700">Panitia</span>;
     }
@@ -193,6 +203,11 @@ export default function UsersPage() {
             <option value="ROLE-007">Pubdok</option>
             <option value="ROLE-008">Humas</option>
             <option value="ROLE-009">Promosi</option>
+            <option value="ROLE-010">MTQ</option>
+            <option value="ROLE-011">Seminar</option>
+            <option value="ROLE-012">Futsal</option>
+            <option value="ROLE-013">E-Sport</option>
+            <option value="ROLE-014">Bazaar</option>
           </select>
           <select 
             value={statusFilter}
@@ -310,6 +325,11 @@ export default function UsersPage() {
                   <option value="ROLE-007">Pubdok</option>
                   <option value="ROLE-008">Humas</option>
                   <option value="ROLE-009">Promosi</option>
+                  <option value="ROLE-010">Panitia MTQ</option>
+                  <option value="ROLE-011">Panitia Seminar</option>
+                  <option value="ROLE-012">Panitia Futsal</option>
+                  <option value="ROLE-013">Panitia E-Sport</option>
+                  <option value="ROLE-014">Panitia Bazaar</option>
                 </select>
               </div>
 
