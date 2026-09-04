@@ -253,7 +253,11 @@ export default function SponsorPage() {
   const filteredSponsors = sponsors.filter(spn => {
     const matchesSearch = spn.nama_sponsor.toLowerCase().includes(searchTerm.toLowerCase()) || 
                           spn.pic.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === "Semua" || spn.status === statusFilter;
+    const matchesStatus = statusFilter === "Semua" 
+      ? true 
+      : statusFilter === "Jadwal Follow Up"
+        ? (spn.tgl_followup && spn.tgl_followup.trim() !== "" && spn.tgl_followup !== "-")
+        : spn.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
@@ -361,7 +365,7 @@ export default function SponsorPage() {
             />
           </div>
           <div className="flex gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0 hide-scrollbar">
-            {["Semua", "Deal / Potensial", "Ditinjau", "Sudah Dihubungi", "Ditolak"].map((status) => (
+            {["Semua", "Jadwal Follow Up", "Deal / Potensial", "Ditinjau", "Sudah Dihubungi", "Ditolak"].map((status) => (
               <button
                 key={status}
                 onClick={() => setStatusFilter(status)}
