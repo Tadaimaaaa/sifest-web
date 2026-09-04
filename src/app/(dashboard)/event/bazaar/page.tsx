@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowLeft, Store, Save, Edit3, X, User, Phone, Tag, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Store, Save, Edit3, X, User, Phone, Tag, CheckCircle2 } from "lucide-react";
 import { SCRIPT_URL } from "@/lib/api";
 import Cookies from "js-cookie";
 import { toast } from "sonner";
