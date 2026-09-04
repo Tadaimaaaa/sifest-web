@@ -428,7 +428,7 @@ export default function BazaarDashboard() {
                 
                 {/* Right spacer for alignment - Gapura Pintu Masuk */}
                 <div className="w-[calc(12.5%-8px)] flex items-center justify-center relative">
-                  <div className="absolute inset-y-4 right-0 w-24 flex flex-col items-center justify-center">
+                  <div className="absolute inset-y-4 -right-12 md:-right-20 w-24 flex flex-col items-center justify-center z-10">
                     {/* Desain Gapura */}
                     <div className="w-full h-full border-t-8 border-r-8 border-b-8 border-amber-600 rounded-r-3xl flex flex-col items-center justify-center bg-amber-50 shadow-inner shadow-amber-900/20 relative">
                       <div className="absolute -top-3 right-4 bg-amber-600 text-white text-[10px] font-black px-2 py-0.5 rounded shadow">PINTU</div>
@@ -475,7 +475,7 @@ export default function BazaarDashboard() {
                   required
                   value={formDataTenant.nama_brand}
                   onChange={(e) => setFormDataTenant({...formDataTenant, nama_brand: e.target.value})}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
                   placeholder="Contoh: Es Teh Solo"
                 />
               </div>
@@ -488,7 +488,7 @@ export default function BazaarDashboard() {
                     required
                     value={formDataTenant.pic}
                     onChange={(e) => setFormDataTenant({...formDataTenant, pic: e.target.value})}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
                     placeholder="Nama pemilik"
                   />
                 </div>
@@ -499,7 +499,7 @@ export default function BazaarDashboard() {
                     required
                     value={formDataTenant.kontak}
                     onChange={(e) => setFormDataTenant({...formDataTenant, kontak: e.target.value})}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
                     placeholder="0812xxx"
                   />
                 </div>
@@ -511,7 +511,7 @@ export default function BazaarDashboard() {
                   <select 
                     value={formDataTenant.kategori}
                     onChange={(e) => setFormDataTenant({...formDataTenant, kategori: e.target.value})}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
                   >
                     <option value="Makanan">Makanan</option>
                     <option value="Minuman">Minuman</option>
@@ -526,7 +526,7 @@ export default function BazaarDashboard() {
                   <select 
                     value={formDataTenant.status_bayar}
                     onChange={(e) => setFormDataTenant({...formDataTenant, status_bayar: e.target.value})}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 font-medium"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 font-medium"
                   >
                     <option value="Belum Bayar">Belum Bayar (Merah)</option>
                     <option value="DP">DP (Biru)</option>
