@@ -204,6 +204,10 @@ export default function BazaarDashboard() {
   const getTendaColor = (id_tenda: string) => {
     const data = tenants[id_tenda];
     if (!data) return "bg-white border-slate-300 text-slate-500 hover:bg-slate-50 hover:border-slate-400"; // Kosong (Tersedia)
+    
+    if (data.kategori === "Sponsor/Corporate") return "bg-amber-50 border-amber-400 text-amber-700 shadow-sm shadow-amber-500/20";
+    if (data.kategori === "Panitia/Internal") return "bg-purple-50 border-purple-400 text-purple-700 shadow-sm shadow-purple-500/20";
+    
     if (data.status_bayar === "Lunas") return "bg-emerald-50 border-emerald-500 text-emerald-700 shadow-sm shadow-emerald-500/20";
     if (data.status_bayar === "DP") return "bg-blue-50 border-blue-400 text-blue-700 shadow-sm shadow-blue-500/20";
     return "bg-rose-50 border-rose-400 text-rose-700 shadow-sm shadow-rose-500/20"; // Belum Bayar
@@ -385,11 +389,14 @@ export default function BazaarDashboard() {
           </div>
 
           {/* Legend */}
-          <div className="flex items-center gap-3 bg-white p-3 rounded-xl border border-slate-200 shadow-sm text-xs font-semibold text-slate-600">
+          <div className="flex items-center gap-3 bg-white p-3 rounded-xl border border-slate-200 shadow-sm text-xs font-semibold text-slate-600 flex-wrap">
             <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-white border-2 border-slate-300" /> Kosong</div>
             <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-rose-50 border-2 border-rose-400" /> Booked</div>
             <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-blue-50 border-2 border-blue-400" /> DP</div>
             <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-emerald-50 border-2 border-emerald-500" /> Lunas</div>
+            <div className="w-px h-4 bg-slate-200 mx-1"></div>
+            <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-amber-50 border-2 border-amber-400" /> Sponsor</div>
+            <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-purple-50 border-2 border-purple-400" /> Panitia</div>
           </div>
         </div>
 
@@ -506,6 +513,7 @@ export default function BazaarDashboard() {
                     <option value="Minuman">Minuman</option>
                     <option value="Pakaian/Aksesoris">Pakaian/Aksesoris</option>
                     <option value="Sponsor/Corporate">Sponsor/Corporate</option>
+                    <option value="Panitia/Internal">Panitia / Internal</option>
                     <option value="Lainnya">Lainnya</option>
                   </select>
                 </div>
