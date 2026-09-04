@@ -594,8 +594,8 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
         id_produk: produk.id_produk,
         id_paket: 'byu_satuan',
         nama_paket: 'Penjualan Kartu by.U',
-        total_harga: byuQty * (produk.harga_satuan || 0),
-        total_modal: 0, // by.U modal usually 0 or tracked differently
+        total_harga: byuQty * 35000,
+        total_modal: byuQty * 16000, // by.U modal 16rb
         terjual_oleh: terjualOleh,
         metode_pembayaran: metodePembayaran,
         items: [{ id_varian: 'byu', nama_varian: 'Kartu by.U', jumlah: byuQty }]
@@ -678,10 +678,17 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
   const thumbnail = getDriveThumbnail(produk.foto_produk);
   const totalPendapatan = produk.penjualan_bundle?.reduce((sum, item) => sum + (item.total_harga || 0), 0) || 0;
   const totalModal = produk.penjualan_bundle?.reduce((sum, item) => sum + (item.total_modal || 0), 0) || 0;
-  const untungBersih = totalPendapatan - totalModal;
+  
   const totalPcsTerjual = produk.penjualan_bundle?.reduce((sum, sale) => {
     return sum + (sale.items?.reduce((itemSum, item) => itemSum + (item.jumlah || 0), 0) || 0);
   }, 0) || 0;
+
+  const isByU = produk?.id_produk === "PRD-002" || produk?.nama_produk?.toLowerCase().includes("by.u");
+
+  const displayHargaSatuan = isByU ? 35000 : produk.harga_satuan;
+  const displayPendapatan = isByU ? totalPcsTerjual * 35000 : totalPendapatan;
+  const displayModal = isByU ? totalPcsTerjual * 16000 : totalModal;
+  const displayUntung = displayPendapatan - displayModal;
 
   const varianTerjual: Record<string, { nama: string; jumlah: number; foto?: string }> = {};
   produk.penjualan_bundle?.forEach(sale => {
@@ -1091,7 +1098,7 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3 lg:gap-4">
             <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 md:p-5 flex flex-col justify-center shadow-sm">
               <p className="text-[10px] md:text-xs text-slate-500 font-semibold uppercase tracking-wider mb-1">Harga Satuan</p>
-              <p className="text-lg xl:text-xl 2xl:text-2xl font-black tracking-tight text-slate-800">{formatRupiah(produk.harga_satuan)}</p>
+              <p className="text-lg xl:text-xl 2xl:text-2xl font-black tracking-tight text-slate-800">{formatRupiah(displayHargaSatuan)}</p>
             </div>
             
             <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl p-4 md:p-5 text-white shadow-lg shadow-orange-500/20 flex flex-col justify-center">
@@ -1099,6 +1106,7 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
               <p className="text-lg xl:text-xl 2xl:text-2xl font-black tracking-tight">{totalPcsTerjual} <span className="text-xs md:text-sm font-medium opacity-80">pcs</span></p>
             </div>
             
+            {!isByU && (
             <button 
               onClick={() => setIsDetailVarianOpen(true)}
               className="bg-white border border-slate-200 rounded-2xl p-3 md:p-4 hover:border-blue-300 hover:bg-blue-50 transition-colors flex items-center justify-center gap-3 cursor-pointer group shadow-sm col-span-2 md:col-span-1"
@@ -1111,20 +1119,21 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
                 <p className="text-sm md:text-base font-black tracking-tight text-slate-800 group-hover:text-blue-700 transition-colors whitespace-nowrap">Lihat Detail</p>
               </div>
             </button>
+            )}
 
             <div className="bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl p-4 md:p-5 text-white shadow-lg shadow-emerald-500/20 flex flex-col justify-center">
               <p className="text-emerald-100 text-[10px] md:text-xs font-bold uppercase tracking-wider mb-1">Pendapatan</p>
-              <p className="text-lg xl:text-xl 2xl:text-2xl font-black tracking-tight">{formatRupiah(totalPendapatan)}</p>
+              <p className="text-lg xl:text-xl 2xl:text-2xl font-black tracking-tight">{formatRupiah(displayPendapatan)}</p>
             </div>
             
             <div className="bg-white border border-slate-200 rounded-2xl p-4 md:p-5 shadow-sm flex flex-col justify-center">
               <p className="text-slate-400 text-[10px] md:text-xs font-bold uppercase tracking-wider mb-1">Modal Dasar</p>
-              <p className="text-lg xl:text-xl 2xl:text-2xl font-black tracking-tight text-slate-700">{formatRupiah(totalModal)}</p>
+              <p className="text-lg xl:text-xl 2xl:text-2xl font-black tracking-tight text-slate-700">{formatRupiah(displayModal)}</p>
             </div>
             
-            <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl p-4 md:p-5 text-white shadow-lg shadow-blue-500/20 flex flex-col justify-center col-span-2 md:col-span-1">
+            <div className={`bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl p-4 md:p-5 text-white shadow-lg shadow-blue-500/20 flex flex-col justify-center ${isByU ? 'col-span-2' : 'col-span-2 md:col-span-1'}`}>
               <p className="text-blue-100 text-[10px] md:text-xs font-bold uppercase tracking-wider mb-1">Laba Bersih</p>
-              <p className="text-lg xl:text-xl 2xl:text-2xl font-black tracking-tight">{formatRupiah(untungBersih)}</p>
+              <p className="text-lg xl:text-xl 2xl:text-2xl font-black tracking-tight">{formatRupiah(displayUntung)}</p>
             </div>
           </div>
 
@@ -1181,7 +1190,7 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
                   <div>
                     <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Total Harga</label>
                     <div className="w-full px-4 py-2 bg-blue-50 border border-blue-100 rounded-xl text-sm font-black text-blue-700 flex items-center">
-                      {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(byuQty * (produk.harga_satuan || 0))}
+                      {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(byuQty * 35000)}
                     </div>
                   </div>
                 </div>
