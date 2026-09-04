@@ -1,15 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { ArrowLeft, Gamepad2, Save, Edit3, User, Phone, MapPin, CalendarDays, Activity, Trash2, Plus, Trophy, Info, Users } from "lucide-react";
-import { SCRIPT_URL } from "@/lib/api";
 import { SCRIPT_URL } from "@/lib/api";
 import Cookies from "js-cookie";
 import { toast } from "sonner";
 import FullPageLoader from "@/components/FullPageLoader";
 import { getEsportRegistrations } from "./actions";
 import { Loader2, Shuffle, Maximize, Minimize } from "lucide-react";
+import Swal from "sweetalert2";
 
 type Team = {
   id_tim: string;
@@ -50,6 +50,12 @@ export default function EsportDashboard() {
   
   // BRACKET STATE
   const [shuffledTeams, setShuffledTeams] = useState<(Team | null)[]>(Array(16).fill(null));
+  const [quarterFinals, setQuarterFinals] = useState<(Team | null)[]>(Array(8).fill(null));
+  const [semiFinals, setSemiFinals] = useState<(Team | null)[]>(Array(4).fill(null));
+  const [finals, setFinals] = useState<(Team | null)[]>(Array(2).fill(null));
+  const [champion, setChampion] = useState<Team | null>(null);
+  const [eliminatedTeams, setEliminatedTeams] = useState<Set<string>>(new Set());
+
   const [isSpinning, setIsSpinning] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const bracketRef = useRef<HTMLDivElement>(null);
@@ -147,6 +153,14 @@ export default function EsportDashboard() {
   }, []);
 
   const toggleSpin = () => {
+    if (!isSpinning) {
+      // Start spin: reset bracket progression
+      setQuarterFinals(Array(8).fill(null));
+      setSemiFinals(Array(4).fill(null));
+      setFinals(Array(2).fill(null));
+      setChampion(null);
+      setEliminatedTeams(new Set());
+    }
     setIsSpinning(!isSpinning);
   };
 
@@ -158,6 +172,121 @@ export default function EsportDashboard() {
     } else {
       document.exitFullscreen();
     }
+  };
+
+  const handleTeamClick = async (team: Team | null, round: number, slotIndex: number) => {
+    if (!team || !hasAccess || isSpinning) return;
+
+    const result = await Swal.fire({
+      title: `${team.nama_tim}`,
+      text: "Tentukan status tim ini:",
+      icon: "question",
+      showCancelButton: true,
+      showDenyButton: true,
+      confirmButtonText: "Lolos Babak Selanjutnya 🏆",
+      denyButtonText: "Gagal / Gugur ❌",
+      cancelButtonText: "Batal",
+      confirmButtonColor: "#10b981", // emerald-500
+      denyButtonColor: "#ef4444", // rose-500
+    });
+
+    if (result.isConfirmed) {
+      // Lolos
+      const nextSlotIndex = Math.floor(slotIndex / 2);
+      if (round === 1) {
+        setQuarterFinals(prev => { const n = [...prev]; n[nextSlotIndex] = team; return n; });
+      } else if (round === 2) {
+        setSemiFinals(prev => { const n = [...prev]; n[nextSlotIndex] = team; return n; });
+      } else if (round === 3) {
+        setFinals(prev => { const n = [...prev]; n[nextSlotIndex] = team; return n; });
+      } else if (round === 4) {
+        setChampion(team);
+      }
+      
+      // Remove from eliminated if they were accidentally marked
+      if (eliminatedTeams.has(team.id_tim)) {
+        setEliminatedTeams(prev => {
+          const next = new Set(prev);
+          next.delete(team.id_tim);
+          return next;
+        });
+      }
+      toast.success(`${team.nama_tim} melaju ke babak selanjutnya!`);
+    } else if (result.isDenied) {
+      // Gagal
+      setEliminatedTeams(prev => {
+        const next = new Set(prev);
+        next.add(team.id_tim);
+        return next;
+      });
+      toast.error(`${team.nama_tim} tereliminasi.`);
+    }
+  };
+
+  // Helper for rendering team slot
+  const renderTeamSlot = (team: Team | null, round: number, slotIndex: number, isTop: boolean) => {
+    const isEliminated = team && eliminatedTeams.has(team.id_tim);
+    const bgClass = isTop ? 'bg-slate-50 border-b border-slate-100' : 'bg-white';
+    const cursorClass = team && hasAccess ? 'cursor-pointer hover:bg-slate-100 transition-colors' : '';
+    const textClass = team ? (isEliminated ? 'text-slate-400 line-through' : 'text-slate-800') : 'text-slate-400';
+    
+    return (
+      <div 
+        className={`px-3 py-2 flex justify-between items-center ${bgClass} ${cursorClass} ${isEliminated ? 'opacity-50 grayscale' : ''}`}
+        onClick={() => handleTeamClick(team, round, slotIndex)}
+        title={team && hasAccess ? "Klik untuk ubah status lolos/gagal" : ""}
+      >
+        <span className={`font-semibold ${textClass} truncate max-w-[160px]`}>
+          {team ? team.nama_tim : 'TBD (BYE)'}
+        </span>
+        <span className="text-slate-300">-</span>
+      </div>
+    );
+  };
+
+  // SVG Lines generator
+  const SVGLines = () => {
+    const COL_WIDTH = 224; // w-56 is 14rem = 224px
+    const GAP = 48; // gap-12 is 3rem = 48px
+    const PADDING_X = 16; // px-4 is 1rem = 16px
+    const HEIGHT = 800; // h-[800px]
+
+    const paths = [];
+    const roundsCount = [8, 4, 2, 1];
+    
+    for (let r = 0; r < roundsCount.length - 1; r++) {
+      const numMatches = roundsCount[r];
+      const nextMatches = roundsCount[r+1];
+      const boxHeight = HEIGHT / numMatches;
+      const nextBoxHeight = HEIGHT / nextMatches;
+      
+      for (let i = 0; i < numMatches; i++) {
+        const startX = PADDING_X + (r + 1) * COL_WIDTH + r * GAP;
+        const startY = boxHeight * i + (boxHeight / 2);
+        
+        const midX = startX + GAP / 2;
+        
+        const nextI = Math.floor(i / 2);
+        const endX = startX + GAP;
+        const endY = nextBoxHeight * nextI + (nextBoxHeight / 2);
+        
+        paths.push(`M ${startX} ${startY} L ${midX} ${startY} L ${midX} ${endY} L ${endX} ${endY}`);
+      }
+    }
+    
+    // Final to Champion line
+    const finalStartX = PADDING_X + 4 * COL_WIDTH + 3 * GAP;
+    const finalStartY = HEIGHT / 2;
+    const finalEndX = finalStartX + GAP;
+    paths.push(`M ${finalStartX} ${finalStartY} L ${finalEndX} ${finalStartY}`);
+
+    return (
+      <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 0 }}>
+        {paths.map((d, idx) => (
+          <path key={idx} d={d} fill="none" stroke="#cbd5e1" strokeWidth="2" strokeLinejoin="round" />
+        ))}
+      </svg>
+    );
   };
 
   if (isLoading) return <FullPageLoader message="Memuat informasi E-Sport..." fullScreen={false} />;
@@ -432,87 +561,65 @@ export default function EsportDashboard() {
           )}
 
           <div className="relative z-10 min-w-[1000px] h-[800px] flex gap-12 px-4 py-4 mx-auto max-w-max">
+            <SVGLines />
+            
             {/* Round 1 (16 Teams) */}
-            <div className="flex flex-col justify-around w-56 shrink-0 relative">
+            <div className="flex flex-col justify-around w-56 shrink-0 relative z-10">
               <div className="absolute -top-6 text-xs font-bold text-slate-400 uppercase tracking-widest text-center w-full">Round of 16</div>
-              {Array(8).fill(0).map((_, i) => {
-                const team1 = shuffledTeams[i * 2];
-                const team2 = shuffledTeams[i * 2 + 1];
-                return (
-                  <div key={`r1-${i}`} className="w-full bg-white border border-slate-200 shadow-sm rounded-lg overflow-hidden flex flex-col text-xs relative z-10">
-                    <div className="px-3 py-2 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                      <span className={`font-semibold ${team1 ? 'text-slate-800' : 'text-slate-400'}`}>
-                        {team1 ? team1.nama_tim : 'TBD (BYE)'}
-                      </span>
-                      <span className="text-slate-300">-</span>
-                    </div>
-                    <div className="px-3 py-2 flex justify-between items-center bg-white">
-                      <span className={`font-semibold ${team2 ? 'text-slate-800' : 'text-slate-400'}`}>
-                        {team2 ? team2.nama_tim : 'TBD (BYE)'}
-                      </span>
-                      <span className="text-slate-300">-</span>
-                    </div>
-                  </div>
-                );
-              })}
+              {Array(8).fill(0).map((_, i) => (
+                <div key={`r1-${i}`} className="w-full bg-white border border-slate-200 shadow-sm rounded-lg overflow-hidden flex flex-col text-xs relative">
+                  {renderTeamSlot(shuffledTeams[i * 2], 1, i * 2, true)}
+                  {renderTeamSlot(shuffledTeams[i * 2 + 1], 1, i * 2 + 1, false)}
+                </div>
+              ))}
             </div>
 
             {/* Quarterfinals */}
-            <div className="flex flex-col justify-around w-56 shrink-0 relative">
+            <div className="flex flex-col justify-around w-56 shrink-0 relative z-10">
               <div className="absolute -top-6 text-xs font-bold text-slate-400 uppercase tracking-widest text-center w-full">Quarterfinals</div>
               {Array(4).fill(0).map((_, i) => (
-                <div key={`qf-${i}`} className="w-full bg-white border border-slate-200 shadow-sm rounded-lg overflow-hidden flex flex-col text-xs relative z-10">
-                  <div className="px-3 py-2 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                    <span className="font-semibold text-slate-400">TBD</span>
-                    <span className="text-slate-300">-</span>
-                  </div>
-                  <div className="px-3 py-2 flex justify-between items-center bg-white">
-                    <span className="font-semibold text-slate-400">TBD</span>
-                    <span className="text-slate-300">-</span>
-                  </div>
+                <div key={`qf-${i}`} className="w-full bg-white border border-slate-200 shadow-sm rounded-lg overflow-hidden flex flex-col text-xs relative">
+                  {renderTeamSlot(quarterFinals[i * 2], 2, i * 2, true)}
+                  {renderTeamSlot(quarterFinals[i * 2 + 1], 2, i * 2 + 1, false)}
                 </div>
               ))}
             </div>
 
             {/* Semifinals */}
-            <div className="flex flex-col justify-around w-56 shrink-0 relative">
+            <div className="flex flex-col justify-around w-56 shrink-0 relative z-10">
               <div className="absolute -top-6 text-xs font-bold text-slate-400 uppercase tracking-widest text-center w-full">Semifinals</div>
               {Array(2).fill(0).map((_, i) => (
-                <div key={`sf-${i}`} className="w-full bg-white border border-slate-200 shadow-sm rounded-lg overflow-hidden flex flex-col text-xs relative z-10">
-                  <div className="px-3 py-2 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                    <span className="font-semibold text-slate-400">TBD</span>
-                    <span className="text-slate-300">-</span>
-                  </div>
-                  <div className="px-3 py-2 flex justify-between items-center bg-white">
-                    <span className="font-semibold text-slate-400">TBD</span>
-                    <span className="text-slate-300">-</span>
-                  </div>
+                <div key={`sf-${i}`} className="w-full bg-white border border-slate-200 shadow-sm rounded-lg overflow-hidden flex flex-col text-xs relative">
+                  {renderTeamSlot(semiFinals[i * 2], 3, i * 2, true)}
+                  {renderTeamSlot(semiFinals[i * 2 + 1], 3, i * 2 + 1, false)}
                 </div>
               ))}
             </div>
 
             {/* Final */}
-            <div className="flex flex-col justify-around w-56 shrink-0 relative">
+            <div className="flex flex-col justify-around w-56 shrink-0 relative z-10">
               <div className="absolute -top-6 text-xs font-bold text-slate-400 uppercase tracking-widest text-center w-full">Grand Final</div>
-              <div className="w-full bg-white border border-amber-300 shadow-md rounded-lg overflow-hidden flex flex-col text-xs relative z-10">
+              <div className="w-full bg-white border border-amber-300 shadow-md rounded-lg overflow-hidden flex flex-col text-xs relative">
                 <div className="bg-amber-100 text-amber-700 text-[10px] font-bold text-center py-1 uppercase tracking-wider">Final Match</div>
-                <div className="px-3 py-2 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                  <span className="font-semibold text-slate-400">TBD</span>
-                  <span className="text-slate-300">-</span>
-                </div>
-                <div className="px-3 py-2 flex justify-between items-center bg-white">
-                  <span className="font-semibold text-slate-400">TBD</span>
-                  <span className="text-slate-300">-</span>
-                </div>
+                {renderTeamSlot(finals[0], 4, 0, true)}
+                {renderTeamSlot(finals[1], 4, 1, false)}
               </div>
             </div>
 
             {/* Winner */}
-            <div className="flex flex-col justify-center w-56 shrink-0 relative pl-4">
-              <div className="p-4 bg-gradient-to-r from-amber-100 to-amber-50 border border-amber-200 rounded-xl flex flex-col items-center justify-center gap-2 shadow-sm text-center">
-                <Trophy className="w-8 h-8 text-amber-500 mb-1" />
-                <span className="text-[10px] font-bold text-amber-700 uppercase tracking-widest">Champion</span>
-                <span className="font-bold text-slate-800 text-lg">TBD</span>
+            <div className="flex flex-col justify-center w-56 shrink-0 relative pl-4 z-10">
+              <div 
+                className={`p-4 border rounded-xl flex flex-col items-center justify-center gap-2 shadow-sm text-center transition-all ${
+                  champion 
+                    ? 'bg-gradient-to-r from-amber-100 to-amber-50 border-amber-300 shadow-amber-200/50' 
+                    : 'bg-slate-50 border-slate-200'
+                }`}
+              >
+                <Trophy className={`w-8 h-8 mb-1 ${champion ? 'text-amber-500' : 'text-slate-300'}`} />
+                <span className={`text-[10px] font-bold uppercase tracking-widest ${champion ? 'text-amber-700' : 'text-slate-400'}`}>Champion</span>
+                <span className={`font-bold text-lg ${champion ? 'text-slate-800' : 'text-slate-400'}`}>
+                  {champion ? champion.nama_tim : 'TBD'}
+                </span>
               </div>
             </div>
           </div>
