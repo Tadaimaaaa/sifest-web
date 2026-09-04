@@ -175,8 +175,9 @@ export default function BazaarDashboard() {
       } else {
         toast.error(data.message || "Gagal menyimpan data.");
       }
-    } catch (error) {
-      toast.error("Terjadi kesalahan jaringan.");
+    } catch (error: any) {
+      console.error(error);
+      toast.error(`Gagal menyimpan: ${error.message || error}`);
     } finally {
       setIsSavingTenant(false);
     }
