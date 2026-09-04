@@ -83,6 +83,14 @@ function doPost(e) {
         return Event.saveEvent(body);
       case 'saveBazaarTenant':
         return Event.saveBazaarTenant(body);
+
+      // --- ESPORT ROUTES ---
+      case 'getEsportTeams':
+        return Esport.getEsportTeams();
+      case 'saveEsportTeam':
+        return Esport.saveEsportTeam(body);
+      case 'deleteEsportTeam':
+        return Esport.deleteEsportTeam(body);
         
       default:
         return Response.error('NOT_FOUND', 'Action not found.');
