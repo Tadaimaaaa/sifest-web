@@ -78,6 +78,12 @@ function doPost(e) {
       case 'deletePubdokRequest':
         return Pubdok.deleteRequest(body, Auth.validateToken(body.token));
         
+      // Event & Bazaar Routes
+      case 'saveEvent':
+        return Event.saveEvent(body);
+      case 'saveBazaarTenant':
+        return Event.saveBazaarTenant(body);
+        
       default:
         return Response.error('NOT_FOUND', 'Action not found.');
     }
@@ -107,6 +113,13 @@ function doGet(e) {
         return Produk.getProdukById(e.parameter.id);
       case 'getPubdok':
         return Pubdok.getPubdokData();
+      
+      // Event & Bazaar Routes
+      case 'getEvent':
+        return Event.getEvent(e.parameter.id_event);
+      case 'getBazaarTenants':
+        return Event.getBazaarTenants();
+        
       default:
         return Response.success('SI FEST Management API is Active.', null);
     }
