@@ -942,7 +942,7 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
               {/* Riwayat Penjualan Bundle */}
           <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden mt-4">
             <div className="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
-              <h3 className="text-sm font-bold text-slate-700">🧾 Riwayat Penjualan Bundle</h3>
+              <h3 className="text-sm font-bold text-slate-700">🧾 Riwayat Penjualan</h3>
               {produk.penjualan_bundle && produk.penjualan_bundle.length > 0 && (
                 <button
                   onClick={handleExportPenjualanBundle}
@@ -1204,7 +1204,7 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
               {/* Riwayat Penjualan Bundle */}
           <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden mt-4">
             <div className="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
-              <h3 className="text-sm font-bold text-slate-700">🧾 Riwayat Penjualan Bundle</h3>
+              <h3 className="text-sm font-bold text-slate-700">🧾 Riwayat Penjualan</h3>
               {produk.penjualan_bundle && produk.penjualan_bundle.length > 0 && (
                 <button
                   onClick={handleExportPenjualanBundle}
