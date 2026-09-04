@@ -206,7 +206,7 @@ export default function EventDetailPage() {
                     type="date" 
                     value={formData.tanggal}
                     onChange={(e) => setFormData({...formData, tanggal: e.target.value})}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                   />
                 </div>
                 <div>
@@ -216,7 +216,7 @@ export default function EventDetailPage() {
                     value={formData.tempat}
                     onChange={(e) => setFormData({...formData, tempat: e.target.value})}
                     placeholder="Contoh: GOR UNP"
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                   />
                 </div>
                 <div className="sm:col-span-2">
@@ -224,7 +224,7 @@ export default function EventDetailPage() {
                   <select 
                     value={formData.status}
                     onChange={(e) => setFormData({...formData, status: e.target.value})}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                   >
                     <option value="Akan Datang">Akan Datang</option>
                     <option value="Sedang Berlangsung">Sedang Berlangsung</option>

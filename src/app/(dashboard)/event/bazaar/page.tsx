@@ -315,7 +315,7 @@ export default function BazaarDashboard() {
                     type="date" 
                     value={formDataEvent.tanggal}
                     onChange={(e) => setFormDataEvent({...formDataEvent, tanggal: e.target.value})}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
                   />
                 </div>
                 <div>
@@ -325,7 +325,7 @@ export default function BazaarDashboard() {
                     value={formDataEvent.tempat}
                     onChange={(e) => setFormDataEvent({...formDataEvent, tempat: e.target.value})}
                     placeholder="Contoh: Lapangan Parkir"
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
                   />
                 </div>
                 <div className="sm:col-span-2">
@@ -333,7 +333,7 @@ export default function BazaarDashboard() {
                   <select 
                     value={formDataEvent.status}
                     onChange={(e) => setFormDataEvent({...formDataEvent, status: e.target.value})}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
                   >
                     <option value="Akan Datang">Akan Datang</option>
                     <option value="Sedang Berlangsung">Sedang Berlangsung</option>
@@ -348,7 +348,7 @@ export default function BazaarDashboard() {
                     value={formDataEvent.deskripsi}
                     onChange={(e) => setFormDataEvent({...formDataEvent, deskripsi: e.target.value})}
                     placeholder="Tuliskan deskripsi atau catatan mengenai event ini..."
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 resize-none"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 resize-none"
                   />
                 </div>
               </div>
