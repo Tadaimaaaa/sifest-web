@@ -72,8 +72,8 @@ export default function SponsorPage() {
     catatan: ""
   });
 
-  const hasAccess = ["ROLE-001", "ROLE-007"].includes(currentUserRole);
-  const canPrint = ["ROLE-001", "ROLE-002", "ROLE-003", "ROLE-007"].includes(currentUserRole);
+  const hasAccess = ["ROLE-001", "ROLE-007", "ROLE-008"].includes(currentUserRole);
+  const canPrint = ["ROLE-001", "ROLE-002", "ROLE-003", "ROLE-007", "ROLE-008"].includes(currentUserRole);
 
   const fetchSponsors = async () => {
     setIsLoading(true);
