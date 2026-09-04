@@ -4,11 +4,12 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowLeft, Gamepad2, Save, Edit3, User, Phone, MapPin, CalendarDays, Activity, Trash2, Plus, Trophy, Info, Users } from "lucide-react";
 import { SCRIPT_URL } from "@/lib/api";
+import { SCRIPT_URL } from "@/lib/api";
 import Cookies from "js-cookie";
 import { toast } from "sonner";
 import FullPageLoader from "@/components/FullPageLoader";
 import { getEsportRegistrations } from "./actions";
-import { Loader2, Shuffle } from "lucide-react";
+import { Loader2, Shuffle, Maximize, Minimize } from "lucide-react";
 
 type Team = {
   id_tim: string;
@@ -50,6 +51,8 @@ export default function EsportDashboard() {
   // BRACKET STATE
   const [shuffledTeams, setShuffledTeams] = useState<(Team | null)[]>(Array(16).fill(null));
   const [isSpinning, setIsSpinning] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const bracketRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const role = Cookies.get("user_role");
@@ -135,8 +138,26 @@ export default function EsportDashboard() {
     return () => clearInterval(interval);
   }, [isSpinning]);
 
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
+
   const toggleSpin = () => {
     setIsSpinning(!isSpinning);
+  };
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      bracketRef.current?.requestFullscreen().catch(err => {
+        toast.error("Gagal masuk ke mode fullscreen");
+      });
+    } else {
+      document.exitFullscreen();
+    }
   };
 
   if (isLoading) return <FullPageLoader message="Memuat informasi E-Sport..." fullScreen={false} />;
@@ -366,33 +387,51 @@ export default function EsportDashboard() {
               <p className="text-xs text-slate-500">Preview Bracket Turnamen & Pengundian</p>
             </div>
           </div>
-          {hasAccess && (
+          <div className="flex items-center gap-3">
+            {hasAccess && (
+              <button 
+                onClick={toggleSpin}
+                className={`px-5 py-2.5 text-white text-sm font-bold rounded-xl shadow-sm transition-all flex items-center gap-2 ${
+                  isSpinning 
+                    ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-500/20 animate-pulse' 
+                    : 'bg-blue-600 hover:bg-blue-700 shadow-blue-500/20'
+                }`}
+              >
+                {isSpinning ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Stop Pengundian!
+                  </>
+                ) : (
+                  <>
+                    <Shuffle className="w-4 h-4" />
+                    Acak Tim (Spin)
+                  </>
+                )}
+              </button>
+            )}
             <button 
-              onClick={toggleSpin}
-              className={`px-6 py-2.5 text-white text-sm font-bold rounded-xl shadow-sm transition-all flex items-center gap-2 ${
-                isSpinning 
-                  ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-500/20 animate-pulse' 
-                  : 'bg-blue-600 hover:bg-blue-700 shadow-blue-500/20'
-              }`}
+              onClick={toggleFullscreen}
+              className="p-2.5 text-slate-600 hover:bg-slate-200 bg-slate-100 rounded-xl transition-colors"
+              title="Layar Penuh"
             >
-              {isSpinning ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  Stop Pengundian!
-                </>
-              ) : (
-                <>
-                  <Shuffle className="w-4 h-4" />
-                  Acak Tim (Spin)
-                </>
-              )}
+              <Maximize className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+        <div ref={bracketRef} className={`w-full overflow-x-auto relative ${isFullscreen ? 'bg-slate-50 p-12 h-screen' : 'bg-slate-50/50 p-8'}`}>
+          <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.02)_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none"></div>
+          
+          {isFullscreen && (
+            <button 
+              onClick={toggleFullscreen}
+              className="absolute top-6 right-6 z-50 p-3 bg-white/80 backdrop-blur text-slate-700 hover:bg-white rounded-xl shadow-sm border border-slate-200 transition-all"
+            >
+              <Minimize className="w-5 h-5" />
             </button>
           )}
-        </div>
-        <div className="p-8 w-full overflow-x-auto bg-slate-50/50 relative">
-          <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.02)_1px,transparent_1px)] bg-[size:40px_40px]"></div>
-          
-          <div className="relative z-10 min-w-[1000px] h-[800px] flex gap-12 px-4 py-4">
+
+          <div className="relative z-10 min-w-[1000px] h-[800px] flex gap-12 px-4 py-4 mx-auto max-w-max">
             {/* Round 1 (16 Teams) */}
             <div className="flex flex-col justify-around w-56 shrink-0 relative">
               <div className="absolute -top-6 text-xs font-bold text-slate-400 uppercase tracking-widest text-center w-full">Round of 16</div>
