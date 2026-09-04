@@ -141,7 +141,11 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
   const [terjualOleh, setTerjualOleh] = useState<string>("Ara");
   const [metodePembayaran, setMetodePembayaran] = useState<string>("Cash");
 
+  const [byuQty, setByuQty] = useState(1);
+
   const distributorNames = Array.from(new Set(produk?.distribusi?.map(d => d.nama_penerima) || []));
+
+  const isByU = produk?.id_produk === "PRD-002" || produk?.nama_produk?.toLowerCase().includes("by.u");
 
   const getMaxStockForVarian = (id_varian: string) => {
     if (terjualOleh === "Ara") {
@@ -576,6 +580,45 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
     } catch { toast.error("Gagal membatalkan penjualan"); }
   };
 
+  const handleCheckoutByU = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!produk || byuQty < 1) return;
+    
+    setIsBundleSubmitting(true);
+    const token = Cookies.get("session_token");
+    
+    try {
+      const payload = {
+        action: "addPenjualanBundleProduk", 
+        token,
+        id_produk: produk.id_produk,
+        id_paket: 'byu_satuan',
+        nama_paket: 'Penjualan Kartu by.U',
+        total_harga: byuQty * (produk.harga_satuan || 0),
+        total_modal: 0, // by.U modal usually 0 or tracked differently
+        terjual_oleh: terjualOleh,
+        metode_pembayaran: metodePembayaran,
+        items: [{ id_varian: 'byu', nama_varian: 'Kartu by.U', jumlah: byuQty }]
+      };
+      
+      const res = await fetch(`${SCRIPT_URL}?action=addPenjualanBundleProduk`, {
+        method: "POST",
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      
+      if (data.success) {
+        toast.success("Penjualan by.U berhasil dicatat!");
+        setByuQty(1);
+        mutate();
+      } else {
+        toast.error(data.message);
+      }
+    } catch { toast.error("Gagal mencatat penjualan"); }
+    finally { setIsBundleSubmitting(false); }
+  };
+
+
   const handleExportPenjualanBundle = () => {
     if (!produk || !produk.penjualan_bundle || produk.penjualan_bundle.length === 0) {
       toast.error("Tidak ada data penjualan untuk diexport.");
@@ -817,30 +860,13 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
                 ))}
               </div>
             )}
-          </div>
-        </div>
 
-        {/* Right: Product Info */}
-        <div className="space-y-5">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-sm font-semibold text-blue-600 uppercase tracking-wider mb-1">{produk.asal_sponsor}</p>
-              <h1 className="text-3xl font-black text-slate-800 leading-tight">{produk.nama_produk}</h1>
-              <p className="text-xs text-slate-400 mt-1 font-mono">{produk.id_produk}</p>
-            </div>
-            {hasAccess && (
-              <div className="flex gap-2 shrink-0">
-                <button onClick={openEditModal} className="p-2.5 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors border border-blue-100" title="Edit">
-                  <Edit2 className="w-4 h-4" />
-                </button>
-                <button onClick={handleDelete} className="p-2.5 text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-xl transition-colors border border-rose-100" title="Hapus">
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            )}
           </div>
 
-          {/* Distribusi Multi (Alokasi) */}
+          {/* Stok & Riwayat khusus by.U (Dipindah ke Kiri) */}
+          {isByU && (
+            <>
+              {/* Distribusi Multi (Alokasi) */}
           <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden mt-4">
             <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
               <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2">
@@ -899,82 +925,8 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
             )}
           </div>
 
-          {/* Stats Grid Premium */}
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 lg:gap-4">
-            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 md:p-5 flex flex-col justify-center shadow-sm">
-              <p className="text-[10px] md:text-xs text-slate-500 font-semibold uppercase tracking-wider mb-1">Harga Satuan</p>
-              <p className="text-lg xl:text-xl 2xl:text-2xl font-black tracking-tight text-slate-800">{formatRupiah(produk.harga_satuan)}</p>
-            </div>
-            
-            <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl p-4 md:p-5 text-white shadow-lg shadow-orange-500/20 flex flex-col justify-center">
-              <p className="text-orange-100 text-[10px] md:text-xs font-bold uppercase tracking-wider mb-1">Total Terjual</p>
-              <p className="text-lg xl:text-xl 2xl:text-2xl font-black tracking-tight">{totalPcsTerjual} <span className="text-xs md:text-sm font-medium opacity-80">pcs</span></p>
-            </div>
-            
-            <button 
-              onClick={() => setIsDetailVarianOpen(true)}
-              className="bg-white border border-slate-200 rounded-2xl p-3 md:p-4 hover:border-blue-300 hover:bg-blue-50 transition-colors flex items-center justify-center gap-3 cursor-pointer group shadow-sm col-span-2 md:col-span-1"
-            >
-              <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center group-hover:scale-110 group-hover:bg-blue-600 group-hover:text-white transition-all shrink-0">
-                <Target className="w-5 h-5" />
-              </div>
-              <div className="text-left">
-                <p className="text-[10px] md:text-xs text-slate-500 font-bold uppercase tracking-wider mb-0.5">Rincian</p>
-                <p className="text-sm md:text-base font-black tracking-tight text-slate-800 group-hover:text-blue-700 transition-colors whitespace-nowrap">Lihat Detail</p>
-              </div>
-            </button>
-
-            <div className="bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl p-4 md:p-5 text-white shadow-lg shadow-emerald-500/20 flex flex-col justify-center">
-              <p className="text-emerald-100 text-[10px] md:text-xs font-bold uppercase tracking-wider mb-1">Pendapatan</p>
-              <p className="text-lg xl:text-xl 2xl:text-2xl font-black tracking-tight">{formatRupiah(totalPendapatan)}</p>
-            </div>
-            
-            <div className="bg-white border border-slate-200 rounded-2xl p-4 md:p-5 shadow-sm flex flex-col justify-center">
-              <p className="text-slate-400 text-[10px] md:text-xs font-bold uppercase tracking-wider mb-1">Modal Dasar</p>
-              <p className="text-lg xl:text-xl 2xl:text-2xl font-black tracking-tight text-slate-700">{formatRupiah(totalModal)}</p>
-            </div>
-            
-            <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl p-4 md:p-5 text-white shadow-lg shadow-blue-500/20 flex flex-col justify-center col-span-2 md:col-span-1">
-              <p className="text-blue-100 text-[10px] md:text-xs font-bold uppercase tracking-wider mb-1">Laba Bersih</p>
-              <p className="text-lg xl:text-xl 2xl:text-2xl font-black tracking-tight">{formatRupiah(untungBersih)}</p>
-            </div>
-          </div>
-
-          {/* POS Kasir Bundle */}
-          {hasAccess && (
-            <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden mt-4">
-              <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-                <h3 className="text-sm font-bold text-slate-700">🛒 Penjualan Paket Bundle</h3>
-              </div>
-              <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {BUNDLES.map(bundle => (
-                  <div key={bundle.id} className="border border-slate-100 rounded-xl p-3 flex flex-col justify-between hover:border-blue-200 hover:bg-blue-50/50 transition-colors group">
-                    <div>
-                      <p className="font-bold text-slate-800">{bundle.nama}</p>
-                      <p className="text-xs text-slate-500 mb-3">{bundle.isDynamic ? `Minimal ${bundle.minItems} Varian Barang` : `${bundle.maxItems} Varian Barang`}</p>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <p className="font-black text-blue-600">{bundle.isDynamic ? `${formatRupiah(bundle.harga)}/pcs` : formatRupiah(bundle.harga)}</p>
-                      <button
-                        onClick={() => {
-                          setSelectedBundle(bundle);
-                          setBundleItems({});
-                          setTerjualOleh("Ara");
-                          setMetodePembayaran("Cash");
-                          setIsBundleModalOpen(true);
-                        }}
-                        className="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-colors"
-                      >
-                        <Plus className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Riwayat Penjualan Bundle */}
+          
+              {/* Riwayat Penjualan Bundle */}
           <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden mt-4">
             <div className="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
               <h3 className="text-sm font-bold text-slate-700">🧾 Riwayat Penjualan Bundle</h3>
@@ -1038,7 +990,257 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
 
 
 
-          <p className="text-xs text-slate-400 text-right">Ditambahkan oleh: {produk.added_by}</p>
+          
+            </>
+          )}
+
+        </div>
+
+        {/* Right: Product Info */}
+        <div className="space-y-5">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-sm font-semibold text-blue-600 uppercase tracking-wider mb-1">{produk.asal_sponsor}</p>
+              <h1 className="text-3xl font-black text-slate-800 leading-tight">{produk.nama_produk}</h1>
+              <p className="text-xs text-slate-400 mt-1 font-mono">{produk.id_produk}</p>
+            </div>
+            {hasAccess && (
+              <div className="flex gap-2 shrink-0">
+                <button onClick={openEditModal} className="p-2.5 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors border border-blue-100" title="Edit">
+                  <Edit2 className="w-4 h-4" />
+                </button>
+                <button onClick={handleDelete} className="p-2.5 text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-xl transition-colors border border-rose-100" title="Hapus">
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            )}
+          </div>
+
+          {!isByU && (\n{/* Distribusi Multi (Alokasi) */}
+          <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden mt-4">
+            <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+              <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                📋 Stok di Tangan Distributor
+                {remainingDistribusi && remainingDistribusi.length > 0 && (
+                  <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-[10px] font-black rounded-md">
+                    Total: {remainingDistribusi.reduce((sum, dist) => sum + (dist.items?.reduce((itemSum, item) => itemSum + (item.jumlah || 0), 0) || 0), 0)} pcs
+                  </span>
+                )}
+              </h3>
+              {hasAccess && (
+                <button
+                  onClick={() => setIsDistribusiModalOpen(true)}
+                  className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5 shadow-sm"
+                >
+                  <Plus className="w-3.5 h-3.5" /> Bagikan ke Panitia
+                </button>
+              )}
+            </div>
+            
+            {!remainingDistribusi || remainingDistribusi.length === 0 ? (
+              <div className="p-6 text-center text-slate-500 text-sm">
+                Tidak ada stok di tangan distributor saat ini.
+              </div>
+            ) : (
+              <div className="divide-y divide-slate-100 max-h-[300px] overflow-y-auto">
+                {remainingDistribusi.map((dist) => (
+                  <div key={dist.id_dist} className="p-4 hover:bg-slate-50 transition-colors group">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-sm font-bold text-slate-800">{dist.nama_penerima}</p>
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs text-slate-400">{new Date(dist.tanggal).toLocaleDateString('id-ID', { dateStyle: 'medium' })}</span>
+                        {hasAccess && (
+                          <button
+                            onClick={() => handleDeleteDistribusi(dist.id_dist)}
+                            className="w-7 h-7 rounded-lg bg-white border border-rose-100 text-rose-500 flex items-center justify-center hover:bg-rose-50 transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100 shadow-sm"
+                            title="Hapus Distribusi"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    {/* List of taken items */}
+                    <div className="grid grid-cols-2 gap-2 mt-2">
+                      {dist.items?.map(item => (
+                        <div key={item.id_varian} className="flex items-center justify-between bg-white border border-slate-100 px-3 py-1.5 rounded-lg">
+                          <span className="text-xs font-medium text-slate-600 truncate mr-2" title={item.nama_varian}>{item.nama_varian}</span>
+                          <span className="text-xs font-bold text-slate-800 shrink-0">{item.jumlah} pcs</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          \n)}\n\n{/* Stats Grid Premium */}
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3 lg:gap-4">
+            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 md:p-5 flex flex-col justify-center shadow-sm">
+              <p className="text-[10px] md:text-xs text-slate-500 font-semibold uppercase tracking-wider mb-1">Harga Satuan</p>
+              <p className="text-lg xl:text-xl 2xl:text-2xl font-black tracking-tight text-slate-800">{formatRupiah(produk.harga_satuan)}</p>
+            </div>
+            
+            <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl p-4 md:p-5 text-white shadow-lg shadow-orange-500/20 flex flex-col justify-center">
+              <p className="text-orange-100 text-[10px] md:text-xs font-bold uppercase tracking-wider mb-1">Total Terjual</p>
+              <p className="text-lg xl:text-xl 2xl:text-2xl font-black tracking-tight">{totalPcsTerjual} <span className="text-xs md:text-sm font-medium opacity-80">pcs</span></p>
+            </div>
+            
+            <button 
+              onClick={() => setIsDetailVarianOpen(true)}
+              className="bg-white border border-slate-200 rounded-2xl p-3 md:p-4 hover:border-blue-300 hover:bg-blue-50 transition-colors flex items-center justify-center gap-3 cursor-pointer group shadow-sm col-span-2 md:col-span-1"
+            >
+              <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center group-hover:scale-110 group-hover:bg-blue-600 group-hover:text-white transition-all shrink-0">
+                <Target className="w-5 h-5" />
+              </div>
+              <div className="text-left">
+                <p className="text-[10px] md:text-xs text-slate-500 font-bold uppercase tracking-wider mb-0.5">Rincian</p>
+                <p className="text-sm md:text-base font-black tracking-tight text-slate-800 group-hover:text-blue-700 transition-colors whitespace-nowrap">Lihat Detail</p>
+              </div>
+            </button>
+
+            <div className="bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl p-4 md:p-5 text-white shadow-lg shadow-emerald-500/20 flex flex-col justify-center">
+              <p className="text-emerald-100 text-[10px] md:text-xs font-bold uppercase tracking-wider mb-1">Pendapatan</p>
+              <p className="text-lg xl:text-xl 2xl:text-2xl font-black tracking-tight">{formatRupiah(totalPendapatan)}</p>
+            </div>
+            
+            <div className="bg-white border border-slate-200 rounded-2xl p-4 md:p-5 shadow-sm flex flex-col justify-center">
+              <p className="text-slate-400 text-[10px] md:text-xs font-bold uppercase tracking-wider mb-1">Modal Dasar</p>
+              <p className="text-lg xl:text-xl 2xl:text-2xl font-black tracking-tight text-slate-700">{formatRupiah(totalModal)}</p>
+            </div>
+            
+            <div className="bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl p-4 md:p-5 text-white shadow-lg shadow-blue-500/20 flex flex-col justify-center col-span-2 md:col-span-1">
+              <p className="text-blue-100 text-[10px] md:text-xs font-bold uppercase tracking-wider mb-1">Laba Bersih</p>
+              <p className="text-lg xl:text-xl 2xl:text-2xl font-black tracking-tight">{formatRupiah(untungBersih)}</p>
+            </div>
+          </div>
+
+          {!isByU && (\n{/* POS Kasir Bundle */}
+          {hasAccess && (
+            <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden mt-4">
+              <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                <h3 className="text-sm font-bold text-slate-700">🛒 Penjualan Paket Bundle</h3>
+              </div>
+              <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {BUNDLES.map(bundle => (
+                  <div key={bundle.id} className="border border-slate-100 rounded-xl p-3 flex flex-col justify-between hover:border-blue-200 hover:bg-blue-50/50 transition-colors group">
+                    <div>
+                      <p className="font-bold text-slate-800">{bundle.nama}</p>
+                      <p className="text-xs text-slate-500 mb-3">{bundle.isDynamic ? `Minimal ${bundle.minItems} Varian Barang` : `${bundle.maxItems} Varian Barang`}</p>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <p className="font-black text-blue-600">{bundle.isDynamic ? `${formatRupiah(bundle.harga)}/pcs` : formatRupiah(bundle.harga)}</p>
+                      <button
+                        onClick={() => {
+                          setSelectedBundle(bundle);
+                          setBundleItems({});
+                          setTerjualOleh("Ara");
+                          setMetodePembayaran("Cash");
+                          setIsBundleModalOpen(true);
+                        }}
+                        className="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-colors"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          \n)}\n\n
+          {/* Kasir Satuan by.U */}
+          {isByU && hasAccess && (
+            <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden mt-4">
+              <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                <h3 className="text-sm font-bold text-slate-700">🛒 Kasir Kartu by.U</h3>
+              </div>
+              <form onSubmit={handleCheckoutByU} className="p-4 flex flex-col gap-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Jumlah Kartu</label>
+                    <input type="number" min={1} required value={byuQty} onChange={(e) => setByuQty(parseInt(e.target.value) || 1)} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Total Harga</label>
+                    <div className="w-full px-4 py-2 bg-blue-50 border border-blue-100 rounded-xl text-sm font-black text-blue-700 flex items-center">
+                      {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(byuQty * (produk.harga_satuan || 0))}
+                    </div>
+                  </div>
+                </div>
+                <button type="submit" disabled={isBundleSubmitting} className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center">
+                  {isBundleSubmitting ? 'Memproses...' : 'Catat Penjualan'}
+                </button>
+              </form>
+            </div>
+          )}
+{!isByU && (\n{/* Riwayat Penjualan Bundle */}
+          <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden mt-4">
+            <div className="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+              <h3 className="text-sm font-bold text-slate-700">🧾 Riwayat Penjualan Bundle</h3>
+              {produk.penjualan_bundle && produk.penjualan_bundle.length > 0 && (
+                <button
+                  onClick={handleExportPenjualanBundle}
+                  className="px-3 py-1.5 bg-emerald-100 text-emerald-700 hover:bg-emerald-200 text-xs font-semibold rounded-lg transition-colors flex items-center gap-1.5 shadow-sm"
+                >
+                  <Download className="w-3.5 h-3.5" /> Export Excel
+                </button>
+              )}
+            </div>
+            {!produk.penjualan_bundle || produk.penjualan_bundle.length === 0 ? (
+              <div className="p-6 text-center text-slate-500 text-sm">Belum ada riwayat penjualan.</div>
+            ) : (
+              <div className="divide-y divide-slate-100 max-h-[300px] overflow-y-auto">
+                {[...(produk.penjualan_bundle || [])].sort((a, b) => new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime()).map(sale => (
+                  <div key={sale.id_penjualan} className="p-4 hover:bg-slate-50 transition-colors group">
+                    <div className="flex justify-between items-start mb-2">
+                      <div>
+                        <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                          <p className="text-sm font-bold text-slate-800">{sale.nama_paket}</p>
+                          {sale.terjual_oleh && sale.terjual_oleh !== "Ara" && (
+                            <span className="px-2 py-0.5 bg-purple-100 text-purple-700 text-[10px] font-bold rounded-md whitespace-nowrap">
+                              Oleh: {sale.terjual_oleh}
+                            </span>
+                          )}
+                          {sale.metode_pembayaran && (
+                            <span className={`px-2 py-0.5 text-[10px] font-bold rounded-md whitespace-nowrap ${sale.metode_pembayaran === 'Transfer' ? 'bg-orange-100 text-orange-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                              {sale.metode_pembayaran}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-slate-400">{new Date(sale.tanggal).toLocaleString('id-ID')}</p>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <p className="text-sm font-black text-emerald-600">+{formatRupiah(sale.total_harga)}</p>
+                        {hasAccess && (
+                          <button
+                            onClick={() => handleDeletePenjualanBundle(sale.id_penjualan)}
+                            className="w-7 h-7 rounded-lg bg-white border border-rose-100 text-rose-500 flex items-center justify-center hover:bg-rose-50 transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100 shadow-sm"
+                            title="Batalkan Penjualan"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap gap-1.5 mt-2">
+                      {sale.items.map(item => (
+                        <span key={item.id_varian} className="inline-flex items-center px-2 py-1 bg-slate-100 text-slate-600 rounded text-[10px] font-bold">
+                          {item.jumlah}x {item.nama_varian}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+
+
+          \n)}\n\n<p className="text-xs text-slate-400 text-right">Ditambahkan oleh: {produk.added_by}</p>
         </div>
       </div>
 
