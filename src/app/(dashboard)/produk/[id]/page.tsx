@@ -1016,7 +1016,9 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
             )}
           </div>
 
-          {!isByU && (\n{/* Distribusi Multi (Alokasi) */}
+          {!isByU && (
+            <>
+              {/* Distribusi Multi (Alokasi) */}
           <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden mt-4">
             <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
               <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2">
@@ -1075,7 +1077,10 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
             )}
           </div>
 
-          \n)}\n\n{/* Stats Grid Premium */}
+            </>
+          )}
+
+          {/* Stats Grid Premium */}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3 lg:gap-4">
             <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 md:p-5 flex flex-col justify-center shadow-sm">
               <p className="text-[10px] md:text-xs text-slate-500 font-semibold uppercase tracking-wider mb-1">Harga Satuan</p>
@@ -1116,7 +1121,9 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
             </div>
           </div>
 
-          {!isByU && (\n{/* POS Kasir Bundle */}
+          {!isByU && (
+            <>
+              {/* POS Kasir Bundle */}
           {hasAccess && (
             <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden mt-4">
               <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
@@ -1150,7 +1157,8 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
             </div>
           )}
 
-          \n)}\n\n
+            </>
+          )}
           {/* Kasir Satuan by.U */}
           {isByU && hasAccess && (
             <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden mt-4">
@@ -1176,7 +1184,9 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
               </form>
             </div>
           )}
-{!isByU && (\n{/* Riwayat Penjualan Bundle */}
+          {!isByU && (
+            <>
+              {/* Riwayat Penjualan Bundle */}
           <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden mt-4">
             <div className="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
               <h3 className="text-sm font-bold text-slate-700">🧾 Riwayat Penjualan Bundle</h3>
@@ -1240,7 +1250,10 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
 
 
 
-          \n)}\n\n<p className="text-xs text-slate-400 text-right">Ditambahkan oleh: {produk.added_by}</p>
+            </>
+          )}
+
+          <p className="text-xs text-slate-400 text-right">Ditambahkan oleh: {produk.added_by}</p>
         </div>
       </div>
 
