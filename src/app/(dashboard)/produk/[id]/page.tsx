@@ -683,7 +683,6 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
     return sum + (sale.items?.reduce((itemSum, item) => itemSum + (item.jumlah || 0), 0) || 0);
   }, 0) || 0;
 
-  const isByU = produk?.id_produk === "PRD-002" || produk?.nama_produk?.toLowerCase().includes("by.u");
 
   const displayHargaSatuan = isByU ? 35000 : produk.harga_satuan;
   const displayPendapatan = isByU ? totalPcsTerjual * 35000 : totalPendapatan;
