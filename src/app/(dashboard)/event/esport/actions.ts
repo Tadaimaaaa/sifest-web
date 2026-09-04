@@ -8,7 +8,7 @@ export async function getEsportRegistrations() {
     const { data: eventData } = await supabaseServer
       .from("events")
       .select("id")
-      .ilike("name", "%esport%")
+      .eq("slug", "turnamen-esport-mlbb")
       .single();
 
     if (!eventData) {
@@ -29,8 +29,8 @@ export async function getEsportRegistrations() {
 
     // 3. Format the data to match the Dashboard's Team table
     const formattedTeams = registrations?.map((reg: any) => {
-      const participant = reg.participants || {};
-      const transaction = reg.transactions || {};
+      const participant = Array.isArray(reg.participants) ? reg.participants[0] : (reg.participants || {});
+      const transaction = Array.isArray(reg.transactions) ? reg.transactions[0] : (reg.transactions || {});
       
       // Convert Supabase transaction status to our UI's payment status
       let paymentStatus = "Belum Bayar";
