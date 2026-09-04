@@ -552,12 +552,37 @@ export default function EsportDashboard() {
           <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.02)_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none"></div>
           
           {isFullscreen && (
-            <button 
-              onClick={toggleFullscreen}
-              className="absolute top-6 right-6 z-50 p-3 bg-white/80 backdrop-blur text-slate-700 hover:bg-white rounded-xl shadow-sm border border-slate-200 transition-all"
-            >
-              <Minimize className="w-5 h-5" />
-            </button>
+            <div className="absolute top-6 right-6 z-50 flex items-center gap-3">
+              {hasAccess && (
+                <button 
+                  onClick={toggleSpin}
+                  className={`px-5 py-2.5 text-white text-sm font-bold rounded-xl shadow-sm transition-all flex items-center gap-2 ${
+                    isSpinning 
+                      ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-500/20 animate-pulse' 
+                      : 'bg-blue-600 hover:bg-blue-700 shadow-blue-500/20'
+                  }`}
+                >
+                  {isSpinning ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Stop Pengundian!
+                    </>
+                  ) : (
+                    <>
+                      <Shuffle className="w-4 h-4" />
+                      Acak Tim (Spin)
+                    </>
+                  )}
+                </button>
+              )}
+              <button 
+                onClick={toggleFullscreen}
+                className="p-2.5 bg-white/80 backdrop-blur text-slate-700 hover:bg-white rounded-xl shadow-sm border border-slate-200 transition-all"
+                title="Keluar Layar Penuh"
+              >
+                <Minimize className="w-5 h-5" />
+              </button>
+            </div>
           )}
 
           <div className="relative z-10 min-w-[1000px] h-[800px] flex gap-12 px-4 py-4 mx-auto max-w-max">
