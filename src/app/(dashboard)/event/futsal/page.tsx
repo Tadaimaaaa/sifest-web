@@ -470,8 +470,8 @@ export default function FutsalDashboard() {
                     <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-50 mb-4">
                       <Users className="w-8 h-8 text-slate-400" />
                     </div>
-                    <h3 className="text-slate-800 font-semibold mb-1">Belum ada tim</h3>
-                    <p className="text-sm text-slate-500">Daftarkan tim pertama yang akan bertanding.</p>
+                    <h3 className="text-slate-800 font-semibold mb-1">Belum ada tim (atau Gagal Memuat)</h3>
+                    <p className="text-sm text-slate-500">Jika seharusnya ada tim, pastikan Environment Variable Vercel sudah benar.</p>
                   </td>
                 </tr>
               ) : (
