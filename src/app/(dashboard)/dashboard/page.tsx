@@ -18,7 +18,7 @@ export default function DashboardPage() {
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
 
   useEffect(() => {
-    const targetDate = new Date('2026-11-02T00:00:00').getTime();
+    const targetDate = new Date('2026-11-02T08:00:00+07:00').getTime();
     
     const updateCountdown = () => {
       const now = new Date().getTime();
