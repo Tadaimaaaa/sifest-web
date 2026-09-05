@@ -89,6 +89,8 @@ export default function FutsalDashboard() {
           initialBracket.push(null);
         }
         setShuffledTeams(initialBracket.slice(0, 16));
+      } else {
+        toast.error(dataTeams.message || "Gagal memuat data pendaftar futsal");
       }
     } catch (error) {
       console.error("Gagal mengambil data futsal:", error);

@@ -1,8 +1,10 @@
 "use server";
 
 import { supabaseServer } from "@/lib/sifest/supabase";
+import { unstable_noStore as noStore } from 'next/cache';
 
 export async function getFutsalRegistrations() {
+  noStore();
   try {
     // 1. Get the Futsal event ID
     const { data: eventData } = await supabaseServer
@@ -12,7 +14,7 @@ export async function getFutsalRegistrations() {
       .single();
 
     if (!eventData) {
-      return { success: false, data: [] };
+      return { success: false, data: [], message: "Event turnamen-futsal tidak ditemukan di Supabase." };
     }
 
     // 2. Get registrations for this event
@@ -24,7 +26,7 @@ export async function getFutsalRegistrations() {
 
     if (error) {
       console.error("Supabase Error:", error);
-      return { success: false, data: [] };
+      return { success: false, data: [], message: error.message };
     }
 
     // 3. Format the data to match the Dashboard's Team table
@@ -47,8 +49,8 @@ export async function getFutsalRegistrations() {
     }) || [];
 
     return { success: true, data: formattedTeams };
-  } catch (error) {
+  } catch (error: any) {
     console.error("Failed to fetch futsal registrations:", error);
-    return { success: false, data: [] };
+    return { success: false, data: [], message: error.message };
   }
 }
