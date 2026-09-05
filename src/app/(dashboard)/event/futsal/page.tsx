@@ -58,6 +58,7 @@ export default function FutsalDashboard() {
 
   const [isSpinning, setIsSpinning] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const bracketRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -93,10 +94,13 @@ export default function FutsalDashboard() {
           initialBracket.push(null);
         }
         setShuffledTeams(initialBracket.slice(0, 16));
+        setErrorMessage(null);
       } else {
+        setErrorMessage(dataTeams.message || "Gagal memuat data pendaftar futsal");
         toast.error(dataTeams.message || "Gagal memuat data pendaftar futsal");
       }
-    } catch (error) {
+    } catch (error: any) {
+      setErrorMessage(error.message || "Terjadi kesalahan sistem");
       console.error("Gagal mengambil data tim futsal:", error);
     } finally {
       setIsLoading(false);
@@ -471,7 +475,13 @@ export default function FutsalDashboard() {
                       <Users className="w-8 h-8 text-slate-400" />
                     </div>
                     <h3 className="text-slate-800 font-semibold mb-1">Belum ada tim (atau Gagal Memuat)</h3>
-                    <p className="text-sm text-slate-500">Jika seharusnya ada tim, pastikan Environment Variable Vercel sudah benar.</p>
+                    <p className="text-sm text-slate-500 mb-2">Jika seharusnya ada tim, pastikan Environment Variable Vercel sudah benar.</p>
+                    {errorMessage && (
+                      <div className="bg-rose-50 text-rose-600 text-xs p-3 rounded-lg border border-rose-100 max-w-md mx-auto text-left whitespace-pre-wrap">
+                        <span className="font-bold block mb-1">Pesan Error Sistem:</span>
+                        {errorMessage}
+                      </div>
+                    )}
                   </td>
                 </tr>
               ) : (
