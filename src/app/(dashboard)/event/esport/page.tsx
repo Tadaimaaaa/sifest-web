@@ -61,8 +61,13 @@ export default function EsportDashboard() {
   const bracketRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const role = Cookies.get("user_role");
-    if (role) setCurrentUserRole(role);
+    const userDataStr = Cookies.get("user_data");
+    if (userDataStr) {
+      try {
+        const user = JSON.parse(userDataStr);
+        setCurrentUserRole(user.role_id || user.role || "");
+      } catch (e) {}
+    }
     fetchData();
   }, []);
 
