@@ -38,7 +38,25 @@ export function FinanceChart({ data }: { data: any[] }) {
     return `Rp ${value}`;
   };
 
-  const chartData = data.length === 1 ? [{ name: '', income: 0, expense: 0 }, ...data] : data;
+  // Pad data with 0s to ensure at least 6 months are shown for a better curve
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'];
+  const now = new Date();
+  const last6Months: string[] = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const name = monthNames[d.getMonth()] + ' ' + d.getFullYear().toString().substring(2);
+    last6Months.push(name);
+  }
+
+  // Merge provided data or pad with 0s if missing
+  const paddedData = last6Months.map(name => {
+    const existing = data.find((d: any) => d.name === name);
+    return existing || { name, income: 0, expense: 0 };
+  });
+
+  // If there's older data not in the last 6 months, we prepend them
+  const olderData = data.filter((d: any) => !last6Months.includes(d.name));
+  const chartData = [...olderData, ...paddedData];
 
   return (
     <div className="h-72 w-full">
