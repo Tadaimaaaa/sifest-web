@@ -31,13 +31,13 @@ export async function getFutsalRegistrations() {
 
     // 3. Format the data to match the Dashboard's Team table
     const formattedTeams = registrations?.map((reg: any) => {
-      const participant = Array.isArray(reg.participants) ? reg.participants[0] : (reg.participants || {});
-      const transaction = Array.isArray(reg.transactions) ? reg.transactions[0] : (reg.transactions || {});
+      const participant = (Array.isArray(reg.participants) ? reg.participants[0] : reg.participants) || {};
+      const transaction = (Array.isArray(reg.transactions) ? reg.transactions[0] : reg.transactions) || {};
       
       // Convert Supabase transaction status to our UI's payment status
       let paymentStatus = "Belum Bayar";
-      if (transaction.status === "PAID") paymentStatus = "Lunas";
-      else if (transaction.status === "PENDING") paymentStatus = "DP"; // Approximation for UI
+      if (transaction?.status === "PAID") paymentStatus = "Lunas";
+      else if (transaction?.status === "PENDING") paymentStatus = "DP"; // Approximation for UI
 
       return {
         id_tim: reg.registration_code,
