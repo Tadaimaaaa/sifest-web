@@ -8,6 +8,7 @@ import Link from "next/link";
 import Cookies from "js-cookie";
 import { toast } from "sonner";
 import { getSeminarRegistrations } from "./actions";
+import { SCRIPT_URL } from "@/lib/api";
 
 // Types based on Apps Script Event output
 interface EventData {
@@ -35,8 +36,6 @@ interface Participant {
   created_at?: string;
 }
 
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyiQyD35b7m22Jk31_2Y0fT8hD4e3fT_h3V-1yXhE15wE2Q79a-Z6b5Yn7E_6H-L1U_/exec";
-
 export default function SeminarDashboard() {
   const [currentUserRole, setCurrentUserRole] = useState("");
   const [eventData, setEventData] = useState<EventData | null>(null);
@@ -50,7 +49,15 @@ export default function SeminarDashboard() {
   // Edit State
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [formData, setFormData] = useState<EventData | null>(null);
+  const [formData, setFormData] = useState<EventData>({
+    id: "seminar",
+    nama: "Seminar Nasional",
+    kategori: "Seminar",
+    deskripsi: "",
+    tanggal: "",
+    status: "Akan Datang",
+    kuota: ""
+  });
 
   useEffect(() => {
     const role = Cookies.get("user_role");
@@ -352,7 +359,7 @@ export default function SeminarDashboard() {
       </div>
 
       {/* Edit Modal */}
-      {isEditing && formData && (
+      {isEditing && (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
