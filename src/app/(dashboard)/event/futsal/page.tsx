@@ -69,16 +69,20 @@ export default function FutsalDashboard() {
   const hasAccess = ["ROLE-001", "SUPER_ADMIN", "ROLE-013"].includes(currentUserRole);
 
   const fetchData = async () => {
+    // 1. Fetch Event Info
     try {
-      // 1. Fetch Event Info
       const resEvent = await fetch(`${SCRIPT_URL}?action=getEvent&id_event=futsal`);
       const dataEvent = await resEvent.json();
       if (dataEvent.success && dataEvent.data) {
         setEventData(dataEvent.data);
         setFormDataEvent(dataEvent.data);
       }
+    } catch (error) {
+      console.error("Gagal mengambil info event futsal:", error);
+    }
 
-      // 2. Fetch Teams from Supabase (Official Web Registrations)
+    // 2. Fetch Teams from Supabase (Official Web Registrations)
+    try {
       const dataTeams = await getFutsalRegistrations();
       if (dataTeams.success && dataTeams.data) {
         setTeams(dataTeams.data);
@@ -93,7 +97,7 @@ export default function FutsalDashboard() {
         toast.error(dataTeams.message || "Gagal memuat data pendaftar futsal");
       }
     } catch (error) {
-      console.error("Gagal mengambil data futsal:", error);
+      console.error("Gagal mengambil data tim futsal:", error);
     } finally {
       setIsLoading(false);
     }
@@ -302,7 +306,7 @@ export default function FutsalDashboard() {
         </Link>
         <div>
           <h1 className="text-2xl font-bold text-slate-800 tracking-tight flex items-center gap-2">
-            E-Sport Competition
+            Futsal Competition
           </h1>
           <p className="text-sm text-slate-500">Informasi Umum Event</p>
         </div>
@@ -310,14 +314,14 @@ export default function FutsalDashboard() {
 
       {/* SECTION 1: Informasi Umum Event */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden relative">
-        <div className="h-24 bg-gradient-to-r from-rose-500 to-pink-700 opacity-90 relative overflow-hidden">
+        <div className="h-24 bg-gradient-to-r from-emerald-500 to-emerald-700 opacity-90 relative overflow-hidden">
           <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20 mix-blend-overlay"></div>
         </div>
         
         <div className="p-6 sm:p-8 relative">
           <div className="flex justify-between items-start mb-6">
-            <div className="-mt-16 w-20 h-20 rounded-2xl bg-rose-50 border-4 border-white shadow-lg flex items-center justify-center relative z-10">
-              <Gamepad2 className="w-8 h-8 text-rose-600" />
+            <div className="-mt-16 w-20 h-20 rounded-2xl bg-emerald-50 border-4 border-white shadow-lg flex items-center justify-center relative z-10">
+              <Activity className="w-8 h-8 text-emerald-600" />
             </div>
             
             {hasAccess && !isEditingEvent && (
@@ -374,7 +378,7 @@ export default function FutsalDashboard() {
                     type="date" 
                     value={formDataEvent.tanggal ? new Date(formDataEvent.tanggal).toISOString().split('T')[0] : ""}
                     onChange={(e) => setFormDataEvent({...formDataEvent, tanggal: e.target.value})}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
                   />
                 </div>
                 <div>
@@ -384,7 +388,7 @@ export default function FutsalDashboard() {
                     value={formDataEvent.tempat}
                     onChange={(e) => setFormDataEvent({...formDataEvent, tempat: e.target.value})}
                     placeholder="Contoh: GOR UNP"
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
                   />
                 </div>
                 <div className="md:col-span-2">
@@ -392,7 +396,7 @@ export default function FutsalDashboard() {
                   <select 
                     value={formDataEvent.status}
                     onChange={(e) => setFormDataEvent({...formDataEvent, status: e.target.value})}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
                   >
                     <option value="Akan Datang">Akan Datang</option>
                     <option value="Sedang Berlangsung">Sedang Berlangsung</option>
@@ -407,7 +411,7 @@ export default function FutsalDashboard() {
                     onChange={(e) => setFormDataEvent({...formDataEvent, deskripsi: e.target.value})}
                     rows={4}
                     placeholder="Tuliskan deskripsi atau catatan mengenai event ini..."
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 resize-none"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 resize-none"
                   />
                 </div>
               </div>
@@ -423,7 +427,7 @@ export default function FutsalDashboard() {
                 <button 
                   type="submit"
                   disabled={isSavingEvent}
-                  className="px-6 py-2.5 bg-rose-600 hover:bg-rose-700 text-white text-sm font-bold rounded-xl shadow-sm shadow-rose-500/20 transition-all flex items-center gap-2 disabled:opacity-50"
+                  className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-xl shadow-sm shadow-emerald-500/20 transition-all flex items-center gap-2 disabled:opacity-50"
                 >
                   {isSavingEvent ? "Menyimpan..." : <><Save className="w-4 h-4" /> Simpan Perubahan</>}
                 </button>
