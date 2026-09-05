@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { 
-  Users, Calendar, Clock, MapPin, Search, Plus, Loader2, ArrowLeft, ArrowUpDown, ChevronDown
+  Users, Calendar, Clock, MapPin, Search, Plus, Loader2, ArrowLeft, ArrowUpDown, ChevronDown, Edit3, X, Save
 } from "lucide-react";
 import Link from "next/link";
 import Cookies from "js-cookie";
@@ -16,9 +16,10 @@ interface EventData {
   kategori: string;
   deskripsi: string;
   tanggal: string;
-  waktu: string;
-  lokasi: string;
-  harga: string;
+  waktu?: string;
+  lokasi?: string;
+  tempat?: string;
+  harga?: string;
   status: string;
   kuota: string;
 }
@@ -46,6 +47,11 @@ export default function SeminarDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // Edit State
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [formData, setFormData] = useState<EventData | null>(null);
+
   useEffect(() => {
     const role = Cookies.get("user_role");
     if (role) setCurrentUserRole(role);
@@ -61,6 +67,7 @@ export default function SeminarDashboard() {
       const dataEvent = await resEvent.json();
       if (dataEvent.success && dataEvent.data) {
         setEventData(dataEvent.data);
+        setFormData(dataEvent.data);
       }
     } catch (error) {
       console.error("Gagal mengambil info event seminar:", error);
@@ -95,6 +102,43 @@ export default function SeminarDashboard() {
       case 'lunas': return 'bg-emerald-100 text-emerald-700 border-emerald-200';
       case 'dp': return 'bg-amber-100 text-amber-700 border-amber-200';
       default: return 'bg-rose-100 text-rose-700 border-rose-200';
+    }
+  };
+
+  const handleSaveEvent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData) return;
+    setIsSaving(true);
+    try {
+      const token = Cookies.get("session_token");
+      const payload = {
+        action: "saveEvent",
+        token,
+        id_event: "seminar",
+        nama_event: "Seminar Nasional",
+        tanggal: formData.tanggal,
+        tempat: formData.tempat || formData.lokasi,
+        deskripsi: formData.deskripsi,
+        status: formData.status
+      };
+
+      const res = await fetch(`${SCRIPT_URL}?action=saveEvent`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      
+      const data = await res.json();
+      if (data.success) {
+        toast.success("Informasi event berhasil diperbarui!");
+        setEventData(formData);
+        setIsEditing(false);
+      } else {
+        toast.error(data.message || "Gagal menyimpan data.");
+      }
+    } catch (error) {
+      toast.error("Terjadi kesalahan saat menyimpan data.");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -148,43 +192,59 @@ export default function SeminarDashboard() {
       </div>
 
       {/* Info Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden group">
-          <div className="absolute -right-6 -top-6 w-24 h-24 bg-blue-50 rounded-full group-hover:scale-150 transition-transform duration-500" />
-          <div className="relative">
-            <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center mb-3">
-              <Users className="w-5 h-5" />
+      <div className="relative">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-lg font-bold text-slate-800">Informasi Event</h2>
+          {hasAccess && (
+            <button 
+              onClick={() => setIsEditing(true)}
+              className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg text-sm font-semibold transition-colors"
+            >
+              <Edit3 className="w-4 h-4" /> Ubah Info
+            </button>
+          )}
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden group">
+            <div className="absolute -right-6 -top-6 w-24 h-24 bg-blue-50 rounded-full group-hover:scale-150 transition-transform duration-500" />
+            <div className="relative">
+              <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center mb-3">
+                <Users className="w-5 h-5" />
+              </div>
+              <p className="text-sm text-slate-500 font-medium">Total Peserta</p>
+              <div className="flex items-baseline gap-2 mt-1">
+                <h3 className="text-2xl font-bold text-slate-800">{participants.length}</h3>
+                {eventData?.kuota && <span className="text-xs text-slate-400">/ {eventData.kuota}</span>}
+              </div>
             </div>
-            <p className="text-sm text-slate-500 font-medium">Total Peserta</p>
-            <div className="flex items-baseline gap-2 mt-1">
-              <h3 className="text-2xl font-bold text-slate-800">{participants.length}</h3>
-              {eventData?.kuota && <span className="text-xs text-slate-400">/ {eventData.kuota}</span>}
+          </div>
+          
+          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+            <div className="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center mb-3">
+              <Calendar className="w-5 h-5" />
             </div>
+            <p className="text-sm text-slate-500 font-medium">Tanggal Pelaksanaan</p>
+            <h3 className="text-base font-bold text-slate-800 mt-1">{eventData?.tanggal || "26 Oktober 2026"}</h3>
           </div>
-        </div>
-        
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-          <div className="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center mb-3">
-            <Calendar className="w-5 h-5" />
+          
+          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+            <div className="w-10 h-10 rounded-xl bg-violet-100 text-violet-600 flex items-center justify-center mb-3">
+              <Clock className="w-5 h-5" />
+            </div>
+            <p className="text-sm text-slate-500 font-medium">Waktu (Default)</p>
+            <h3 className="text-base font-bold text-slate-800 mt-1">08:00 - Selesai</h3>
           </div>
-          <p className="text-sm text-slate-500 font-medium">Tanggal Pelaksanaan</p>
-          <h3 className="text-base font-bold text-slate-800 mt-1">{eventData?.tanggal || "26 Oktober 2026"}</h3>
-        </div>
-        
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-          <div className="w-10 h-10 rounded-xl bg-violet-100 text-violet-600 flex items-center justify-center mb-3">
-            <Clock className="w-5 h-5" />
+          
+          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+            <div className="w-10 h-10 rounded-xl bg-fuchsia-100 text-fuchsia-600 flex items-center justify-center mb-3">
+              <MapPin className="w-5 h-5" />
+            </div>
+            <p className="text-sm text-slate-500 font-medium">Lokasi / Tempat</p>
+            <h3 className="text-base font-bold text-slate-800 mt-1 truncate" title={eventData?.tempat || eventData?.lokasi || "UPI Convention Center"}>
+              {eventData?.tempat || eventData?.lokasi || "UPI Convention Center"}
+            </h3>
           </div>
-          <p className="text-sm text-slate-500 font-medium">Waktu</p>
-          <h3 className="text-base font-bold text-slate-800 mt-1">{eventData?.waktu || "08:00 - Selesai"}</h3>
-        </div>
-        
-        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
-          <div className="w-10 h-10 rounded-xl bg-fuchsia-100 text-fuchsia-600 flex items-center justify-center mb-3">
-            <MapPin className="w-5 h-5" />
-          </div>
-          <p className="text-sm text-slate-500 font-medium">Lokasi</p>
-          <h3 className="text-base font-bold text-slate-800 mt-1 truncate">{eventData?.lokasi || "UPI Convention Center"}</h3>
         </div>
       </div>
 
@@ -290,6 +350,75 @@ export default function SeminarDashboard() {
           </table>
         </div>
       </div>
+
+      {/* Edit Modal */}
+      {isEditing && formData && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+              <h3 className="text-lg font-bold text-slate-800">Ubah Info Event</h3>
+              <button onClick={() => setIsEditing(false)} className="p-2 hover:bg-slate-100 rounded-full text-slate-500 transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <form onSubmit={handleSaveEvent} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Tanggal Pelaksanaan</label>
+                <input 
+                  type="text" 
+                  value={formData.tanggal || ''}
+                  onChange={(e) => setFormData({...formData, tanggal: e.target.value})}
+                  placeholder="Contoh: 26 Oktober 2026"
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Tempat / Lokasi</label>
+                <input 
+                  type="text" 
+                  value={formData.tempat || formData.lokasi || ''}
+                  onChange={(e) => setFormData({...formData, tempat: e.target.value, lokasi: e.target.value})}
+                  placeholder="Contoh: UPI Convention Center"
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Status Event</label>
+                <select 
+                  value={formData.status || 'Akan Datang'}
+                  onChange={(e) => setFormData({...formData, status: e.target.value})}
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                >
+                  <option value="Akan Datang">Akan Datang</option>
+                  <option value="Sedang Berlangsung">Sedang Berlangsung</option>
+                  <option value="Selesai">Selesai</option>
+                </select>
+              </div>
+
+              <div className="pt-4 mt-6 border-t border-slate-100 flex justify-end gap-3">
+                <button 
+                  type="button"
+                  onClick={() => setIsEditing(false)}
+                  className="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50 rounded-xl transition-colors"
+                >
+                  Batal
+                </button>
+                <button 
+                  type="submit"
+                  disabled={isSaving}
+                  className="px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition-colors flex items-center gap-2 disabled:opacity-70"
+                >
+                  {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                  Simpan Perubahan
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
