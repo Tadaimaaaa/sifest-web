@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Users, Activity, Target, Sparkles, AlertCircle } from "lucide-react";
+import { Users, Activity, Target, Sparkles, AlertCircle, Clock } from "lucide-react";
 import { SCRIPT_URL } from "@/lib/api";
 import Cookies from "js-cookie";
 import Link from "next/link";
@@ -15,6 +15,32 @@ import { FinanceChart, SponsorChart } from "@/components/dashboard/DashboardChar
 export default function DashboardPage() {
   const [userName, setUserName] = useState("Admin");
   const [currentUserRole, setCurrentUserRole] = useState("ROLE-004");
+  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+
+  useEffect(() => {
+    const targetDate = new Date('2026-11-02T00:00:00').getTime();
+    
+    const updateCountdown = () => {
+      const now = new Date().getTime();
+      const distance = targetDate - now;
+      
+      if (distance < 0) {
+        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+        return;
+      }
+      
+      const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+      const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+      const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+      
+      setTimeLeft({ days, hours, minutes, seconds });
+    };
+
+    updateCountdown();
+    const interval = setInterval(updateCountdown, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     try {
@@ -61,9 +87,43 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Dashboard</h1>
-        <p className="text-sm text-slate-500 mt-1">Halo, <span className="font-semibold text-blue-600">{userName}</span>. Selamat datang kembali!</p>
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Dashboard</h1>
+          <p className="text-sm text-slate-500 mt-1">Halo, <span className="font-semibold text-blue-600">{userName}</span>. Selamat datang kembali!</p>
+        </div>
+
+        {/* Countdown */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-white px-5 py-4 rounded-2xl border border-slate-100 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center flex-shrink-0 relative overflow-hidden group">
+              <div className="absolute inset-0 bg-indigo-100 scale-0 group-hover:scale-100 transition-transform duration-300 rounded-xl"></div>
+              <Clock className="w-5 h-5 text-indigo-600 relative z-10 animate-pulse" />
+            </div>
+            <div>
+              <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-0.5">Menuju Hari H SI FEST</p>
+              <p className="text-[10px] text-slate-400 font-medium">02 November 2026</p>
+            </div>
+          </div>
+          <div className="flex gap-2 text-sm font-bold text-slate-700 w-full sm:w-auto">
+            <div className="flex flex-col items-center bg-slate-50 border border-slate-100 px-3 py-1.5 rounded-xl min-w-[50px]">
+              <span className="text-lg text-indigo-600 leading-none">{String(timeLeft.days).padStart(2, '0')}</span>
+              <span className="text-[9px] text-slate-400 font-semibold uppercase tracking-wider mt-1">Hari</span>
+            </div>
+            <div className="flex flex-col items-center bg-slate-50 border border-slate-100 px-3 py-1.5 rounded-xl min-w-[50px]">
+              <span className="text-lg text-indigo-600 leading-none">{String(timeLeft.hours).padStart(2, '0')}</span>
+              <span className="text-[9px] text-slate-400 font-semibold uppercase tracking-wider mt-1">Jam</span>
+            </div>
+            <div className="flex flex-col items-center bg-slate-50 border border-slate-100 px-3 py-1.5 rounded-xl min-w-[50px]">
+              <span className="text-lg text-indigo-600 leading-none">{String(timeLeft.minutes).padStart(2, '0')}</span>
+              <span className="text-[9px] text-slate-400 font-semibold uppercase tracking-wider mt-1">Menit</span>
+            </div>
+            <div className="flex flex-col items-center bg-indigo-50 border border-indigo-100 px-3 py-1.5 rounded-xl min-w-[50px]">
+              <span className="text-lg text-indigo-700 leading-none animate-pulse">{String(timeLeft.seconds).padStart(2, '0')}</span>
+              <span className="text-[9px] text-indigo-400 font-semibold uppercase tracking-wider mt-1">Detik</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Stats Grid */}
