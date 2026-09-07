@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { ArrowLeft, User, Calendar, CreditCard, Clock, School, Users, FileText } from 'lucide-react';
 import clsx from 'clsx';
+import PrintButton from './PrintButton';
 
 function StatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
@@ -93,17 +94,25 @@ export default async function RegistrationDetailPage({
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
-      <div className="flex items-center gap-4">
-        <Link
-          href="/sifest/registrations"
-          className="p-2 bg-white border border-slate-200 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5" />
-        </Link>
-        <div>
-          <h1 className="text-2xl font-bold text-slate-900">Detail Pendaftar</h1>
-          <p className="text-sm text-slate-500 mt-1">ID: {registration.id}</p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 print:hidden">
+        <div className="flex items-center gap-4">
+          <Link
+            href="/sifest/registrations"
+            className="p-2 bg-white border border-slate-200 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </Link>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900">Detail Pendaftar</h1>
+            <p className="text-sm text-slate-500 mt-1">ID: {registration.id}</p>
+          </div>
         </div>
+        <PrintButton />
+      </div>
+
+      <div className="hidden print:block mb-8 text-center border-b pb-4">
+        <h1 className="text-2xl font-bold text-slate-900">Formulir Pendaftaran {events?.name}</h1>
+        <p className="text-sm text-slate-500 mt-1">Kode Pendaftaran: {registration.registration_code}</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
