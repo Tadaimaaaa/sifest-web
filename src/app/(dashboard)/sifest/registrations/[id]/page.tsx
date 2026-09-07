@@ -144,58 +144,7 @@ export default async function RegistrationDetailPage({
             </SectionCard>
           )}
 
-          {participants?.metadata?.players && (
-            <SectionCard title={`Daftar Pemain (${participants.metadata.players.length})`} icon={Users}>
-              <div className="overflow-x-auto -mx-6 px-6">
-                <table className="w-full text-sm text-left text-slate-500 whitespace-nowrap">
-                  <thead className="text-xs text-slate-700 uppercase bg-slate-50">
-                    <tr>
-                      <th className="px-4 py-2">No</th>
-                      <th className="px-4 py-2">Nama</th>
-                      <th className="px-4 py-2">NISN</th>
-                      <th className="px-4 py-2">Posisi</th>
-                      <th className="px-4 py-2">No. Punggung</th>
-                      <th className="px-4 py-2">KTS</th>
-                      <th className="px-4 py-2">Foto</th>
-                      <th className="px-4 py-2">Akta</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {participants.metadata.players.map((p: any, idx: number) => (
-                      <tr key={idx} className="bg-white border-b hover:bg-slate-50">
-                        <td className="px-4 py-2">{idx + 1} {idx === 0 && "(Kapten)"}</td>
-                        <td className="px-4 py-2 font-medium text-slate-900">{p.name}</td>
-                        <td className="px-4 py-2">{p.nisn}</td>
-                        <td className="px-4 py-2">{p.posisi || "-"}</td>
-                        <td className="px-4 py-2">{p.jerseyNumber || "-"}</td>
-                        <td className="px-4 py-2">
-                          {p.studentCardUrl ? (
-                            <a href={p.studentCardUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Lihat</a>
-                          ) : (
-                            <span className="text-slate-400">-</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-2">
-                          {p.photoUrl ? (
-                            <a href={p.photoUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Lihat</a>
-                          ) : (
-                            <span className="text-slate-400">-</span>
-                          )}
-                        </td>
-                        <td className="px-4 py-2">
-                          {p.birthCertificateUrl ? (
-                            <a href={p.birthCertificateUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Lihat</a>
-                          ) : (
-                            <span className="text-slate-400">-</span>
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </SectionCard>
-          )}
+
         </div>
 
         <div className="space-y-6">
@@ -242,6 +191,61 @@ export default async function RegistrationDetailPage({
           )}
         </div>
       </div>
+
+      {participants?.metadata?.players && (
+        <div className="mt-6">
+          <SectionCard title={`Daftar Pemain (${participants.metadata.players.length})`} icon={Users}>
+            <div className="overflow-x-auto -mx-6 px-6">
+              <table className="w-full text-sm text-left text-slate-500 whitespace-nowrap">
+                <thead className="text-xs text-slate-700 uppercase bg-slate-50">
+                  <tr>
+                    <th className="px-4 py-2">No</th>
+                    <th className="px-4 py-2">Nama</th>
+                    <th className="px-4 py-2">NISN</th>
+                    <th className="px-4 py-2">Posisi</th>
+                    <th className="px-4 py-2">No. Punggung</th>
+                    <th className="px-4 py-2">KTS</th>
+                    <th className="px-4 py-2">Foto</th>
+                    <th className="px-4 py-2">Akta</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {participants.metadata.players.map((p: any, idx: number) => (
+                    <tr key={idx} className="bg-white border-b hover:bg-slate-50">
+                      <td className="px-4 py-2">{idx + 1} {idx === 0 && "(Kapten)"}</td>
+                      <td className="px-4 py-2 font-medium text-slate-900">{p.name}</td>
+                      <td className="px-4 py-2">{p.nisn}</td>
+                      <td className="px-4 py-2">{p.posisi || "-"}</td>
+                      <td className="px-4 py-2">{p.jerseyNumber || "-"}</td>
+                      <td className="px-4 py-2">
+                        {p.studentCardUrl ? (
+                          <a href={p.studentCardUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Lihat</a>
+                        ) : (
+                          <span className="text-slate-400">-</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-2">
+                        {p.photoUrl ? (
+                          <a href={p.photoUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Lihat</a>
+                        ) : (
+                          <span className="text-slate-400">-</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-2">
+                        {p.birthCertificateUrl ? (
+                          <a href={p.birthCertificateUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Lihat</a>
+                        ) : (
+                          <span className="text-slate-400">-</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </SectionCard>
+        </div>
+      )}
     </div>
   );
 }
