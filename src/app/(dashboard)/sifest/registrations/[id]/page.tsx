@@ -164,8 +164,17 @@ export default async function RegistrationDetailPage({
                   <InfoRow label="Jenjang" value={participants.metadata.schoolData.level} />
                   <InfoRow label="Alamat" value={participants.metadata.schoolData.address} />
                   <InfoRow label="Kota/Kab" value={participants.metadata.schoolData.city} />
-                  <InfoRow label="Nama Pembina" value={participants.metadata.schoolData.coachName} />
-                  <InfoRow label="WA Pembina" value={participants.metadata.schoolData.coachWhatsapp} />
+                  <InfoRow label="Penanggung Jawab / Pembina" value={participants.metadata.schoolData.coachName} />
+                  <InfoRow label="WA Penanggung Jawab" value={participants.metadata.schoolData.coachWhatsapp} />
+                </div>
+              )}
+
+              {participants.metadata.teamData && (
+                <div className="space-y-4 mb-6">
+                  <h4 className="text-sm font-bold text-slate-800 uppercase tracking-wider border-b pb-2">Data Pelatih</h4>
+                  <InfoRow label="Nama Pelatih" value={participants.metadata.teamData.coachName} />
+                  <InfoRow label="WA Pelatih" value={participants.metadata.teamData.coachWhatsapp} />
+                  <InfoRow label="Asisten Pelatih" value={participants.metadata.teamData.assistantCoachName || "-"} />
                 </div>
               )}
 
@@ -176,13 +185,17 @@ export default async function RegistrationDetailPage({
                     Daftar Pemain ({participants.metadata.players.length})
                   </h4>
                   <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left text-slate-500">
+                    <table className="w-full text-sm text-left text-slate-500 whitespace-nowrap">
                       <thead className="text-xs text-slate-700 uppercase bg-slate-50">
                         <tr>
                           <th className="px-4 py-2">No</th>
                           <th className="px-4 py-2">Nama</th>
                           <th className="px-4 py-2">NISN</th>
+                          <th className="px-4 py-2">Posisi</th>
+                          <th className="px-4 py-2">No. Punggung</th>
                           <th className="px-4 py-2">KTS</th>
+                          <th className="px-4 py-2">Foto</th>
+                          <th className="px-4 py-2">Akta</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -191,9 +204,25 @@ export default async function RegistrationDetailPage({
                             <td className="px-4 py-2">{idx + 1} {idx === 0 && "(Kapten)"}</td>
                             <td className="px-4 py-2 font-medium text-slate-900">{p.name}</td>
                             <td className="px-4 py-2">{p.nisn}</td>
+                            <td className="px-4 py-2">{p.posisi || "-"}</td>
+                            <td className="px-4 py-2">{p.jerseyNumber || "-"}</td>
                             <td className="px-4 py-2">
                               {p.studentCardUrl ? (
                                 <a href={p.studentCardUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Lihat</a>
+                              ) : (
+                                <span className="text-slate-400">-</span>
+                              )}
+                            </td>
+                            <td className="px-4 py-2">
+                              {p.photoUrl ? (
+                                <a href={p.photoUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Lihat</a>
+                              ) : (
+                                <span className="text-slate-400">-</span>
+                              )}
+                            </td>
+                            <td className="px-4 py-2">
+                              {p.birthCertificateUrl ? (
+                                <a href={p.birthCertificateUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Lihat</a>
                               ) : (
                                 <span className="text-slate-400">-</span>
                               )}
