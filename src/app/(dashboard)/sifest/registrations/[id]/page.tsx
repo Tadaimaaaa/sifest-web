@@ -2,7 +2,7 @@ import { getRegistrationById } from '@/lib/sifest/registrations';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { cookies } from 'next/headers';
-import { ArrowLeft, User, Calendar, CreditCard, Clock } from 'lucide-react';
+import { ArrowLeft, User, Calendar, CreditCard, Clock, School, Users, FileText } from 'lucide-react';
 import clsx from 'clsx';
 
 function StatusBadge({ status }: { status: string }) {
@@ -118,9 +118,8 @@ export default async function RegistrationDetailPage({
           <SectionCard title="Data Peserta" icon={User}>
             <InfoRow label="Nama Lengkap" value={participants?.full_name} />
             <InfoRow label="Email" value={participants?.email} />
-            <InfoRow label="No. HP / WhatsApp" value={participants?.phone_number} />
-            <InfoRow label="Asal Institusi" value={participants?.institution_name} />
-            <InfoRow label="NIM / NISN" value={participants?.student_id} />
+            <InfoRow label="No. HP / WhatsApp" value={participants?.whatsapp} />
+            <InfoRow label="Asal Institusi" value={participants?.institution} />
           </SectionCard>
         </div>
 
@@ -137,11 +136,77 @@ export default async function RegistrationDetailPage({
               </>
             )}
             {!transactions && (
-              <div className="p-4 bg-slate-50 rounded-lg border border-slate-100 text-center">
-                <p className="text-sm text-slate-500">Belum ada data transaksi pembayaran.</p>
+              <div className="p-4 bg-slate-50 rounded-lg border border-slate-100 text-center space-y-4">
+                <p className="text-sm text-slate-500">
+                  Menggunakan sistem pembayaran manual.
+                </p>
+                {registration.payment_proof_url ? (
+                  <div className="space-y-2">
+                    <p className="text-sm font-semibold text-slate-700">Bukti Pembayaran Diunggah:</p>
+                    <a href={registration.payment_proof_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-blue-600 hover:underline text-sm font-medium">
+                      <FileText className="w-4 h-4" />
+                      Lihat Bukti Transfer
+                    </a>
+                  </div>
+                ) : (
+                  <p className="text-sm text-amber-600 font-medium">Peserta belum mengunggah bukti pembayaran.</p>
+                )}
               </div>
             )}
           </SectionCard>
+
+          {participants?.metadata && (
+            <SectionCard title="Data Tambahan (Futsal)" icon={School}>
+              {participants.metadata.schoolData && (
+                <div className="space-y-4 mb-6">
+                  <h4 className="text-sm font-bold text-slate-800 uppercase tracking-wider border-b pb-2">Data Sekolah</h4>
+                  <InfoRow label="Nama Sekolah" value={participants.metadata.schoolData.schoolName} />
+                  <InfoRow label="Jenjang" value={participants.metadata.schoolData.level} />
+                  <InfoRow label="Alamat" value={participants.metadata.schoolData.address} />
+                  <InfoRow label="Kota/Kab" value={participants.metadata.schoolData.city} />
+                  <InfoRow label="Nama Pembina" value={participants.metadata.schoolData.coachName} />
+                  <InfoRow label="WA Pembina" value={participants.metadata.schoolData.coachWhatsapp} />
+                </div>
+              )}
+
+              {participants.metadata.players && (
+                <div className="space-y-4">
+                  <h4 className="text-sm font-bold text-slate-800 uppercase tracking-wider border-b pb-2 flex items-center gap-2">
+                    <Users className="w-4 h-4" />
+                    Daftar Pemain ({participants.metadata.players.length})
+                  </h4>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm text-left text-slate-500">
+                      <thead className="text-xs text-slate-700 uppercase bg-slate-50">
+                        <tr>
+                          <th className="px-4 py-2">No</th>
+                          <th className="px-4 py-2">Nama</th>
+                          <th className="px-4 py-2">NISN</th>
+                          <th className="px-4 py-2">KTS</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {participants.metadata.players.map((p: any, idx: number) => (
+                          <tr key={idx} className="bg-white border-b hover:bg-slate-50">
+                            <td className="px-4 py-2">{idx + 1} {idx === 0 && "(Kapten)"}</td>
+                            <td className="px-4 py-2 font-medium text-slate-900">{p.name}</td>
+                            <td className="px-4 py-2">{p.nisn}</td>
+                            <td className="px-4 py-2">
+                              {p.studentCardUrl ? (
+                                <a href={p.studentCardUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Lihat</a>
+                              ) : (
+                                <span className="text-slate-400">-</span>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </SectionCard>
+          )}
         </div>
       </div>
     </div>

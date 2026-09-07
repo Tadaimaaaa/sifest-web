@@ -13,10 +13,10 @@ export interface Participant {
   id: string;
   full_name: string;
   email: string;
-  phone_number: string;
-  institution_name: string;
-  student_id: string | null;
+  whatsapp: string;
+  institution: string;
   created_at: string;
+  metadata?: any;
 }
 
 export interface Transaction {
@@ -36,6 +36,7 @@ export interface Registration {
   event_id: string;
   participant_id: string;
   transaction_id: string | null;
+  payment_proof_url: string | null;
   
   // Joined fields from Supabase
   events?: Event;

@@ -124,7 +124,7 @@ export default async function RegistrationsPage({
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
                     <div className="font-medium text-slate-900">{reg.participants?.full_name}</div>
-                    <div className="text-xs">{reg.participants?.institution_name}</div>
+                    <div className="text-xs">{reg.participants?.institution}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
                     {reg.events?.name || '-'}
