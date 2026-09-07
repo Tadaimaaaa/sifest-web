@@ -115,12 +115,73 @@ export default async function RegistrationDetailPage({
             <InfoRow label="Waktu Daftar" value={new Date(registration.created_at).toLocaleString('id-ID')} />
           </SectionCard>
 
-          <SectionCard title="Data Peserta" icon={User}>
+          <SectionCard title={events?.slug === 'turnamen-futsal-slta' ? "Data Kapten" : "Data Peserta"} icon={User}>
             <InfoRow label="Nama Lengkap" value={participants?.full_name} />
             <InfoRow label="Email" value={participants?.email} />
             <InfoRow label="No. HP / WhatsApp" value={participants?.whatsapp} />
             <InfoRow label="Asal Institusi" value={participants?.institution} />
           </SectionCard>
+
+          {participants?.metadata?.teamData && (
+            <SectionCard title="Data Pelatih" icon={User}>
+              <InfoRow label="Nama Pelatih" value={participants.metadata.teamData.coachName} />
+              <InfoRow label="WA Pelatih" value={participants.metadata.teamData.coachWhatsapp} />
+              <InfoRow label="Asisten Pelatih" value={participants.metadata.teamData.assistantCoachName || "-"} />
+            </SectionCard>
+          )}
+
+          {participants?.metadata?.players && (
+            <SectionCard title={`Daftar Pemain (${participants.metadata.players.length})`} icon={Users}>
+              <div className="overflow-x-auto -mx-6 px-6">
+                <table className="w-full text-sm text-left text-slate-500 whitespace-nowrap">
+                  <thead className="text-xs text-slate-700 uppercase bg-slate-50">
+                    <tr>
+                      <th className="px-4 py-2">No</th>
+                      <th className="px-4 py-2">Nama</th>
+                      <th className="px-4 py-2">NISN</th>
+                      <th className="px-4 py-2">Posisi</th>
+                      <th className="px-4 py-2">No. Punggung</th>
+                      <th className="px-4 py-2">KTS</th>
+                      <th className="px-4 py-2">Foto</th>
+                      <th className="px-4 py-2">Akta</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {participants.metadata.players.map((p: any, idx: number) => (
+                      <tr key={idx} className="bg-white border-b hover:bg-slate-50">
+                        <td className="px-4 py-2">{idx + 1} {idx === 0 && "(Kapten)"}</td>
+                        <td className="px-4 py-2 font-medium text-slate-900">{p.name}</td>
+                        <td className="px-4 py-2">{p.nisn}</td>
+                        <td className="px-4 py-2">{p.posisi || "-"}</td>
+                        <td className="px-4 py-2">{p.jerseyNumber || "-"}</td>
+                        <td className="px-4 py-2">
+                          {p.studentCardUrl ? (
+                            <a href={p.studentCardUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Lihat</a>
+                          ) : (
+                            <span className="text-slate-400">-</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-2">
+                          {p.photoUrl ? (
+                            <a href={p.photoUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Lihat</a>
+                          ) : (
+                            <span className="text-slate-400">-</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-2">
+                          {p.birthCertificateUrl ? (
+                            <a href={p.birthCertificateUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Lihat</a>
+                          ) : (
+                            <span className="text-slate-400">-</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </SectionCard>
+          )}
         </div>
 
         <div className="space-y-6">
@@ -155,85 +216,14 @@ export default async function RegistrationDetailPage({
             )}
           </SectionCard>
 
-          {participants?.metadata && (
-            <SectionCard title="Data Tambahan (Futsal)" icon={School}>
-              {participants.metadata.schoolData && (
-                <div className="space-y-4 mb-6">
-                  <h4 className="text-sm font-bold text-slate-800 uppercase tracking-wider border-b pb-2">Data Sekolah</h4>
-                  <InfoRow label="Nama Sekolah" value={participants.metadata.schoolData.schoolName} />
-                  <InfoRow label="Jenjang" value={participants.metadata.schoolData.level} />
-                  <InfoRow label="Alamat" value={participants.metadata.schoolData.address} />
-                  <InfoRow label="Kota/Kab" value={participants.metadata.schoolData.city} />
-                  <InfoRow label="Penanggung Jawab / Pembina" value={participants.metadata.schoolData.coachName} />
-                  <InfoRow label="WA Penanggung Jawab" value={participants.metadata.schoolData.coachWhatsapp} />
-                </div>
-              )}
-
-              {participants.metadata.teamData && (
-                <div className="space-y-4 mb-6">
-                  <h4 className="text-sm font-bold text-slate-800 uppercase tracking-wider border-b pb-2">Data Pelatih</h4>
-                  <InfoRow label="Nama Pelatih" value={participants.metadata.teamData.coachName} />
-                  <InfoRow label="WA Pelatih" value={participants.metadata.teamData.coachWhatsapp} />
-                  <InfoRow label="Asisten Pelatih" value={participants.metadata.teamData.assistantCoachName || "-"} />
-                </div>
-              )}
-
-              {participants.metadata.players && (
-                <div className="space-y-4">
-                  <h4 className="text-sm font-bold text-slate-800 uppercase tracking-wider border-b pb-2 flex items-center gap-2">
-                    <Users className="w-4 h-4" />
-                    Daftar Pemain ({participants.metadata.players.length})
-                  </h4>
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left text-slate-500 whitespace-nowrap">
-                      <thead className="text-xs text-slate-700 uppercase bg-slate-50">
-                        <tr>
-                          <th className="px-4 py-2">No</th>
-                          <th className="px-4 py-2">Nama</th>
-                          <th className="px-4 py-2">NISN</th>
-                          <th className="px-4 py-2">Posisi</th>
-                          <th className="px-4 py-2">No. Punggung</th>
-                          <th className="px-4 py-2">KTS</th>
-                          <th className="px-4 py-2">Foto</th>
-                          <th className="px-4 py-2">Akta</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {participants.metadata.players.map((p: any, idx: number) => (
-                          <tr key={idx} className="bg-white border-b hover:bg-slate-50">
-                            <td className="px-4 py-2">{idx + 1} {idx === 0 && "(Kapten)"}</td>
-                            <td className="px-4 py-2 font-medium text-slate-900">{p.name}</td>
-                            <td className="px-4 py-2">{p.nisn}</td>
-                            <td className="px-4 py-2">{p.posisi || "-"}</td>
-                            <td className="px-4 py-2">{p.jerseyNumber || "-"}</td>
-                            <td className="px-4 py-2">
-                              {p.studentCardUrl ? (
-                                <a href={p.studentCardUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Lihat</a>
-                              ) : (
-                                <span className="text-slate-400">-</span>
-                              )}
-                            </td>
-                            <td className="px-4 py-2">
-                              {p.photoUrl ? (
-                                <a href={p.photoUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Lihat</a>
-                              ) : (
-                                <span className="text-slate-400">-</span>
-                              )}
-                            </td>
-                            <td className="px-4 py-2">
-                              {p.birthCertificateUrl ? (
-                                <a href={p.birthCertificateUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Lihat</a>
-                              ) : (
-                                <span className="text-slate-400">-</span>
-                              )}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              )}
+          {participants?.metadata?.schoolData && (
+            <SectionCard title="Data Sekolah (Futsal)" icon={School}>
+              <InfoRow label="Nama Sekolah" value={participants.metadata.schoolData.schoolName} />
+              <InfoRow label="Jenjang" value={participants.metadata.schoolData.level} />
+              <InfoRow label="Alamat" value={participants.metadata.schoolData.address} />
+              <InfoRow label="Kota/Kab" value={participants.metadata.schoolData.city} />
+              <InfoRow label="Penanggung Jawab / Pembina" value={participants.metadata.schoolData.coachName} />
+              <InfoRow label="WA Penanggung Jawab" value={participants.metadata.schoolData.coachWhatsapp} />
             </SectionCard>
           )}
         </div>
