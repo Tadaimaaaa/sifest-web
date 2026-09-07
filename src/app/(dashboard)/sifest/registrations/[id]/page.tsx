@@ -117,33 +117,35 @@ export default async function RegistrationDetailPage({
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-6">
-          <SectionCard title="Data Registrasi" icon={Calendar}>
-            <InfoRow label="Kode Pendaftaran" value={<span className="font-mono text-blue-600 bg-blue-50 px-2 py-1 rounded">{registration.registration_code}</span>} />
-            <InfoRow label="Event" value={events?.name} />
-            <InfoRow label="Status Pendaftaran" value={<StatusBadge status={registration.status} />} />
-            <InfoRow label="Waktu Daftar" value={new Date(registration.created_at).toLocaleString('id-ID')} />
-          </SectionCard>
-
-          {events?.slug === 'turnamen-futsal-slta' ? (
-            <>
-              {participants?.metadata?.players?.[0] && (
-                <SectionCard title="Data Kapten" icon={User}>
-                  <InfoRow label="Nama Kapten" value={participants.metadata.players[0].name} />
-                  <InfoRow label="NISN" value={participants.metadata.players[0].nisn} />
-                  <InfoRow label="WhatsApp Kapten" value={participants.metadata.players[0].whatsapp} />
-                  <InfoRow label="Posisi" value={participants.metadata.players[0].posisi || "-"} />
-                  <InfoRow label="No. Punggung" value={participants.metadata.players[0].jerseyNumber || "-"} />
-                </SectionCard>
-              )}
-            </>
-          ) : (
-            <SectionCard title="Data Peserta" icon={User}>
-              <InfoRow label="Nama Lengkap" value={participants?.full_name} />
-              <InfoRow label="Email" value={participants?.email} />
-              <InfoRow label="No. HP / WhatsApp" value={participants?.whatsapp} />
-              <InfoRow label="Asal Institusi" value={participants?.institution} />
+          <div className="print:hidden space-y-6">
+            <SectionCard title="Data Registrasi" icon={Calendar}>
+              <InfoRow label="Kode Pendaftaran" value={<span className="font-mono text-blue-600 bg-blue-50 px-2 py-1 rounded">{registration.registration_code}</span>} />
+              <InfoRow label="Event" value={events?.name} />
+              <InfoRow label="Status Pendaftaran" value={<StatusBadge status={registration.status} />} />
+              <InfoRow label="Waktu Daftar" value={new Date(registration.created_at).toLocaleString('id-ID')} />
             </SectionCard>
-          )}
+
+            {events?.slug === 'turnamen-futsal-slta' ? (
+              <>
+                {participants?.metadata?.players?.[0] && (
+                  <SectionCard title="Data Kapten" icon={User}>
+                    <InfoRow label="Nama Kapten" value={participants.metadata.players[0].name} />
+                    <InfoRow label="NISN" value={participants.metadata.players[0].nisn} />
+                    <InfoRow label="WhatsApp Kapten" value={participants.metadata.players[0].whatsapp} />
+                    <InfoRow label="Posisi" value={participants.metadata.players[0].posisi || "-"} />
+                    <InfoRow label="No. Punggung" value={participants.metadata.players[0].jerseyNumber || "-"} />
+                  </SectionCard>
+                )}
+              </>
+            ) : (
+              <SectionCard title="Data Peserta" icon={User}>
+                <InfoRow label="Nama Lengkap" value={participants?.full_name} />
+                <InfoRow label="Email" value={participants?.email} />
+                <InfoRow label="No. HP / WhatsApp" value={participants?.whatsapp} />
+                <InfoRow label="Asal Institusi" value={participants?.institution} />
+              </SectionCard>
+            )}
+          </div>
 
           {participants?.metadata?.teamData && (
             <SectionCard title="Data Pelatih" icon={User}>
@@ -157,36 +159,38 @@ export default async function RegistrationDetailPage({
         </div>
 
         <div className="space-y-6">
-          <SectionCard title="Informasi Pembayaran" icon={CreditCard}>
-            <InfoRow label="Status Pembayaran" value={<StatusBadge status={transactions?.status || 'PENDING'} />} />
-            {transactions && (
-              <>
-                <InfoRow label="Metode Pembayaran" value={transactions.payment_method} />
-                <InfoRow label="Tipe Pembayaran" value={transactions.payment_type} />
-                <InfoRow label="Nominal" value={new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(transactions.amount)} />
-                <InfoRow label="Waktu Pembayaran" value={transactions.paid_at ? new Date(transactions.paid_at).toLocaleString('id-ID') : '-'} />
-                <InfoRow label="Transaction ID" value={<span className="font-mono text-xs break-all">{transactions.id}</span>} />
-              </>
-            )}
-            {!transactions && (
-              <div className="p-4 bg-slate-50 rounded-lg border border-slate-100 text-center space-y-4">
-                <p className="text-sm text-slate-500">
-                  Menggunakan sistem pembayaran manual.
-                </p>
-                {registration.payment_proof_url ? (
-                  <div className="space-y-2">
-                    <p className="text-sm font-semibold text-slate-700">Bukti Pembayaran Diunggah:</p>
-                    <a href={registration.payment_proof_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-blue-600 hover:underline text-sm font-medium">
-                      <FileText className="w-4 h-4" />
-                      Lihat Bukti Transfer
-                    </a>
-                  </div>
-                ) : (
-                  <p className="text-sm text-amber-600 font-medium">Peserta belum mengunggah bukti pembayaran.</p>
-                )}
-              </div>
-            )}
-          </SectionCard>
+          <div className="print:hidden">
+            <SectionCard title="Informasi Pembayaran" icon={CreditCard}>
+              <InfoRow label="Status Pembayaran" value={<StatusBadge status={transactions?.status || 'PENDING'} />} />
+              {transactions && (
+                <>
+                  <InfoRow label="Metode Pembayaran" value={transactions.payment_method} />
+                  <InfoRow label="Tipe Pembayaran" value={transactions.payment_type} />
+                  <InfoRow label="Nominal" value={new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(transactions.amount)} />
+                  <InfoRow label="Waktu Pembayaran" value={transactions.paid_at ? new Date(transactions.paid_at).toLocaleString('id-ID') : '-'} />
+                  <InfoRow label="Transaction ID" value={<span className="font-mono text-xs break-all">{transactions.id}</span>} />
+                </>
+              )}
+              {!transactions && (
+                <div className="p-4 bg-slate-50 rounded-lg border border-slate-100 text-center space-y-4">
+                  <p className="text-sm text-slate-500">
+                    Menggunakan sistem pembayaran manual.
+                  </p>
+                  {registration.payment_proof_url ? (
+                    <div className="space-y-2">
+                      <p className="text-sm font-semibold text-slate-700">Bukti Pembayaran Diunggah:</p>
+                      <a href={registration.payment_proof_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-blue-600 hover:underline text-sm font-medium">
+                        <FileText className="w-4 h-4" />
+                        Lihat Bukti Transfer
+                      </a>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-amber-600 font-medium">Peserta belum mengunggah bukti pembayaran.</p>
+                  )}
+                </div>
+              )}
+            </SectionCard>
+          </div>
 
           {participants?.metadata?.schoolData && (
             <SectionCard title="Data Sekolah (Futsal)" icon={School}>
