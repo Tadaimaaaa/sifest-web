@@ -117,12 +117,6 @@ export default async function RegistrationDetailPage({
 
           {events?.slug === 'turnamen-futsal-slta' ? (
             <>
-              <SectionCard title="Data Pendaftar (Akun)" icon={User}>
-                <InfoRow label="Nama Pendaftar" value={participants?.full_name} />
-                <InfoRow label="Email" value={participants?.email} />
-                <InfoRow label="No. HP Pendaftar" value={participants?.whatsapp} />
-              </SectionCard>
-
               {participants?.metadata?.players?.[0] && (
                 <SectionCard title="Data Kapten" icon={User}>
                   <InfoRow label="Nama Kapten" value={participants.metadata.players[0].name} />
