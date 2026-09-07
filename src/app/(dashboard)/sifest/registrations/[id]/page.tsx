@@ -115,12 +115,32 @@ export default async function RegistrationDetailPage({
             <InfoRow label="Waktu Daftar" value={new Date(registration.created_at).toLocaleString('id-ID')} />
           </SectionCard>
 
-          <SectionCard title={events?.slug === 'turnamen-futsal-slta' ? "Data Kapten" : "Data Peserta"} icon={User}>
-            <InfoRow label="Nama Lengkap" value={participants?.full_name} />
-            <InfoRow label="Email" value={participants?.email} />
-            <InfoRow label="No. HP / WhatsApp" value={participants?.whatsapp} />
-            <InfoRow label="Asal Institusi" value={participants?.institution} />
-          </SectionCard>
+          {events?.slug === 'turnamen-futsal-slta' ? (
+            <>
+              <SectionCard title="Data Pendaftar (Akun)" icon={User}>
+                <InfoRow label="Nama Pendaftar" value={participants?.full_name} />
+                <InfoRow label="Email" value={participants?.email} />
+                <InfoRow label="No. HP Pendaftar" value={participants?.whatsapp} />
+              </SectionCard>
+
+              {participants?.metadata?.players?.[0] && (
+                <SectionCard title="Data Kapten" icon={User}>
+                  <InfoRow label="Nama Kapten" value={participants.metadata.players[0].name} />
+                  <InfoRow label="NISN" value={participants.metadata.players[0].nisn} />
+                  <InfoRow label="WhatsApp Kapten" value={participants.metadata.players[0].whatsapp} />
+                  <InfoRow label="Posisi" value={participants.metadata.players[0].posisi || "-"} />
+                  <InfoRow label="No. Punggung" value={participants.metadata.players[0].jerseyNumber || "-"} />
+                </SectionCard>
+              )}
+            </>
+          ) : (
+            <SectionCard title="Data Peserta" icon={User}>
+              <InfoRow label="Nama Lengkap" value={participants?.full_name} />
+              <InfoRow label="Email" value={participants?.email} />
+              <InfoRow label="No. HP / WhatsApp" value={participants?.whatsapp} />
+              <InfoRow label="Asal Institusi" value={participants?.institution} />
+            </SectionCard>
+          )}
 
           {participants?.metadata?.teamData && (
             <SectionCard title="Data Pelatih" icon={User}>
