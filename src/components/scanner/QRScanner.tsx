@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from 'react';
-import { Html5QrcodeScanner } from 'html5-qrcode';
+import { Html5Qrcode } from 'html5-qrcode';
+import { Camera, AlertCircle } from 'lucide-react';
 
 interface QRScannerProps {
   onScanSuccess: (decodedText: string) => void;
@@ -9,102 +10,156 @@ interface QRScannerProps {
 }
 
 export default function QRScanner({ onScanSuccess, onScanFailure }: QRScannerProps) {
-  const scannerRef = useRef<Html5QrcodeScanner | null>(null);
-  const [isClient, setIsClient] = useState(false);
+  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const scannerRef = useRef<Html5Qrcode | null>(null);
+  const isScanningRef = useRef(false);
 
   useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  useEffect(() => {
-    if (!isClient) return;
-
-    // Initialize scanner
-    const config = {
-      fps: 10,
-      qrbox: { width: 250, height: 250 },
-      aspectRatio: 1.0,
-      showTorchButtonIfSupported: true,
+    let mounted = true;
+    
+    const startScanner = async () => {
+      try {
+        // Request camera permissions first to check if available
+        const devices = await Html5Qrcode.getCameras();
+        if (devices && devices.length) {
+          if (mounted) setHasPermission(true);
+          
+          if (!scannerRef.current) {
+            scannerRef.current = new Html5Qrcode("qr-reader");
+            
+            await scannerRef.current.start(
+              { facingMode: "environment" }, // Prefer back camera
+              {
+                fps: 10,
+                qrbox: { width: 250, height: 250 },
+                aspectRatio: 1.0,
+              },
+              (decodedText) => {
+                if (!isScanningRef.current) {
+                  isScanningRef.current = true;
+                  // Stop scanning immediately after success to avoid multiple triggers
+                  if (scannerRef.current && scannerRef.current.isScanning) {
+                    scannerRef.current.pause(true);
+                  }
+                  onScanSuccess(decodedText);
+                }
+              },
+              (err) => {
+                if (onScanFailure) onScanFailure(err);
+              }
+            );
+          }
+        } else {
+          if (mounted) {
+            setHasPermission(false);
+            setError("Tidak ada kamera yang terdeteksi di perangkat Anda.");
+          }
+        }
+      } catch (err: any) {
+        if (mounted) {
+          setHasPermission(false);
+          setError("Akses kamera ditolak atau tidak didukung oleh browser. Pastikan Anda memberikan izin akses kamera.");
+        }
+      }
     };
 
-    // Use a unique ID for the scanner container
-    const scannerId = "qr-reader";
-    
-    // Check if element exists to avoid React strict mode issues
-    if (document.getElementById(scannerId)) {
-      if (!scannerRef.current) {
-        scannerRef.current = new Html5QrcodeScanner(scannerId, config, false);
-        scannerRef.current.render(
-          (decodedText) => {
-            // Pause scanning after success to prevent multiple triggers
-            if (scannerRef.current) {
-              scannerRef.current.pause(true);
-            }
-            onScanSuccess(decodedText);
-          },
-          (error) => {
-            if (onScanFailure) {
-              onScanFailure(error);
-            }
-          }
-        );
-      }
-    }
+    startScanner();
 
-    // Cleanup on unmount
     return () => {
+      mounted = false;
+      if (scannerRef.current && scannerRef.current.isScanning) {
+        scannerRef.current.stop().catch(e => console.error("Error stopping scanner", e));
+      }
       if (scannerRef.current) {
-        scannerRef.current.clear().catch(error => {
-          console.error("Failed to clear html5QrcodeScanner. ", error);
-        });
+        scannerRef.current.clear();
         scannerRef.current = null;
       }
     };
-  }, [isClient, onScanSuccess, onScanFailure]);
+  }, [onScanSuccess, onScanFailure]);
 
-  if (!isClient) return null;
+  if (hasPermission === false) {
+    return (
+      <div className="w-full max-w-sm mx-auto p-8 rounded-3xl bg-slate-50 border-2 border-dashed border-slate-300 flex flex-col items-center text-center">
+        <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4 text-red-500">
+          <AlertCircle size={32} />
+        </div>
+        <h3 className="text-lg font-bold text-slate-800 mb-2">Kamera Tidak Tersedia</h3>
+        <p className="text-sm text-slate-500">{error}</p>
+        <button 
+          onClick={() => window.location.reload()}
+          className="mt-6 px-4 py-2 bg-slate-900 text-white font-medium rounded-xl hover:bg-slate-800"
+        >
+          Muat Ulang
+        </button>
+      </div>
+    );
+  }
 
   return (
-    <div className="w-full max-w-md mx-auto overflow-hidden rounded-2xl border-2 border-slate-200 bg-white shadow-xl">
-      <div id="qr-reader" className="w-full" />
+    <div className="relative w-full max-w-sm mx-auto overflow-hidden rounded-3xl bg-black shadow-2xl shadow-blue-900/20 ring-4 ring-slate-100">
+      
+      {/* Video Container */}
+      <div id="qr-reader" className="w-full" style={{ minHeight: '350px' }} />
+
+      {/* QRIS-like Overlay */}
+      <div className="absolute inset-0 pointer-events-none flex flex-col">
+        {/* Top Dark Overlay */}
+        <div className="flex-1 bg-black/50 flex flex-col items-center justify-center p-4">
+          <div className="bg-black/40 backdrop-blur-md px-4 py-1.5 rounded-full flex items-center gap-2 mb-2">
+            <Camera size={14} className="text-white" />
+            <span className="text-xs font-medium text-white tracking-wide uppercase">Scanner Aktif</span>
+          </div>
+          <p className="text-white/80 text-xs font-medium text-center px-6">
+            Posisikan QR Code tiket di dalam area kotak
+          </p>
+        </div>
+
+        {/* Center Scanner Window */}
+        <div className="flex">
+          <div className="flex-1 bg-black/50" />
+          <div className="w-[250px] h-[250px] relative">
+            {/* Animated Scanning Line */}
+            <div className="absolute top-0 left-0 w-full h-1 bg-blue-500 shadow-[0_0_15px_#3b82f6] animate-scan-line" />
+            
+            {/* Corner Markers */}
+            <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-blue-500 rounded-tl-xl" />
+            <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-blue-500 rounded-tr-xl" />
+            <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-blue-500 rounded-bl-xl" />
+            <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-blue-500 rounded-br-xl" />
+          </div>
+          <div className="flex-1 bg-black/50" />
+        </div>
+
+        {/* Bottom Dark Overlay */}
+        <div className="flex-1 bg-black/50 flex items-center justify-center pb-6">
+          <div className="flex items-center gap-2">
+             <div className="w-2 h-2 rounded-full bg-blue-500 animate-ping" />
+             <span className="text-xs text-blue-200 font-medium tracking-widest uppercase">Mendeteksi...</span>
+          </div>
+        </div>
+      </div>
+
       <style dangerouslySetInnerHTML={{
         __html: `
-        #qr-reader {
-          border: none !important;
+        /* Hide html5-qrcode default UI elements */
+        #qr-reader video {
+          object-fit: cover !important;
+          width: 100% !important;
+          height: 100% !important;
         }
-        #qr-reader__scan_region {
-          min-height: 300px;
-          background: #f8fafc;
+        #qr-reader img {
+          display: none !important;
         }
-        #qr-reader__dashboard_section_csr span {
-          color: #0f172a !important;
-          font-family: inherit !important;
+        /* Create animation for scanning line */
+        @keyframes scan {
+          0% { top: 0%; opacity: 0; }
+          10% { opacity: 1; }
+          90% { opacity: 1; }
+          100% { top: 100%; opacity: 0; }
         }
-        #qr-reader__dashboard_section_swaplink {
-          text-decoration: none !important;
-          color: #2563eb !important;
-          font-weight: 500;
-        }
-        #qr-reader button {
-          background-color: #2563eb;
-          color: white;
-          border: none;
-          padding: 8px 16px;
-          border-radius: 8px;
-          font-weight: 500;
-          cursor: pointer;
-          transition: background-color 0.2s;
-        }
-        #qr-reader button:hover {
-          background-color: #1d4ed8;
-        }
-        #qr-reader__camera_selection {
-          padding: 8px;
-          border-radius: 8px;
-          border: 1px solid #cbd5e1;
-          margin-bottom: 12px;
-          width: 100%;
-          max-width: 300px;
+        .animate-scan-line {
+          animation: scan 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
         }
         `
       }} />
