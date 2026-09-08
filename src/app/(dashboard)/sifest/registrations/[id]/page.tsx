@@ -25,6 +25,7 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function SectionCard({ title, icon: Icon, children }: { title: string, icon: any, children: React.ReactNode }) {
   return (
     <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
@@ -75,7 +76,7 @@ export default async function RegistrationDetailPage({
         <p className="text-slate-600 max-w-md mb-6 leading-relaxed">
           Maaf, fitur ini sedang dalam tahap pengembangan khusus dan sementara <strong>hanya bisa diakses oleh Super Admin</strong>.
           <br /><br />
-          <span className="text-sm italic text-slate-500">"Belikan admin martabak dulu hehe, sabar yaa masih di develop!"</span>
+          <span className="text-sm italic text-slate-500">&quot;Belikan admin martabak dulu hehe, sabar yaa masih di develop!&quot;</span>
         </p>
         <Link href="/dashboard" className="px-6 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors">
           Kembali ke Dashboard
@@ -204,6 +205,15 @@ export default async function RegistrationDetailPage({
             </SectionCard>
           </div>
 
+          {participants?.metadata?.teamData && (
+            <SectionCard title="Data Tim (E-Sport)" icon={Users}>
+              <InfoRow label="Nama Tim" value={participants.metadata.teamData.teamName} />
+              <InfoRow label="Kategori" value={participants.metadata.teamData.teamCategory} />
+              <InfoRow label="Kapten" value={participants.metadata.teamData.captainName} />
+              <InfoRow label="WA Kapten" value={participants.metadata.teamData.captainWhatsapp} />
+            </SectionCard>
+          )}
+
           {participants?.metadata?.schoolData && (
             <SectionCard title="Data Sekolah (Futsal)" icon={School}>
               <InfoRow label="Nama Sekolah" value={participants.metadata.schoolData.schoolName} />
@@ -226,22 +236,41 @@ export default async function RegistrationDetailPage({
                   <tr>
                     <th className="px-4 py-2">No</th>
                     <th className="px-4 py-2">Nama</th>
-                    <th className="px-4 py-2">NISN</th>
-                    <th className="px-4 py-2">Posisi</th>
-                    <th className="px-4 py-2">No. Punggung</th>
+                    {participants?.metadata?.teamData ? (
+                      <>
+                        <th className="px-4 py-2">Nickname</th>
+                        <th className="px-4 py-2">ID Game</th>
+                      </>
+                    ) : (
+                      <>
+                        <th className="px-4 py-2">NISN</th>
+                        <th className="px-4 py-2">Posisi</th>
+                        <th className="px-4 py-2">No. Punggung</th>
+                      </>
+                    )}
                     <th className="px-4 py-2">KTS</th>
                     <th className="px-4 py-2">Foto</th>
                     <th className="px-4 py-2">Akta</th>
                   </tr>
                 </thead>
                 <tbody>
+                  {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                   {participants.metadata.players.map((p: any, idx: number) => (
                     <tr key={idx} className="bg-white border-b hover:bg-slate-50">
                       <td className="px-4 py-2">{idx + 1} {idx === 0 && "(Kapten)"}</td>
                       <td className="px-4 py-2 font-medium text-slate-900">{p.name}</td>
-                      <td className="px-4 py-2">{p.nisn}</td>
-                      <td className="px-4 py-2">{p.posisi || "-"}</td>
-                      <td className="px-4 py-2">{p.jerseyNumber || "-"}</td>
+                      {participants?.metadata?.teamData ? (
+                        <>
+                          <td className="px-4 py-2">{p.nickname || "-"}</td>
+                          <td className="px-4 py-2">{p.idGame || "-"}</td>
+                        </>
+                      ) : (
+                        <>
+                          <td className="px-4 py-2">{p.nisn}</td>
+                          <td className="px-4 py-2">{p.posisi || "-"}</td>
+                          <td className="px-4 py-2">{p.jerseyNumber || "-"}</td>
+                        </>
+                      )}
                       <td className="px-4 py-2">
                         {p.studentCardUrl ? (
                           <a href={p.studentCardUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Lihat</a>
