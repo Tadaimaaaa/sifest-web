@@ -172,13 +172,13 @@ export default async function RegistrationDetailPage({
                   </div>
                 )}
                 {participants?.metadata?.fotoKtpUrl && (
-                  <InfoRow label="Foto KTP" value={<a href={participants.metadata.fotoKtpUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline flex items-center gap-1"><FileText className="w-4 h-4" /> Lihat KTP</a>} />
+                  <InfoRow label="Foto KTP" value={<a href={participants.metadata.fotoKtpUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-green-50 text-green-700 hover:bg-green-100 font-medium text-xs border border-green-200 transition-colors"><FileText className="w-3.5 h-3.5" /> Data Valid (Lihat)</a>} />
                 )}
                 {participants?.metadata?.fotoKtmUrl && (
-                  <InfoRow label="Foto KTM" value={<a href={participants.metadata.fotoKtmUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline flex items-center gap-1"><FileText className="w-4 h-4" /> Lihat KTM</a>} />
+                  <InfoRow label="Foto KTM" value={<a href={participants.metadata.fotoKtmUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-green-50 text-green-700 hover:bg-green-100 font-medium text-xs border border-green-200 transition-colors"><FileText className="w-3.5 h-3.5" /> Data Valid (Lihat)</a>} />
                 )}
                 {participants?.metadata?.studentCardUrl && (
-                  <InfoRow label="Surat Keterangan/Kartu Pelajar" value={<a href={participants.metadata.studentCardUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline flex items-center gap-1"><FileText className="w-4 h-4" /> Lihat File</a>} />
+                  <InfoRow label="Surat Keterangan/Kartu Pelajar" value={<a href={participants.metadata.studentCardUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-green-50 text-green-700 hover:bg-green-100 font-medium text-xs border border-green-200 transition-colors"><FileText className="w-3.5 h-3.5" /> Data Valid (Lihat)</a>} />
                 )}
               </SectionCard>
             )}
@@ -216,9 +216,9 @@ export default async function RegistrationDetailPage({
                   {registration.payment_proof_url ? (
                     <div className="space-y-2">
                       <p className="text-sm font-semibold text-slate-700">Bukti Pembayaran Diunggah:</p>
-                      <a href={registration.payment_proof_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-blue-600 hover:underline text-sm font-medium">
-                        <FileText className="w-4 h-4" />
-                        Lihat Bukti Transfer
+                      <a href={registration.payment_proof_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-green-50 text-green-700 hover:bg-green-100 font-medium text-xs border border-green-200 transition-colors">
+                        <FileText className="w-3.5 h-3.5" />
+                        Bukti Valid (Lihat)
                       </a>
                     </div>
                   ) : (
@@ -297,21 +297,21 @@ export default async function RegistrationDetailPage({
                       )}
                       <td className="px-4 py-2">
                         {p.studentCardUrl ? (
-                          <a href={p.studentCardUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Lihat</a>
+                          <a href={p.studentCardUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-green-50 text-green-700 hover:bg-green-100 font-medium text-[11px] border border-green-200 transition-colors">Data Valid (Lihat)</a>
                         ) : (
                           <span className="text-slate-400">-</span>
                         )}
                       </td>
                       <td className="px-4 py-2">
                         {p.photoUrl ? (
-                          <a href={p.photoUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Lihat</a>
+                          <a href={p.photoUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-green-50 text-green-700 hover:bg-green-100 font-medium text-[11px] border border-green-200 transition-colors">Data Valid (Lihat)</a>
                         ) : (
                           <span className="text-slate-400">-</span>
                         )}
                       </td>
                       <td className="px-4 py-2">
                         {p.birthCertificateUrl ? (
-                          <a href={p.birthCertificateUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Lihat</a>
+                          <a href={p.birthCertificateUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-green-50 text-green-700 hover:bg-green-100 font-medium text-[11px] border border-green-200 transition-colors">Data Valid (Lihat)</a>
                         ) : (
                           <span className="text-slate-400">-</span>
                         )}
