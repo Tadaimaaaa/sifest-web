@@ -164,11 +164,21 @@ export default async function RegistrationDetailPage({
                     <InfoRow label="Produk" value={participants.metadata.products} />
                   </div>
                 )}
+                {events?.slug === 'lomba-keagamaan' && participants?.metadata && (
+                  <div className="pt-2 mt-2 border-t border-slate-100">
+                    <InfoRow label="Kelas" value={participants.metadata.grade} />
+                    <InfoRow label="Nama Pembimbing" value={participants.metadata.mentorName} />
+                    <InfoRow label="WA Pembimbing" value={participants.metadata.mentorWhatsapp} />
+                  </div>
+                )}
                 {participants?.metadata?.fotoKtpUrl && (
                   <InfoRow label="Foto KTP" value={<a href={participants.metadata.fotoKtpUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline flex items-center gap-1"><FileText className="w-4 h-4" /> Lihat KTP</a>} />
                 )}
                 {participants?.metadata?.fotoKtmUrl && (
                   <InfoRow label="Foto KTM" value={<a href={participants.metadata.fotoKtmUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline flex items-center gap-1"><FileText className="w-4 h-4" /> Lihat KTM</a>} />
+                )}
+                {participants?.metadata?.studentCardUrl && (
+                  <InfoRow label="Surat Keterangan/Kartu Pelajar" value={<a href={participants.metadata.studentCardUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline flex items-center gap-1"><FileText className="w-4 h-4" /> Lihat File</a>} />
                 )}
               </SectionCard>
             )}
