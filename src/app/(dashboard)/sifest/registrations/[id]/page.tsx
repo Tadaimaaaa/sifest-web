@@ -152,10 +152,24 @@ export default async function RegistrationDetailPage({
               </>
             ) : (
               <SectionCard title="Data Peserta" icon={User}>
-                <InfoRow label="Nama Lengkap" value={participants?.full_name} />
+                <InfoRow label={events?.slug?.startsWith('open-bazaar') ? "Nama Penanggung Jawab" : "Nama Lengkap"} value={participants?.full_name} />
                 <InfoRow label="Email" value={participants?.email} />
                 <InfoRow label="No. HP / WhatsApp" value={participants?.whatsapp} />
-                <InfoRow label="Asal Institusi" value={participants?.institution} />
+                <InfoRow label={events?.slug?.startsWith('open-bazaar') ? "Nama Usaha/Brand" : "Asal Institusi"} value={participants?.institution} />
+                {events?.slug?.startsWith('open-bazaar') && participants?.metadata && (
+                  <div className="pt-2 mt-2 border-t border-slate-100">
+                    <InfoRow label="Alamat" value={participants.metadata.address} />
+                    <InfoRow label="Instagram" value={participants.metadata.instagram} />
+                    <InfoRow label="Kategori Usaha" value={participants.metadata.category} />
+                    <InfoRow label="Produk" value={participants.metadata.products} />
+                  </div>
+                )}
+                {participants?.metadata?.fotoKtpUrl && (
+                  <InfoRow label="Foto KTP" value={<a href={participants.metadata.fotoKtpUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline flex items-center gap-1"><FileText className="w-4 h-4" /> Lihat KTP</a>} />
+                )}
+                {participants?.metadata?.fotoKtmUrl && (
+                  <InfoRow label="Foto KTM" value={<a href={participants.metadata.fotoKtmUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline flex items-center gap-1"><FileText className="w-4 h-4" /> Lihat KTM</a>} />
+                )}
               </SectionCard>
             )}
           </div>
