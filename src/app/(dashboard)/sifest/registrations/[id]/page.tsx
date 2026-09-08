@@ -66,24 +66,6 @@ export default async function RegistrationDetailPage({
     } catch(e) {}
   }
 
-  if (roleId !== "ROLE-001" && roleId !== "SUPER_ADMIN") {
-    return (
-      <div className="flex flex-col items-center justify-center py-20 px-4 text-center h-[70vh]">
-        <div className="w-24 h-24 mb-6 rounded-full bg-slate-100 flex items-center justify-center shadow-inner">
-          <span className="text-4xl">🍕</span>
-        </div>
-        <h2 className="text-2xl font-bold text-slate-800 mb-3">Fitur Terkunci</h2>
-        <p className="text-slate-600 max-w-md mb-6 leading-relaxed">
-          Maaf, fitur ini sedang dalam tahap pengembangan khusus dan sementara <strong>hanya bisa diakses oleh Super Admin</strong>.
-          <br /><br />
-          <span className="text-sm italic text-slate-500">&quot;Belikan admin martabak dulu hehe, sabar yaa masih di develop!&quot;</span>
-        </p>
-        <Link href="/dashboard" className="px-6 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors">
-          Kembali ke Dashboard
-        </Link>
-      </div>
-    );
-  }
 
   const registration = await getRegistrationById(resolvedParams.id);
 
@@ -184,7 +166,7 @@ export default async function RegistrationDetailPage({
             )}
           </div>
 
-          {participants?.metadata?.teamData && (
+          {participants?.metadata?.teamData && !events?.slug?.includes('futsal') && (
             <SectionCard title="Data Pelatih" icon={User}>
               <InfoRow label="Nama Pelatih" value={participants.metadata.teamData.coachName} />
               <InfoRow label="WA Pelatih" value={participants.metadata.teamData.coachWhatsapp} />
@@ -229,7 +211,7 @@ export default async function RegistrationDetailPage({
             </SectionCard>
           </div>
 
-          {participants?.metadata?.teamData && (
+          {participants?.metadata?.teamData && !events?.slug?.includes('futsal') && (
             <SectionCard title="Data Tim (E-Sport)" icon={Users}>
               <InfoRow label="Nama Tim" value={participants.metadata.teamData.teamName} />
               <InfoRow label="Kategori" value={participants.metadata.teamData.teamCategory} />
@@ -260,7 +242,7 @@ export default async function RegistrationDetailPage({
                   <tr>
                     <th className="px-4 py-2">No</th>
                     <th className="px-4 py-2">Nama</th>
-                    {participants?.metadata?.teamData ? (
+                    {participants?.metadata?.teamData && !events?.slug?.includes('futsal') ? (
                       <>
                         <th className="px-4 py-2">Nickname</th>
                         <th className="px-4 py-2">ID Game</th>
@@ -283,7 +265,7 @@ export default async function RegistrationDetailPage({
                     <tr key={idx} className="bg-white border-b hover:bg-slate-50">
                       <td className="px-4 py-2">{idx + 1} {idx === 0 && "(Kapten)"}</td>
                       <td className="px-4 py-2 font-medium text-slate-900">{p.name}</td>
-                      {participants?.metadata?.teamData ? (
+                      {participants?.metadata?.teamData && !events?.slug?.includes('futsal') ? (
                         <>
                           <td className="px-4 py-2">{p.nickname || "-"}</td>
                           <td className="px-4 py-2">{p.idGame || "-"}</td>
