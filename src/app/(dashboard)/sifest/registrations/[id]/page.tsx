@@ -1,5 +1,7 @@
 import { getRegistrationById } from '@/lib/sifest/registrations';
 import { notFound } from 'next/navigation';
+
+export const dynamic = 'force-dynamic';
 import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { ArrowLeft, User, Calendar, CreditCard, Clock, School, Users, FileText } from 'lucide-react';

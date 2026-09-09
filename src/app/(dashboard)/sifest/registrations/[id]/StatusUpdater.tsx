@@ -4,6 +4,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import clsx from "clsx";
 import Swal from "sweetalert2";
+import { useRouter } from "next/navigation";
 import { updateRegistrationStatus, updatePaymentStatus } from "./actions";
 
 interface StatusUpdaterProps {
@@ -17,21 +18,38 @@ interface StatusUpdaterProps {
 export function StatusUpdater({ currentStatus, type, id, registrationId, canEdit }: StatusUpdaterProps) {
   const [isUpdating, setIsUpdating] = useState(false);
   const [status, setStatus] = useState(currentStatus);
+  const router = useRouter();
 
-  const registrationStatuses = ["PENDING", "VERIFIED", "REJECTED", "CANCELLED"];
-  const paymentStatuses = ["PENDING", "WAITING_PAYMENT", "PAID", "FAILED", "EXPIRED"];
+  const registrationStatuses = [
+    { value: "PENDING", label: "Menunggu" },
+    { value: "VERIFIED", label: "Terverifikasi" },
+    { value: "REJECTED", label: "Ditolak" },
+    { value: "CANCELLED", label: "Dibatalkan" }
+  ];
+
+  const paymentStatuses = [
+    { value: "PENDING", label: "Menunggu" },
+    { value: "WAITING_PAYMENT", label: "Menunggu Pembayaran" },
+    { value: "PAID", label: "Lunas" },
+    { value: "FAILED", label: "Gagal" },
+    { value: "EXPIRED", label: "Kedaluwarsa" }
+  ];
 
   const options = type === "registration" ? registrationStatuses : paymentStatuses;
 
   const styles: Record<string, string> = {
-    PENDING: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+    PENDING: 'bg-amber-100 text-amber-800 border-amber-200',
     WAITING_PAYMENT: 'bg-blue-100 text-blue-800 border-blue-200',
-    PAID: 'bg-green-100 text-green-800 border-green-200',
+    PAID: 'bg-emerald-100 text-emerald-800 border-emerald-200',
     VERIFIED: 'bg-emerald-100 text-emerald-800 border-emerald-200',
-    REJECTED: 'bg-red-100 text-red-800 border-red-200',
+    REJECTED: 'bg-rose-100 text-rose-800 border-rose-200',
     CANCELLED: 'bg-slate-100 text-slate-800 border-slate-200',
     EXPIRED: 'bg-orange-100 text-orange-800 border-orange-200',
     FAILED: 'bg-red-100 text-red-800 border-red-200',
+  };
+
+  const getLabel = (val: string) => {
+    return options.find(o => o.value === val)?.label || val;
   };
 
   const handleChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -40,7 +58,7 @@ export function StatusUpdater({ currentStatus, type, id, registrationId, canEdit
 
     const resultConfirm = await Swal.fire({
       title: 'Ubah Status?',
-      text: `Apakah Anda yakin ingin mengubah status ${type === 'registration' ? 'pendaftaran' : 'pembayaran'} menjadi ${newStatus}?`,
+      text: `Apakah Anda yakin ingin mengubah status ${type === 'registration' ? 'pendaftaran' : 'pembayaran'} menjadi ${getLabel(newStatus)}?`,
       icon: 'question',
       showCancelButton: true,
       confirmButtonColor: '#10b981',
@@ -65,6 +83,7 @@ export function StatusUpdater({ currentStatus, type, id, registrationId, canEdit
       if (result.success) {
         setStatus(newStatus);
         toast.success(`Status ${type === 'registration' ? 'pendaftaran' : 'pembayaran'} berhasil diperbarui`);
+        router.refresh();
       } else {
         toast.error(result.error || "Gagal memperbarui status");
         e.target.value = status;
@@ -80,7 +99,7 @@ export function StatusUpdater({ currentStatus, type, id, registrationId, canEdit
   if (!canEdit) {
     return (
       <span className={clsx("px-3 py-1 inline-flex text-sm font-semibold rounded-full border", styles[status] || 'bg-slate-100 text-slate-800 border-slate-200')}>
-        {status}
+        {getLabel(status)}
       </span>
     );
   }
@@ -97,8 +116,8 @@ export function StatusUpdater({ currentStatus, type, id, registrationId, canEdit
         )}
       >
         {options.map(opt => (
-          <option key={opt} value={opt} className="bg-white text-slate-900 font-medium">
-            {opt}
+          <option key={opt.value} value={opt.value} className="bg-white text-slate-900 font-medium">
+            {opt.label}
           </option>
         ))}
       </select>
