@@ -400,7 +400,7 @@ export default function PubdokPage() {
         {/* SECTION: REQUEST */}
         <div>
           <h2 className="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2"><Send className="w-5 h-5 text-emerald-600"/> Request Desain</h2>
-        <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+        <div className="bg-white border border-slate-200 rounded-2xl overflow-x-auto shadow-sm">
           <table className="w-full text-left text-sm whitespace-nowrap">
             <thead className="bg-slate-50 text-slate-500 border-b border-slate-200">
               <tr>
