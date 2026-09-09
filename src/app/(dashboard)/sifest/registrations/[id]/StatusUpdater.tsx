@@ -37,7 +37,7 @@ const STATUS_STYLES: Record<string, { badge: string; dot: string }> = {
   FAILED:          { badge: "bg-red-100 text-red-800 border-red-300",          dot: "bg-red-500" },
 };
 
-const REGISTRATION_STATUSES = ["PENDING", "VERIFIED", "REJECTED", "CANCELLED"];
+const REGISTRATION_STATUSES = ["PENDING", "WAITING_PAYMENT", "PAID", "VERIFIED", "REJECTED", "CANCELLED"];
 const PAYMENT_STATUSES      = ["PENDING", "WAITING_PAYMENT", "PAID", "FAILED", "EXPIRED"];
 
 export function StatusUpdater({ currentStatus, type, id, registrationId, canEdit }: StatusUpdaterProps) {
@@ -58,8 +58,8 @@ export function StatusUpdater({ currentStatus, type, id, registrationId, canEdit
     if (!buttonRef.current) return;
     const rect = buttonRef.current.getBoundingClientRect();
     setDropdownPos({
-      top:   rect.bottom + window.scrollY + 6,
-      left:  rect.right  + window.scrollX,
+      top: rect.bottom + 6, // fixed position is viewport-relative
+      left: rect.right,
       width: Math.max(rect.width, 220),
     });
     setIsOpen(true);
@@ -122,14 +122,12 @@ export function StatusUpdater({ currentStatus, type, id, registrationId, canEdit
       <div className="fixed inset-0 z-[9998]" onClick={() => setIsOpen(false)} />
       {/* Dropdown — rendered at fixed position to escape any overflow clip */}
       <div
-        className="fixed z-[9999] bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden py-1 min-w-[220px]"
+        className="fixed z-[9999] bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden py-1"
         style={{
-          top:       dropdownPos.top,
-          right:     undefined,
-          left:      "auto",
-          transform: `translateX(calc(-100% + 0px))`,
-          // position relative to button right edge
-          marginLeft: dropdownPos.left - dropdownPos.width,
+          top: dropdownPos.top,
+          left: dropdownPos.left,
+          minWidth: `${dropdownPos.width}px`,
+          transform: 'translateX(-100%)', // Align right edge to button's right edge
         }}
       >
         <p className="px-3 py-1.5 text-[10px] font-semibold text-slate-400 uppercase tracking-wider border-b border-slate-100">
