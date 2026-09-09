@@ -4,137 +4,168 @@ import { useState } from "react";
 import { toast } from "sonner";
 import clsx from "clsx";
 import Swal from "sweetalert2";
-import { useRouter } from "next/navigation";
+import { updateRegistrationStatus, updatePaymentStatus } from "./actions";
 
 interface StatusUpdaterProps {
   currentStatus: string;
   type: "registration" | "payment";
-  id: string; // Registration ID or Transaction ID depending on type
-  registrationId: string; // Always need Registration ID for revalidation
+  id: string;
+  registrationId: string;
   canEdit: boolean;
 }
+
+// Status label dalam Bahasa Indonesia
+const STATUS_LABELS: Record<string, string> = {
+  PENDING: "Menunggu",
+  WAITING_PAYMENT: "Menunggu Pembayaran",
+  PAID: "Sudah Bayar",
+  VERIFIED: "Terverifikasi",
+  REJECTED: "Ditolak",
+  CANCELLED: "Dibatalkan",
+  EXPIRED: "Kedaluwarsa",
+  FAILED: "Gagal",
+};
+
+const STATUS_STYLES: Record<string, { badge: string; dot: string }> = {
+  PENDING:         { badge: "bg-yellow-100 text-yellow-800 border-yellow-300", dot: "bg-yellow-400" },
+  WAITING_PAYMENT: { badge: "bg-blue-100 text-blue-800 border-blue-300",       dot: "bg-blue-400" },
+  PAID:            { badge: "bg-green-100 text-green-800 border-green-300",    dot: "bg-green-500" },
+  VERIFIED:        { badge: "bg-emerald-100 text-emerald-800 border-emerald-300", dot: "bg-emerald-500" },
+  REJECTED:        { badge: "bg-red-100 text-red-800 border-red-300",          dot: "bg-red-500" },
+  CANCELLED:       { badge: "bg-slate-100 text-slate-700 border-slate-300",    dot: "bg-slate-400" },
+  EXPIRED:         { badge: "bg-orange-100 text-orange-800 border-orange-300", dot: "bg-orange-400" },
+  FAILED:          { badge: "bg-red-100 text-red-800 border-red-300",          dot: "bg-red-500" },
+};
+
+const REGISTRATION_STATUSES = ["PENDING", "VERIFIED", "REJECTED", "CANCELLED"];
+const PAYMENT_STATUSES = ["PENDING", "WAITING_PAYMENT", "PAID", "FAILED", "EXPIRED"];
 
 export function StatusUpdater({ currentStatus, type, id, registrationId, canEdit }: StatusUpdaterProps) {
   const [isUpdating, setIsUpdating] = useState(false);
   const [status, setStatus] = useState(currentStatus);
-  const router = useRouter();
+  const [isOpen, setIsOpen] = useState(false);
 
-  const registrationStatuses = [
-    { value: "PENDING", label: "Menunggu" },
-    { value: "CONFIRMED", label: "Dikonfirmasi" },
-    { value: "CANCELLED", label: "Dibatalkan" }
-  ];
+  const options = type === "registration" ? REGISTRATION_STATUSES : PAYMENT_STATUSES;
+  const style = STATUS_STYLES[status] || STATUS_STYLES.CANCELLED;
+  const label = STATUS_LABELS[status] || status;
 
-  const paymentStatuses = [
-    { value: "PENDING", label: "Menunggu" },
-    { value: "PAID", label: "Lunas" },
-    { value: "EXPIRED", label: "Kedaluwarsa" },
-    { value: "FAILED", label: "Gagal" },
-    { value: "CANCELLED", label: "Dibatalkan" }
-  ];
-
-  const options = type === "registration" ? registrationStatuses : paymentStatuses;
-
-  const styles: Record<string, string> = {
-    PENDING: 'bg-amber-100 text-amber-800 border-amber-200',
-    WAITING_PAYMENT: 'bg-blue-100 text-blue-800 border-blue-200',
-    PAID: 'bg-emerald-100 text-emerald-800 border-emerald-200',
-    VERIFIED: 'bg-emerald-100 text-emerald-800 border-emerald-200',
-    REJECTED: 'bg-rose-100 text-rose-800 border-rose-200',
-    CANCELLED: 'bg-slate-100 text-slate-800 border-slate-200',
-    EXPIRED: 'bg-orange-100 text-orange-800 border-orange-200',
-    FAILED: 'bg-red-100 text-red-800 border-red-200',
-  };
-
-  const getLabel = (val: string) => {
-    return options.find(o => o.value === val)?.label || val;
-  };
-
-  const handleChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newStatus = e.target.value;
+  const handleSelect = async (newStatus: string) => {
+    setIsOpen(false);
     if (newStatus === status) return;
 
+    const typeName = type === "registration" ? "pendaftaran" : "pembayaran";
+    const newLabel = STATUS_LABELS[newStatus] || newStatus;
+
     const resultConfirm = await Swal.fire({
-      title: 'Ubah Status?',
-      text: `Apakah Anda yakin ingin mengubah status ${type === 'registration' ? 'pendaftaran' : 'pembayaran'} menjadi ${getLabel(newStatus)}?`,
-      icon: 'question',
+      title: `Ubah Status ${type === "registration" ? "Pendaftaran" : "Pembayaran"}?`,
+      html: `Status akan diubah dari <b>${label}</b> menjadi <b style="color:#10b981">${newLabel}</b>.`,
+      icon: "question",
       showCancelButton: true,
-      confirmButtonColor: '#10b981',
-      cancelButtonText: 'Batal',
-      confirmButtonText: 'Ya, Ubah'
+      confirmButtonColor: "#10b981",
+      cancelButtonColor: "#94a3b8",
+      cancelButtonText: "Batal",
+      confirmButtonText: "Ya, Ubah Sekarang",
+      reverseButtons: true,
     });
 
-    if (!resultConfirm.isConfirmed) {
-      e.target.value = status;
-      return;
-    }
+    if (!resultConfirm.isConfirmed) return;
 
-    const selectEl = e.target;
     setIsUpdating(true);
     try {
-      const res = await fetch('/api/update-status', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type,
-          id,
-          newStatus,
-          registrationId
-        })
-      });
-
-      const result = await res.json();
+      let result;
+      if (type === "registration") {
+        result = await updateRegistrationStatus(id, newStatus);
+      } else {
+        result = await updatePaymentStatus(id, newStatus, registrationId);
+      }
 
       if (result.success) {
         setStatus(newStatus);
-        toast.success(`Status ${type === 'registration' ? 'pendaftaran' : 'pembayaran'} berhasil diperbarui`);
-        router.refresh();
+        toast.success(`Status ${typeName} berhasil diubah menjadi "${newLabel}"`);
       } else {
-        toast.error(result?.error || "Gagal memperbarui status. Cek konsol untuk detail.");
-        selectEl.value = status;
+        toast.error(result.error || `Gagal mengubah status ${typeName}`);
       }
-    } catch (err: any) {
-      console.error("StatusUpdater error:", err);
-      toast.error(`Terjadi kesalahan: ${err?.message || "Unknown error"}`);
-      selectEl.value = status;
+    } catch (err) {
+      toast.error("Terjadi kesalahan sistem. Silakan coba lagi.");
     } finally {
       setIsUpdating(false);
     }
   };
 
+  // Read-only badge untuk yang tidak punya akses
   if (!canEdit) {
     return (
-      <span className={clsx("px-3 py-1 inline-flex text-sm font-semibold rounded-full border", styles[status] || 'bg-slate-100 text-slate-800 border-slate-200')}>
-        {getLabel(status)}
+      <span className={clsx("inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full border", style.badge)}>
+        <span className={clsx("w-1.5 h-1.5 rounded-full flex-shrink-0", style.dot)} />
+        {label}
       </span>
     );
   }
 
+  // Dropdown interaktif
   return (
     <div className="relative inline-block">
-      <select
-        value={status}
-        onChange={handleChange}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
         disabled={isUpdating}
         className={clsx(
-          "appearance-none px-4 py-1 pr-8 text-sm font-semibold rounded-full border cursor-pointer hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all disabled:opacity-50",
-          styles[status] || 'bg-slate-100 text-slate-800 border-slate-200'
+          "inline-flex items-center gap-2 px-3 py-1 text-xs font-semibold rounded-full border cursor-pointer transition-all hover:shadow-md focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-slate-400 disabled:opacity-50 disabled:cursor-not-allowed",
+          style.badge
         )}
       >
-        {options.map(opt => (
-          <option key={opt.value} value={opt.value} className="bg-white text-slate-900 font-medium">
-            {opt.label}
-          </option>
-        ))}
-      </select>
-      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5">
-        <svg className={clsx("fill-current h-4 w-4", isUpdating ? "opacity-0" : "opacity-60")} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-          <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
-        </svg>
-        {isUpdating && (
-          <div className="absolute right-2.5 w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div>
+        {isUpdating ? (
+          <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin flex-shrink-0" />
+        ) : (
+          <span className={clsx("w-1.5 h-1.5 rounded-full flex-shrink-0", style.dot)} />
         )}
-      </div>
+        {isUpdating ? "Menyimpan..." : label}
+        {!isUpdating && (
+          <svg className="w-3 h-3 flex-shrink-0 opacity-60" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+          </svg>
+        )}
+      </button>
+
+      {isOpen && (
+        <>
+          {/* Backdrop */}
+          <div className="fixed inset-0 z-10" onClick={() => setIsOpen(false)} />
+          {/* Dropdown Panel */}
+          <div className="absolute right-0 mt-2 w-52 bg-white rounded-xl shadow-xl border border-slate-200 z-20 overflow-hidden py-1">
+            <p className="px-3 py-1.5 text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+              Pilih Status Baru
+            </p>
+            {options.map((opt) => {
+              const optStyle = STATUS_STYLES[opt] || STATUS_STYLES.CANCELLED;
+              const optLabel = STATUS_LABELS[opt] || opt;
+              const isActive = opt === status;
+              return (
+                <button
+                  key={opt}
+                  onClick={() => handleSelect(opt)}
+                  className={clsx(
+                    "w-full flex items-center gap-2.5 px-3 py-2 text-sm transition-colors text-left",
+                    isActive
+                      ? "bg-slate-50 cursor-default"
+                      : "hover:bg-slate-50 cursor-pointer"
+                  )}
+                >
+                  <span className={clsx("w-2 h-2 rounded-full flex-shrink-0", optStyle.dot)} />
+                  <span className={clsx("font-medium", isActive ? "text-slate-500" : "text-slate-800")}>
+                    {optLabel}
+                  </span>
+                  <span className="ml-auto text-[10px] text-slate-400 font-mono">{opt}</span>
+                  {isActive && (
+                    <svg className="w-4 h-4 text-emerald-500 flex-shrink-0 -ml-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </>
+      )}
     </div>
   );
 }
