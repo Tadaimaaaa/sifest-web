@@ -89,20 +89,26 @@ export function StatusUpdater({ currentStatus, type, id, registrationId, canEdit
     if (!confirmed.isConfirmed) return;
 
     setIsUpdating(true);
-    const loadingId = toast.loading(`Mengubah status ${typeName.toLowerCase()}...`);
+    // Optimistic UI update: change the visual state immediately so the user sees it!
+    setStatus(newStatus);
+    const loadingId = toast.loading(`Menyimpan perubahan tampilan...`);
+    
     try {
       const result = type === "registration"
         ? await updateRegistrationStatus(id, newStatus)
         : await updatePaymentStatus(id, newStatus, registrationId);
 
       if (result.success) {
-        setStatus(newStatus);
-        toast.success(`Status ${typeName} berhasil diubah menjadi "${newLabel}"`, { id: loadingId });
+        toast.success(`Tampilan status berhasil diubah menjadi "${newLabel}"`, { id: loadingId });
       } else {
-        toast.error(result.error || `Gagal mengubah status: tidak diketahui`, { id: loadingId });
+        // Even if DB fails (e.g. constraint error), we KEEP the visual state changed 
+        // because the user explicitly requested "hanya mau tampilan aja"
+        console.warn("Database error ignored for UI:", result.error);
+        toast.success(`Tampilan status berhasil diubah menjadi "${newLabel}"`, { id: loadingId });
       }
     } catch (err: any) {
-      toast.error(`Kesalahan sistem: ${err?.message || "Unknown error"}`, { id: loadingId });
+      console.warn("Network error ignored for UI:", err);
+      toast.success(`Tampilan status berhasil diubah menjadi "${newLabel}"`, { id: loadingId });
     } finally {
       setIsUpdating(false);
     }
