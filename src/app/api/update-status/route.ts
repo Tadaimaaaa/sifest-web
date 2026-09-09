@@ -1,6 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseServer } from '@/lib/sifest/supabase';
 
+export async function GET() {
+  try {
+    // Test: fetch one registration and try to update it to its own status
+    const { data: reg } = await supabaseServer
+      .from('registrations')
+      .select('id, status')
+      .limit(1)
+      .single();
+
+    if (!reg) return NextResponse.json({ ok: false, error: 'No registrations found' });
+
+    const { error: updateError, status: updateStatus } = await supabaseServer
+      .from('registrations')
+      .update({ status: reg.status })
+      .eq('id', reg.id);
+
+    return NextResponse.json({
+      ok: !updateError,
+      reg_id: reg.id,
+      reg_status: reg.status,
+      update_http_status: updateStatus,
+      update_error: updateError?.message || null
+    });
+  } catch (err: any) {
+    return NextResponse.json({ ok: false, error: err.message }, { status: 500 });
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
