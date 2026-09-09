@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import clsx from "clsx";
+import Swal from "sweetalert2";
 import { updateRegistrationStatus, updatePaymentStatus } from "./actions";
 
 interface StatusUpdaterProps {
@@ -37,7 +38,17 @@ export function StatusUpdater({ currentStatus, type, id, registrationId, canEdit
     const newStatus = e.target.value;
     if (newStatus === status) return;
 
-    if (!confirm(`Apakah Anda yakin ingin mengubah status ${type === 'registration' ? 'pendaftaran' : 'pembayaran'} menjadi ${newStatus}?`)) {
+    const resultConfirm = await Swal.fire({
+      title: 'Ubah Status?',
+      text: `Apakah Anda yakin ingin mengubah status ${type === 'registration' ? 'pendaftaran' : 'pembayaran'} menjadi ${newStatus}?`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#10b981',
+      cancelButtonText: 'Batal',
+      confirmButtonText: 'Ya, Ubah'
+    });
+
+    if (!resultConfirm.isConfirmed) {
       e.target.value = status;
       return;
     }
@@ -81,7 +92,7 @@ export function StatusUpdater({ currentStatus, type, id, registrationId, canEdit
         onChange={handleChange}
         disabled={isUpdating}
         className={clsx(
-          "appearance-none px-3 py-1 pr-8 text-sm font-semibold rounded-full border cursor-pointer focus:outline-none focus:ring-2 focus:ring-slate-400 transition-colors disabled:opacity-50",
+          "appearance-none px-4 py-1 pr-8 text-sm font-semibold rounded-full border cursor-pointer hover:shadow-md focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all disabled:opacity-50",
           styles[status] || 'bg-slate-100 text-slate-800 border-slate-200'
         )}
       >
@@ -91,12 +102,12 @@ export function StatusUpdater({ currentStatus, type, id, registrationId, canEdit
           </option>
         ))}
       </select>
-      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2">
-        <svg className={clsx("fill-current h-4 w-4", isUpdating ? "opacity-0" : "opacity-50")} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2.5">
+        <svg className={clsx("fill-current h-4 w-4", isUpdating ? "opacity-0" : "opacity-60")} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
           <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
         </svg>
         {isUpdating && (
-          <div className="absolute right-2.5 w-3.5 h-3.5 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div>
+          <div className="absolute right-2.5 w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin"></div>
         )}
       </div>
     </div>
