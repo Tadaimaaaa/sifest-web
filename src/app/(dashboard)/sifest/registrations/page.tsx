@@ -8,21 +8,35 @@ import { cookies } from 'next/headers';
 
 export const dynamic = 'force-dynamic';
 
+const STATUS_LABELS: Record<string, string> = {
+  PENDING: 'Menunggu',
+  WAITING_PAYMENT: 'Menunggu Bayar',
+  PAID: 'Sudah Bayar',
+  VERIFIED: 'Terverifikasi',
+  REJECTED: 'Ditolak',
+  CANCELLED: 'Dibatalkan',
+  EXPIRED: 'Kedaluwarsa',
+  FAILED: 'Gagal',
+};
+
+const STATUS_STYLES: Record<string, { badge: string; dot: string }> = {
+  PENDING:         { badge: 'bg-yellow-100 text-yellow-800 border border-yellow-200', dot: 'bg-yellow-400' },
+  WAITING_PAYMENT: { badge: 'bg-blue-100 text-blue-800 border border-blue-200',       dot: 'bg-blue-400' },
+  PAID:            { badge: 'bg-green-100 text-green-800 border border-green-200',    dot: 'bg-green-500' },
+  VERIFIED:        { badge: 'bg-emerald-100 text-emerald-800 border border-emerald-200', dot: 'bg-emerald-500' },
+  REJECTED:        { badge: 'bg-red-100 text-red-800 border border-red-200',          dot: 'bg-red-500' },
+  CANCELLED:       { badge: 'bg-slate-100 text-slate-700 border border-slate-200',    dot: 'bg-slate-400' },
+  EXPIRED:         { badge: 'bg-orange-100 text-orange-800 border border-orange-200', dot: 'bg-orange-400' },
+  FAILED:          { badge: 'bg-red-100 text-red-800 border border-red-200',          dot: 'bg-red-500' },
+};
+
 function StatusBadge({ status }: { status: string }) {
-  const styles: Record<string, string> = {
-    PENDING: 'bg-yellow-100 text-yellow-800',
-    WAITING_PAYMENT: 'bg-blue-100 text-blue-800',
-    PAID: 'bg-green-100 text-green-800',
-    VERIFIED: 'bg-emerald-100 text-emerald-800',
-    REJECTED: 'bg-red-100 text-red-800',
-    CANCELLED: 'bg-slate-100 text-slate-800',
-    EXPIRED: 'bg-orange-100 text-orange-800',
-    FAILED: 'bg-red-100 text-red-800',
-  };
-  
+  const style = STATUS_STYLES[status] || STATUS_STYLES.CANCELLED;
+  const label = STATUS_LABELS[status] || status;
   return (
-    <span className={clsx("px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full", styles[status] || 'bg-slate-100 text-slate-800')}>
-      {status}
+    <span className={clsx('inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-full', style.badge)}>
+      <span className={clsx('w-1.5 h-1.5 rounded-full flex-shrink-0', style.dot)} />
+      {label}
     </span>
   );
 }

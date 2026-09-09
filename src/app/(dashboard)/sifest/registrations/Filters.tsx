@@ -75,12 +75,11 @@ export function RegistrationsFilters({ events }: { events: Event[] }) {
           defaultValue={searchParams.get('status') || 'ALL'}
         >
           <option value="ALL">Semua Status</option>
-          <option value="PENDING">PENDING</option>
-          <option value="WAITING_PAYMENT">WAITING_PAYMENT</option>
-          <option value="PAID">PAID</option>
-          <option value="VERIFIED">VERIFIED</option>
-          <option value="REJECTED">REJECTED</option>
-          <option value="CANCELLED">CANCELLED</option>
+          <option value="PENDING">Menunggu</option>
+          <option value="WAITING_PAYMENT">Menunggu Pembayaran</option>
+          <option value="VERIFIED">Terverifikasi</option>
+          <option value="REJECTED">Ditolak</option>
+          <option value="CANCELLED">Dibatalkan</option>
         </select>
 
         <select
@@ -89,10 +88,10 @@ export function RegistrationsFilters({ events }: { events: Event[] }) {
           defaultValue={searchParams.get('payment_status') || 'ALL'}
         >
           <option value="ALL">Semua Pembayaran</option>
-          <option value="PENDING">PENDING</option>
-          <option value="PAID">PAID</option>
-          <option value="EXPIRED">EXPIRED</option>
-          <option value="FAILED">FAILED</option>
+          <option value="PENDING">Menunggu</option>
+          <option value="PAID">Sudah Bayar</option>
+          <option value="FAILED">Gagal</option>
+          <option value="EXPIRED">Kedaluwarsa</option>
         </select>
       </div>
     </div>

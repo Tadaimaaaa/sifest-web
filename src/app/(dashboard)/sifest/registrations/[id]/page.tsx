@@ -29,7 +29,7 @@ function canEditRegistrationStatus(roleId: string, eventSlug: string | undefined
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function SectionCard({ title, icon: Icon, children }: { title: string, icon: any, children: React.ReactNode }) {
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+    <div className="bg-white rounded-xl shadow-sm border border-slate-200">
       <div className="border-b border-slate-200 bg-slate-50 px-6 py-4 flex items-center gap-2">
         <Icon className="w-5 h-5 text-slate-500" />
         <h3 className="text-lg font-semibold text-slate-800">{title}</h3>
