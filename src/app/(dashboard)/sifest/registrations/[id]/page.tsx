@@ -198,7 +198,7 @@ export default async function RegistrationDetailPage({
                   canEdit={canEditPaymentStatus(roleId)} 
                 />
               } />
-              {transactions && (
+              {transactions && transactions.payment_method !== 'MANUAL' && (
                 <>
                   <InfoRow label="Metode Pembayaran" value={transactions.payment_method} />
                   <InfoRow label="Tipe Pembayaran" value={transactions.payment_type} />
@@ -207,24 +207,21 @@ export default async function RegistrationDetailPage({
                   <InfoRow label="Transaction ID" value={<span className="font-mono text-xs break-all">{transactions.id}</span>} />
                 </>
               )}
-              {!transactions && (
-                <div className="p-4 bg-slate-50 rounded-lg border border-slate-100 text-center space-y-4">
-                  <p className="text-sm text-slate-500">
-                    Menggunakan sistem pembayaran manual.
-                  </p>
-                  {registration.payment_proof_url ? (
-                    <div className="space-y-2">
-                      <p className="text-sm font-semibold text-slate-700">Bukti Pembayaran Diunggah:</p>
-                      <a href={registration.payment_proof_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-green-50 text-green-700 hover:bg-green-100 font-medium text-xs border border-green-200 transition-colors">
-                        <FileText className="w-3.5 h-3.5" />
-                        Bukti Valid (Lihat)
-                      </a>
-                    </div>
-                  ) : (
-                    <p className="text-sm text-amber-600 font-medium">Peserta belum mengunggah bukti pembayaran.</p>
-                  )}
-                </div>
-              )}
+              {/* Tampilkan bukti pembayaran manual selalu jika ada */}
+              <div className="p-4 bg-slate-50 rounded-lg border border-slate-100 text-center space-y-3">
+                <p className="text-sm text-slate-500">Menggunakan sistem pembayaran manual.</p>
+                {registration.payment_proof_url ? (
+                  <div className="space-y-2">
+                    <p className="text-sm font-semibold text-slate-700">Bukti Pembayaran Diunggah:</p>
+                    <a href={registration.payment_proof_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-green-50 text-green-700 hover:bg-green-100 font-medium text-xs border border-green-200 transition-colors">
+                      <FileText className="w-3.5 h-3.5" />
+                      Bukti Valid (Lihat)
+                    </a>
+                  </div>
+                ) : (
+                  <p className="text-sm text-amber-600 font-medium">Peserta belum mengunggah bukti pembayaran.</p>
+                )}
+              </div>
             </SectionCard>
           </div>
 
