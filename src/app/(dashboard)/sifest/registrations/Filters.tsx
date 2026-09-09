@@ -80,6 +80,7 @@ export function RegistrationsFilters({ events }: { events: Event[] }) {
           <option value="PAID" className="text-slate-900">Sudah Bayar</option>
           <option value="VERIFIED" className="text-slate-900">Terverifikasi</option>
           <option value="REJECTED" className="text-slate-900">Ditolak</option>
+          <option value="INCOMPLETE" className="text-slate-900">Lengkapi Berkas</option>
           <option value="CANCELLED" className="text-slate-900">Dibatalkan</option>
         </select>
 
