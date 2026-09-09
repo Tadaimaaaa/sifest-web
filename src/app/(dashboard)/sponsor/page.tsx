@@ -262,8 +262,10 @@ export default function SponsorPage() {
   };
 
   const filteredSponsors = sponsors.filter(spn => {
-    const matchesSearch = spn.nama_sponsor.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          spn.pic.toLowerCase().includes(searchTerm.toLowerCase());
+    const safeNama = (spn.nama_sponsor || "").toLowerCase();
+    const safePic = (spn.pic || "").toLowerCase();
+    const safeSearch = (searchTerm || "").toLowerCase();
+    const matchesSearch = safeNama.includes(safeSearch) || safePic.includes(safeSearch);
     const matchesStatus = statusFilter === "Semua" 
       ? true 
       : statusFilter === "Jadwal Follow Up"
