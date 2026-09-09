@@ -44,7 +44,7 @@ export default function SponsorPage() {
   // Format tanggal ISO dari Google Sheets ke format lokal
   const formatTanggal = (dateStr: string) => {
     if (!dateStr || dateStr === "-") return "-";
-    if (dateStr.includes("T") && (dateStr.endsWith("Z") || dateStr.includes("+"))) {
+    if (typeof dateStr === 'string' && dateStr.includes("T") && (dateStr.endsWith("Z") || dateStr.includes("+"))) {
       try {
         return new Date(dateStr).toLocaleDateString('id-ID', { 
           weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' 
@@ -269,7 +269,7 @@ export default function SponsorPage() {
     const matchesStatus = statusFilter === "Semua" 
       ? true 
       : statusFilter === "Jadwal Follow Up"
-        ? (spn.tgl_followup && spn.tgl_followup.trim() !== "" && spn.tgl_followup !== "-")
+        ? (spn.tgl_followup && typeof spn.tgl_followup === 'string' && spn.tgl_followup.trim() !== "" && spn.tgl_followup !== "-")
         : spn.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -424,12 +424,12 @@ export default function SponsorPage() {
                   <tr key={spn.id_sponsor} className="hover:bg-slate-50/80 transition-colors group">
                     <td className="px-6 py-4">
                       <p className="font-bold text-slate-800 text-[15px] mb-1">{spn.nama_sponsor}</p>
-                      {spn.pic !== "-" && (
+                      {spn.pic && typeof spn.pic === 'string' && spn.pic !== "-" && (
                         <div className="flex items-center gap-1.5 text-slate-500 mb-0.5">
                           <Tag className="w-3 h-3" /> <span className="text-xs">{spn.pic}</span>
                         </div>
                       )}
-                      {spn.kontak !== "-" && (
+                      {spn.kontak && typeof spn.kontak === 'string' && spn.kontak !== "-" && (
                         <div className="flex items-center gap-1.5 text-blue-600 mb-0.5">
                           <Phone className="w-3 h-3" /> 
                           <a href={spn.kontak.startsWith('http') ? spn.kontak : `tel:${spn.kontak}`} target="_blank" rel="noreferrer" className="text-xs hover:underline truncate max-w-[200px]">
@@ -437,7 +437,7 @@ export default function SponsorPage() {
                           </a>
                         </div>
                       )}
-                      {spn.email !== "-" && (
+                      {spn.email && typeof spn.email === 'string' && spn.email !== "-" && (
                         <div className="flex items-center gap-1.5 text-slate-500">
                           <Mail className="w-3 h-3" /> <span className="text-xs">{spn.email}</span>
                         </div>
