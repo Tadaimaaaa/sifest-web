@@ -6,23 +6,24 @@ import { ArrowLeft, User, Calendar, CreditCard, Clock, School, Users, FileText }
 import clsx from 'clsx';
 import PrintButton from './PrintButton';
 
-function StatusBadge({ status }: { status: string }) {
-  const styles: Record<string, string> = {
-    PENDING: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-    WAITING_PAYMENT: 'bg-blue-100 text-blue-800 border-blue-200',
-    PAID: 'bg-green-100 text-green-800 border-green-200',
-    VERIFIED: 'bg-emerald-100 text-emerald-800 border-emerald-200',
-    REJECTED: 'bg-red-100 text-red-800 border-red-200',
-    CANCELLED: 'bg-slate-100 text-slate-800 border-slate-200',
-    EXPIRED: 'bg-orange-100 text-orange-800 border-orange-200',
-    FAILED: 'bg-red-100 text-red-800 border-red-200',
-  };
+import { StatusUpdater } from './StatusUpdater';
+
+// RBAC Helper Functions
+function canEditPaymentStatus(roleId: string): boolean {
+  return ['ROLE-001', 'ROLE-005', 'ROLE-006'].includes(roleId);
+}
+
+function canEditRegistrationStatus(roleId: string, eventSlug: string | undefined): boolean {
+  if (['ROLE-001', 'ROLE-003'].includes(roleId)) return true;
+  if (!eventSlug) return false;
   
-  return (
-    <span className={clsx("px-3 py-1 inline-flex text-sm font-semibold rounded-full border", styles[status] || 'bg-slate-100 text-slate-800 border-slate-200')}>
-      {status}
-    </span>
-  );
+  if (eventSlug.includes('futsal') && roleId === 'ROLE-012') return true;
+  if ((eventSlug.includes('esport') || eventSlug === 'mlbb') && roleId === 'ROLE-013') return true;
+  if ((eventSlug.includes('mtq') || eventSlug.includes('keagamaan')) && roleId === 'ROLE-010') return true;
+  if (eventSlug.includes('seminar') && roleId === 'ROLE-011') return true;
+  if (eventSlug.includes('bazaar') && roleId === 'ROLE-014') return true;
+  
+  return false;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -116,7 +117,15 @@ export default async function RegistrationDetailPage({
             <SectionCard title="Data Registrasi" icon={Calendar}>
               <InfoRow label="Kode Pendaftaran" value={<span className="font-mono text-blue-600 bg-blue-50 px-2 py-1 rounded">{registration.registration_code}</span>} />
               <InfoRow label="Event" value={events?.name} />
-              <InfoRow label="Status Pendaftaran" value={<StatusBadge status={registration.status} />} />
+              <InfoRow label="Status Pendaftaran" value={
+                <StatusUpdater 
+                  currentStatus={registration.status} 
+                  type="registration" 
+                  id={registration.id} 
+                  registrationId={registration.id}
+                  canEdit={canEditRegistrationStatus(roleId, events?.slug)} 
+                />
+              } />
               <InfoRow label="Waktu Daftar" value={new Date(registration.created_at).toLocaleString('id-ID')} />
             </SectionCard>
 
@@ -180,7 +189,15 @@ export default async function RegistrationDetailPage({
         <div className="space-y-6">
           <div className="print:hidden">
             <SectionCard title="Informasi Pembayaran" icon={CreditCard}>
-              <InfoRow label="Status Pembayaran" value={<StatusBadge status={transactions?.status || 'PENDING'} />} />
+              <InfoRow label="Status Pembayaran" value={
+                <StatusUpdater 
+                  currentStatus={transactions?.status || 'PENDING'} 
+                  type="payment" 
+                  id={transactions?.id || ''} 
+                  registrationId={registration.id}
+                  canEdit={transactions ? canEditPaymentStatus(roleId) : false} 
+                />
+              } />
               {transactions && (
                 <>
                   <InfoRow label="Metode Pembayaran" value={transactions.payment_method} />
