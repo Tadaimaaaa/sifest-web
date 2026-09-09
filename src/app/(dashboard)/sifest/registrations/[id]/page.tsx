@@ -195,7 +195,7 @@ export default async function RegistrationDetailPage({
                   type="payment" 
                   id={transactions?.id || ''} 
                   registrationId={registration.id}
-                  canEdit={transactions ? canEditPaymentStatus(roleId) : false} 
+                  canEdit={canEditPaymentStatus(roleId)} 
                 />
               } />
               {transactions && (
