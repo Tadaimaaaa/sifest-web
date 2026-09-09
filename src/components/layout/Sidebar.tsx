@@ -13,7 +13,6 @@ const navItems = [
   { name: "Data Panitia", href: "/users", icon: Users },
   { name: "Data Keuangan", href: "/keuangan", icon: Wallet },
   { name: "Data Sponsor", href: "/sponsor", icon: Handshake },
-  { name: "Media Partner", href: "/sifest/media-partner", icon: ImageIcon },
   { name: "Surat Masuk & Keluar", href: "/surat", icon: Mail },
   { name: "Produk Sponsor", href: "/produk", icon: Package },
   { name: "Data Event", href: "/event", icon: Calendar },
