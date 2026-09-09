@@ -71,6 +71,7 @@ export function StatusUpdater({ currentStatus, type, id, registrationId, canEdit
       return;
     }
 
+    const selectEl = e.target;
     setIsUpdating(true);
     try {
       let result;
@@ -80,17 +81,18 @@ export function StatusUpdater({ currentStatus, type, id, registrationId, canEdit
         result = await updatePaymentStatus(id, newStatus, registrationId);
       }
 
-      if (result.success) {
+      if (result && result.success) {
         setStatus(newStatus);
         toast.success(`Status ${type === 'registration' ? 'pendaftaran' : 'pembayaran'} berhasil diperbarui`);
         router.refresh();
       } else {
-        toast.error(result.error || "Gagal memperbarui status");
-        e.target.value = status;
+        toast.error(result?.error || "Gagal memperbarui status. Cek konsol untuk detail.");
+        selectEl.value = status;
       }
-    } catch (err) {
-      toast.error("Terjadi kesalahan sistem");
-      e.target.value = status;
+    } catch (err: any) {
+      console.error("StatusUpdater error:", err);
+      toast.error(`Terjadi kesalahan: ${err?.message || "Unknown error"}`);
+      selectEl.value = status;
     } finally {
       setIsUpdating(false);
     }
