@@ -38,8 +38,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Parameter tidak lengkap' }, { status: 400 });
     }
 
-    const validRegStatuses = ['PENDING', 'VERIFIED', 'REJECTED', 'CANCELLED'];
-    const validPayStatuses = ['PENDING', 'WAITING_PAYMENT', 'PAID', 'FAILED', 'EXPIRED'];
+    const validRegStatuses = ['PENDING', 'CONFIRMED', 'CANCELLED'];
+    const validPayStatuses = ['PENDING', 'PAID', 'EXPIRED', 'FAILED', 'CANCELLED'];
 
     if (type === 'registration') {
       if (!validRegStatuses.includes(newStatus)) {

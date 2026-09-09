@@ -21,17 +21,16 @@ export function StatusUpdater({ currentStatus, type, id, registrationId, canEdit
 
   const registrationStatuses = [
     { value: "PENDING", label: "Menunggu" },
-    { value: "VERIFIED", label: "Terverifikasi" },
-    { value: "REJECTED", label: "Ditolak" },
+    { value: "CONFIRMED", label: "Dikonfirmasi" },
     { value: "CANCELLED", label: "Dibatalkan" }
   ];
 
   const paymentStatuses = [
     { value: "PENDING", label: "Menunggu" },
-    { value: "WAITING_PAYMENT", label: "Menunggu Pembayaran" },
     { value: "PAID", label: "Lunas" },
+    { value: "EXPIRED", label: "Kedaluwarsa" },
     { value: "FAILED", label: "Gagal" },
-    { value: "EXPIRED", label: "Kedaluwarsa" }
+    { value: "CANCELLED", label: "Dibatalkan" }
   ];
 
   const options = type === "registration" ? registrationStatuses : paymentStatuses;
