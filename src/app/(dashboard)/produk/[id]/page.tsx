@@ -209,6 +209,7 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
     const weeksMap: Record<string, { 
       totalPcs: number, 
       totalPendapatan: number, 
+      totalModal: number,
       dateForSort: number,
       varianTerjual: Record<string, { nama: string, jumlah: number }>
     }> = {};
@@ -231,10 +232,11 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
       const weekLabel = `${periodStart.toLocaleDateString('id-ID', {day: 'numeric', month: 'short'})} - ${periodEnd.toLocaleDateString('id-ID', {day: 'numeric', month: 'short'})}`;
       
       if (!weeksMap[weekLabel]) {
-        weeksMap[weekLabel] = { totalPcs: 0, totalPendapatan: 0, dateForSort: periodIndex, varianTerjual: {} };
+        weeksMap[weekLabel] = { totalPcs: 0, totalPendapatan: 0, totalModal: 0, dateForSort: periodIndex, varianTerjual: {} };
       }
       
       weeksMap[weekLabel].totalPendapatan += sale.total_harga || 0;
+      weeksMap[weekLabel].totalModal += sale.total_modal || 0;
       
       sale.items.forEach(item => {
         const qty = item.jumlah || 0;
@@ -848,6 +850,14 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
                       <div className="bg-white border border-slate-100 p-3 rounded-xl">
                         <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider mb-1">Pendapatan</p>
                         <p className="text-sm font-black text-emerald-600">{formatRupiah(week.totalPendapatan)}</p>
+                      </div>
+                      <div className="bg-white border border-slate-100 p-3 rounded-xl">
+                        <p className="text-[10px] text-orange-500 font-bold uppercase tracking-wider mb-1">Modal</p>
+                        <p className="text-sm font-black text-orange-500">{formatRupiah(week.totalModal)}</p>
+                      </div>
+                      <div className="bg-white border border-slate-100 p-3 rounded-xl">
+                        <p className="text-[10px] text-blue-600 font-bold uppercase tracking-wider mb-1">Laba Bersih</p>
+                        <p className="text-sm font-black text-blue-600">{formatRupiah(week.totalPendapatan - week.totalModal)}</p>
                       </div>
                     </div>
                     {Object.values(week.varianTerjual).length > 0 && (
