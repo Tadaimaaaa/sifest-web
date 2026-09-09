@@ -5,7 +5,6 @@ import { toast } from "sonner";
 import clsx from "clsx";
 import Swal from "sweetalert2";
 import { useRouter } from "next/navigation";
-import { updateRegistrationStatus, updatePaymentStatus } from "./actions";
 
 interface StatusUpdaterProps {
   currentStatus: string;
@@ -74,14 +73,20 @@ export function StatusUpdater({ currentStatus, type, id, registrationId, canEdit
     const selectEl = e.target;
     setIsUpdating(true);
     try {
-      let result;
-      if (type === "registration") {
-        result = await updateRegistrationStatus(id, newStatus);
-      } else {
-        result = await updatePaymentStatus(id, newStatus, registrationId);
-      }
+      const res = await fetch('/api/update-status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type,
+          id,
+          newStatus,
+          registrationId
+        })
+      });
 
-      if (result && result.success) {
+      const result = await res.json();
+
+      if (result.success) {
         setStatus(newStatus);
         toast.success(`Status ${type === 'registration' ? 'pendaftaran' : 'pembayaran'} berhasil diperbarui`);
         router.refresh();
