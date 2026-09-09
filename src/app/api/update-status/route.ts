@@ -60,26 +60,17 @@ export async function POST(request: NextRequest) {
 
       if (!id) {
         // Create new manual transaction
-        const { data: newTx, error: insertError } = await supabaseServer
-          .from('transactions')
-          .insert({
-            registration_id: registrationId,
-            amount: 0,
-            status: newStatus,
-            payment_method: 'MANUAL',
-            paid_at: newStatus === 'PAID' ? new Date().toISOString() : null
-          })
-          .select()
-          .single();
+        const { error: insertError } = await supabaseServer
+        .from('transactions')
+        .insert({
+          registration_id: registrationId,
+          amount: 0,
+          status: newStatus,
+          payment_method: 'MANUAL',
+          paid_at: newStatus === 'PAID' ? new Date().toISOString() : null
+        });
 
-        if (insertError) throw insertError;
-
-        const { error: regError } = await supabaseServer
-          .from('registrations')
-          .update({ transaction_id: newTx.id })
-          .eq('id', registrationId);
-
-        if (regError) throw regError;
+      if (insertError) throw insertError;
 
       } else {
         const { error } = await supabaseServer
