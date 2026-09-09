@@ -63,10 +63,10 @@ export async function POST(request: NextRequest) {
         const { data: newTx, error: insertError } = await supabaseServer
           .from('transactions')
           .insert({
+            registration_id: registrationId,
             amount: 0,
             status: newStatus,
             payment_method: 'MANUAL',
-            payment_type: 'MANUAL',
             paid_at: newStatus === 'PAID' ? new Date().toISOString() : null
           })
           .select()
