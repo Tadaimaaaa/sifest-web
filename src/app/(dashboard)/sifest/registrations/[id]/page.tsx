@@ -10,11 +10,11 @@ import { StatusUpdater } from './StatusUpdater';
 
 // RBAC Helper Functions
 function canEditPaymentStatus(roleId: string): boolean {
-  return ['ROLE-001', 'ROLE-005', 'ROLE-006'].includes(roleId);
+  return ['ROLE-001', 'SUPER_ADMIN', 'ROLE-005', 'ROLE-006'].includes(roleId);
 }
 
 function canEditRegistrationStatus(roleId: string, eventSlug: string | undefined): boolean {
-  if (['ROLE-001', 'ROLE-003'].includes(roleId)) return true;
+  if (['ROLE-001', 'SUPER_ADMIN', 'ROLE-003'].includes(roleId)) return true;
   if (!eventSlug) return false;
   
   if (eventSlug.includes('futsal') && roleId === 'ROLE-012') return true;
