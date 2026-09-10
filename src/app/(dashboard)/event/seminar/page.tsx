@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { 
-  Users, Calendar, Clock, MapPin, Search, Plus, Loader2, ArrowLeft, ArrowUpDown, ChevronDown, Edit3, X, Save
+  Users, Calendar, Clock, MapPin, Search, Plus, Loader2, ArrowLeft, ArrowUpDown, ChevronDown, Edit3, X, Save, Printer
 } from "lucide-react";
 import Link from "next/link";
 import Cookies from "js-cookie";
@@ -195,10 +195,14 @@ export default function SeminarDashboard() {
         
         {hasAccess && (
           <div className="flex items-center gap-3">
-            <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 transition-colors text-sm font-medium shadow-sm">
-              <Plus className="w-4 h-4" />
-              <span>Tambah Manual</span>
-            </button>
+            <Link 
+              href="/event/seminar/certificate" 
+              target="_blank"
+              className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors text-sm font-medium shadow-sm"
+            >
+              <Printer className="w-4 h-4" />
+              <span>Cetak E-Sertifikat</span>
+            </Link>
           </div>
         )}
       </div>
