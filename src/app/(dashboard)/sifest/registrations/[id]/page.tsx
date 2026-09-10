@@ -251,7 +251,7 @@ export default async function RegistrationDetailPage({
 
       {(participants?.metadata?.players?.length > 0) && (events?.slug?.startsWith('turnamen-futsal') || events?.slug?.startsWith('turnamen-esport')) && (
         <div className="mt-6">
-          <SectionCard title={`Daftar Pemain (${participants.metadata.players.length})`} icon={Users}>
+          <SectionCard title={`Daftar Pemain (${participants?.metadata?.players?.length || 0})`} icon={Users}>
             <div className="overflow-x-auto -mx-6 px-6">
               <table className="w-full text-sm text-left text-slate-500 whitespace-nowrap">
                 <thead className="text-xs text-slate-700 uppercase bg-slate-50">
@@ -277,7 +277,7 @@ export default async function RegistrationDetailPage({
                 </thead>
                 <tbody>
                   {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                  {participants.metadata.players.map((p: any, idx: number) => (
+                  {participants?.metadata?.players?.map((p: any, idx: number) => (
                     <tr key={idx} className="bg-white border-b hover:bg-slate-50">
                       <td className="px-4 py-2">{idx + 1} {idx === 0 && "(Kapten)"}</td>
                       <td className="px-4 py-2 font-medium text-slate-900">{p.name}</td>
