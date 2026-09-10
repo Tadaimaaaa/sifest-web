@@ -191,7 +191,7 @@ export default async function RegistrationDetailPage({
             <SectionCard title="Informasi Pembayaran" icon={CreditCard}>
               <InfoRow label="Status Pembayaran" value={
                 <StatusUpdater 
-                  currentStatus={transactions?.status || 'PENDING'} 
+                  currentStatus={transactions?.payment_method === 'FREE' ? 'FREE' : (transactions?.status || 'PENDING')} 
                   type="payment" 
                   id={transactions?.id || ''} 
                   registrationId={registration.id}

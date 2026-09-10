@@ -25,6 +25,7 @@ const STATUS_LABELS: Record<string, string> = {
   EXPIRED: "Kedaluwarsa",
   FAILED: "Gagal",
   INCOMPLETE: "Lengkapi Berkas",
+  FREE: "Free",
 };
 
 const STATUS_STYLES: Record<string, { badge: string; dot: string }> = {
@@ -37,6 +38,7 @@ const STATUS_STYLES: Record<string, { badge: string; dot: string }> = {
   EXPIRED:         { badge: "bg-orange-100 text-orange-800 border-orange-300", dot: "bg-orange-400" },
   FAILED:          { badge: "bg-red-100 text-red-800 border-red-300",          dot: "bg-red-500" },
   INCOMPLETE:      { badge: "bg-purple-100 text-purple-800 border-purple-300", dot: "bg-purple-500" },
+  FREE:            { badge: "bg-teal-100 text-teal-800 border-teal-300",       dot: "bg-teal-500" },
 };
 
 const REGISTRATION_STATUSES = ["VERIFIED", "REJECTED", "INCOMPLETE"];

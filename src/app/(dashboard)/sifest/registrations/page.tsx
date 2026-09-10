@@ -18,6 +18,7 @@ const STATUS_LABELS: Record<string, string> = {
   EXPIRED: 'Kedaluwarsa',
   FAILED: 'Gagal',
   INCOMPLETE: 'Lengkapi Berkas',
+  FREE: 'Free',
 };
 
 const STATUS_STYLES: Record<string, { badge: string; dot: string }> = {
@@ -30,6 +31,7 @@ const STATUS_STYLES: Record<string, { badge: string; dot: string }> = {
   EXPIRED:         { badge: 'bg-orange-100 text-orange-800 border border-orange-200', dot: 'bg-orange-400' },
   FAILED:          { badge: 'bg-red-100 text-red-800 border border-red-200',          dot: 'bg-red-500' },
   INCOMPLETE:      { badge: 'bg-purple-100 text-purple-800 border border-purple-200', dot: 'bg-purple-500' },
+  FREE:            { badge: 'bg-teal-100 text-teal-800 border border-teal-200',       dot: 'bg-teal-500' },
 };
 
 function StatusBadge({ status }: { status: string }) {
@@ -149,7 +151,7 @@ export default async function RegistrationsPage({
                     <StatusBadge status={reg.status} />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-                    <StatusBadge status={reg.transactions?.status || 'PENDING'} />
+                    <StatusBadge status={reg.transactions?.payment_method === 'FREE' ? 'FREE' : (reg.transactions?.status || 'PENDING')} />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <Link
