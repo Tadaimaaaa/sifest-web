@@ -208,20 +208,22 @@ export default async function RegistrationDetailPage({
                 </>
               )}
               {/* Tampilkan bukti pembayaran manual selalu jika ada */}
-              <div className="p-4 bg-slate-50 rounded-lg border border-slate-100 text-center space-y-3">
-                <p className="text-sm text-slate-500">Menggunakan sistem pembayaran manual.</p>
-                {registration.payment_proof_url ? (
-                  <div className="space-y-2">
-                    <p className="text-sm font-semibold text-slate-700">Bukti Pembayaran Diunggah:</p>
-                    <a href={registration.payment_proof_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-green-50 text-green-700 hover:bg-green-100 font-medium text-xs border border-green-200 transition-colors">
-                      <FileText className="w-3.5 h-3.5" />
-                      Bukti Valid (Lihat)
-                    </a>
-                  </div>
-                ) : (
-                  <p className="text-sm text-amber-600 font-medium">Peserta belum mengunggah bukti pembayaran.</p>
-                )}
-              </div>
+              {(!transactions || transactions.payment_method !== 'FREE') && (
+                <div className="p-4 bg-slate-50 rounded-lg border border-slate-100 text-center space-y-3">
+                  <p className="text-sm text-slate-500">Menggunakan sistem pembayaran manual.</p>
+                  {registration.payment_proof_url ? (
+                    <div className="space-y-2">
+                      <p className="text-sm font-semibold text-slate-700">Bukti Pembayaran Diunggah:</p>
+                      <a href={registration.payment_proof_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-green-50 text-green-700 hover:bg-green-100 font-medium text-xs border border-green-200 transition-colors">
+                        <FileText className="w-3.5 h-3.5" />
+                        Bukti Valid (Lihat)
+                      </a>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-amber-600 font-medium">Peserta belum mengunggah bukti pembayaran.</p>
+                  )}
+                </div>
+              )}
             </SectionCard>
           </div>
 
@@ -234,7 +236,7 @@ export default async function RegistrationDetailPage({
             </SectionCard>
           )}
 
-          {participants?.metadata?.schoolData && (
+          {participants?.metadata?.schoolData && events?.slug?.startsWith('turnamen-futsal') && (
             <SectionCard title="Data Sekolah (Futsal)" icon={School}>
               <InfoRow label="Nama Sekolah" value={participants.metadata.schoolData.schoolName} />
               <InfoRow label="Jenjang" value={participants.metadata.schoolData.level} />
@@ -247,7 +249,7 @@ export default async function RegistrationDetailPage({
         </div>
       </div>
 
-      {participants?.metadata?.players && (
+      {(participants?.metadata?.players?.length > 0) && (events?.slug?.startsWith('turnamen-futsal') || events?.slug?.startsWith('turnamen-esport')) && (
         <div className="mt-6">
           <SectionCard title={`Daftar Pemain (${participants.metadata.players.length})`} icon={Users}>
             <div className="overflow-x-auto -mx-6 px-6">
