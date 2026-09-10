@@ -126,6 +126,7 @@ export default function MtqDashboard() {
       const token = Cookies.get("session_token");
       const payload = {
         action: "saveEvent",
+        token,
         id_event: "mtq",
         nama_event: "MTQ",
         tanggal: formData.tanggal,
@@ -134,9 +135,12 @@ export default function MtqDashboard() {
         status: formData.status
       };
 
-      const res = await api.post(`?action=saveEvent`, payload);
-      const data = res.data;
+      const res = await fetch(`${SCRIPT_URL}?action=saveEvent`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
       
+      const data = await res.json();
       if (data.success) {
         toast.success("Informasi event berhasil diperbarui!");
         setEventData(formData);
