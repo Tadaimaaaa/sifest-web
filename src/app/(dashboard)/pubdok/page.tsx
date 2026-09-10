@@ -49,7 +49,7 @@ export default function PubdokPage() {
   
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterEvent, setFilterEvent] = useState("Semua");
+  const [filterKebutuhan, setFilterKebutuhan] = useState("Semua");
 
   const [isPlannerModalOpen, setIsPlannerModalOpen] = useState(false);
   const [isAssetModalOpen, setIsAssetModalOpen] = useState(false);
@@ -403,14 +403,14 @@ export default function PubdokPage() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
             <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2"><Send className="w-5 h-5 text-emerald-600"/> Request Desain</h2>
             <div className="flex items-center gap-2">
-              <span className="text-sm text-slate-500">Filter Event:</span>
+              <span className="text-sm text-slate-500">Filter Kebutuhan:</span>
               <select
-                value={filterEvent}
-                onChange={(e) => setFilterEvent(e.target.value)}
+                value={filterKebutuhan}
+                onChange={(e) => setFilterKebutuhan(e.target.value)}
                 className="text-sm border border-slate-200 rounded-xl px-3 py-2 bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none"
               >
-                {["Semua", ...Array.from(new Set(requests.map(r => r.event)))].map(ev => (
-                  <option key={ev} value={ev}>{ev}</option>
+                {["Semua", ...Array.from(new Set(requests.map(r => r.kebutuhan)))].map(k => (
+                  <option key={k} value={k}>{k}</option>
                 ))}
               </select>
             </div>
@@ -427,7 +427,7 @@ export default function PubdokPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {requests.filter(r => filterEvent === "Semua" || r.event === filterEvent).map(r => (
+              {requests.filter(r => filterKebutuhan === "Semua" || r.kebutuhan === filterKebutuhan).map(r => (
                 <tr key={r.id} className="hover:bg-slate-50/50">
                   <td className="px-6 py-4">
                     <p className="font-medium text-slate-800">{r.event}</p>
@@ -462,7 +462,7 @@ export default function PubdokPage() {
               ))}
             </tbody>
           </table>
-          {requests.filter(r => filterEvent === "Semua" || r.event === filterEvent).length === 0 && <div className="py-10 text-center text-slate-400">Belum ada request desain yang sesuai.</div>}
+          {requests.filter(r => filterKebutuhan === "Semua" || r.kebutuhan === filterKebutuhan).length === 0 && <div className="py-10 text-center text-slate-400">Belum ada request desain yang sesuai.</div>}
         </div>
         </div>
       </div>
