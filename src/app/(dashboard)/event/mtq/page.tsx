@@ -8,7 +8,7 @@ import Link from "next/link";
 import Cookies from "js-cookie";
 import { toast } from "sonner";
 import { getMtqRegistrations } from "./actions";
-import { SCRIPT_URL } from "@/lib/api";
+import { SCRIPT_URL, api } from "@/lib/api";
 
 // Types based on Apps Script Event output
 interface EventData {
@@ -126,7 +126,6 @@ export default function MtqDashboard() {
       const token = Cookies.get("session_token");
       const payload = {
         action: "saveEvent",
-        token,
         id_event: "mtq",
         nama_event: "MTQ",
         tanggal: formData.tanggal,
@@ -135,21 +134,20 @@ export default function MtqDashboard() {
         status: formData.status
       };
 
-      const res = await fetch(`${SCRIPT_URL}?action=saveEvent`, {
-        method: "POST",
-        body: JSON.stringify(payload),
-      });
+      const res = await api.post(`?action=saveEvent`, payload);
+      const data = res.data;
       
-      const data = await res.json();
       if (data.success) {
         toast.success("Informasi event berhasil diperbarui!");
         setEventData(formData);
         setIsEditing(false);
       } else {
         toast.error(data.message || "Gagal menyimpan data.");
+        setIsSaving(false);
       }
-    } catch (error) {
-      toast.error("Terjadi kesalahan saat menyimpan data.");
+    } catch (error: any) {
+      toast.error(`Terjadi kesalahan: ${error.message || "Gagal menyimpan"}`);
+      setIsSaving(false);
     } finally {
       setIsSaving(false);
     }
@@ -380,7 +378,7 @@ export default function MtqDashboard() {
                 <label className="block text-sm font-semibold text-slate-700 mb-1.5">Tanggal Pelaksanaan</label>
                 <input 
                   type="date" 
-                  value={formData.tanggal || ''}
+                  value={formData.tanggal ? new Date(formData.tanggal).toISOString().split('T')[0] : ''}
                   onChange={(e) => setFormData({...formData, tanggal: e.target.value})}
                   placeholder="Contoh: 27 Oktober 2026"
                   className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500"
