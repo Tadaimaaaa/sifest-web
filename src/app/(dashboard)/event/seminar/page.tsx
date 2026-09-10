@@ -52,7 +52,7 @@ export default function SeminarDashboard() {
   const [formData, setFormData] = useState<EventData>({
     id: "seminar",
     nama: "Talk Show",
-    kategori: "Seminar",
+    kategori: "Talk Show",
     deskripsi: "",
     tanggal: "",
     status: "Akan Datang",

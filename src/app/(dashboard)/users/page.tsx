@@ -129,7 +129,7 @@ export default function UsersPage() {
       case 'ROLE-010':
         return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-700">MTQ</span>;
       case 'ROLE-011':
-        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">Seminar</span>;
+        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">Talk Show</span>;
       case 'ROLE-012':
         return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">Futsal</span>;
       case 'ROLE-013':
@@ -204,7 +204,7 @@ export default function UsersPage() {
             <option value="ROLE-008">Humas</option>
             <option value="ROLE-009">Promosi</option>
             <option value="ROLE-010">MTQ</option>
-            <option value="ROLE-011">Seminar</option>
+            <option value="ROLE-011">Talk Show</option>
             <option value="ROLE-012">Futsal</option>
             <option value="ROLE-013">E-Sport</option>
             <option value="ROLE-014">Bazaar</option>
@@ -326,7 +326,7 @@ export default function UsersPage() {
                   <option value="ROLE-008">Humas</option>
                   <option value="ROLE-009">Promosi</option>
                   <option value="ROLE-010">Panitia MTQ</option>
-                  <option value="ROLE-011">Panitia Seminar</option>
+                  <option value="ROLE-011">Panitia Talk Show</option>
                   <option value="ROLE-012">Panitia Futsal</option>
                   <option value="ROLE-013">Panitia E-Sport</option>
                   <option value="ROLE-014">Panitia Bazaar</option>
