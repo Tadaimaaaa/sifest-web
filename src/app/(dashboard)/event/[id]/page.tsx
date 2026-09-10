@@ -11,7 +11,7 @@ import FullPageLoader from "@/components/FullPageLoader";
 
 const EVENTS_META = {
   "mtq": { name: "MTQ", color: "from-indigo-500 to-indigo-700", bg: "bg-indigo-50", text: "text-indigo-600", role: "ROLE-010" },
-  "seminar": { name: "Seminar Nasional", color: "from-blue-500 to-blue-700", bg: "bg-blue-50", text: "text-blue-600", role: "ROLE-011" },
+  "seminar": { name: "Talk Show", color: "from-blue-500 to-blue-700", bg: "bg-blue-50", text: "text-blue-600", role: "ROLE-011" },
   "futsal": { name: "Futsal Competition", color: "from-green-500 to-emerald-700", bg: "bg-emerald-50", text: "text-emerald-600", role: "ROLE-012" },
   "esport": { name: "E-Sport Competition", color: "from-rose-500 to-pink-700", bg: "bg-rose-50", text: "text-rose-600", role: "ROLE-013" },
   "bazaar": { name: "Bazaar", color: "from-amber-500 to-orange-700", bg: "bg-amber-50", text: "text-amber-600", role: "ROLE-014" }
