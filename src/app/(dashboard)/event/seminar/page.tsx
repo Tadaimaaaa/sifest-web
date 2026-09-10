@@ -243,7 +243,13 @@ export default function SeminarDashboard() {
               <Calendar className="w-5 h-5" />
             </div>
             <p className="text-sm text-slate-500 font-medium">Tanggal Pelaksanaan</p>
-            <h3 className="text-base font-bold text-slate-800 mt-1">{eventData?.tanggal || "26 Oktober 2026"}</h3>
+            <h3 className="text-base font-bold text-slate-800 mt-1">
+              {eventData?.tanggal ? (
+                isNaN(Date.parse(eventData.tanggal)) 
+                  ? eventData.tanggal 
+                  : new Intl.DateTimeFormat('id-ID', { day: '2-digit', month: 'long', year: 'numeric' }).format(new Date(eventData.tanggal))
+              ) : "26 Oktober 2026"}
+            </h3>
           </div>
           
           <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
