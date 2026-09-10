@@ -378,7 +378,7 @@ export default function SeminarDashboard() {
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-1.5">Tanggal Pelaksanaan</label>
                 <input 
-                  type="text" 
+                  type="date" 
                   value={formData.tanggal || ''}
                   onChange={(e) => setFormData({...formData, tanggal: e.target.value})}
                   placeholder="Contoh: 26 Oktober 2026"
