@@ -75,7 +75,15 @@ export default function MtqDashboard() {
   const fetchData = async () => {
     // 1. Fetch Event Info
     try {
-      const resEvent = await fetch(`${SCRIPT_URL}?action=getEvent&id_event=mtq`);
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 seconds timeout
+      
+      const resEvent = await fetch(`${SCRIPT_URL}?action=getEvent&id_event=mtq&t=${Date.now()}`, {
+        cache: 'no-store',
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+      
       const dataEvent = await resEvent.json();
       if (dataEvent.success && dataEvent.data) {
         setEventData(dataEvent.data);
@@ -138,6 +146,9 @@ export default function MtqDashboard() {
       const res = await fetch(`${SCRIPT_URL}?action=saveEvent`, {
         method: "POST",
         body: JSON.stringify(payload),
+        headers: {
+          "Content-Type": "text/plain;charset=utf-8",
+        }
       });
       
       const data = await res.json();
