@@ -157,9 +157,8 @@ export default async function RegistrationDetailPage({
                 )}
                 {events?.slug === 'lomba-keagamaan' && participants?.metadata && (
                   <div className="pt-2 mt-2 border-t border-slate-100">
-                    <InfoRow label="Kelas" value={participants.metadata.grade} />
-                    <InfoRow label="Nama Pembimbing" value={participants.metadata.mentorName} />
-                    <InfoRow label="WA Pembimbing" value={participants.metadata.mentorWhatsapp} />
+                    <InfoRow label="Nama Pembimbing" value={participants.metadata.guruPendamping || "-"} />
+                    <InfoRow label="WA Pembimbing" value={participants.metadata.nowaGuruPendamping || "-"} />
                   </div>
                 )}
                 {participants?.metadata?.fotoKtpUrl && (
