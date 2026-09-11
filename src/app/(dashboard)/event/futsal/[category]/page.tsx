@@ -20,6 +20,15 @@ type Team = {
   status_bayar: string;
 };
 
+type GroupMatch = {
+  id: string;
+  groupId: number; // 0=A, 1=B, 2=C, 3=D
+  team1Index: number;
+  team2Index: number;
+  score1: number | null;
+  score2: number | null;
+};
+
 type EventData = {
   id_event: string;
   nama_event: string;
@@ -60,6 +69,7 @@ export default function FutsalDashboard() {
   const [finals, setFinals] = useState<(Team | null)[]>(Array(2).fill(null));
   const [champion, setChampion] = useState<Team | null>(null);
   const [eliminatedTeams, setEliminatedTeams] = useState<Set<string>>(new Set());
+  const [groupMatches, setGroupMatches] = useState<GroupMatch[]>([]);
 
   const [isSpinning, setIsSpinning] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -160,9 +170,29 @@ export default function FutsalDashboard() {
           return newArr;
         });
       }, 50); // 50ms fast shuffle
+    } else {
+      // WHEN SPIN STOPS
+      if (category === 'sma' && shuffledTeams.some(t => t !== null)) {
+        const matches: GroupMatch[] = [];
+        for (let g = 0; g < 4; g++) {
+          const offset = g * 4;
+          const pairings = [[0,1], [2,3], [0,2], [1,3], [0,3], [1,2]];
+          pairings.forEach((pair, idx) => {
+            matches.push({
+              id: `g${g}-m${idx}`,
+              groupId: g,
+              team1Index: offset + pair[0],
+              team2Index: offset + pair[1],
+              score1: null,
+              score2: null,
+            });
+          });
+        }
+        setGroupMatches(matches);
+      }
     }
     return () => clearInterval(interval);
-  }, [isSpinning]);
+  }, [isSpinning, category, shuffledTeams]);
 
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -180,6 +210,7 @@ export default function FutsalDashboard() {
       setFinals(Array(2).fill(null));
       setChampion(null);
       setEliminatedTeams(new Set());
+      setGroupMatches([]);
     }
     setIsSpinning(!isSpinning);
   };
@@ -249,7 +280,101 @@ export default function FutsalDashboard() {
         next.add(team.id_tim);
         return next;
       });
-      toast.error(`${team.nama_tim} tereliminasi.`);
+    }
+  };
+
+  // Helper to calculate standings for a group
+  const calculateGroupStandings = (groupId: number) => {
+    const groupTeams = [
+      shuffledTeams[groupId * 4],
+      shuffledTeams[groupId * 4 + 1],
+      shuffledTeams[groupId * 4 + 2],
+      shuffledTeams[groupId * 4 + 3],
+    ];
+
+    const stats = groupTeams.map((team, localIdx) => {
+      const globalIdx = groupId * 4 + localIdx;
+      let M = 0, W = 0, D = 0, L = 0, GF = 0, GA = 0;
+
+      groupMatches.filter(m => m.groupId === groupId).forEach(m => {
+        if (m.score1 !== null && m.score2 !== null) {
+          if (m.team1Index === globalIdx) {
+            M++; GF += m.score1; GA += m.score2;
+            if (m.score1 > m.score2) W++;
+            else if (m.score1 === m.score2) D++;
+            else if (m.score1 < m.score2) L++;
+          } else if (m.team2Index === globalIdx) {
+            M++; GF += m.score2; GA += m.score1;
+            if (m.score2 > m.score1) W++;
+            else if (m.score2 === m.score1) D++;
+            else if (m.score2 < m.score1) L++;
+          }
+        }
+      });
+
+      return {
+        team,
+        originalIndex: globalIdx,
+        M, W, D, L, GF, GA,
+        GD: GF - GA,
+        PTS: W * 3 + D * 1
+      };
+    });
+
+    // Sort by PTS, then GD, then GF, then original random index as tie-breaker
+    return stats.sort((a, b) => {
+      if (b.PTS !== a.PTS) return b.PTS - a.PTS;
+      if (b.GD !== a.GD) return b.GD - a.GD;
+      if (b.GF !== a.GF) return b.GF - a.GF;
+      return 0; // retain original shuffle order if completely tied
+    });
+  };
+
+  const handleMatchClick = async (match: GroupMatch) => {
+    if (!hasAccess || isSpinning) return;
+    const t1 = shuffledTeams[match.team1Index];
+    const t2 = shuffledTeams[match.team2Index];
+    if (!t1 || !t2) return;
+
+    const { value: formValues } = await Swal.fire({
+      title: 'Input Skor Pertandingan',
+      html:
+        `<div class="flex justify-between items-center gap-4 mt-4">
+          <div class="flex flex-col items-center w-[45%]">
+            <div class="text-[11px] font-bold mb-2 text-center h-10 flex flex-col justify-end text-slate-700 leading-tight w-full truncate" title="${t1.nama_tim}">${t1.nama_tim}</div>
+            <input id="swal-score1" type="number" min="0" class="w-full text-center text-3xl font-black p-4 border-2 border-slate-200 rounded-xl bg-slate-50 focus:border-blue-500 focus:bg-white transition-all outline-none" placeholder="0" value="${match.score1 ?? ''}" />
+          </div>
+          <div class="font-black text-xl text-slate-300 w-[10%] text-center">VS</div>
+          <div class="flex flex-col items-center w-[45%]">
+            <div class="text-[11px] font-bold mb-2 text-center h-10 flex flex-col justify-end text-slate-700 leading-tight w-full truncate" title="${t2.nama_tim}">${t2.nama_tim}</div>
+            <input id="swal-score2" type="number" min="0" class="w-full text-center text-3xl font-black p-4 border-2 border-slate-200 rounded-xl bg-slate-50 focus:border-blue-500 focus:bg-white transition-all outline-none" placeholder="0" value="${match.score2 ?? ''}" />
+          </div>
+        </div>`,
+      focusConfirm: false,
+      showCancelButton: true,
+      confirmButtonText: 'Simpan Skor',
+      cancelButtonText: 'Batal',
+      confirmButtonColor: '#3b82f6',
+      preConfirm: () => {
+        const s1 = (document.getElementById('swal-score1') as HTMLInputElement).value;
+        const s2 = (document.getElementById('swal-score2') as HTMLInputElement).value;
+        if (s1 === '' && s2 === '') return null; // reset
+        if (s1 === '' || s2 === '') {
+          Swal.showValidationMessage('Kedua skor harus diisi atau sama-sama dikosongkan!');
+          return false;
+        }
+        return [parseInt(s1), parseInt(s2)];
+      }
+    });
+
+    if (formValues !== undefined) {
+      setGroupMatches(prev => prev.map(m => {
+        if (m.id === match.id) {
+          if (formValues === null) return { ...m, score1: null, score2: null };
+          return { ...m, score1: formValues[0], score2: formValues[1] };
+        }
+        return m;
+      }));
     }
   };
 
@@ -282,7 +407,7 @@ export default function FutsalDashboard() {
     const HEIGHT = 800; // h-[800px]
 
     const paths = [];
-    const roundsCount = [8, 4, 2, 1];
+    const roundsCount = category === 'sma' ? [4, 2, 1] : [8, 4, 2, 1];
     
     for (let r = 0; r < roundsCount.length - 1; r++) {
       const numMatches = roundsCount[r];
@@ -305,7 +430,8 @@ export default function FutsalDashboard() {
     }
     
     // Final to Champion line
-    const finalStartX = PADDING_X + 4 * COL_WIDTH + 3 * GAP;
+    const numCols = roundsCount.length;
+    const finalStartX = PADDING_X + numCols * COL_WIDTH + (numCols - 1) * GAP;
     const finalStartY = HEIGHT / 2;
     const finalEndX = finalStartX + GAP;
     paths.push(`M ${finalStartX} ${finalStartY} L ${finalEndX} ${finalStartY}`);
@@ -621,41 +747,98 @@ export default function FutsalDashboard() {
             </div>
           )}
 
+          {category === 'sma' && (
+            <div className="flex flex-col gap-8 mb-12 relative z-10 w-full max-w-[1400px] mx-auto bg-slate-50/50 p-6 rounded-3xl border border-slate-200">
+              <h2 className="text-xl font-black text-slate-800 flex items-center gap-2"><Trophy className="w-5 h-5 text-emerald-500" /> Fase Grup & Jadwal Pertandingan</h2>
+              
+              <div className="flex flex-col xl:flex-row gap-8 items-start">
+                 {/* LEFT: 2x2 Grid for Standings */}
+                 <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
+                    {[0, 1, 2, 3].map((gIndex) => {
+                      const groupName = ['Grup A', 'Grup B', 'Grup C', 'Grup D'][gIndex];
+                      const standings = calculateGroupStandings(gIndex);
+                      
+                      return (
+                        <div key={`group-${gIndex}`} className="w-full bg-white border border-slate-200 shadow-sm rounded-xl overflow-hidden flex flex-col text-xs relative">
+                          <div className="bg-slate-800 text-white font-bold text-center py-2 uppercase tracking-wider text-[11px] flex justify-between px-4">
+                            <span>{groupName}</span>
+                            <span className="text-slate-400 font-normal">M W D L GD PTS</span>
+                          </div>
+                          <div className="flex flex-col">
+                            {standings.map((stat, i) => {
+                              const isQualify = i < 2; // Top 2
+                              return (
+                                <div key={`g${gIndex}-team${i}`} className={`flex justify-between items-center px-3 py-2 border-b border-slate-100 ${isQualify ? 'bg-emerald-50 hover:bg-emerald-100' : 'bg-rose-50 hover:bg-rose-100'} transition-colors cursor-pointer`} onClick={() => handleTeamClick(stat.team, 1, gIndex * 2 + i)}>
+                                  <div className="flex items-center gap-2 overflow-hidden">
+                                    <span className={`w-5 h-5 flex items-center justify-center rounded-full text-[10px] font-bold ${isQualify ? 'bg-emerald-500 text-white' : 'bg-rose-200 text-rose-700'}`}>{i + 1}</span>
+                                    <span className={`font-semibold truncate max-w-[120px] ${isQualify ? 'text-emerald-900' : 'text-rose-900'}`}>{stat.team ? stat.team.nama_tim : 'TBD'}</span>
+                                  </div>
+                                  <div className={`flex gap-3 font-mono text-[10px] ${isQualify ? 'text-emerald-700' : 'text-rose-700'}`}>
+                                    <span className="w-3 text-center">{stat.M}</span>
+                                    <span className="w-3 text-center">{stat.W}</span>
+                                    <span className="w-3 text-center">{stat.D}</span>
+                                    <span className="w-3 text-center">{stat.L}</span>
+                                    <span className="w-4 text-center">{stat.GD > 0 ? `+${stat.GD}` : stat.GD}</span>
+                                    <span className="w-4 text-center font-bold">{stat.PTS}</span>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })}
+                 </div>
+                 
+                 {/* RIGHT: Match List */}
+                 <div className="w-full xl:w-96 shrink-0 bg-white border border-slate-200 rounded-xl shadow-sm flex flex-col h-[600px] overflow-hidden">
+                    <div className="bg-slate-100 border-b border-slate-200 p-4 shrink-0">
+                      <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2"><CalendarDays className="w-4 h-4 text-blue-500" /> Hasil & Jadwal</h3>
+                    </div>
+                    <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 bg-slate-50">
+                       {groupMatches.map(match => {
+                         const t1 = shuffledTeams[match.team1Index];
+                         const t2 = shuffledTeams[match.team2Index];
+                         const groupName = ['Grup A', 'Grup B', 'Grup C', 'Grup D'][match.groupId];
+                         const hasScore = match.score1 !== null && match.score2 !== null;
+                         
+                         return (
+                           <div key={match.id} onClick={() => handleMatchClick(match)} className="bg-white border border-slate-200 rounded-lg p-3 cursor-pointer hover:border-blue-400 hover:shadow-md transition-all group flex flex-col gap-2">
+                             <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider text-center">{groupName}</div>
+                             <div className="flex justify-between items-center gap-2">
+                               <div className="flex-1 text-right text-xs font-semibold text-slate-700 truncate" title={t1 ? t1.nama_tim : 'TBD'}>{t1 ? t1.nama_tim : 'TBD'}</div>
+                               <div className={`px-2 py-1 rounded text-xs font-black min-w-[50px] text-center ${hasScore ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-400'}`}>
+                                 {hasScore ? `${match.score1} - ${match.score2}` : 'VS'}
+                               </div>
+                               <div className="flex-1 text-left text-xs font-semibold text-slate-700 truncate" title={t2 ? t2.nama_tim : 'TBD'}>{t2 ? t2.nama_tim : 'TBD'}</div>
+                             </div>
+                           </div>
+                         );
+                       })}
+                       {groupMatches.length === 0 && (
+                         <div className="text-center text-xs text-slate-400 py-8">Belum ada jadwal. Silakan acak tim (spin) terlebih dahulu.</div>
+                       )}
+                    </div>
+                 </div>
+              </div>
+            </div>
+          )}
+
           <div className="relative z-10 min-w-[1000px] h-[800px] flex gap-12 px-4 py-4 mx-auto max-w-max">
             <SVGLines />
             
             {/* Round 1 / Fase Grup */}
-            <div className="flex flex-col justify-around w-56 shrink-0 relative z-10">
-              <div className="absolute -top-6 text-xs font-bold text-slate-400 uppercase tracking-widest text-center w-full">
-                {category === 'sma' ? 'Fase Grup' : 'Round of 16'}
+            {category !== 'sma' && (
+              <div className="flex flex-col justify-around w-56 shrink-0 relative z-10">
+                <div className="absolute -top-6 text-xs font-bold text-slate-400 uppercase tracking-widest text-center w-full">Round of 16</div>
+                {Array(8).fill(0).map((_, i) => (
+                  <div key={`r1-${i}`} className="w-full bg-white border border-slate-200 shadow-sm rounded-lg overflow-hidden flex flex-col text-xs relative">
+                    {renderTeamSlot(shuffledTeams[i * 2], 1, i * 2, true)}
+                    {renderTeamSlot(shuffledTeams[i * 2 + 1], 1, i * 2 + 1, false)}
+                  </div>
+                ))}
               </div>
-              
-              {category === 'sma' ? (
-                <div className="flex flex-col gap-5 justify-center h-full">
-                  {['Grup A', 'Grup B', 'Grup C', 'Grup D'].map((groupName, gIndex) => (
-                    <div key={`group-${gIndex}`} className="w-full bg-white border border-slate-200 shadow-sm rounded-lg overflow-hidden flex flex-col text-xs relative">
-                      <div className="bg-slate-100 text-slate-600 font-bold text-center py-1.5 uppercase tracking-wider text-[10px] border-b border-slate-200">
-                        {groupName}
-                      </div>
-                      {Array(4).fill(0).map((_, i) => (
-                        <div key={`g${gIndex}-slot${i}`}>
-                           {renderTeamSlot(shuffledTeams[gIndex * 4 + i], 1, gIndex * 4 + i, i !== 3)}
-                        </div>
-                      ))}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <>
-                  {Array(8).fill(0).map((_, i) => (
-                    <div key={`r1-${i}`} className="w-full bg-white border border-slate-200 shadow-sm rounded-lg overflow-hidden flex flex-col text-xs relative">
-                      {renderTeamSlot(shuffledTeams[i * 2], 1, i * 2, true)}
-                      {renderTeamSlot(shuffledTeams[i * 2 + 1], 1, i * 2 + 1, false)}
-                    </div>
-                  ))}
-                </>
-              )}
-            </div>
+            )}
 
             {/* Quarterfinals */}
             <div className="flex flex-col justify-around w-56 shrink-0 relative z-10">
