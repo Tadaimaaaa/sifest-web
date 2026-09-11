@@ -7,6 +7,7 @@ import { SCRIPT_URL } from "@/lib/api";
 import Cookies from "js-cookie";
 import { toast } from "sonner";
 import FullPageLoader from "@/components/FullPageLoader";
+import { getBazaarParticipants } from "./actions";
 
 type Tenant = {
   id_tenda: string;
@@ -66,6 +67,8 @@ export default function BazaarDashboard() {
     status_bayar: "Belum Bayar"
   });
 
+  const [bazaarParticipants, setBazaarParticipants] = useState<any[]>([]);
+
   useEffect(() => {
     const userDataStr = Cookies.get("user_data");
     if (userDataStr) {
@@ -80,10 +83,15 @@ export default function BazaarDashboard() {
     try {
       const token = Cookies.get("session_token");
       
-      const [resEvent, resTenants] = await Promise.all([
+      const [resEvent, resTenants, dbParticipants] = await Promise.all([
         fetch(`${SCRIPT_URL}?action=getEvent&id_event=bazaar&token=${token}`).catch(() => null),
-        fetch(`${SCRIPT_URL}?action=getBazaarTenants&token=${token}`).catch(() => null)
+        fetch(`${SCRIPT_URL}?action=getBazaarTenants&token=${token}`).catch(() => null),
+        getBazaarParticipants().catch(() => ({ success: false, data: [] }))
       ]);
+
+      if (dbParticipants && dbParticipants.success) {
+        setBazaarParticipants(dbParticipants.data);
+      }
       
       if (resEvent) {
         const dataEvent = await resEvent.json();
@@ -469,6 +477,34 @@ export default function BazaarDashboard() {
             </div>
             
             <form onSubmit={handleSaveTenant} className="p-6 space-y-5">
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5"><Store className="w-4 h-4 text-slate-400" /> Pilih dari Pendaftar SI FEST</label>
+                <select
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                  onChange={(e) => {
+                    const selected = bazaarParticipants.find(p => p.id === e.target.value);
+                    if (selected) {
+                      setFormDataTenant({
+                        ...formDataTenant,
+                        nama_brand: selected.nama_brand,
+                        pic: selected.pic,
+                        kontak: selected.kontak,
+                        kategori: selected.kategori || 'Makanan',
+                        status_bayar: 'Lunas' // Assuming they've paid if they are on this list, or you can check if they are VERIFIED/PAID
+                      });
+                    }
+                  }}
+                >
+                  <option value="">-- Pilih Pendaftar (Opsional) --</option>
+                  {bazaarParticipants.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.nama_brand} - {p.pic}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-[11px] text-slate-500 mt-1 ml-1">Memilih pendaftar akan otomatis mengisi kolom di bawah.</p>
+              </div>
+
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5"><Tag className="w-4 h-4 text-slate-400" /> Nama Brand / Toko</label>
                 <input 
