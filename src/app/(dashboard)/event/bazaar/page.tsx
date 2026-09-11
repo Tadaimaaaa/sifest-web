@@ -457,6 +457,54 @@ export default function BazaarDashboard() {
         </div>
       </div>
 
+      {/* SECTION 3: Tabel Data Penyewa */}
+      <div className="bg-white rounded-3xl p-6 md:p-8 border border-slate-100 shadow-sm relative overflow-hidden">
+        <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2 mb-6">
+          <Store className="w-5 h-5 text-amber-500" />
+          Daftar Penyewa Tenda
+        </h2>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse text-sm">
+            <thead>
+              <tr className="border-b-2 border-slate-100 text-slate-500">
+                <th className="pb-3 px-4 font-semibold">Tenda</th>
+                <th className="pb-3 px-4 font-semibold">Nama Usaha / Brand</th>
+                <th className="pb-3 px-4 font-semibold">Penanggung Jawab</th>
+                <th className="pb-3 px-4 font-semibold">Kategori</th>
+                <th className="pb-3 px-4 font-semibold">Status Bayar</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Object.values(tenants).length > 0 ? Object.values(tenants).sort((a, b) => a.id_tenda.localeCompare(b.id_tenda, undefined, { numeric: true })).map(tenant => (
+                <tr key={tenant.id_tenda} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
+                  <td className="py-4 px-4 font-bold text-amber-600">{tenant.id_tenda}</td>
+                  <td className="py-4 px-4 font-medium text-slate-800">{tenant.nama_brand}</td>
+                  <td className="py-4 px-4 text-slate-600">
+                    <div>{tenant.pic}</div>
+                    <div className="text-xs text-slate-400 mt-0.5">{tenant.kontak}</div>
+                  </td>
+                  <td className="py-4 px-4 text-slate-600">{tenant.kategori}</td>
+                  <td className="py-4 px-4">
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-md ${
+                      tenant.status_bayar === 'Lunas' ? 'bg-emerald-100 text-emerald-700' :
+                      tenant.status_bayar === 'DP' ? 'bg-blue-100 text-blue-700' :
+                      tenant.status_bayar === 'Kosong' ? 'bg-slate-100 text-slate-700' :
+                      'bg-rose-100 text-rose-700'
+                    }`}>
+                      {tenant.status_bayar}
+                    </span>
+                  </td>
+                </tr>
+              )) : (
+                <tr>
+                  <td colSpan={5} className="py-8 text-center text-slate-500">Belum ada penyewa tenda yang terdaftar.</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       {/* Modal Tenant */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
