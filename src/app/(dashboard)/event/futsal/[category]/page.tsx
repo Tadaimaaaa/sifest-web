@@ -32,7 +32,7 @@ type EventData = {
 export default function FutsalDashboard() {
   const params = useParams();
   const category = params.category as string;
-  const gameSlug = category === 'sma' ? 'turnamen-futsal-sma' : 'turnamen-futsal-umum';
+  const gameSlug = category === 'sma' ? 'turnamen-futsal-slta' : 'turnamen-futsal-umum';
 
   const [currentUserRole, setCurrentUserRole] = useState("ROLE-001");
   const [isLoading, setIsLoading] = useState(true);
