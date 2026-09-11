@@ -214,7 +214,17 @@ export default function FutsalDashboard() {
       // Lolos
       const nextSlotIndex = Math.floor(slotIndex / 2);
       if (round === 1) {
-        setQuarterFinals(prev => { const n = [...prev]; n[nextSlotIndex] = team; return n; });
+        if (category === 'sma') {
+          setQuarterFinals(prev => { 
+            const n = [...prev]; 
+            const emptyIdx = n.findIndex(t => t === null);
+            if (emptyIdx !== -1) n[emptyIdx] = team; 
+            else setTimeout(() => toast.error("Slot 8 Besar sudah penuh!"), 500);
+            return n; 
+          });
+        } else {
+          setQuarterFinals(prev => { const n = [...prev]; n[nextSlotIndex] = team; return n; });
+        }
       } else if (round === 2) {
         setSemiFinals(prev => { const n = [...prev]; n[nextSlotIndex] = team; return n; });
       } else if (round === 3) {
@@ -614,15 +624,37 @@ export default function FutsalDashboard() {
           <div className="relative z-10 min-w-[1000px] h-[800px] flex gap-12 px-4 py-4 mx-auto max-w-max">
             <SVGLines />
             
-            {/* Round 1 (16 Teams) */}
+            {/* Round 1 / Fase Grup */}
             <div className="flex flex-col justify-around w-56 shrink-0 relative z-10">
-              <div className="absolute -top-6 text-xs font-bold text-slate-400 uppercase tracking-widest text-center w-full">Round of 16</div>
-              {Array(8).fill(0).map((_, i) => (
-                <div key={`r1-${i}`} className="w-full bg-white border border-slate-200 shadow-sm rounded-lg overflow-hidden flex flex-col text-xs relative">
-                  {renderTeamSlot(shuffledTeams[i * 2], 1, i * 2, true)}
-                  {renderTeamSlot(shuffledTeams[i * 2 + 1], 1, i * 2 + 1, false)}
+              <div className="absolute -top-6 text-xs font-bold text-slate-400 uppercase tracking-widest text-center w-full">
+                {category === 'sma' ? 'Fase Grup' : 'Round of 16'}
+              </div>
+              
+              {category === 'sma' ? (
+                <div className="flex flex-col gap-5 justify-center h-full">
+                  {['Grup A', 'Grup B', 'Grup C', 'Grup D'].map((groupName, gIndex) => (
+                    <div key={`group-${gIndex}`} className="w-full bg-white border border-slate-200 shadow-sm rounded-lg overflow-hidden flex flex-col text-xs relative">
+                      <div className="bg-slate-100 text-slate-600 font-bold text-center py-1.5 uppercase tracking-wider text-[10px] border-b border-slate-200">
+                        {groupName}
+                      </div>
+                      {Array(4).fill(0).map((_, i) => (
+                        <div key={`g${gIndex}-slot${i}`}>
+                           {renderTeamSlot(shuffledTeams[gIndex * 4 + i], 1, gIndex * 4 + i, i !== 3)}
+                        </div>
+                      ))}
+                    </div>
+                  ))}
                 </div>
-              ))}
+              ) : (
+                <>
+                  {Array(8).fill(0).map((_, i) => (
+                    <div key={`r1-${i}`} className="w-full bg-white border border-slate-200 shadow-sm rounded-lg overflow-hidden flex flex-col text-xs relative">
+                      {renderTeamSlot(shuffledTeams[i * 2], 1, i * 2, true)}
+                      {renderTeamSlot(shuffledTeams[i * 2 + 1], 1, i * 2 + 1, false)}
+                    </div>
+                  ))}
+                </>
+              )}
             </div>
 
             {/* Quarterfinals */}
