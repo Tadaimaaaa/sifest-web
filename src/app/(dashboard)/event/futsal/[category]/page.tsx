@@ -751,35 +751,42 @@ export default function FutsalDashboard() {
             <div className="flex flex-col gap-8 mb-12 relative z-10 w-full max-w-[1400px] mx-auto bg-slate-50/50 p-6 rounded-3xl border border-slate-200">
               <h2 className="text-xl font-black text-slate-800 flex items-center gap-2"><Trophy className="w-5 h-5 text-emerald-500" /> Fase Grup & Jadwal Pertandingan</h2>
               
-              <div className="flex flex-col xl:flex-row gap-8 items-start">
-                 {/* LEFT: 2x2 Grid for Standings */}
-                 <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
+              <div className="flex flex-col gap-10 items-start w-full">
+                 {/* TOP: 2x2 Grid for Standings */}
+                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 w-full">
                     {[0, 1, 2, 3].map((gIndex) => {
                       const groupName = ['Grup A', 'Grup B', 'Grup C', 'Grup D'][gIndex];
                       const standings = calculateGroupStandings(gIndex);
                       
                       return (
                         <div key={`group-${gIndex}`} className="w-full bg-white border border-slate-200 shadow-sm rounded-xl overflow-hidden flex flex-col text-xs relative">
-                          <div className="bg-slate-800 text-white font-bold text-center py-2 uppercase tracking-wider text-[11px] flex justify-between px-4">
+                          <div className="bg-slate-800 text-white font-bold text-center py-3 uppercase tracking-wider text-[12px] flex justify-between px-5">
                             <span>{groupName}</span>
-                            <span className="text-slate-400 font-normal">M W D L GD PTS</span>
+                            <span className="text-slate-400 font-normal tracking-normal flex gap-5">
+                              <span className="w-4 text-center">M</span>
+                              <span className="w-4 text-center">W</span>
+                              <span className="w-4 text-center">D</span>
+                              <span className="w-4 text-center">L</span>
+                              <span className="w-6 text-center">GD</span>
+                              <span className="w-6 text-center">PTS</span>
+                            </span>
                           </div>
                           <div className="flex flex-col">
                             {standings.map((stat, i) => {
                               const isQualify = i < 2; // Top 2
                               return (
-                                <div key={`g${gIndex}-team${i}`} className={`flex justify-between items-center px-3 py-2 border-b border-slate-100 ${isQualify ? 'bg-emerald-50 hover:bg-emerald-100' : 'bg-rose-50 hover:bg-rose-100'} transition-colors cursor-pointer`} onClick={() => handleTeamClick(stat.team, 1, gIndex * 2 + i)}>
-                                  <div className="flex items-center gap-2 overflow-hidden">
-                                    <span className={`w-5 h-5 flex items-center justify-center rounded-full text-[10px] font-bold ${isQualify ? 'bg-emerald-500 text-white' : 'bg-rose-200 text-rose-700'}`}>{i + 1}</span>
-                                    <span className={`font-semibold truncate max-w-[120px] ${isQualify ? 'text-emerald-900' : 'text-rose-900'}`}>{stat.team ? stat.team.nama_tim : 'TBD'}</span>
+                                <div key={`g${gIndex}-team${i}`} className={`flex justify-between items-center px-4 py-3 border-b border-slate-100 ${isQualify ? 'bg-emerald-50 hover:bg-emerald-100' : 'bg-rose-50 hover:bg-rose-100'} transition-colors cursor-pointer`} onClick={() => handleTeamClick(stat.team, 1, gIndex * 2 + i)}>
+                                  <div className="flex items-center gap-3 overflow-hidden flex-1 mr-4">
+                                    <span className={`w-6 h-6 shrink-0 flex items-center justify-center rounded-full text-xs font-bold ${isQualify ? 'bg-emerald-500 text-white' : 'bg-rose-200 text-rose-700'}`}>{i + 1}</span>
+                                    <span className={`font-bold text-sm truncate ${isQualify ? 'text-emerald-900' : 'text-rose-900'}`}>{stat.team ? stat.team.nama_tim : 'TBD'}</span>
                                   </div>
-                                  <div className={`flex gap-3 font-mono text-[10px] ${isQualify ? 'text-emerald-700' : 'text-rose-700'}`}>
-                                    <span className="w-3 text-center">{stat.M}</span>
-                                    <span className="w-3 text-center">{stat.W}</span>
-                                    <span className="w-3 text-center">{stat.D}</span>
-                                    <span className="w-3 text-center">{stat.L}</span>
-                                    <span className="w-4 text-center">{stat.GD > 0 ? `+${stat.GD}` : stat.GD}</span>
-                                    <span className="w-4 text-center font-bold">{stat.PTS}</span>
+                                  <div className={`flex gap-5 font-mono text-[13px] shrink-0 ${isQualify ? 'text-emerald-700' : 'text-rose-700'}`}>
+                                    <span className="w-4 text-center">{stat.M}</span>
+                                    <span className="w-4 text-center">{stat.W}</span>
+                                    <span className="w-4 text-center">{stat.D}</span>
+                                    <span className="w-4 text-center">{stat.L}</span>
+                                    <span className="w-6 text-center">{stat.GD > 0 ? `+${stat.GD}` : stat.GD}</span>
+                                    <span className="w-6 text-center font-black">{stat.PTS}</span>
                                   </div>
                                 </div>
                               );
@@ -790,12 +797,12 @@ export default function FutsalDashboard() {
                     })}
                  </div>
                  
-                 {/* RIGHT: Match List */}
-                 <div className="w-full xl:w-96 shrink-0 bg-white border border-slate-200 rounded-xl shadow-sm flex flex-col h-[600px] overflow-hidden">
+                 {/* BOTTOM: Match List */}
+                 <div className="w-full bg-white border border-slate-200 rounded-xl shadow-sm flex flex-col overflow-hidden">
                     <div className="bg-slate-100 border-b border-slate-200 p-4 shrink-0">
-                      <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2"><CalendarDays className="w-4 h-4 text-blue-500" /> Hasil & Jadwal</h3>
+                      <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2"><CalendarDays className="w-4 h-4 text-blue-500" /> Hasil & Jadwal Pertandingan Fase Grup</h3>
                     </div>
-                    <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 bg-slate-50">
+                    <div className="p-6 bg-slate-50 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                        {groupMatches.map(match => {
                          const t1 = shuffledTeams[match.team1Index];
                          const t2 = shuffledTeams[match.team2Index];
@@ -803,20 +810,20 @@ export default function FutsalDashboard() {
                          const hasScore = match.score1 !== null && match.score2 !== null;
                          
                          return (
-                           <div key={match.id} onClick={() => handleMatchClick(match)} className="bg-white border border-slate-200 rounded-lg p-3 cursor-pointer hover:border-blue-400 hover:shadow-md transition-all group flex flex-col gap-2">
-                             <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider text-center">{groupName}</div>
-                             <div className="flex justify-between items-center gap-2">
-                               <div className="flex-1 text-right text-xs font-semibold text-slate-700 truncate" title={t1 ? t1.nama_tim : 'TBD'}>{t1 ? t1.nama_tim : 'TBD'}</div>
-                               <div className={`px-2 py-1 rounded text-xs font-black min-w-[50px] text-center ${hasScore ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-400'}`}>
+                           <div key={match.id} onClick={() => handleMatchClick(match)} className="bg-white border border-slate-200 rounded-xl p-4 cursor-pointer hover:border-blue-400 hover:shadow-md transition-all group flex flex-col gap-3">
+                             <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider text-center">{groupName}</div>
+                             <div className="flex justify-between items-center gap-3">
+                               <div className="flex-1 text-right text-sm font-bold text-slate-700 truncate" title={t1 ? t1.nama_tim : 'TBD'}>{t1 ? t1.nama_tim : 'TBD'}</div>
+                               <div className={`px-3 py-1.5 rounded-lg text-sm font-black min-w-[60px] text-center shrink-0 ${hasScore ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-400'}`}>
                                  {hasScore ? `${match.score1} - ${match.score2}` : 'VS'}
                                </div>
-                               <div className="flex-1 text-left text-xs font-semibold text-slate-700 truncate" title={t2 ? t2.nama_tim : 'TBD'}>{t2 ? t2.nama_tim : 'TBD'}</div>
+                               <div className="flex-1 text-left text-sm font-bold text-slate-700 truncate" title={t2 ? t2.nama_tim : 'TBD'}>{t2 ? t2.nama_tim : 'TBD'}</div>
                              </div>
                            </div>
                          );
                        })}
                        {groupMatches.length === 0 && (
-                         <div className="text-center text-xs text-slate-400 py-8">Belum ada jadwal. Silakan acak tim (spin) terlebih dahulu.</div>
+                         <div className="col-span-full text-center text-sm text-slate-400 py-12">Belum ada jadwal. Silakan acak tim (spin) terlebih dahulu.</div>
                        )}
                     </div>
                  </div>
