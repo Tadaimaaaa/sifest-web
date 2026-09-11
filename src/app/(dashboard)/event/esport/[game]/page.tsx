@@ -96,7 +96,19 @@ export default function EsportDashboard() {
         setTeams(dataTeams.data);
         
         // Initialize bracket with padded teams up to 16
-        const initialBracket: (Team | null)[] = [...dataTeams.data];
+        const expandedBracket: Team[] = [];
+        dataTeams.data.forEach((team: Team) => {
+          expandedBracket.push(team);
+          if (gameSlug === 'turnamen-esport-efootball' && team.slot_count === '2') {
+            expandedBracket.push({
+              ...team,
+              id_tim: team.id_tim + '-2',
+              nama_tim: team.in_game_slot2 || `${team.nama_tim} (Tim 2)`,
+            });
+          }
+        });
+
+        const initialBracket: (Team | null)[] = [...expandedBracket];
         while (initialBracket.length < 16) {
           initialBracket.push(null);
         }
