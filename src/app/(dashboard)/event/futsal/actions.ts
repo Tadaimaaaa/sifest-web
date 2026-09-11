@@ -3,18 +3,18 @@
 import { supabaseServer } from "@/lib/sifest/supabase";
 import { unstable_noStore as noStore } from 'next/cache';
 
-export async function getFutsalRegistrations() {
+export async function getFutsalRegistrations(gameSlug: string) {
   noStore();
   try {
     // 1. Get the Futsal event ID
     const { data: eventData } = await supabaseServer
       .from("events")
       .select("id")
-      .eq("slug", "turnamen-futsal")
+      .eq("slug", gameSlug)
       .single();
 
     if (!eventData) {
-      return { success: false, data: [], message: "Event turnamen-futsal tidak ditemukan di Supabase." };
+      return { success: false, data: [], message: `Event ${gameSlug} tidak ditemukan di Supabase.` };
     }
 
     // 2. Get registrations for this event
