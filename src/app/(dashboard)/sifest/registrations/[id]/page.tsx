@@ -175,7 +175,7 @@ export default async function RegistrationDetailPage({
             )}
           </div>
 
-          {participants?.metadata?.teamData && !events?.slug?.includes('futsal') && (
+          {participants?.metadata?.teamData && events?.slug === 'turnamen-esport-mlbb' && (
             <SectionCard title="Data Pelatih" icon={User}>
               <InfoRow label="Nama Pelatih" value={participants.metadata.teamData.coachName} />
               <InfoRow label="WA Pelatih" value={participants.metadata.teamData.coachWhatsapp} />
@@ -227,12 +227,21 @@ export default async function RegistrationDetailPage({
             </SectionCard>
           </div>
 
-          {participants?.metadata?.teamData && !events?.slug?.includes('futsal') && (
+          {participants?.metadata?.teamData && events?.slug === 'turnamen-esport-mlbb' && (
             <SectionCard title="Data Tim (E-Sport)" icon={Users}>
               <InfoRow label="Nama Tim" value={participants.metadata.teamData.teamName} />
               <InfoRow label="Kategori" value={participants.metadata.teamData.teamCategory} />
               <InfoRow label="Kapten" value={participants.metadata.teamData.captainName} />
               <InfoRow label="WA Kapten" value={participants.metadata.teamData.captainWhatsapp} />
+            </SectionCard>
+          )}
+
+          {events?.slug === 'turnamen-esport-efootball' && (
+            <SectionCard title="Detail E-Football" icon={Users}>
+              <InfoRow label="Jumlah Slot" value={participants?.metadata?.slotCount === '2' ? '2 Slot' : '1 Slot'} />
+              {participants?.metadata?.slotCount === '2' && (
+                <InfoRow label="Nama In-game Slot 2" value={participants?.metadata?.teamName2 || "-"} />
+              )}
             </SectionCard>
           )}
 
@@ -249,7 +258,7 @@ export default async function RegistrationDetailPage({
         </div>
       </div>
 
-      {(participants?.metadata?.players?.length > 0) && (events?.slug?.startsWith('turnamen-futsal') || events?.slug?.startsWith('turnamen-esport')) && (
+      {(participants?.metadata?.players?.length > 0) && (events?.slug?.startsWith('turnamen-futsal') || events?.slug === 'turnamen-esport-mlbb') && (
         <div className="mt-6">
           <SectionCard title={`Daftar Pemain (${participants?.metadata?.players?.length || 0})`} icon={Users}>
             <div className="overflow-x-auto -mx-6 px-6">
