@@ -67,3 +67,22 @@ export async function getFutsalData(gameSlug: string) {
     return { success: false, teams: [], bracket: null, message: error.message };
   }
 }
+
+export async function saveBracket(eventSlug: string, bracketData: any) {
+  try {
+    const { data, error } = await supabaseServer
+      .from('event_brackets')
+      .upsert(
+        { event_slug: eventSlug, bracket_data: bracketData, updated_at: new Date().toISOString() },
+        { onConflict: 'event_slug' }
+      )
+      .select()
+      .single();
+
+    if (error) throw error;
+    return { success: true, data };
+  } catch (error: any) {
+    console.error("Failed to save bracket:", error);
+    return { success: false, message: error.message };
+  }
+}
