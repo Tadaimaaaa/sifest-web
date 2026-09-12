@@ -7,7 +7,7 @@ import { SCRIPT_URL } from "@/lib/api";
 import Cookies from "js-cookie";
 import { toast } from "sonner";
 import FullPageLoader from "@/components/FullPageLoader";
-import { getFutsalRegistrations } from "../actions";
+import { getFutsalRegistrations, saveBracket, getBracket } from "../actions";
 import { Loader2, Shuffle, Maximize, Minimize } from "lucide-react";
 import { useParams } from "next/navigation";
 import Swal from "sweetalert2";
@@ -115,16 +115,33 @@ export default function FutsalDashboard() {
 
     // 2. Fetch Teams from Supabase (Official Web Registrations)
     try {
-      const dataTeams = await getFutsalRegistrations(gameSlug);
+      const [dataTeams, dataBracket] = await Promise.all([
+        getFutsalRegistrations(gameSlug),
+        getBracket(gameSlug)
+      ]);
+
       if (dataTeams.success && dataTeams.data) {
         setTeams(dataTeams.data);
         
-        // Initialize bracket with padded teams up to 16
-        const initialBracket: (Team | null)[] = [...dataTeams.data];
-        while (initialBracket.length < 16) {
-          initialBracket.push(null);
+        if (dataBracket.success && dataBracket.data) {
+          // Restore bracket state
+          const b = dataBracket.data;
+          setShuffledTeams(b.shuffledTeams || Array(16).fill(null));
+          setQuarterFinals(b.quarterFinals || Array(8).fill(null));
+          setSemiFinals(b.semiFinals || Array(4).fill(null));
+          setFinals(b.finals || Array(2).fill(null));
+          setChampion(b.champion || null);
+          setEliminatedTeams(new Set(b.eliminatedTeams || []));
+          setGroupMatches(b.groupMatches || []);
+          setKnockoutMatches(b.knockoutMatches || []);
+        } else {
+          // Initialize bracket with padded teams up to 16
+          const initialBracket: (Team | null)[] = [...dataTeams.data];
+          while (initialBracket.length < 16) {
+            initialBracket.push(null);
+          }
+          setShuffledTeams(initialBracket.slice(0, 16));
         }
-        setShuffledTeams(initialBracket.slice(0, 16));
         setErrorMessage(null);
       } else {
         setErrorMessage(dataTeams.message || "Gagal memuat data pendaftar futsal");
@@ -135,6 +152,33 @@ export default function FutsalDashboard() {
       console.error("Gagal mengambil data tim futsal:", error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleSaveBracket = async () => {
+    setIsSavingEvent(true);
+    const toastId = toast.loading("Menyimpan progres bagan...");
+    try {
+      const bracketData = {
+        shuffledTeams,
+        quarterFinals,
+        semiFinals,
+        finals,
+        champion,
+        eliminatedTeams: Array.from(eliminatedTeams),
+        groupMatches,
+        knockoutMatches
+      };
+      const res = await saveBracket(gameSlug, bracketData);
+      if (res.success) {
+        toast.success("Bagan berhasil disimpan!", { id: toastId });
+      } else {
+        toast.error(res.message || "Gagal menyimpan bagan", { id: toastId });
+      }
+    } catch (error: any) {
+      toast.error(`Terjadi kesalahan: ${error.message || error}`, { id: toastId });
+    } finally {
+      setIsSavingEvent(false);
     }
   };
 
@@ -943,26 +987,36 @@ export default function FutsalDashboard() {
           {isFullscreen && (
             <div className="absolute top-6 right-6 z-50 flex items-center gap-3">
               {hasAccess && (
-                <button 
-                  onClick={toggleSpin}
-                  className={`px-5 py-2.5 text-white text-sm font-bold rounded-xl shadow-sm transition-all flex items-center gap-2 ${
-                    isSpinning 
-                      ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-500/20 animate-pulse' 
-                      : 'bg-blue-600 hover:bg-blue-700 shadow-blue-500/20'
-                  }`}
-                >
-                  {isSpinning ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Stop Pengundian!
-                    </>
-                  ) : (
-                    <>
-                      <Shuffle className="w-4 h-4" />
-                      Acak Tim (Spin)
-                    </>
-                  )}
-                </button>
+                <>
+                  <button 
+                    onClick={handleSaveBracket}
+                    disabled={isSavingEvent || isSpinning}
+                    className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-xl shadow-sm transition-all flex items-center gap-2 disabled:opacity-50"
+                  >
+                    <Save className="w-4 h-4" />
+                    Simpan Progres Bagan
+                  </button>
+                  <button 
+                    onClick={toggleSpin}
+                    className={`px-5 py-2.5 text-white text-sm font-bold rounded-xl shadow-sm transition-all flex items-center gap-2 ${
+                      isSpinning 
+                        ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-500/20 animate-pulse' 
+                        : 'bg-blue-600 hover:bg-blue-700 shadow-blue-500/20'
+                    }`}
+                  >
+                    {isSpinning ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Stop Pengundian!
+                      </>
+                    ) : (
+                      <>
+                        <Shuffle className="w-4 h-4" />
+                        Acak Tim (Spin)
+                      </>
+                    )}
+                  </button>
+                </>
               )}
               <button 
                 onClick={toggleFullscreen}
@@ -973,6 +1027,60 @@ export default function FutsalDashboard() {
               </button>
             </div>
           )}
+
+          <div className="relative z-10 min-w-[1000px] h-[800px] flex gap-12 px-4 py-4 mx-auto max-w-max">
+            <SVGLines />
+            
+            {/* Header / Tombol Aksi Kiri Atas saat TIDAK FULLSCREEN */}
+            {!isFullscreen && (
+              <div className="absolute top-0 left-0 z-50 flex items-center gap-3">
+                {hasAccess && (
+                  <>
+                    <button 
+                      onClick={handleSaveBracket}
+                      disabled={isSavingEvent || isSpinning}
+                      className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-xl shadow-sm transition-all flex items-center gap-2 disabled:opacity-50"
+                    >
+                      <Save className="w-4 h-4" />
+                      Simpan Bagan
+                    </button>
+                    <button 
+                      onClick={toggleSpin}
+                      className={`px-5 py-2.5 text-white text-sm font-bold rounded-xl shadow-sm transition-all flex items-center gap-2 ${
+                        isSpinning 
+                          ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-500/20 animate-pulse' 
+                          : 'bg-blue-600 hover:bg-blue-700 shadow-blue-500/20'
+                      }`}
+                    >
+                      {isSpinning ? (
+                        <>
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Stop Pengundian
+                        </>
+                      ) : (
+                        <>
+                          <Shuffle className="w-4 h-4" />
+                          Acak Tim Baru
+                        </>
+                      )}
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+
+            {/* Tombol Fullscreen Kanan Atas saat TIDAK FULLSCREEN */}
+            {!isFullscreen && (
+              <div className="absolute top-0 right-0 z-50 flex items-center gap-3">
+                <button 
+                  onClick={toggleFullscreen}
+                  className="p-2.5 text-slate-600 hover:bg-slate-200 bg-slate-100 rounded-xl transition-colors shadow-sm"
+                  title="Layar Penuh"
+                >
+                  <Maximize className="w-4 h-4" />
+                </button>
+              </div>
+            )}
 
           {category === 'sma' && (
             <div className="flex flex-col gap-8 mb-12 relative z-10 w-full max-w-[1400px] mx-auto bg-slate-50/50 p-6 rounded-3xl border border-slate-200">

@@ -54,3 +54,43 @@ export async function getFutsalRegistrations(gameSlug: string) {
     return { success: false, data: [], message: error.message };
   }
 }
+
+export async function saveBracket(eventSlug: string, bracketData: any) {
+  try {
+    const { data, error } = await supabaseServer
+      .from('event_brackets')
+      .upsert(
+        { event_slug: eventSlug, bracket_data: bracketData, updated_at: new Date().toISOString() },
+        { onConflict: 'event_slug' }
+      )
+      .select()
+      .single();
+
+    if (error) throw error;
+    return { success: true, data };
+  } catch (error: any) {
+    console.error("Failed to save bracket:", error);
+    return { success: false, message: error.message };
+  }
+}
+
+export async function getBracket(eventSlug: string) {
+  noStore();
+  try {
+    const { data, error } = await supabaseServer
+      .from('event_brackets')
+      .select('bracket_data')
+      .eq('event_slug', eventSlug)
+      .single();
+
+    if (error && error.code !== 'PGRST116') {
+      // PGRST116 = JSON object requested, multiple (or no) rows returned.
+      throw error;
+    }
+    
+    return { success: true, data: data?.bracket_data || null };
+  } catch (error: any) {
+    console.error("Failed to fetch bracket:", error);
+    return { success: false, message: error.message };
+  }
+}
