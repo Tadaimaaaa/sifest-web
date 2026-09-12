@@ -1028,59 +1028,6 @@ export default function FutsalDashboard() {
             </div>
           )}
 
-          <div className="relative z-10 min-w-[1000px] h-[800px] flex gap-12 px-4 py-4 mx-auto max-w-max">
-            <SVGLines />
-            
-            {/* Header / Tombol Aksi Kiri Atas saat TIDAK FULLSCREEN */}
-            {!isFullscreen && (
-              <div className="absolute top-0 left-0 z-50 flex items-center gap-3">
-                {hasAccess && (
-                  <>
-                    <button 
-                      onClick={handleSaveBracket}
-                      disabled={isSavingEvent || isSpinning}
-                      className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-xl shadow-sm transition-all flex items-center gap-2 disabled:opacity-50"
-                    >
-                      <Save className="w-4 h-4" />
-                      Simpan Bagan
-                    </button>
-                    <button 
-                      onClick={toggleSpin}
-                      className={`px-5 py-2.5 text-white text-sm font-bold rounded-xl shadow-sm transition-all flex items-center gap-2 ${
-                        isSpinning 
-                          ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-500/20 animate-pulse' 
-                          : 'bg-blue-600 hover:bg-blue-700 shadow-blue-500/20'
-                      }`}
-                    >
-                      {isSpinning ? (
-                        <>
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                          Stop Pengundian
-                        </>
-                      ) : (
-                        <>
-                          <Shuffle className="w-4 h-4" />
-                          Acak Tim Baru
-                        </>
-                      )}
-                    </button>
-                  </>
-                )}
-              </div>
-            )}
-
-            {/* Tombol Fullscreen Kanan Atas saat TIDAK FULLSCREEN */}
-            {!isFullscreen && (
-              <div className="absolute top-0 right-0 z-50 flex items-center gap-3">
-                <button 
-                  onClick={toggleFullscreen}
-                  className="p-2.5 text-slate-600 hover:bg-slate-200 bg-slate-100 rounded-xl transition-colors shadow-sm"
-                  title="Layar Penuh"
-                >
-                  <Maximize className="w-4 h-4" />
-                </button>
-              </div>
-            )}
 
           {category === 'sma' && (
             <div className="flex flex-col gap-8 mb-12 relative z-10 w-full max-w-[1400px] mx-auto bg-slate-50/50 p-6 rounded-3xl border border-slate-200">
