@@ -240,6 +240,12 @@ export default function FutsalDashboard() {
   const handleTeamClick = async (team: Team | null, round: number, slotIndex: number) => {
     if (!team || !hasAccess || isSpinning) return;
 
+    // Block interaction for Rank 3 and 4 in Group Stage
+    if (category === 'sma' && round === 1 && slotIndex % 4 > 1) {
+      toast.error("Hanya Peringkat 1 dan 2 yang bisa melaju ke babak Knockout!");
+      return;
+    }
+
     const result = await Swal.fire({
       title: `${team.nama_tim}`,
       text: "Tentukan status tim ini:",
@@ -258,13 +264,29 @@ export default function FutsalDashboard() {
       const nextSlotIndex = Math.floor(slotIndex / 2);
       if (round === 1) {
         if (category === 'sma') {
-          setQuarterFinals(prev => { 
-            const n = [...prev]; 
-            const emptyIdx = n.findIndex(t => t === null);
-            if (emptyIdx !== -1) n[emptyIdx] = team; 
-            else setTimeout(() => toast.error("Slot 8 Besar sudah penuh!"), 500);
-            return n; 
-          });
+          // Crossover Rule
+          // slotIndex is (gIndex * 4) + i
+          const gIndex = Math.floor(slotIndex / 4);
+          const rank = slotIndex % 4;
+          
+          const crossoverMap: Record<string, number> = {
+            "0-0": 0, // Juara A -> QF M1 T1
+            "1-1": 1, // Runner-up B -> QF M1 T2
+            "2-0": 2, // Juara C -> QF M2 T1
+            "3-1": 3, // Runner-up D -> QF M2 T2
+            "1-0": 4, // Juara B -> QF M3 T1
+            "0-1": 5, // Runner-up A -> QF M3 T2
+            "3-0": 6, // Juara D -> QF M4 T1
+            "2-1": 7, // Runner-up C -> QF M4 T2
+          };
+          const mappedSlot = crossoverMap[`${gIndex}-${rank}`];
+          if (mappedSlot !== undefined) {
+             setQuarterFinals(prev => { 
+               const n = [...prev]; 
+               n[mappedSlot] = team;
+               return n; 
+             });
+          }
         } else {
           setQuarterFinals(prev => { const n = [...prev]; n[nextSlotIndex] = team; return n; });
         }
@@ -980,7 +1002,7 @@ export default function FutsalDashboard() {
                             {standings.map((stat, i) => {
                               const isQualify = i < 2; // Top 2
                               return (
-                                <div key={`g${gIndex}-team${i}`} className={`flex justify-between items-center px-4 py-3 border-b border-slate-100 ${isQualify ? 'bg-emerald-50 hover:bg-emerald-100' : 'bg-rose-50 hover:bg-rose-100'} transition-colors cursor-pointer`} onClick={() => handleTeamClick(stat.team, 1, gIndex * 2 + i)}>
+                                <div key={`g${gIndex}-team${i}`} className={`flex justify-between items-center px-4 py-3 border-b border-slate-100 ${isQualify ? 'bg-emerald-50 hover:bg-emerald-100' : 'bg-rose-50'} transition-colors ${isQualify ? 'cursor-pointer' : 'cursor-not-allowed'}`} onClick={() => handleTeamClick(stat.team, 1, gIndex * 4 + i)}>
                                   <div className="flex items-center gap-3 overflow-hidden flex-1 mr-4">
                                     <span className={`w-6 h-6 shrink-0 flex items-center justify-center rounded-full text-xs font-bold ${isQualify ? 'bg-emerald-500 text-white' : 'bg-rose-200 text-rose-700'}`}>{i + 1}</span>
                                     <span className={`font-bold text-sm truncate ${isQualify ? 'text-emerald-900' : 'text-rose-900'}`}>{stat.team ? stat.team.nama_tim : 'TBD'}</span>
