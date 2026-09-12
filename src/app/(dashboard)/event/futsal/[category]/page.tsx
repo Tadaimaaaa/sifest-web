@@ -7,7 +7,7 @@ import { SCRIPT_URL } from "@/lib/api";
 import Cookies from "js-cookie";
 import { toast } from "sonner";
 import FullPageLoader from "@/components/FullPageLoader";
-import { getFutsalRegistrations, saveBracket, getBracket } from "../actions";
+import { getFutsalData, saveBracket } from "../actions";
 import { Loader2, Shuffle, Maximize, Minimize } from "lucide-react";
 import { useParams } from "next/navigation";
 import Swal from "sweetalert2";
@@ -113,19 +113,16 @@ export default function FutsalDashboard() {
       console.error("Gagal mengambil info event futsal:", error);
     }
 
-    // 2. Fetch Teams from Supabase (Official Web Registrations)
+    // 2. Fetch Teams and Bracket from Supabase
     try {
-      const [dataTeams, dataBracket] = await Promise.all([
-        getFutsalRegistrations(gameSlug),
-        getBracket(gameSlug)
-      ]);
+      const dataResult = await getFutsalData(gameSlug);
 
-      if (dataTeams.success && dataTeams.data) {
-        setTeams(dataTeams.data);
+      if (dataResult.success && dataResult.teams) {
+        setTeams(dataResult.teams);
         
-        if (dataBracket.success && dataBracket.data) {
+        if (dataResult.bracket) {
           // Restore bracket state
-          const b = dataBracket.data;
+          const b = dataResult.bracket;
           setShuffledTeams(b.shuffledTeams || Array(16).fill(null));
           setQuarterFinals(b.quarterFinals || Array(8).fill(null));
           setSemiFinals(b.semiFinals || Array(4).fill(null));
@@ -136,7 +133,7 @@ export default function FutsalDashboard() {
           setKnockoutMatches(b.knockoutMatches || []);
         } else {
           // Initialize bracket with padded teams up to 16
-          const initialBracket: (Team | null)[] = [...dataTeams.data];
+          const initialBracket: (Team | null)[] = [...dataResult.teams];
           while (initialBracket.length < 16) {
             initialBracket.push(null);
           }
@@ -144,8 +141,8 @@ export default function FutsalDashboard() {
         }
         setErrorMessage(null);
       } else {
-        setErrorMessage(dataTeams.message || "Gagal memuat data pendaftar futsal");
-        toast.error(dataTeams.message || "Gagal memuat data pendaftar futsal");
+        setErrorMessage(dataResult.message || "Gagal memuat data pendaftar futsal");
+        toast.error(dataResult.message || "Gagal memuat data pendaftar futsal");
       }
     } catch (error: any) {
       setErrorMessage(error.message || "Terjadi kesalahan sistem");
