@@ -29,6 +29,16 @@ type GroupMatch = {
   score2: number | null;
 };
 
+type KnockoutMatch = {
+  id: string;
+  round: number;
+  matchIndex: number;
+  score1: number | null;
+  score2: number | null;
+  pen1: number | null;
+  pen2: number | null;
+};
+
 type EventData = {
   id_event: string;
   nama_event: string;
@@ -70,6 +80,7 @@ export default function FutsalDashboard() {
   const [champion, setChampion] = useState<Team | null>(null);
   const [eliminatedTeams, setEliminatedTeams] = useState<Set<string>>(new Set());
   const [groupMatches, setGroupMatches] = useState<GroupMatch[]>([]);
+  const [knockoutMatches, setKnockoutMatches] = useState<KnockoutMatch[]>([]);
 
   const [isSpinning, setIsSpinning] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -211,6 +222,7 @@ export default function FutsalDashboard() {
       setChampion(null);
       setEliminatedTeams(new Set());
       setGroupMatches([]);
+      setKnockoutMatches([]);
     }
     setIsSpinning(!isSpinning);
   };
@@ -378,7 +390,7 @@ export default function FutsalDashboard() {
     }
   };
 
-  // Helper for rendering team slot
+  // Helper for rendering team slot in Group Stage
   const renderTeamSlot = (team: Team | null, round: number, slotIndex: number, isTop: boolean) => {
     const isEliminated = team && eliminatedTeams.has(team.id_tim);
     const bgClass = isTop ? 'bg-slate-50 border-b border-slate-100' : 'bg-white';
@@ -395,6 +407,199 @@ export default function FutsalDashboard() {
           {team ? team.nama_tim : 'TBD (BYE)'}
         </span>
         <span className="text-slate-300">-</span>
+      </div>
+    );
+  };
+
+  const handleKnockoutMatchClick = async (round: number, matchIndex: number) => {
+    if (!hasAccess || isSpinning) return;
+    
+    let t1: Team | null = null;
+    let t2: Team | null = null;
+
+    if (round === 1) {
+      t1 = shuffledTeams[matchIndex * 2];
+      t2 = shuffledTeams[matchIndex * 2 + 1];
+    } else if (round === 2) {
+      t1 = quarterFinals[matchIndex * 2];
+      t2 = quarterFinals[matchIndex * 2 + 1];
+    } else if (round === 3) {
+      t1 = semiFinals[matchIndex * 2];
+      t2 = semiFinals[matchIndex * 2 + 1];
+    } else if (round === 4) {
+      t1 = finals[0];
+      t2 = finals[1];
+    }
+
+    if (!t1 || !t2) {
+      toast.error("Pertandingan belum siap! Kedua tim harus terisi.");
+      return;
+    }
+
+    const matchId = `r${round}-m${matchIndex}`;
+    const existingMatch = knockoutMatches.find(m => m.id === matchId);
+
+    const { value: formValues } = await Swal.fire({
+      title: 'Input Skor Babak Gugur',
+      html:
+        `<div class="flex flex-col gap-4 mt-4">
+          <div class="flex justify-between items-center gap-4">
+            <div class="flex flex-col items-center w-[45%]">
+              <div class="text-[11px] font-bold mb-2 text-center h-10 flex flex-col justify-end text-slate-700 leading-tight w-full truncate" title="${t1.nama_tim}">${t1.nama_tim}</div>
+              <input id="swal-kscore1" type="number" min="0" class="w-full text-center text-3xl font-black p-4 border-2 border-slate-200 rounded-xl bg-slate-50 focus:border-blue-500 focus:bg-white transition-all outline-none" placeholder="0" value="${existingMatch?.score1 ?? ''}" />
+            </div>
+            <div class="font-black text-xl text-slate-300 w-[10%] text-center">VS</div>
+            <div class="flex flex-col items-center w-[45%]">
+              <div class="text-[11px] font-bold mb-2 text-center h-10 flex flex-col justify-end text-slate-700 leading-tight w-full truncate" title="${t2.nama_tim}">${t2.nama_tim}</div>
+              <input id="swal-kscore2" type="number" min="0" class="w-full text-center text-3xl font-black p-4 border-2 border-slate-200 rounded-xl bg-slate-50 focus:border-blue-500 focus:bg-white transition-all outline-none" placeholder="0" value="${existingMatch?.score2 ?? ''}" />
+            </div>
+          </div>
+          <div id="penalty-section" class="flex flex-col gap-2 p-4 bg-orange-50 border border-orange-200 rounded-xl mt-2 hidden">
+            <div class="text-xs font-bold text-orange-600 text-center uppercase tracking-wider">Hasil Adu Penalti</div>
+            <div class="flex justify-between items-center gap-4">
+              <input id="swal-pen1" type="number" min="0" class="w-full text-center text-xl font-bold p-2 border-2 border-orange-200 rounded-lg focus:border-orange-500 outline-none bg-white" placeholder="0" value="${existingMatch?.pen1 ?? ''}" />
+              <div class="text-orange-300 font-bold">-</div>
+              <input id="swal-pen2" type="number" min="0" class="w-full text-center text-xl font-bold p-2 border-2 border-orange-200 rounded-lg focus:border-orange-500 outline-none bg-white" placeholder="0" value="${existingMatch?.pen2 ?? ''}" />
+            </div>
+          </div>
+        </div>`,
+      focusConfirm: false,
+      showCancelButton: true,
+      confirmButtonText: 'Simpan Skor',
+      cancelButtonText: 'Batal',
+      confirmButtonColor: '#3b82f6',
+      didOpen: () => {
+        const s1 = document.getElementById('swal-kscore1') as HTMLInputElement;
+        const s2 = document.getElementById('swal-kscore2') as HTMLInputElement;
+        const penSection = document.getElementById('penalty-section');
+        const checkDraw = () => {
+          if (s1.value !== '' && s2.value !== '' && s1.value === s2.value) {
+            penSection?.classList.remove('hidden');
+          } else {
+            penSection?.classList.add('hidden');
+          }
+        };
+        s1.addEventListener('input', checkDraw);
+        s2.addEventListener('input', checkDraw);
+        checkDraw();
+      },
+      preConfirm: () => {
+        const s1 = (document.getElementById('swal-kscore1') as HTMLInputElement).value;
+        const s2 = (document.getElementById('swal-kscore2') as HTMLInputElement).value;
+        const p1 = (document.getElementById('swal-pen1') as HTMLInputElement).value;
+        const p2 = (document.getElementById('swal-pen2') as HTMLInputElement).value;
+
+        if (s1 === '' && s2 === '') return null; // Reset
+        if (s1 === '' || s2 === '') {
+          Swal.showValidationMessage('Kedua skor utama harus diisi!');
+          return false;
+        }
+
+        const score1 = parseInt(s1);
+        const score2 = parseInt(s2);
+        let pen1 = null;
+        let pen2 = null;
+
+        if (score1 === score2) {
+          if (p1 === '' || p2 === '') {
+            Swal.showValidationMessage('Karena seri, skor penalti wajib diisi!');
+            return false;
+          }
+          pen1 = parseInt(p1);
+          pen2 = parseInt(p2);
+          if (pen1 === pen2) {
+            Swal.showValidationMessage('Skor penalti tidak boleh seri!');
+            return false;
+          }
+        }
+
+        return { score1, score2, pen1, pen2 };
+      }
+    });
+
+    if (formValues !== undefined) {
+      setKnockoutMatches(prev => {
+        const matchData = { id: matchId, round, matchIndex, ...(formValues || { score1: null, score2: null, pen1: null, pen2: null }) };
+        const exists = prev.find(m => m.id === matchId);
+        if (exists) return prev.map(m => m.id === matchId ? matchData : m);
+        return [...prev, matchData];
+      });
+
+      if (formValues === null) return;
+
+      const { score1, score2, pen1, pen2 } = formValues;
+      let winner: Team = t1;
+      let loser: Team = t2;
+
+      if (score1 > score2 || (score1 === score2 && pen1! > pen2!)) {
+        winner = t1;
+        loser = t2;
+      } else {
+        winner = t2;
+        loser = t1;
+      }
+
+      setEliminatedTeams(prev => {
+        const next = new Set(prev);
+        next.add(loser.id_tim);
+        next.delete(winner.id_tim); 
+        return next;
+      });
+
+      if (round === 1) {
+        setQuarterFinals(prev => { const n = [...prev]; n[matchIndex] = winner; return n; });
+      } else if (round === 2) {
+        setSemiFinals(prev => { const n = [...prev]; n[matchIndex] = winner; return n; });
+      } else if (round === 3) {
+        setFinals(prev => { const n = [...prev]; n[matchIndex] = winner; return n; });
+      } else if (round === 4) {
+        setChampion(winner);
+      }
+
+      toast.success(`${winner.nama_tim} berhasil melaju!`);
+    }
+  };
+
+  const renderMatchSlot = (round: number, matchIndex: number, t1: Team | null, t2: Team | null, isFinal = false) => {
+    const matchId = `r${round}-m${matchIndex}`;
+    const match = knockoutMatches.find(m => m.id === matchId);
+    const hasScore = match && match.score1 !== null && match.score2 !== null;
+    const isPen = hasScore && match!.score1 === match!.score2;
+
+    const t1Eliminated = t1 && eliminatedTeams.has(t1.id_tim);
+    const t2Eliminated = t2 && eliminatedTeams.has(t2.id_tim);
+
+    const formatScore = (score: number | null, pen: number | null) => {
+      if (score === null) return '-';
+      if (pen !== null) return `${score} (${pen})`;
+      return `${score}`;
+    };
+
+    return (
+      <div 
+        className={`w-full bg-white border ${isFinal ? 'border-amber-300 shadow-md' : 'border-slate-200 shadow-sm'} rounded-lg overflow-hidden flex flex-col text-xs relative ${hasAccess && !isSpinning ? 'cursor-pointer hover:border-blue-400 hover:shadow-md transition-all' : ''}`}
+        onClick={() => handleKnockoutMatchClick(round, matchIndex)}
+        title={hasAccess && !isSpinning ? "Klik untuk input skor pertandingan" : ""}
+      >
+        {isFinal && (
+          <div className="bg-amber-100 text-amber-700 text-[10px] font-bold text-center py-1 uppercase tracking-wider">Final Match</div>
+        )}
+        <div className={`px-3 py-2 flex justify-between items-center bg-slate-50 border-b border-slate-100 ${t1Eliminated ? 'opacity-50 grayscale' : ''}`}>
+          <span className={`font-semibold ${t1 ? (t1Eliminated ? 'text-slate-400 line-through' : 'text-slate-800') : 'text-slate-400'} truncate max-w-[140px]`}>
+            {t1 ? t1.nama_tim : 'TBD (BYE)'}
+          </span>
+          <span className={`font-black ${hasScore ? 'text-slate-800' : 'text-slate-300'}`}>
+            {formatScore(match?.score1 ?? null, isPen ? match?.pen1 ?? null : null)}
+          </span>
+        </div>
+        <div className={`px-3 py-2 flex justify-between items-center bg-white ${t2Eliminated ? 'opacity-50 grayscale' : ''}`}>
+          <span className={`font-semibold ${t2 ? (t2Eliminated ? 'text-slate-400 line-through' : 'text-slate-800') : 'text-slate-400'} truncate max-w-[140px]`}>
+            {t2 ? t2.nama_tim : 'TBD (BYE)'}
+          </span>
+          <span className={`font-black ${hasScore ? 'text-slate-800' : 'text-slate-300'}`}>
+            {formatScore(match?.score2 ?? null, isPen ? match?.pen2 ?? null : null)}
+          </span>
+        </div>
       </div>
     );
   };
@@ -839,9 +1044,8 @@ export default function FutsalDashboard() {
               <div className="flex flex-col justify-around w-56 shrink-0 relative z-10">
                 <div className="absolute -top-6 text-xs font-bold text-slate-400 uppercase tracking-widest text-center w-full">Round of 16</div>
                 {Array(8).fill(0).map((_, i) => (
-                  <div key={`r1-${i}`} className="w-full bg-white border border-slate-200 shadow-sm rounded-lg overflow-hidden flex flex-col text-xs relative">
-                    {renderTeamSlot(shuffledTeams[i * 2], 1, i * 2, true)}
-                    {renderTeamSlot(shuffledTeams[i * 2 + 1], 1, i * 2 + 1, false)}
+                  <div key={`r1-${i}`}>
+                    {renderMatchSlot(1, i, shuffledTeams[i * 2], shuffledTeams[i * 2 + 1])}
                   </div>
                 ))}
               </div>
@@ -851,9 +1055,8 @@ export default function FutsalDashboard() {
             <div className="flex flex-col justify-around w-56 shrink-0 relative z-10">
               <div className="absolute -top-6 text-xs font-bold text-slate-400 uppercase tracking-widest text-center w-full">Quarterfinals</div>
               {Array(4).fill(0).map((_, i) => (
-                <div key={`qf-${i}`} className="w-full bg-white border border-slate-200 shadow-sm rounded-lg overflow-hidden flex flex-col text-xs relative">
-                  {renderTeamSlot(quarterFinals[i * 2], 2, i * 2, true)}
-                  {renderTeamSlot(quarterFinals[i * 2 + 1], 2, i * 2 + 1, false)}
+                <div key={`qf-${i}`}>
+                  {renderMatchSlot(2, i, quarterFinals[i * 2], quarterFinals[i * 2 + 1])}
                 </div>
               ))}
             </div>
@@ -862,9 +1065,8 @@ export default function FutsalDashboard() {
             <div className="flex flex-col justify-around w-56 shrink-0 relative z-10">
               <div className="absolute -top-6 text-xs font-bold text-slate-400 uppercase tracking-widest text-center w-full">Semifinals</div>
               {Array(2).fill(0).map((_, i) => (
-                <div key={`sf-${i}`} className="w-full bg-white border border-slate-200 shadow-sm rounded-lg overflow-hidden flex flex-col text-xs relative">
-                  {renderTeamSlot(semiFinals[i * 2], 3, i * 2, true)}
-                  {renderTeamSlot(semiFinals[i * 2 + 1], 3, i * 2 + 1, false)}
+                <div key={`sf-${i}`}>
+                  {renderMatchSlot(3, i, semiFinals[i * 2], semiFinals[i * 2 + 1])}
                 </div>
               ))}
             </div>
@@ -872,11 +1074,7 @@ export default function FutsalDashboard() {
             {/* Final */}
             <div className="flex flex-col justify-around w-56 shrink-0 relative z-10">
               <div className="absolute -top-6 text-xs font-bold text-slate-400 uppercase tracking-widest text-center w-full">Grand Final</div>
-              <div className="w-full bg-white border border-amber-300 shadow-md rounded-lg overflow-hidden flex flex-col text-xs relative">
-                <div className="bg-amber-100 text-amber-700 text-[10px] font-bold text-center py-1 uppercase tracking-wider">Final Match</div>
-                {renderTeamSlot(finals[0], 4, 0, true)}
-                {renderTeamSlot(finals[1], 4, 1, false)}
-              </div>
+              {renderMatchSlot(4, 0, finals[0], finals[1], true)}
             </div>
 
             {/* Winner */}
