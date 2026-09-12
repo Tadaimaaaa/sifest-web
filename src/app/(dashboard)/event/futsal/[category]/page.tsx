@@ -951,26 +951,36 @@ export default function FutsalDashboard() {
           </div>
           <div className="flex items-center gap-3">
             {hasAccess && (
-              <button 
-                onClick={toggleSpin}
-                className={`px-5 py-2.5 text-white text-sm font-bold rounded-xl shadow-sm transition-all flex items-center gap-2 ${
-                  isSpinning 
-                    ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-500/20 animate-pulse' 
-                    : 'bg-blue-600 hover:bg-blue-700 shadow-blue-500/20'
-                }`}
-              >
-                {isSpinning ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Stop Pengundian!
-                  </>
-                ) : (
-                  <>
-                    <Shuffle className="w-4 h-4" />
-                    Acak Tim (Spin)
-                  </>
-                )}
-              </button>
+              <>
+                <button 
+                  onClick={handleSaveBracket}
+                  disabled={isSavingEvent || isSpinning}
+                  className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-xl shadow-sm transition-all flex items-center gap-2 disabled:opacity-50"
+                >
+                  <Save className="w-4 h-4" />
+                  Simpan Progres
+                </button>
+                <button 
+                  onClick={toggleSpin}
+                  className={`px-5 py-2.5 text-white text-sm font-bold rounded-xl shadow-sm transition-all flex items-center gap-2 ${
+                    isSpinning 
+                      ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-500/20 animate-pulse' 
+                      : 'bg-blue-600 hover:bg-blue-700 shadow-blue-500/20'
+                  }`}
+                >
+                  {isSpinning ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Stop Pengundian!
+                    </>
+                  ) : (
+                    <>
+                      <Shuffle className="w-4 h-4" />
+                      Acak Tim (Spin)
+                    </>
+                  )}
+                </button>
+              </>
             )}
             <button 
               onClick={toggleFullscreen}
