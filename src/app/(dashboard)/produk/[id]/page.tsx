@@ -132,6 +132,7 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
     { id: 'toko', nama: 'Paket Toko', harga: 13000, isDynamic: true, minItems: 1 },
     { id: 'luar-kota', nama: 'Harga Luar Kota', harga: 12000, isDynamic: true, minItems: 1 },
     { id: 'grosir', nama: 'Harga Grosir', harga: 11000, isDynamic: true, minItems: 1 },
+    { id: 'mahasiswa', nama: 'Harga Mahasiswa', harga: 10000, isDynamic: true, minItems: 1 },
   ];
   const MODAL_SATUAN = 9000;
 
