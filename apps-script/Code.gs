@@ -91,6 +91,13 @@ function doPost(e) {
         return Esport.saveEsportTeam(body);
       case 'deleteEsportTeam':
         return Esport.deleteEsportTeam(body);
+      // Volunteer Routes
+      case 'addVolunteer':
+        return Volunteer.addVolunteer(body);
+      case 'updateStatusVolunteer':
+        return Volunteer.updateStatusVolunteer(body, Auth.validateToken(body.token));
+      case 'deleteVolunteer':
+        return Volunteer.deleteVolunteer(body, Auth.validateToken(body.token));
         
       default:
         return Response.error('NOT_FOUND', 'Action not found.');
@@ -127,6 +134,10 @@ function doGet(e) {
         return Event.getEvent(e.parameter.id_event);
       case 'getBazaarTenants':
         return Event.getBazaarTenants();
+      
+      // Volunteer Routes
+      case 'getVolunteers':
+        return Volunteer.getVolunteers(Auth.validateToken(e.parameter.token));
         
       default:
         return Response.success('SI FEST Management API is Active.', null);
