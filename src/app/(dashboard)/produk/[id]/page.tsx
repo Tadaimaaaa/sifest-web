@@ -1114,10 +1114,12 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
 
           {/* Stats Grid Premium */}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3 lg:gap-4">
-            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 md:p-5 flex flex-col justify-center shadow-sm">
-              <p className="text-[10px] md:text-xs text-slate-500 font-semibold uppercase tracking-wider mb-1">Harga Satuan</p>
-              <p className="text-lg xl:text-xl 2xl:text-2xl font-black tracking-tight text-slate-800">{formatRupiah(displayHargaSatuan)}</p>
-            </div>
+            {!isByU && (
+              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 md:p-5 flex flex-col justify-center shadow-sm">
+                <p className="text-[10px] md:text-xs text-slate-500 font-semibold uppercase tracking-wider mb-1">Harga Satuan</p>
+                <p className="text-lg xl:text-xl 2xl:text-2xl font-black tracking-tight text-slate-800">{formatRupiah(displayHargaSatuan)}</p>
+              </div>
+            )}
             
             <div className="bg-gradient-to-br from-amber-500 to-orange-600 rounded-2xl p-4 md:p-5 text-white shadow-lg shadow-orange-500/20 flex flex-col justify-center">
               <p className="text-orange-100 text-[10px] md:text-xs font-bold uppercase tracking-wider mb-1">Total Terjual</p>
