@@ -254,7 +254,7 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
     });
 
     return Object.entries(weeksMap)
-      .sort((a, b) => b[1].dateForSort - a[1].dateForSort)
+      .sort((a, b) => a[1].dateForSort - b[1].dateForSort)
       .map(([label, data]) => ({ label, ...data, periodIndex: data.dateForSort + 1 }));
   };
 
