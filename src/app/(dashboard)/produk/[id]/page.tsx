@@ -145,6 +145,7 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
   const [metodePembayaran, setMetodePembayaran] = useState<string>("Cash");
 
   const [byuQty, setByuQty] = useState(1);
+  const [byuPrice, setByuPrice] = useState(35000);
 
   const distributorNames = Array.from(new Set(produk?.distribusi?.map(d => d.nama_penerima) || []));
 
@@ -589,6 +590,11 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
     e.preventDefault();
     if (!produk || byuQty < 1) return;
     
+    if (byuPrice < 16000) {
+      toast.error("Harga jual tidak boleh di bawah modal (Rp 16.000)!");
+      return;
+    }
+    
     setIsBundleSubmitting(true);
     const token = Cookies.get("session_token");
     
@@ -599,7 +605,7 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
         id_produk: produk.id_produk,
         id_paket: 'byu_satuan',
         nama_paket: 'Penjualan Kartu by.U',
-        total_harga: byuQty * 35000,
+        total_harga: byuQty * byuPrice,
         total_modal: byuQty * 16000, // by.U modal 16rb
         terjual_oleh: terjualOleh,
         metode_pembayaran: metodePembayaran,
@@ -689,9 +695,9 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
   }, 0) || 0;
 
 
-  const displayHargaSatuan = isByU ? 35000 : produk.harga_satuan;
-  const displayPendapatan = isByU ? totalPcsTerjual * 35000 : totalPendapatan;
-  const displayModal = isByU ? totalPcsTerjual * 16000 : totalModal;
+  const displayHargaSatuan = produk.harga_satuan;
+  const displayPendapatan = totalPendapatan;
+  const displayModal = totalModal;
   const displayUntung = displayPendapatan - displayModal;
 
   const varianTerjual: Record<string, { nama: string; jumlah: number; foto?: string }> = {};
@@ -1194,19 +1200,31 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
                 <h3 className="text-sm font-bold text-slate-700">🛒 Kasir Kartu by.U</h3>
               </div>
               <form onSubmit={handleCheckoutByU} className="p-4 flex flex-col gap-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Jumlah Kartu</label>
-                    <input type="number" min={1} required value={byuQty} onChange={(e) => setByuQty(parseInt(e.target.value) || 1)} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" />
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Harga per Kartu</label>
+                    <div className="flex flex-col gap-2">
+                      <div className="flex gap-2">
+                        <button type="button" onClick={() => setByuPrice(25000)} className={`flex-1 py-1.5 px-3 rounded-lg border text-sm font-bold transition-colors ${byuPrice === 25000 ? 'bg-blue-600 border-blue-600 text-white shadow-sm' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}>Rp 25.000</button>
+                        <button type="button" onClick={() => setByuPrice(35000)} className={`flex-1 py-1.5 px-3 rounded-lg border text-sm font-bold transition-colors ${byuPrice === 35000 ? 'bg-blue-600 border-blue-600 text-white shadow-sm' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}>Rp 35.000</button>
+                      </div>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-medium text-sm">Rp</span>
+                        <input type="number" min={16000} required value={byuPrice || ""} onChange={(e) => setByuPrice(parseInt(e.target.value) || 0)} className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" placeholder="Harga custom (Min 16.000)" />
+                      </div>
+                    </div>
                   </div>
                   <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Jumlah Kartu</label>
+                    <input type="number" min={1} required value={byuQty} onChange={(e) => setByuQty(parseInt(e.target.value) || 1)} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 mb-4" />
+                    
                     <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Total Harga</label>
                     <div className="w-full px-4 py-2 bg-blue-50 border border-blue-100 rounded-xl text-sm font-black text-blue-700 flex items-center">
-                      {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(byuQty * 35000)}
+                      {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(byuQty * byuPrice)}
                     </div>
                   </div>
                 </div>
-                <button type="submit" disabled={isBundleSubmitting} className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center">
+                <button type="submit" disabled={isBundleSubmitting || byuPrice < 16000} className="w-full mt-2 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center">
                   {isBundleSubmitting ? 'Memproses...' : 'Catat Penjualan'}
                 </button>
               </form>
