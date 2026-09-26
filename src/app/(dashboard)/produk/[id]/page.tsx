@@ -146,6 +146,7 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
 
   const [byuQty, setByuQty] = useState(1);
   const [byuPrice, setByuPrice] = useState(35000);
+  const [tanggalPenjualan, setTanggalPenjualan] = useState(() => new Date().toISOString().split('T')[0]);
 
   const distributorNames = Array.from(new Set(produk?.distribusi?.map(d => d.nama_penerima) || []));
 
@@ -254,7 +255,7 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
     });
 
     return Object.entries(weeksMap)
-      .sort((a, b) => a[1].dateForSort - b[1].dateForSort)
+      .sort((a, b) => b[1].dateForSort - a[1].dateForSort)
       .map(([label, data]) => ({ label, ...data, periodIndex: data.dateForSort + 1 }));
   };
 
@@ -547,6 +548,7 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
         total_modal: total_modal,
         terjual_oleh: terjualOleh,
         metode_pembayaran: metodePembayaran,
+        tanggal: tanggalPenjualan,
         items
       };
       
@@ -609,6 +611,7 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
         total_modal: byuQty * 16000, // by.U modal 16rb
         terjual_oleh: terjualOleh,
         metode_pembayaran: metodePembayaran,
+        tanggal: tanggalPenjualan,
         items: [{ id_varian: 'byu', nama_varian: 'Kartu by.U', jumlah: byuQty }]
       };
       
@@ -1204,6 +1207,19 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
               <form onSubmit={handleCheckoutByU} className="p-4 flex flex-col gap-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Tanggal Penjualan</label>
+                    <input type="date" required value={tanggalPenjualan} onChange={(e) => setTanggalPenjualan(e.target.value)} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Metode Bayar</label>
+                    <select value={metodePembayaran} onChange={(e) => setMetodePembayaran(e.target.value)} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                      <option value="Cash">Cash (Tunai)</option>
+                      <option value="Transfer">Transfer</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
                     <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Harga per Kartu</label>
                     <div className="flex flex-col gap-2">
                       <div className="flex gap-2">
@@ -1548,7 +1564,7 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
             </div>
             
             <form onSubmit={handleAddPenjualanBundle} className="flex-1 overflow-y-auto p-6 space-y-6">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
                 <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
                   <label className="block text-sm font-bold text-slate-700 mb-2">Terjual Oleh</label>
                   <select 
@@ -1575,6 +1591,16 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
                     <option value="Cash" className="text-slate-900 bg-white">Cash (Tunai)</option>
                     <option value="Transfer" className="text-slate-900 bg-white">Transfer</option>
                   </select>
+                </div>
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
+                  <label className="block text-sm font-bold text-slate-700 mb-2">Tanggal</label>
+                  <input 
+                    type="date" 
+                    required 
+                    value={tanggalPenjualan} 
+                    onChange={(e) => setTanggalPenjualan(e.target.value)} 
+                    className="w-full border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm text-slate-900 bg-white" 
+                  />
                 </div>
               </div>
 
