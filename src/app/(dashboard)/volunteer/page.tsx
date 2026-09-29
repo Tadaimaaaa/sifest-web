@@ -36,7 +36,7 @@ export default function VolunteerDashboard() {
       const token = Cookies.get("session_token");
       const res = await fetch(`${SCRIPT_URL}?action=getVolunteers&token=${token}&t=${Date.now()}`);
       const result = await res.json();
-      if (result.status === "success") {
+      if (result.success === true) {
         setVolunteers(result.data.reverse()); // Terbaru di atas
       }
     } catch (error) {
@@ -61,7 +61,7 @@ export default function VolunteerDashboard() {
         body: JSON.stringify({ action: "updateStatusVolunteer", id_volunteer, status, token })
       });
       const result = await res.json();
-      if (result.status === "success") {
+      if (result.success === true) {
         fetchVolunteers();
       } else {
         alert("Gagal: " + result.message);
@@ -82,7 +82,7 @@ export default function VolunteerDashboard() {
         body: JSON.stringify({ action: "deleteVolunteer", id_volunteer, token })
       });
       const result = await res.json();
-      if (result.status === "success") {
+      if (result.success === true) {
         fetchVolunteers();
       } else {
         alert("Gagal: " + result.message);
