@@ -51,8 +51,8 @@ export default function SeminarDashboard() {
   const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState<EventData>({
     id: "seminar",
-    nama: "Talk Show",
-    kategori: "Talk Show",
+    nama: "Seminar",
+    kategori: "Seminar",
     deskripsi: "",
     tanggal: "",
     status: "Akan Datang",
@@ -135,7 +135,7 @@ export default function SeminarDashboard() {
         action: "saveEvent",
         token,
         id_event: "seminar",
-        nama_event: "Talk Show",
+        nama_event: "Seminar",
         tanggal: formData.tanggal,
         tempat: formData.tempat || formData.lokasi,
         deskripsi: formData.deskripsi,
@@ -197,11 +197,11 @@ export default function SeminarDashboard() {
           </Link>
           <div>
             <h1 className="text-2xl font-bold text-slate-800 tracking-tight flex items-center gap-2">
-              Talk Show
+              Seminar
               {isLoading && <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />}
             </h1>
             <p className="text-sm text-slate-500 mt-1">
-              Kelola data peserta Talk Show SI FEST 2026
+              Kelola data peserta Seminar SI FEST 2026
             </p>
           </div>
         </div>

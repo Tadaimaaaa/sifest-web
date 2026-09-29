@@ -17,8 +17,8 @@ const events = [
   },
   {
     id: "seminar",
-    name: "Talk Show",
-    description: "Talk Show Teknologi dan Informasi",
+    name: "Seminar",
+    description: "Seminar Teknologi dan Informasi",
     icon: Users,
     color: "from-blue-500 to-blue-700",
     shadow: "shadow-blue-500/20",

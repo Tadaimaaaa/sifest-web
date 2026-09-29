@@ -85,7 +85,7 @@ export default function CertificatePage() {
               </div>
 
               <h1 className="text-6xl font-black text-blue-900 mb-2 tracking-tight">E-SERTIFIKAT</h1>
-              <h3 className="text-xl text-blue-600 font-semibold tracking-[0.2em] uppercase mb-12">Talk Show Nasional 2026</h3>
+              <h3 className="text-xl text-blue-600 font-semibold tracking-[0.2em] uppercase mb-12">Seminar Nasional 2026</h3>
               
               <p className="text-xl text-slate-500 mb-6 uppercase tracking-wider font-medium">Diberikan Kepada</p>
               
@@ -95,7 +95,7 @@ export default function CertificatePage() {
               <p className="text-xl text-slate-500 mb-12 font-medium">{p.institusi}</p>
               
               <p className="text-lg text-slate-600 max-w-3xl leading-relaxed">
-                Atas partisipasinya sebagai <strong>Peserta</strong> dalam acara <strong>Talk Show Teknologi dan Informasi</strong> dengan tema <br/>
+                Atas partisipasinya sebagai <strong>Peserta</strong> dalam acara <strong>Seminar Teknologi dan Informasi</strong> dengan tema <br/>
                 <em className="text-slate-800 font-medium">"Sinergi Inovasi: Menautkan Teknologi, Merangkul Keberagaman"</em> <br/>
                 yang diselenggarakan oleh Himpunan Mahasiswa Jurusan Sistem Informasi UPI "YPTK" Padang <br/>
                 pada tanggal 03 November 2026.
@@ -111,7 +111,7 @@ export default function CertificatePage() {
                 <div className="flex flex-col items-center">
                   <div className="w-40 h-20 border-b border-slate-400 mb-2"></div>
                   <p className="font-bold text-slate-800">Nama Pemateri</p>
-                  <p className="text-sm text-slate-500">Pemateri Talk Show</p>
+                  <p className="text-sm text-slate-500">Pemateri Seminar</p>
                 </div>
               </div>
             </div>

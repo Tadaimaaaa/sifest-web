@@ -133,7 +133,7 @@ export default function VolunteerDashboard() {
           className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="">Semua Event</option>
-          <option value="Talk Show">Talk Show</option>
+          <option value="Seminar">Seminar</option>
           <option value="Turnamen Futsal (SLTA & Mahasiswa)">Turnamen Futsal</option>
           <option value="Turnamen E-Sport (MLBB & E-Football)">E-Sport</option>
           <option value="Lomba Keagamaan / MTQ">Lomba Keagamaan / MTQ</option>
