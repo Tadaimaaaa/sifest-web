@@ -738,12 +738,12 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Breadcrumb / Back */}
       <div className="flex items-center gap-3">
-        <Link href="/produk" className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-800 transition-colors group">
+        <Link href="/produk" className="flex items-center gap-2 text-sm text-slate-400 hover:text-slate-200 transition-colors group">
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
           Kembali ke Katalog
         </Link>
         <span className="text-slate-300">/</span>
-        <span className="text-sm font-medium text-slate-700 truncate">{produk.nama_produk}</span>
+        <span className="text-sm font-medium text-slate-300 truncate">{produk.nama_produk}</span>
       </div>
 
       {/* Main Content */}
@@ -751,8 +751,8 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
         
         {/* Left: Product Image & Varian */}
         <div className="space-y-6">
-          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
-            <div className="aspect-square w-full bg-slate-100 relative">
+          <div className="bg-[#0F172A] rounded-2xl border border-white/5/5 shadow-sm overflow-hidden">
+            <div className="aspect-square w-full bg-slate-800 relative">
               {thumbnail ? (
                 <img src={thumbnail} alt={produk.nama_produk} className="w-full h-full object-cover" />
               ) : (
@@ -763,7 +763,7 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
               )}
             </div>
             {produk.foto_produk && produk.foto_produk !== "-" && (
-              <div className="p-4 border-t border-slate-100">
+              <div className="p-4 border-t border-white/5/5">
                 <a href={produk.foto_produk} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 text-sm text-blue-600 hover:text-blue-800 transition-colors font-medium">
                   <ExternalLink className="w-4 h-4" /> Buka foto di Google Drive
                 </a>
@@ -772,9 +772,9 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
           </div>
 
           {/* Varian & Stok Barang */}
-          <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-            <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-              <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+          <div className="bg-[#0F172A] border border-slate-700/50 rounded-2xl shadow-sm overflow-hidden">
+            <div className="p-4 border-b border-white/5/5 flex items-center justify-between bg-slate-50">
+              <h3 className="text-sm font-bold text-slate-300 flex items-center gap-2">
                 📦 {isByU ? 'Stok Kartu' : 'Varian & Stok'}
                 {produk.varian && produk.varian.length > 0 && (
                   <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-[10px] font-black rounded-md">
@@ -798,7 +798,7 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
             </div>
             
             {!produk.varian || produk.varian.length === 0 ? (
-              <div className="p-6 text-center text-slate-500 text-sm">
+              <div className="p-6 text-center text-slate-400 text-sm">
                 {isByU ? 'Stok belum diatur.' : 'Belum ada data varian barang.'}
               </div>
             ) : (
@@ -807,12 +807,12 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
                   <div key={varItem.id_varian} className="p-4 hover:bg-slate-50 transition-colors flex items-center justify-between group">
                     <div className="flex items-center gap-3">
                       {varItem.foto && varItem.foto !== "-" && (
-                        <div className="w-10 h-10 rounded-lg overflow-hidden border border-slate-200 shrink-0">
+                        <div className="w-10 h-10 rounded-lg overflow-hidden border border-slate-700/50 shrink-0">
                           <img src={getDriveThumbnail(varItem.foto) || varItem.foto} alt={varItem.nama_varian} className="w-full h-full object-cover" />
                         </div>
                       )}
                       <div>
-                        <p className="text-sm font-bold text-slate-800">{varItem.nama_varian}</p>
+                        <p className="text-sm font-bold text-slate-200">{varItem.nama_varian}</p>
                         <p className="text-xs text-slate-400 mt-0.5">Ditambahkan: {new Date(varItem.tanggal).toLocaleDateString('id-ID')}</p>
                       </div>
                     </div>
@@ -820,16 +820,16 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
                       {hasAccess && (
                         <button
                           onClick={() => handleUpdateVarianStock(varItem.id_varian, Math.max(0, varItem.jumlah - 1))}
-                          className="w-7 h-7 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-100 transition-colors shadow-sm font-bold"
+                          className="w-7 h-7 rounded-lg bg-[#0F172A] border border-slate-700/50 flex items-center justify-center text-slate-400 hover:bg-slate-800 transition-colors shadow-sm font-bold"
                         >
                           <Minus className="w-3 h-3" />
                         </button>
                       )}
-                      <span className="w-12 text-center text-base font-black text-slate-700">{varItem.jumlah}</span>
+                      <span className="w-12 text-center text-base font-black text-slate-300">{varItem.jumlah}</span>
                       {hasAccess && (
                         <button
                           onClick={() => handleUpdateVarianStock(varItem.id_varian, varItem.jumlah + 1)}
-                          className="w-7 h-7 rounded-lg bg-white border border-slate-200 flex items-center justify-center text-slate-600 hover:bg-slate-100 transition-colors shadow-sm font-bold"
+                          className="w-7 h-7 rounded-lg bg-[#0F172A] border border-slate-700/50 flex items-center justify-center text-slate-400 hover:bg-slate-800 transition-colors shadow-sm font-bold"
                         >
                           <Plus className="w-3 h-3" />
                         </button>
@@ -837,7 +837,7 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
                       {hasAccess && (
                         <button
                           onClick={() => handleDeleteVarian(varItem.id_varian)}
-                          className="w-7 h-7 rounded-lg bg-white border border-rose-100 text-rose-500 flex items-center justify-center hover:bg-rose-50 transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100 shadow-sm ml-1"
+                          className="w-7 h-7 rounded-lg bg-[#0F172A] border border-rose-100 text-rose-500 flex items-center justify-center hover:bg-rose-50 transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100 shadow-sm ml-1"
                           title="Hapus Varian"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -852,45 +852,45 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
 
           {/* Rekapan Perminggu (Dipindah ke Kiri) */}
           {!isByU && (
-          <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden flex flex-col mt-4">
-            <div className="p-4 border-b border-slate-100 bg-slate-50 flex items-center gap-2 shrink-0">
+          <div className="bg-[#0F172A] border border-slate-700/50 rounded-2xl shadow-sm overflow-hidden flex flex-col mt-4">
+            <div className="p-4 border-b border-white/5/5 bg-slate-50 flex items-center gap-2 shrink-0">
               <Calendar className="w-4 h-4 text-blue-600" />
-              <h3 className="text-sm font-bold text-slate-700">Rekap Penjualan per Minggu</h3>
+              <h3 className="text-sm font-bold text-slate-300">Rekap Penjualan per Minggu</h3>
             </div>
             
             {!weeklyRecap || weeklyRecap.length === 0 ? (
-              <div className="p-6 text-center text-slate-500 text-sm flex-1 flex items-center justify-center">Belum ada data penjualan.</div>
+              <div className="p-6 text-center text-slate-400 text-sm flex-1 flex items-center justify-center">Belum ada data penjualan.</div>
             ) : (
               <div className="divide-y divide-slate-100 max-h-[400px] overflow-y-auto">
                 {weeklyRecap.map((week, idx) => (
                   <div key={idx} className="p-4 hover:bg-slate-50 transition-colors">
                     <div className="flex items-center justify-between mb-3">
-                      <p className="text-sm font-bold text-slate-800">{week.label}</p>
+                      <p className="text-sm font-bold text-slate-200">{week.label}</p>
                       <span className="px-2.5 py-1 bg-blue-50 text-blue-700 text-xs font-bold rounded-lg">
                         Periode ke-{week.periodIndex}
                       </span>
                     </div>
                     <div className="grid grid-cols-2 gap-3 mb-3">
-                      <div className="bg-white border border-slate-100 p-3 rounded-xl">
-                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Total Terjual</p>
-                        <p className="text-sm font-black text-slate-800">{week.totalPcs} <span className="text-xs font-medium text-slate-500">pcs</span></p>
+                      <div className="bg-[#0F172A] border border-white/5/5 p-3 rounded-xl">
+                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">Total Terjual</p>
+                        <p className="text-sm font-black text-slate-200">{week.totalPcs} <span className="text-xs font-medium text-slate-400">pcs</span></p>
                       </div>
-                      <div className="bg-white border border-slate-100 p-3 rounded-xl">
+                      <div className="bg-[#0F172A] border border-white/5/5 p-3 rounded-xl">
                         <p className="text-[10px] text-emerald-600 font-bold uppercase tracking-wider mb-1">Pendapatan</p>
                         <p className="text-sm font-black text-emerald-600">{formatRupiah(week.totalPendapatan)}</p>
                       </div>
-                      <div className="bg-white border border-slate-100 p-3 rounded-xl">
+                      <div className="bg-[#0F172A] border border-white/5/5 p-3 rounded-xl">
                         <p className="text-[10px] text-orange-500 font-bold uppercase tracking-wider mb-1">Modal</p>
                         <p className="text-sm font-black text-orange-500">{formatRupiah(week.totalModal)}</p>
                       </div>
-                      <div className="bg-white border border-slate-100 p-3 rounded-xl">
+                      <div className="bg-[#0F172A] border border-white/5/5 p-3 rounded-xl">
                         <p className="text-[10px] text-blue-600 font-bold uppercase tracking-wider mb-1">Laba Bersih</p>
                         <p className="text-sm font-black text-blue-600">{formatRupiah(week.totalPendapatan - week.totalModal)}</p>
                       </div>
                     </div>
                     {Object.values(week.varianTerjual).length > 0 && (
-                      <details className="group bg-slate-50 rounded-xl border border-slate-100 overflow-hidden">
-                        <summary className="p-3 text-[10px] font-bold text-slate-500 uppercase tracking-wider cursor-pointer list-none [&::-webkit-details-marker]:hidden flex justify-between items-center hover:bg-slate-100 transition-colors">
+                      <details className="group bg-slate-50 rounded-xl border border-white/5/5 overflow-hidden">
+                        <summary className="p-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider cursor-pointer list-none [&::-webkit-details-marker]:hidden flex justify-between items-center hover:bg-slate-800 transition-colors">
                           <span>Lihat Detail Varian</span>
                           <span className="group-open:rotate-180 transition-transform text-slate-400">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6"/></svg>
@@ -899,8 +899,8 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
                         <div className="p-3 pt-0 space-y-2 bg-slate-50">
                           {Object.values(week.varianTerjual).sort((a, b) => b.jumlah - a.jumlah).map((v, i) => (
                             <div key={i} className="flex items-center justify-between text-xs">
-                              <span className="text-slate-600 font-medium truncate pr-2">{v.nama}</span>
-                              <span className="font-bold text-slate-800 shrink-0">{v.jumlah} pcs</span>
+                              <span className="text-slate-400 font-medium truncate pr-2">{v.nama}</span>
+                              <span className="font-bold text-slate-200 shrink-0">{v.jumlah} pcs</span>
                             </div>
                           ))}
                         </div>
@@ -918,9 +918,9 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
           {isByU && (
             <>
               {/* Distribusi Multi (Alokasi) */}
-          <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-            <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-              <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+          <div className="bg-[#0F172A] border border-slate-700/50 rounded-2xl shadow-sm overflow-hidden">
+            <div className="p-4 border-b border-white/5/5 flex items-center justify-between bg-slate-50">
+              <h3 className="text-sm font-bold text-slate-300 flex items-center gap-2">
                 📋 Stok di Tangan Distributor
                 {remainingDistribusi && remainingDistribusi.length > 0 && (
                   <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-[10px] font-black rounded-md">
@@ -939,7 +939,7 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
             </div>
             
             {!remainingDistribusi || remainingDistribusi.length === 0 ? (
-              <div className="p-6 text-center text-slate-500 text-sm">
+              <div className="p-6 text-center text-slate-400 text-sm">
                 Tidak ada stok di tangan distributor saat ini.
               </div>
             ) : (
@@ -947,13 +947,13 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
                 {remainingDistribusi.map((dist) => (
                   <div key={dist.id_dist} className="p-4 hover:bg-slate-50 transition-colors group">
                     <div className="flex items-center justify-between mb-2">
-                      <p className="text-sm font-bold text-slate-800">{dist.nama_penerima}</p>
+                      <p className="text-sm font-bold text-slate-200">{dist.nama_penerima}</p>
                       <div className="flex items-center gap-3">
                         <span className="text-xs text-slate-400">{new Date(dist.tanggal).toLocaleDateString('id-ID', { dateStyle: 'medium' })}</span>
                         {hasAccess && (
                           <button
                             onClick={() => handleDeleteDistribusi(dist.id_dist)}
-                            className="w-7 h-7 rounded-lg bg-white border border-rose-100 text-rose-500 flex items-center justify-center hover:bg-rose-50 transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100 shadow-sm"
+                            className="w-7 h-7 rounded-lg bg-[#0F172A] border border-rose-100 text-rose-500 flex items-center justify-center hover:bg-rose-50 transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100 shadow-sm"
                             title="Hapus Distribusi"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -964,9 +964,9 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
                     {/* List of taken items */}
                     <div className="grid grid-cols-2 gap-2 mt-2">
                       {dist.items?.map(item => (
-                        <div key={item.id_varian} className="flex items-center justify-between bg-white border border-slate-100 px-3 py-1.5 rounded-lg">
-                          <span className="text-xs font-medium text-slate-600 truncate mr-2" title={item.nama_varian}>{item.nama_varian}</span>
-                          <span className="text-xs font-bold text-slate-800 shrink-0">{item.jumlah} pcs</span>
+                        <div key={item.id_varian} className="flex items-center justify-between bg-[#0F172A] border border-white/5/5 px-3 py-1.5 rounded-lg">
+                          <span className="text-xs font-medium text-slate-400 truncate mr-2" title={item.nama_varian}>{item.nama_varian}</span>
+                          <span className="text-xs font-bold text-slate-200 shrink-0">{item.jumlah} pcs</span>
                         </div>
                       ))}
                     </div>
@@ -978,9 +978,9 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
 
           
               {/* Riwayat Penjualan Bundle */}
-          <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
-            <div className="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
-              <h3 className="text-sm font-bold text-slate-700">🧾 Riwayat Penjualan</h3>
+          <div className="bg-[#0F172A] border border-slate-700/50 rounded-2xl shadow-sm overflow-hidden">
+            <div className="p-4 border-b border-white/5/5 bg-slate-50 flex justify-between items-center">
+              <h3 className="text-sm font-bold text-slate-300">🧾 Riwayat Penjualan</h3>
               {produk.penjualan_bundle && produk.penjualan_bundle.length > 0 && (
                 <button
                   onClick={handleExportPenjualanBundle}
@@ -991,7 +991,7 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
               )}
             </div>
             {!produk.penjualan_bundle || produk.penjualan_bundle.length === 0 ? (
-              <div className="p-6 text-center text-slate-500 text-sm">Belum ada riwayat penjualan.</div>
+              <div className="p-6 text-center text-slate-400 text-sm">Belum ada riwayat penjualan.</div>
             ) : (
               <div className="divide-y divide-slate-100 max-h-[300px] overflow-y-auto">
                 {[...(produk.penjualan_bundle || [])].sort((a, b) => new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime()).map(sale => (
@@ -999,7 +999,7 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
                     <div className="flex justify-between items-start mb-2">
                       <div>
                         <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                          <p className="text-sm font-bold text-slate-800">{sale.nama_paket}</p>
+                          <p className="text-sm font-bold text-slate-200">{sale.nama_paket}</p>
                           {sale.terjual_oleh && sale.terjual_oleh !== "Ara" && (
                             <span className="px-2 py-0.5 bg-purple-100 text-purple-700 text-[10px] font-bold rounded-md whitespace-nowrap">
                               Oleh: {sale.terjual_oleh}
@@ -1018,7 +1018,7 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
                         {hasAccess && (
                           <button
                             onClick={() => handleDeletePenjualanBundle(sale.id_penjualan)}
-                            className="w-7 h-7 rounded-lg bg-white border border-rose-100 text-rose-500 flex items-center justify-center hover:bg-rose-50 transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100 shadow-sm"
+                            className="w-7 h-7 rounded-lg bg-[#0F172A] border border-rose-100 text-rose-500 flex items-center justify-center hover:bg-rose-50 transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100 shadow-sm"
                             title="Batalkan Penjualan"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -1028,7 +1028,7 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
                     </div>
                     <div className="flex flex-wrap gap-1.5 mt-2">
                       {sale.items.map(item => (
-                        <span key={item.id_varian} className="inline-flex items-center px-2 py-1 bg-slate-100 text-slate-600 rounded text-[10px] font-bold">
+                        <span key={item.id_varian} className="inline-flex items-center px-2 py-1 bg-slate-800 text-slate-400 rounded text-[10px] font-bold">
                           {item.jumlah}x {item.nama_varian}
                         </span>
                       ))}
@@ -1052,7 +1052,7 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-sm font-semibold text-blue-600 uppercase tracking-wider mb-1">{produk.asal_sponsor}</p>
-              <h1 className="text-3xl font-black text-slate-800 leading-tight">{produk.nama_produk}</h1>
+              <h1 className="text-3xl font-black text-slate-200 leading-tight">{produk.nama_produk}</h1>
               <p className="text-xs text-slate-400 mt-1 font-mono">{produk.id_produk}</p>
             </div>
             {hasAccess && (
@@ -1070,9 +1070,9 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
           {!isByU && (
             <>
               {/* Distribusi Multi (Alokasi) */}
-          <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden mt-4">
-            <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-              <h3 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+          <div className="bg-[#0F172A] border border-slate-700/50 rounded-2xl shadow-sm overflow-hidden mt-4">
+            <div className="p-4 border-b border-white/5/5 flex items-center justify-between bg-slate-50">
+              <h3 className="text-sm font-bold text-slate-300 flex items-center gap-2">
                 📋 Stok di Tangan Distributor
                 {remainingDistribusi && remainingDistribusi.length > 0 && (
                   <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-[10px] font-black rounded-md">
@@ -1091,7 +1091,7 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
             </div>
             
             {!remainingDistribusi || remainingDistribusi.length === 0 ? (
-              <div className="p-6 text-center text-slate-500 text-sm">
+              <div className="p-6 text-center text-slate-400 text-sm">
                 Tidak ada stok di tangan distributor saat ini.
               </div>
             ) : (
@@ -1099,13 +1099,13 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
                 {remainingDistribusi.map((dist) => (
                   <div key={dist.id_dist} className="p-4 hover:bg-slate-50 transition-colors group">
                     <div className="flex items-center justify-between mb-2">
-                      <p className="text-sm font-bold text-slate-800">{dist.nama_penerima}</p>
+                      <p className="text-sm font-bold text-slate-200">{dist.nama_penerima}</p>
                       <div className="flex items-center gap-3">
                         <span className="text-xs text-slate-400">{new Date(dist.tanggal).toLocaleDateString('id-ID', { dateStyle: 'medium' })}</span>
                         {hasAccess && (
                           <button
                             onClick={() => handleDeleteDistribusi(dist.id_dist)}
-                            className="w-7 h-7 rounded-lg bg-white border border-rose-100 text-rose-500 flex items-center justify-center hover:bg-rose-50 transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100 shadow-sm"
+                            className="w-7 h-7 rounded-lg bg-[#0F172A] border border-rose-100 text-rose-500 flex items-center justify-center hover:bg-rose-50 transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100 shadow-sm"
                             title="Hapus Distribusi"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -1116,9 +1116,9 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
                     {/* List of taken items */}
                     <div className="grid grid-cols-2 gap-2 mt-2">
                       {dist.items?.map(item => (
-                        <div key={item.id_varian} className="flex items-center justify-between bg-white border border-slate-100 px-3 py-1.5 rounded-lg">
-                          <span className="text-xs font-medium text-slate-600 truncate mr-2" title={item.nama_varian}>{item.nama_varian}</span>
-                          <span className="text-xs font-bold text-slate-800 shrink-0">{item.jumlah} pcs</span>
+                        <div key={item.id_varian} className="flex items-center justify-between bg-[#0F172A] border border-white/5/5 px-3 py-1.5 rounded-lg">
+                          <span className="text-xs font-medium text-slate-400 truncate mr-2" title={item.nama_varian}>{item.nama_varian}</span>
+                          <span className="text-xs font-bold text-slate-200 shrink-0">{item.jumlah} pcs</span>
                         </div>
                       ))}
                     </div>
@@ -1134,9 +1134,9 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
           {/* Stats Grid Premium */}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3 lg:gap-4">
             {!isByU && (
-              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 md:p-5 flex flex-col justify-center shadow-sm">
-                <p className="text-[10px] md:text-xs text-slate-500 font-semibold uppercase tracking-wider mb-1">Harga Satuan</p>
-                <p className="text-lg xl:text-xl 2xl:text-2xl font-black tracking-tight text-slate-800">{formatRupiah(displayHargaSatuan)}</p>
+              <div className="bg-slate-50 border border-slate-700/50 rounded-2xl p-4 md:p-5 flex flex-col justify-center shadow-sm">
+                <p className="text-[10px] md:text-xs text-slate-400 font-semibold uppercase tracking-wider mb-1">Harga Satuan</p>
+                <p className="text-lg xl:text-xl 2xl:text-2xl font-black tracking-tight text-slate-200">{formatRupiah(displayHargaSatuan)}</p>
               </div>
             )}
             
@@ -1148,14 +1148,14 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
             {!isByU && (
             <button 
               onClick={() => setIsDetailVarianOpen(true)}
-              className="bg-white border border-slate-200 rounded-2xl p-3 md:p-4 hover:border-blue-300 hover:bg-blue-50 transition-colors flex items-center justify-center gap-3 cursor-pointer group shadow-sm col-span-2 md:col-span-1"
+              className="bg-[#0F172A] border border-slate-700/50 rounded-2xl p-3 md:p-4 hover:border-blue-300 hover:bg-blue-50 transition-colors flex items-center justify-center gap-3 cursor-pointer group shadow-sm col-span-2 md:col-span-1"
             >
               <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center group-hover:scale-110 group-hover:bg-blue-600 group-hover:text-white transition-all shrink-0">
                 <Target className="w-5 h-5" />
               </div>
               <div className="text-left">
-                <p className="text-[10px] md:text-xs text-slate-500 font-bold uppercase tracking-wider mb-0.5">Rincian</p>
-                <p className="text-sm md:text-base font-black tracking-tight text-slate-800 group-hover:text-blue-700 transition-colors whitespace-nowrap">Lihat Detail</p>
+                <p className="text-[10px] md:text-xs text-slate-400 font-bold uppercase tracking-wider mb-0.5">Rincian</p>
+                <p className="text-sm md:text-base font-black tracking-tight text-slate-200 group-hover:text-blue-700 transition-colors whitespace-nowrap">Lihat Detail</p>
               </div>
             </button>
             )}
@@ -1165,9 +1165,9 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
               <p className="text-lg xl:text-xl 2xl:text-2xl font-black tracking-tight">{formatRupiah(displayPendapatan)}</p>
             </div>
             
-            <div className="bg-white border border-slate-200 rounded-2xl p-4 md:p-5 shadow-sm flex flex-col justify-center">
+            <div className="bg-[#0F172A] border border-slate-700/50 rounded-2xl p-4 md:p-5 shadow-sm flex flex-col justify-center">
               <p className="text-slate-400 text-[10px] md:text-xs font-bold uppercase tracking-wider mb-1">Modal Dasar</p>
-              <p className="text-lg xl:text-xl 2xl:text-2xl font-black tracking-tight text-slate-700">{formatRupiah(displayModal)}</p>
+              <p className="text-lg xl:text-xl 2xl:text-2xl font-black tracking-tight text-slate-300">{formatRupiah(displayModal)}</p>
             </div>
             
             <div className={`bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl p-4 md:p-5 text-white shadow-lg shadow-blue-500/20 flex flex-col justify-center ${isByU ? 'col-span-2' : 'col-span-2 md:col-span-1'}`}>
@@ -1180,16 +1180,16 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
             <>
               {/* POS Kasir Bundle */}
           {hasAccess && (
-            <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden mt-4">
-              <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-                <h3 className="text-sm font-bold text-slate-700">🛒 Penjualan Paket Bundle</h3>
+            <div className="bg-[#0F172A] border border-slate-700/50 rounded-2xl shadow-sm overflow-hidden mt-4">
+              <div className="p-4 border-b border-white/5/5 flex items-center justify-between bg-slate-50">
+                <h3 className="text-sm font-bold text-slate-300">🛒 Penjualan Paket Bundle</h3>
               </div>
               <div className="p-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {BUNDLES.map(bundle => (
-                  <div key={bundle.id} className="border border-slate-100 rounded-xl p-3 flex flex-col justify-between hover:border-blue-200 hover:bg-blue-50/50 transition-colors group">
+                  <div key={bundle.id} className="border border-white/5/5 rounded-xl p-3 flex flex-col justify-between hover:border-blue-200 hover:bg-blue-50/50 transition-colors group">
                     <div>
-                      <p className="font-bold text-slate-800">{bundle.nama}</p>
-                      <p className="text-xs text-slate-500 mb-3">{bundle.isDynamic ? `Minimal ${bundle.minItems} Varian Barang` : `${bundle.maxItems} Varian Barang`}</p>
+                      <p className="font-bold text-slate-200">{bundle.nama}</p>
+                      <p className="text-xs text-slate-400 mb-3">{bundle.isDynamic ? `Minimal ${bundle.minItems} Varian Barang` : `${bundle.maxItems} Varian Barang`}</p>
                     </div>
                     <div className="flex items-center justify-between">
                       <p className="font-black text-blue-600">{bundle.isDynamic ? `${formatRupiah(bundle.harga)}/pcs` : formatRupiah(bundle.harga)}</p>
@@ -1216,19 +1216,19 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
           )}
           {/* Kasir Satuan by.U */}
           {isByU && hasAccess && (
-            <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden mt-4">
-              <div className="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-                <h3 className="text-sm font-bold text-slate-700">🛒 Kasir Kartu by.U</h3>
+            <div className="bg-[#0F172A] border border-slate-700/50 rounded-2xl shadow-sm overflow-hidden mt-4">
+              <div className="p-4 border-b border-white/5/5 flex items-center justify-between bg-slate-50">
+                <h3 className="text-sm font-bold text-slate-300">🛒 Kasir Kartu by.U</h3>
               </div>
               <form onSubmit={handleCheckoutByU} className="p-4 flex flex-col gap-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Tanggal Penjualan</label>
-                    <input type="date" required value={tanggalPenjualan} onChange={(e) => setTanggalPenjualan(e.target.value)} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" />
+                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Tanggal Penjualan</label>
+                    <input type="date" required value={tanggalPenjualan} onChange={(e) => setTanggalPenjualan(e.target.value)} className="w-full px-4 py-2 bg-slate-50 border border-slate-700/50 rounded-xl text-sm font-bold text-white focus:bg-[#0F172A] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Metode Bayar</label>
-                    <select value={metodePembayaran} onChange={(e) => setMetodePembayaran(e.target.value)} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
+                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Metode Bayar</label>
+                    <select value={metodePembayaran} onChange={(e) => setMetodePembayaran(e.target.value)} className="w-full px-4 py-2 bg-slate-50 border border-slate-700/50 rounded-xl text-sm font-bold text-white focus:bg-[#0F172A] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500">
                       <option value="Cash">Cash (Tunai)</option>
                       <option value="Transfer">Transfer</option>
                     </select>
@@ -1236,23 +1236,23 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Harga per Kartu</label>
+                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Harga per Kartu</label>
                     <div className="flex flex-col gap-2">
                       <div className="flex gap-2">
-                        <button type="button" onClick={() => setByuPrice(25000)} className={`flex-1 py-1.5 px-3 rounded-lg border text-sm font-bold transition-colors ${byuPrice === 25000 ? 'bg-blue-600 border-blue-600 text-white shadow-sm' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}>Rp 25.000</button>
-                        <button type="button" onClick={() => setByuPrice(35000)} className={`flex-1 py-1.5 px-3 rounded-lg border text-sm font-bold transition-colors ${byuPrice === 35000 ? 'bg-blue-600 border-blue-600 text-white shadow-sm' : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'}`}>Rp 35.000</button>
+                        <button type="button" onClick={() => setByuPrice(25000)} className={`flex-1 py-1.5 px-3 rounded-lg border text-sm font-bold transition-colors ${byuPrice === 25000 ? 'bg-blue-600 border-blue-600 text-white shadow-sm' : 'bg-[#0F172A] border-slate-700/50 text-slate-400 hover:bg-slate-50'}`}>Rp 25.000</button>
+                        <button type="button" onClick={() => setByuPrice(35000)} className={`flex-1 py-1.5 px-3 rounded-lg border text-sm font-bold transition-colors ${byuPrice === 35000 ? 'bg-blue-600 border-blue-600 text-white shadow-sm' : 'bg-[#0F172A] border-slate-700/50 text-slate-400 hover:bg-slate-50'}`}>Rp 35.000</button>
                       </div>
                       <div className="relative">
                         <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-medium text-sm">Rp</span>
-                        <input type="number" min={16000} required value={byuPrice || ""} onChange={(e) => setByuPrice(parseInt(e.target.value) || 0)} className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" placeholder="Harga custom (Min 16.000)" />
+                        <input type="number" min={16000} required value={byuPrice || ""} onChange={(e) => setByuPrice(parseInt(e.target.value) || 0)} className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-700/50 rounded-xl text-sm font-bold text-white focus:bg-[#0F172A] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" placeholder="Harga custom (Min 16.000)" />
                       </div>
                     </div>
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Jumlah Kartu</label>
-                    <input type="number" min={1} required value={byuQty} onChange={(e) => setByuQty(parseInt(e.target.value) || 1)} className="w-full px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 mb-4" />
+                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Jumlah Kartu</label>
+                    <input type="number" min={1} required value={byuQty} onChange={(e) => setByuQty(parseInt(e.target.value) || 1)} className="w-full px-4 py-2 bg-slate-50 border border-slate-700/50 rounded-xl text-sm font-bold text-white focus:bg-[#0F172A] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 mb-4" />
                     
-                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5">Total Harga</label>
+                    <label className="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-1.5">Total Harga</label>
                     <div className="w-full px-4 py-2 bg-blue-50 border border-blue-100 rounded-xl text-sm font-black text-blue-700 flex items-center">
                       {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(byuQty * byuPrice)}
                     </div>
@@ -1267,9 +1267,9 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
           {!isByU && (
             <>
               {/* Riwayat Penjualan Bundle */}
-          <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden mt-4">
-            <div className="p-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
-              <h3 className="text-sm font-bold text-slate-700">🧾 Riwayat Penjualan</h3>
+          <div className="bg-[#0F172A] border border-slate-700/50 rounded-2xl shadow-sm overflow-hidden mt-4">
+            <div className="p-4 border-b border-white/5/5 bg-slate-50 flex justify-between items-center">
+              <h3 className="text-sm font-bold text-slate-300">🧾 Riwayat Penjualan</h3>
               {produk.penjualan_bundle && produk.penjualan_bundle.length > 0 && (
                 <button
                   onClick={handleExportPenjualanBundle}
@@ -1280,7 +1280,7 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
               )}
             </div>
             {!produk.penjualan_bundle || produk.penjualan_bundle.length === 0 ? (
-              <div className="p-6 text-center text-slate-500 text-sm">Belum ada riwayat penjualan.</div>
+              <div className="p-6 text-center text-slate-400 text-sm">Belum ada riwayat penjualan.</div>
             ) : (
               <div className="divide-y divide-slate-100 max-h-[300px] overflow-y-auto">
                 {[...(produk.penjualan_bundle || [])].sort((a, b) => new Date(b.tanggal).getTime() - new Date(a.tanggal).getTime()).map(sale => (
@@ -1288,7 +1288,7 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
                     <div className="flex justify-between items-start mb-2">
                       <div>
                         <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                          <p className="text-sm font-bold text-slate-800">{sale.nama_paket}</p>
+                          <p className="text-sm font-bold text-slate-200">{sale.nama_paket}</p>
                           {sale.terjual_oleh && sale.terjual_oleh !== "Ara" && (
                             <span className="px-2 py-0.5 bg-purple-100 text-purple-700 text-[10px] font-bold rounded-md whitespace-nowrap">
                               Oleh: {sale.terjual_oleh}
@@ -1307,7 +1307,7 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
                         {hasAccess && (
                           <button
                             onClick={() => handleDeletePenjualanBundle(sale.id_penjualan)}
-                            className="w-7 h-7 rounded-lg bg-white border border-rose-100 text-rose-500 flex items-center justify-center hover:bg-rose-50 transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100 shadow-sm"
+                            className="w-7 h-7 rounded-lg bg-[#0F172A] border border-rose-100 text-rose-500 flex items-center justify-center hover:bg-rose-50 transition-colors opacity-100 md:opacity-0 md:group-hover:opacity-100 shadow-sm"
                             title="Batalkan Penjualan"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -1317,7 +1317,7 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
                     </div>
                     <div className="flex flex-wrap gap-1.5 mt-2">
                       {sale.items.map(item => (
-                        <span key={item.id_varian} className="inline-flex items-center px-2 py-1 bg-slate-100 text-slate-600 rounded text-[10px] font-bold">
+                        <span key={item.id_varian} className="inline-flex items-center px-2 py-1 bg-slate-800 text-slate-400 rounded text-[10px] font-bold">
                           {item.jumlah}x {item.nama_varian}
                         </span>
                       ))}
@@ -1340,58 +1340,58 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
       {/* Edit Modal */}
       {isEditModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="sticky top-0 bg-white border-b border-slate-100 px-6 py-4 flex items-center justify-between z-10">
-              <h2 className="text-lg font-bold text-slate-800">Edit Produk Sponsor</h2>
-              <button onClick={() => setIsEditModalOpen(false)} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
+          <div className="bg-[#0F172A] rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="sticky top-0 bg-[#0F172A] border-b border-white/5/5 px-6 py-4 flex items-center justify-between z-10">
+              <h2 className="text-lg font-bold text-slate-200">Edit Produk Sponsor</h2>
+              <button onClick={() => setIsEditModalOpen(false)} className="p-2 text-slate-400 hover:text-slate-400 hover:bg-slate-800 rounded-full transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
             <form onSubmit={handleSaveEdit} className="p-6 space-y-5">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div className="sm:col-span-2">
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Nama Produk <span className="text-rose-500">*</span></label>
-                  <input type="text" required value={formData.nama_produk} onChange={(e) => setFormData({...formData, nama_produk: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" />
+                  <label className="block text-sm font-semibold text-slate-300 mb-1.5">Nama Produk <span className="text-rose-500">*</span></label>
+                  <input type="text" required value={formData.nama_produk} onChange={(e) => setFormData({...formData, nama_produk: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-700/50 rounded-xl text-sm text-white focus:bg-[#0F172A] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" />
                 </div>
                 <div className="sm:col-span-2">
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Asal Sponsor <span className="text-rose-500">*</span></label>
-                  <input type="text" required value={formData.asal_sponsor} onChange={(e) => setFormData({...formData, asal_sponsor: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" />
+                  <label className="block text-sm font-semibold text-slate-300 mb-1.5">Asal Sponsor <span className="text-rose-500">*</span></label>
+                  <input type="text" required value={formData.asal_sponsor} onChange={(e) => setFormData({...formData, asal_sponsor: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-700/50 rounded-xl text-sm text-white focus:bg-[#0F172A] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Harga Satuan (Rp)</label>
-                  <input type="text" value={formData.harga_satuan} onChange={(e) => { const val = e.target.value.replace(/\D/g, ''); setFormData({...formData, harga_satuan: val ? parseInt(val).toLocaleString('id-ID') : ''}); }} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 font-semibold focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" />
+                  <label className="block text-sm font-semibold text-slate-300 mb-1.5">Harga Satuan (Rp)</label>
+                  <input type="text" value={formData.harga_satuan} onChange={(e) => { const val = e.target.value.replace(/\D/g, ''); setFormData({...formData, harga_satuan: val ? parseInt(val).toLocaleString('id-ID') : ''}); }} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-700/50 rounded-xl text-sm text-white font-semibold focus:bg-[#0F172A] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">Target (Pcs)</label>
-                    <input type="number" value={formData.target_penjualan} onChange={(e) => setFormData({...formData, target_penjualan: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" />
+                    <label className="block text-sm font-semibold text-slate-300 mb-1.5">Target (Pcs)</label>
+                    <input type="number" value={formData.target_penjualan} onChange={(e) => setFormData({...formData, target_penjualan: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-700/50 rounded-xl text-sm text-white focus:bg-[#0F172A] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" />
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">Terjual (Pcs)</label>
-                    <input type="number" value={formData.sudah_terjual} onChange={(e) => setFormData({...formData, sudah_terjual: e.target.value})} className="w-full px-4 py-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-sm text-emerald-900 font-bold focus:bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all" />
+                    <label className="block text-sm font-semibold text-slate-300 mb-1.5">Terjual (Pcs)</label>
+                    <input type="number" value={formData.sudah_terjual} onChange={(e) => setFormData({...formData, sudah_terjual: e.target.value})} className="w-full px-4 py-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-sm text-emerald-900 font-bold focus:bg-[#0F172A] focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all" />
                   </div>
                 </div>
                 <div className="sm:col-span-2">
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Keterangan</label>
-                  <textarea rows={2} value={formData.keterangan} onChange={(e) => setFormData({...formData, keterangan: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none" />
+                  <label className="block text-sm font-semibold text-slate-300 mb-1.5">Keterangan</label>
+                  <textarea rows={2} value={formData.keterangan} onChange={(e) => setFormData({...formData, keterangan: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-700/50 rounded-xl text-sm text-white focus:bg-[#0F172A] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none" />
                 </div>
                 <div className="sm:col-span-2">
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Ganti Foto Produk <span className="text-slate-400 font-normal">(kosongkan jika tidak ganti)</span></label>
+                  <label className="block text-sm font-semibold text-slate-300 mb-1.5">Ganti Foto Produk <span className="text-slate-400 font-normal">(kosongkan jika tidak ganti)</span></label>
                   {formData.fileData ? (
-                    <div className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                    <div className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-700/50 rounded-xl">
                       <img src={formData.fileData} alt="" className="w-12 h-12 rounded-lg object-cover border" />
-                      <span className="text-sm font-medium text-slate-700 flex-1 truncate">{formData.fileName}</span>
+                      <span className="text-sm font-medium text-slate-300 flex-1 truncate">{formData.fileName}</span>
                       <button type="button" onClick={() => setFormData({...formData, fileData: "", fileName: "", mimeType: ""})} className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg"><X className="w-4 h-4" /></button>
                     </div>
                   ) : (
-                    <input type="file" accept="image/*" onChange={handleFileChange} className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/50 focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+                    <input type="file" accept="image/*" onChange={handleFileChange} className="w-full px-4 py-2.5 bg-[#0F172A] border border-slate-700/50 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/50 focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
                   )}
                 </div>
               </div>
-              <div className="pt-4 border-t border-slate-100 flex justify-end gap-3">
-                <button type="button" onClick={() => setIsEditModalOpen(false)} className="px-5 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-xl transition-colors">Batal</button>
+              <div className="pt-4 border-t border-white/5/5 flex justify-end gap-3">
+                <button type="button" onClick={() => setIsEditModalOpen(false)} className="px-5 py-2.5 text-sm font-medium text-slate-400 hover:bg-slate-800 rounded-xl transition-colors">Batal</button>
                 <button type="submit" disabled={isSubmitting} className="px-6 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-xl transition-colors flex items-center justify-center min-w-[120px]">
-                  {isSubmitting ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : 'Simpan Perubahan'}
+                  {isSubmitting ? <div className="w-5 h-5 border-2 border-white/5/30 border-t-white rounded-full animate-spin" /> : 'Simpan Perubahan'}
                 </button>
               </div>
             </form>
@@ -1402,44 +1402,44 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
       {/* Varian Modal */}
       {isVarianModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="border-b border-slate-100 px-6 py-4 flex items-center justify-between">
-              <h2 className="text-lg font-bold text-slate-800">{isByU ? 'Tambah Stok Kartu' : 'Tambah Varian Produk'}</h2>
-              <button onClick={() => setIsVarianModalOpen(false)} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
+          <div className="bg-[#0F172A] rounded-2xl w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="border-b border-white/5/5 px-6 py-4 flex items-center justify-between">
+              <h2 className="text-lg font-bold text-slate-200">{isByU ? 'Tambah Stok Kartu' : 'Tambah Varian Produk'}</h2>
+              <button onClick={() => setIsVarianModalOpen(false)} className="p-2 text-slate-400 hover:text-slate-400 hover:bg-slate-800 rounded-full transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
             <form onSubmit={handleAddVarian} className="p-6 space-y-4">
               {!isByU && (
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Nama Varian / Rasa <span className="text-rose-500">*</span></label>
+                <label className="block text-sm font-semibold text-slate-300 mb-1.5">Nama Varian / Rasa <span className="text-rose-500">*</span></label>
                 <input
                   type="text"
                   required
                   placeholder="Contoh: Keripik Pisang Coklat"
                   value={varianFormData.nama_varian}
                   onChange={(e) => setVarianFormData({ ...varianFormData, nama_varian: e.target.value })}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-700/50 rounded-xl text-sm text-white focus:bg-[#0F172A] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                 />
               </div>
               )}
               <div className="grid grid-cols-2 gap-4">
                 {!isByU && (
                 <div className="col-span-2">
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Foto Varian <span className="text-slate-400 font-normal">(opsional)</span></label>
+                  <label className="block text-sm font-semibold text-slate-300 mb-1.5">Foto Varian <span className="text-slate-400 font-normal">(opsional)</span></label>
                   {varianFormData.fileData ? (
-                    <div className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                    <div className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-700/50 rounded-xl">
                       <img src={varianFormData.fileData} alt="" className="w-12 h-12 rounded-lg object-cover border" />
-                      <span className="text-sm font-medium text-slate-700 flex-1 truncate">{varianFormData.fileName}</span>
+                      <span className="text-sm font-medium text-slate-300 flex-1 truncate">{varianFormData.fileName}</span>
                       <button type="button" onClick={() => setVarianFormData({...varianFormData, fileData: "", fileName: "", mimeType: ""})} className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg"><X className="w-4 h-4" /></button>
                     </div>
                   ) : (
-                    <input type="file" accept="image/*" onChange={handleVarianFileChange} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/50 focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+                    <input type="file" accept="image/*" onChange={handleVarianFileChange} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-700/50 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/50 focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
                   )}
                 </div>
                 )}
                 <div className="col-span-2">
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Stok Awal <span className="text-rose-500">*</span></label>
+                  <label className="block text-sm font-semibold text-slate-300 mb-1.5">Stok Awal <span className="text-rose-500">*</span></label>
                   <input
                     type="number"
                     required
@@ -1447,14 +1447,14 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
                     placeholder="0"
                     value={varianFormData.jumlah}
                     onChange={(e) => setVarianFormData({ ...varianFormData, jumlah: e.target.value })}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-700/50 rounded-xl text-sm text-white focus:bg-[#0F172A] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                   />
                 </div>
               </div>
-              <div className="pt-4 border-t border-slate-100 flex justify-end gap-3 mt-6">
-                <button type="button" onClick={() => setIsVarianModalOpen(false)} className="px-5 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-xl transition-colors">Batal</button>
+              <div className="pt-4 border-t border-white/5/5 flex justify-end gap-3 mt-6">
+                <button type="button" onClick={() => setIsVarianModalOpen(false)} className="px-5 py-2.5 text-sm font-medium text-slate-400 hover:bg-slate-800 rounded-xl transition-colors">Batal</button>
                 <button type="submit" disabled={isVarianSubmitting} className="px-6 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-xl transition-colors flex items-center justify-center min-w-[120px]">
-                  {isVarianSubmitting ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : 'Simpan Varian'}
+                  {isVarianSubmitting ? <div className="w-5 h-5 border-2 border-white/5/30 border-t-white rounded-full animate-spin" /> : 'Simpan Varian'}
                 </button>
               </div>
             </form>
@@ -1464,42 +1464,42 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
       {/* Distribusi Multi Modal */}
       {isDistribusiModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="border-b border-slate-100 px-6 py-4 flex items-center justify-between shrink-0">
-              <h2 className="text-lg font-bold text-slate-800">Bagikan ke Panitia</h2>
-              <button onClick={() => setIsDistribusiModalOpen(false)} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
+          <div className="bg-[#0F172A] rounded-2xl w-full max-w-lg shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="border-b border-white/5/5 px-6 py-4 flex items-center justify-between shrink-0">
+              <h2 className="text-lg font-bold text-slate-200">Bagikan ke Panitia</h2>
+              <button onClick={() => setIsDistribusiModalOpen(false)} className="p-2 text-slate-400 hover:text-slate-400 hover:bg-slate-800 rounded-full transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
             
             <form onSubmit={handleAddDistribusiMulti} className="flex-1 overflow-y-auto p-6 space-y-6">
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Tanggal Distribusi <span className="text-rose-500">*</span></label>
+                <label className="block text-sm font-semibold text-slate-300 mb-1.5">Tanggal Distribusi <span className="text-rose-500">*</span></label>
                 <input
                   type="date"
                   required
                   value={distribusiFormData.tanggal}
                   onChange={(e) => setDistribusiFormData({ ...distribusiFormData, tanggal: e.target.value })}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-700/50 rounded-xl text-sm text-white focus:bg-[#0F172A] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Nama Panitia / Penerima <span className="text-rose-500">*</span></label>
+                <label className="block text-sm font-semibold text-slate-300 mb-1.5">Nama Panitia / Penerima <span className="text-rose-500">*</span></label>
                 <input
                   type="text"
                   required
                   placeholder="Contoh: Budi (Div. Danus)"
                   value={distribusiFormData.nama_penerima}
                   onChange={(e) => setDistribusiFormData({ ...distribusiFormData, nama_penerima: e.target.value })}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-700/50 rounded-xl text-sm text-white focus:bg-[#0F172A] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-3">Tentukan Jumlah per Varian</label>
+                <label className="block text-sm font-semibold text-slate-300 mb-3">Tentukan Jumlah per Varian</label>
                 {!produk.varian || produk.varian.length === 0 ? (
-                  <div className="text-sm text-slate-500 bg-slate-50 p-4 rounded-xl border border-slate-200 text-center">
+                  <div className="text-sm text-slate-400 bg-slate-50 p-4 rounded-xl border border-slate-700/50 text-center">
                     Belum ada varian produk. Silakan tambah varian terlebih dahulu.
                   </div>
                 ) : (
@@ -1507,40 +1507,40 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
                     {produk.varian.map((varItem) => {
                       const qty = distribusiFormData.items[varItem.id_varian] || 0;
                       return (
-                        <div key={varItem.id_varian} className="flex items-center justify-between bg-white border border-slate-200 p-3 rounded-xl shadow-sm">
+                        <div key={varItem.id_varian} className="flex items-center justify-between bg-[#0F172A] border border-slate-700/50 p-3 rounded-xl shadow-sm">
                           <div className="flex items-center gap-3">
                             {varItem.foto && varItem.foto !== "-" ? (
                               <img src={getDriveThumbnail(varItem.foto) || varItem.foto} alt="" className="w-8 h-8 rounded border object-cover" />
                             ) : (
-                              <div className="w-8 h-8 rounded border bg-slate-100 flex items-center justify-center text-slate-400">
+                              <div className="w-8 h-8 rounded border bg-slate-800 flex items-center justify-center text-slate-400">
                                 <Package className="w-4 h-4" />
                               </div>
                             )}
                             <div>
-                              <p className="text-sm font-bold text-slate-800">{varItem.nama_varian}</p>
+                              <p className="text-sm font-bold text-slate-200">{varItem.nama_varian}</p>
                               <p className="text-xs text-slate-400">Stok: {varItem.jumlah}</p>
                             </div>
                           </div>
                           
-                          <div className="flex items-center gap-3 bg-slate-50 rounded-lg p-1 border border-slate-200">
+                          <div className="flex items-center gap-3 bg-slate-50 rounded-lg p-1 border border-slate-700/50">
                             <button
                               type="button"
                               onClick={() => setDistribusiFormData(prev => ({
                                 ...prev,
                                 items: { ...prev.items, [varItem.id_varian]: Math.max(0, qty - 1) }
                               }))}
-                              className="w-8 h-8 rounded-md bg-white border border-slate-200 text-slate-600 flex items-center justify-center hover:bg-slate-100 transition-colors font-bold shadow-sm"
+                              className="w-8 h-8 rounded-md bg-[#0F172A] border border-slate-700/50 text-slate-400 flex items-center justify-center hover:bg-slate-800 transition-colors font-bold shadow-sm"
                             >
                               <Minus className="w-3.5 h-3.5" />
                             </button>
-                            <span className="w-8 text-center text-sm font-black text-slate-800">{qty}</span>
+                            <span className="w-8 text-center text-sm font-black text-slate-200">{qty}</span>
                             <button
                               type="button"
                               onClick={() => setDistribusiFormData(prev => ({
                                 ...prev,
                                 items: { ...prev.items, [varItem.id_varian]: qty + 1 }
                               }))}
-                              className="w-8 h-8 rounded-md bg-white border border-slate-200 text-slate-600 flex items-center justify-center hover:bg-slate-100 transition-colors font-bold shadow-sm"
+                              className="w-8 h-8 rounded-md bg-[#0F172A] border border-slate-700/50 text-slate-400 flex items-center justify-center hover:bg-slate-800 transition-colors font-bold shadow-sm"
                             >
                               <Plus className="w-3.5 h-3.5" />
                             </button>
@@ -1552,10 +1552,10 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
                 )}
               </div>
               
-              <div className="pt-4 border-t border-slate-100 flex justify-end gap-3 sticky bottom-0 bg-white">
-                <button type="button" onClick={() => setIsDistribusiModalOpen(false)} className="px-5 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-xl transition-colors">Batal</button>
+              <div className="pt-4 border-t border-white/5/5 flex justify-end gap-3 sticky bottom-0 bg-[#0F172A]">
+                <button type="button" onClick={() => setIsDistribusiModalOpen(false)} className="px-5 py-2.5 text-sm font-medium text-slate-400 hover:bg-slate-800 rounded-xl transition-colors">Batal</button>
                 <button type="submit" disabled={isDistribusiSubmitting || (!produk.varian || produk.varian.length === 0)} className="px-6 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-xl transition-colors flex items-center justify-center min-w-[120px]">
-                  {isDistribusiSubmitting ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : 'Simpan Distribusi'}
+                  {isDistribusiSubmitting ? <div className="w-5 h-5 border-2 border-white/5/30 border-t-white rounded-full animate-spin" /> : 'Simpan Distribusi'}
                 </button>
               </div>
             </form>
@@ -1566,63 +1566,63 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
       {/* Bundle Modal */}
       {isBundleModalOpen && selectedBundle && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="border-b border-slate-100 px-6 py-4 flex items-center justify-between shrink-0 bg-blue-50">
+          <div className="bg-[#0F172A] rounded-2xl w-full max-w-lg shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="border-b border-white/5/5 px-6 py-4 flex items-center justify-between shrink-0 bg-blue-50">
               <div>
-                <h2 className="text-lg font-bold text-slate-800">Kasir: {selectedBundle.nama}</h2>
+                <h2 className="text-lg font-bold text-slate-200">Kasir: {selectedBundle.nama}</h2>
                 <p className="text-xs text-blue-600 font-medium mt-0.5">
                   {selectedBundle.isDynamic ? `Pilih minimal ${selectedBundle.minItems} barang` : `Pilih ${selectedBundle.maxItems} barang yang terjual`}
                 </p>
               </div>
-              <button onClick={() => setIsBundleModalOpen(false)} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-white rounded-full transition-colors">
+              <button onClick={() => setIsBundleModalOpen(false)} className="p-2 text-slate-400 hover:text-slate-400 hover:bg-[#0F172A] rounded-full transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
             
             <form onSubmit={handleAddPenjualanBundle} className="flex-1 overflow-y-auto p-6 space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-                <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
-                  <label className="block text-sm font-bold text-slate-700 mb-2">Terjual Oleh</label>
+                <div className="bg-slate-50 border border-slate-700/50 rounded-xl p-4">
+                  <label className="block text-sm font-bold text-slate-300 mb-2">Terjual Oleh</label>
                   <select 
                     value={terjualOleh} 
                     onChange={(e) => {
                       setTerjualOleh(e.target.value);
                       setBundleItems({}); // Reset selected items when changing seller
                     }}
-                    className="w-full border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm text-slate-900 bg-white"
+                    className="w-full border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm text-white bg-[#0F172A]"
                   >
-                    <option value="Ara" className="text-slate-900 bg-white">Ara (Stok Utama)</option>
+                    <option value="Ara" className="text-white bg-[#0F172A]">Ara (Stok Utama)</option>
                     {distributorNames.map(name => (
-                      <option key={name} value={name} className="text-slate-900 bg-white">{name}</option>
+                      <option key={name} value={name} className="text-white bg-[#0F172A]">{name}</option>
                     ))}
                   </select>
                 </div>
-                <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
-                  <label className="block text-sm font-bold text-slate-700 mb-2">Metode Bayar</label>
+                <div className="bg-slate-50 border border-slate-700/50 rounded-xl p-4">
+                  <label className="block text-sm font-bold text-slate-300 mb-2">Metode Bayar</label>
                   <select 
                     value={metodePembayaran} 
                     onChange={(e) => setMetodePembayaran(e.target.value)}
-                    className="w-full border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm text-slate-900 bg-white"
+                    className="w-full border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm text-white bg-[#0F172A]"
                   >
-                    <option value="Cash" className="text-slate-900 bg-white">Cash (Tunai)</option>
-                    <option value="Transfer" className="text-slate-900 bg-white">Transfer</option>
+                    <option value="Cash" className="text-white bg-[#0F172A]">Cash (Tunai)</option>
+                    <option value="Transfer" className="text-white bg-[#0F172A]">Transfer</option>
                   </select>
                 </div>
-                <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
-                  <label className="block text-sm font-bold text-slate-700 mb-2">Tanggal</label>
+                <div className="bg-slate-50 border border-slate-700/50 rounded-xl p-4">
+                  <label className="block text-sm font-bold text-slate-300 mb-2">Tanggal</label>
                   <input 
                     type="date" 
                     required 
                     value={tanggalPenjualan} 
                     onChange={(e) => setTanggalPenjualan(e.target.value)} 
-                    className="w-full border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm text-slate-900 bg-white" 
+                    className="w-full border-slate-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-sm text-white bg-[#0F172A]" 
                   />
                 </div>
               </div>
 
               <div>
                 {!produk.varian || produk.varian.length === 0 ? (
-                  <div className="text-sm text-slate-500 bg-slate-50 p-4 rounded-xl border border-slate-200 text-center">
+                  <div className="text-sm text-slate-400 bg-slate-50 p-4 rounded-xl border border-slate-700/50 text-center">
                     Belum ada varian produk. Silakan tambah varian terlebih dahulu.
                   </div>
                 ) : (
@@ -1633,35 +1633,35 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
                       const totalSelected = Object.values(bundleItems).reduce((sum, val) => sum + val, 0);
                       
                       return (
-                        <div key={varItem.id_varian} className="flex items-center justify-between bg-white border border-slate-200 p-3 rounded-xl shadow-sm hover:border-blue-200 transition-colors opacity-100 data-[disabled=true]:opacity-50" data-disabled={maxStock === 0}>
+                        <div key={varItem.id_varian} className="flex items-center justify-between bg-[#0F172A] border border-slate-700/50 p-3 rounded-xl shadow-sm hover:border-blue-200 transition-colors opacity-100 data-[disabled=true]:opacity-50" data-disabled={maxStock === 0}>
                           <div className="flex items-center gap-3">
                             {varItem.foto && varItem.foto !== "-" ? (
                               <img src={getDriveThumbnail(varItem.foto) || varItem.foto} alt="" className="w-10 h-10 rounded-lg border object-cover" />
                             ) : (
-                              <div className="w-10 h-10 rounded-lg border bg-slate-100 flex items-center justify-center text-slate-400">
+                              <div className="w-10 h-10 rounded-lg border bg-slate-800 flex items-center justify-center text-slate-400">
                                 <Package className="w-5 h-5" />
                               </div>
                             )}
                             <div>
-                              <p className="text-sm font-bold text-slate-800">{varItem.nama_varian}</p>
+                              <p className="text-sm font-bold text-slate-200">{varItem.nama_varian}</p>
                               <p className="text-xs text-slate-400">Sisa Stok: {maxStock}</p>
                             </div>
                           </div>
                           
-                          <div className="flex items-center gap-3 bg-slate-50 rounded-lg p-1 border border-slate-200">
+                          <div className="flex items-center gap-3 bg-slate-50 rounded-lg p-1 border border-slate-700/50">
                             <button
                               type="button"
                               onClick={() => setBundleItems(prev => ({ ...prev, [varItem.id_varian]: Math.max(0, qty - 1) }))}
-                              className="w-8 h-8 rounded-md bg-white border border-slate-200 text-slate-600 flex items-center justify-center hover:bg-slate-100 transition-colors font-bold shadow-sm"
+                              className="w-8 h-8 rounded-md bg-[#0F172A] border border-slate-700/50 text-slate-400 flex items-center justify-center hover:bg-slate-800 transition-colors font-bold shadow-sm"
                             >
                               <Minus className="w-3.5 h-3.5" />
                             </button>
-                            <span className="w-8 text-center text-base font-black text-slate-800">{qty}</span>
+                            <span className="w-8 text-center text-base font-black text-slate-200">{qty}</span>
                             <button
                               type="button"
                               disabled={(!selectedBundle.isDynamic && totalSelected >= (selectedBundle.maxItems || 0)) || qty >= maxStock}
                               onClick={() => setBundleItems(prev => ({ ...prev, [varItem.id_varian]: qty + 1 }))}
-                              className="w-8 h-8 rounded-md bg-white border border-slate-200 text-slate-600 flex items-center justify-center hover:bg-slate-100 transition-colors font-bold shadow-sm disabled:opacity-30 disabled:cursor-not-allowed"
+                              className="w-8 h-8 rounded-md bg-[#0F172A] border border-slate-700/50 text-slate-400 flex items-center justify-center hover:bg-slate-800 transition-colors font-bold shadow-sm disabled:opacity-30 disabled:cursor-not-allowed"
                             >
                               <Plus className="w-3.5 h-3.5" />
                             </button>
@@ -1673,13 +1673,13 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
                 )}
               </div>
               
-              <div className="pt-4 border-t border-slate-100 flex justify-end gap-3 sticky bottom-0 bg-white">
+              <div className="pt-4 border-t border-white/5/5 flex justify-end gap-3 sticky bottom-0 bg-[#0F172A]">
                 <div className="flex-1">
-                  <p className="text-xs text-slate-500 font-semibold">Total Terpilih:</p>
+                  <p className="text-xs text-slate-400 font-semibold">Total Terpilih:</p>
                   <p className={`text-lg font-black ${
                     selectedBundle.isDynamic 
-                      ? (Object.values(bundleItems).reduce((sum, val) => sum + val, 0) >= (selectedBundle.minItems || 0) ? 'text-emerald-600' : 'text-slate-700')
-                      : (Object.values(bundleItems).reduce((sum, val) => sum + val, 0) === selectedBundle.maxItems ? 'text-emerald-600' : 'text-slate-700')
+                      ? (Object.values(bundleItems).reduce((sum, val) => sum + val, 0) >= (selectedBundle.minItems || 0) ? 'text-emerald-600' : 'text-slate-300')
+                      : (Object.values(bundleItems).reduce((sum, val) => sum + val, 0) === selectedBundle.maxItems ? 'text-emerald-600' : 'text-slate-300')
                   }`}>
                     {Object.values(bundleItems).reduce((sum, val) => sum + val, 0)} {selectedBundle.isDynamic ? `(Min. ${selectedBundle.minItems})` : `/ ${selectedBundle.maxItems}`}
                   </p>
@@ -1687,7 +1687,7 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
                      <p className="text-xs font-bold text-blue-600 mt-1">Total: {formatRupiah(Object.values(bundleItems).reduce((sum, val) => sum + val, 0) * selectedBundle.harga)}</p>
                   )}
                 </div>
-                <button type="button" onClick={() => setIsBundleModalOpen(false)} className="px-5 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-xl transition-colors">Batal</button>
+                <button type="button" onClick={() => setIsBundleModalOpen(false)} className="px-5 py-2.5 text-sm font-medium text-slate-400 hover:bg-slate-800 rounded-xl transition-colors">Batal</button>
                 <button 
                   type="submit" 
                   disabled={
@@ -1698,7 +1698,7 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
                   } 
                   className="px-6 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-colors flex items-center justify-center min-w-[120px] shadow-md shadow-blue-500/20"
                 >
-                  {isBundleSubmitting ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : 'Catat Penjualan'}
+                  {isBundleSubmitting ? <div className="w-5 h-5 border-2 border-white/5/30 border-t-white rounded-full animate-spin" /> : 'Catat Penjualan'}
                 </button>
               </div>
             </form>
@@ -1709,34 +1709,34 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
       {/* Detail Varian Terjual Modal */}
       {isDetailVarianOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="border-b border-slate-100 px-6 py-4 flex items-center justify-between shrink-0 bg-amber-50">
+          <div className="bg-[#0F172A] rounded-2xl w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="border-b border-white/5/5 px-6 py-4 flex items-center justify-between shrink-0 bg-amber-50">
               <div>
-                <h2 className="text-lg font-bold text-slate-800">Detail Varian Terjual</h2>
+                <h2 className="text-lg font-bold text-slate-200">Detail Varian Terjual</h2>
                 <p className="text-xs text-amber-600 font-medium mt-0.5">Total Keseluruhan: {totalPcsTerjual} pcs</p>
               </div>
-              <button onClick={() => setIsDetailVarianOpen(false)} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-white rounded-full transition-colors">
+              <button onClick={() => setIsDetailVarianOpen(false)} className="p-2 text-slate-400 hover:text-slate-400 hover:bg-[#0F172A] rounded-full transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
             
             <div className="flex-1 overflow-y-auto p-6 space-y-3">
               {Object.keys(varianTerjual).length === 0 ? (
-                <div className="text-sm text-slate-500 bg-slate-50 p-4 rounded-xl border border-slate-200 text-center">
+                <div className="text-sm text-slate-400 bg-slate-50 p-4 rounded-xl border border-slate-700/50 text-center">
                   Belum ada varian yang terjual.
                 </div>
               ) : (
                 Object.values(varianTerjual).sort((a,b) => b.jumlah - a.jumlah).map((item, idx) => (
-                  <div key={idx} className="flex items-center justify-between bg-white border border-slate-200 p-3 rounded-xl shadow-sm hover:border-amber-200 transition-colors">
+                  <div key={idx} className="flex items-center justify-between bg-[#0F172A] border border-slate-700/50 p-3 rounded-xl shadow-sm hover:border-amber-200 transition-colors">
                     <div className="flex items-center gap-3">
                       {item.foto && item.foto !== "-" ? (
                         <img src={getDriveThumbnail(item.foto) || item.foto} alt={item.nama} className="w-10 h-10 rounded-lg border object-cover" />
                       ) : (
-                        <div className="w-10 h-10 rounded-lg border bg-slate-100 flex items-center justify-center text-slate-400">
+                        <div className="w-10 h-10 rounded-lg border bg-slate-800 flex items-center justify-center text-slate-400">
                           <Package className="w-5 h-5" />
                         </div>
                       )}
-                      <p className="text-sm font-bold text-slate-800">{item.nama}</p>
+                      <p className="text-sm font-bold text-slate-200">{item.nama}</p>
                     </div>
                     <span className="px-3 py-1 bg-amber-100 text-amber-700 text-sm font-black rounded-lg shadow-sm border border-amber-200 shrink-0">{item.jumlah} pcs</span>
                   </div>
@@ -1744,7 +1744,7 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
               )}
             </div>
             
-            <div className="pt-4 border-t border-slate-100 flex justify-end px-6 pb-6 bg-white">
+            <div className="pt-4 border-t border-white/5/5 flex justify-end px-6 pb-6 bg-[#0F172A]">
               <button type="button" onClick={() => setIsDetailVarianOpen(false)} className="w-full px-5 py-2.5 text-sm font-bold text-white bg-slate-800 hover:bg-slate-900 rounded-xl transition-colors shadow-lg">Tutup Rincian</button>
             </div>
           </div>

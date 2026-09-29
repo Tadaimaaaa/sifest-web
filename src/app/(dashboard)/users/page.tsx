@@ -137,7 +137,7 @@ export default function UsersPage() {
       case 'ROLE-014':
         return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">Bazaar</span>;
       default:
-        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700">Panitia</span>;
+        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-800 text-slate-300">Panitia</span>;
     }
   };
 
@@ -158,8 +158,8 @@ export default function UsersPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Data Panitia</h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <h1 className="text-2xl font-bold text-slate-200 tracking-tight">Data Panitia</h1>
+          <p className="text-sm text-slate-400 mt-1">
             {isSuperAdmin ? "Kelola data pengguna dan hak akses aplikasi." : "Daftar panitia dan divisi SI FEST 2026."}
           </p>
         </div>
@@ -172,14 +172,14 @@ export default function UsersPage() {
       </div>
 
       {/* Filters & Search */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col sm:flex-row gap-4">
+      <div className="bg-[#0F172A] p-4 rounded-2xl border border-white/5/5 shadow-sm flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
             <Search className="w-4 h-4 text-slate-400" />
           </div>
           <input
             type="text"
-            className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+            className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-700/50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50"
             placeholder="Cari nama atau NIM..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -191,7 +191,7 @@ export default function UsersPage() {
           <select 
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
-            className="bg-slate-50 border border-slate-200 rounded-xl text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-700"
+            className="bg-slate-50 border border-slate-700/50 rounded-xl text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-300"
           >
             <option value="">Semua Role</option>
             <option value="ROLE-001">Super Admin</option>
@@ -212,7 +212,7 @@ export default function UsersPage() {
           <select 
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="bg-slate-50 border border-slate-200 rounded-xl text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-700"
+            className="bg-slate-50 border border-slate-700/50 rounded-xl text-sm px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-300"
           >
             <option value="">Semua Status</option>
             <option value="ACTIVE">Aktif</option>
@@ -222,10 +222,10 @@ export default function UsersPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
+      <div className="bg-[#0F172A] border border-white/5/5 rounded-2xl shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-slate-600">
-            <thead className="bg-slate-50 border-b border-slate-100 text-slate-500">
+          <table className="w-full text-left text-sm text-slate-400">
+            <thead className="bg-slate-50 border-b border-white/5/5 text-slate-400">
               <tr>
                 <th className="px-6 py-4 font-semibold">Nama / NIM</th>
                 <th className="px-6 py-4 font-semibold">Divisi / Posisi</th>
@@ -243,20 +243,20 @@ export default function UsersPage() {
                 </tr>
               ) : filteredUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={isSuperAdmin ? 5 : 4} className="px-6 py-12 text-center text-slate-500">
+                  <td colSpan={isSuperAdmin ? 5 : 4} className="px-6 py-12 text-center text-slate-400">
                     Tidak ada panitia yang ditemukan.
                   </td>
                 </tr>
               ) : (
                 filteredUsers.map((user) => (
-                  <tr key={user.user_id} className="hover:bg-slate-50/50 transition-colors">
+                  <tr key={user.user_id} className="hover:bg-[#1e293b]/50 transition-colors">
                     <td className="px-6 py-4">
-                      <p className="font-semibold text-slate-800">{user.name}</p>
-                      <p className="text-xs text-slate-500 mt-0.5">{user.nim || "-"}</p>
+                      <p className="font-semibold text-slate-200">{user.name}</p>
+                      <p className="text-xs text-slate-400 mt-0.5">{user.nim || "-"}</p>
                     </td>
                     <td className="px-6 py-4">
-                      <p className="text-slate-700">{user.division || "-"}</p>
-                      <p className="text-xs text-slate-500 mt-0.5 font-medium">{user.position || "-"}</p>
+                      <p className="text-slate-300">{user.division || "-"}</p>
+                      <p className="text-xs text-slate-400 mt-0.5 font-medium">{user.position || "-"}</p>
                     </td>
                     <td className="px-6 py-4">
                       {getRoleBadge(user.role_id)}
@@ -288,33 +288,33 @@ export default function UsersPage() {
       {/* Modal Kelola Akses */}
       {isModalOpen && selectedUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between p-5 border-b border-slate-100">
-              <h2 className="font-bold text-slate-800 flex items-center gap-2">
+          <div className="bg-[#0F172A] rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between p-5 border-b border-white/5/5">
+              <h2 className="font-bold text-slate-200 flex items-center gap-2">
                 <ShieldAlert className="w-5 h-5 text-blue-600" />
                 Kelola Akses Panitia
               </h2>
               <button 
                 onClick={() => setIsModalOpen(false)}
-                className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                className="p-2 text-slate-400 hover:text-slate-400 hover:bg-slate-800 rounded-lg transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
             
             <form onSubmit={handleUpdateAccess} className="p-6 space-y-5">
-              <div className="bg-slate-50 p-4 rounded-xl border border-slate-100 mb-2">
-                <p className="text-sm text-slate-500">Nama</p>
-                <p className="font-semibold text-slate-800">{selectedUser.name}</p>
-                <p className="text-xs text-slate-500 mt-1">{selectedUser.division} - {selectedUser.position}</p>
+              <div className="bg-slate-50 p-4 rounded-xl border border-white/5/5 mb-2">
+                <p className="text-sm text-slate-400">Nama</p>
+                <p className="font-semibold text-slate-200">{selectedUser.name}</p>
+                <p className="text-xs text-slate-400 mt-1">{selectedUser.division} - {selectedUser.position}</p>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-slate-700">Ubah Jabatan (Role)</label>
+                <label className="text-sm font-medium text-slate-300">Ubah Jabatan (Role)</label>
                 <select 
                   value={editRole}
                   onChange={(e) => setEditRole(e.target.value)}
-                  className="w-full bg-white border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-800 font-medium"
+                  className="w-full bg-[#0F172A] border border-slate-700/50 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-200 font-medium"
                 >
                   <option value="ROLE-001">Super Admin</option>
                   <option value="ROLE-002">Steering Committee (SC)</option>
@@ -334,17 +334,17 @@ export default function UsersPage() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-slate-700">Status Akun</label>
+                <label className="text-sm font-medium text-slate-300">Status Akun</label>
                 <select 
                   value={editStatus}
                   onChange={(e) => setEditStatus(e.target.value)}
                   className={`w-full border rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 font-medium
-                    ${editStatus === 'ACTIVE' ? 'bg-green-50 border-green-200 text-green-700' : 'bg-slate-50 border-slate-200 text-slate-700'}`}
+                    ${editStatus === 'ACTIVE' ? 'bg-green-50 border-green-200 text-green-700' : 'bg-slate-50 border-slate-700/50 text-slate-300'}`}
                 >
                   <option value="ACTIVE">Aktif (Bisa Login)</option>
                   <option value="INACTIVE">Nonaktif (Diblokir)</option>
                 </select>
-                <p className="text-xs text-slate-500 mt-1">
+                <p className="text-xs text-slate-400 mt-1">
                   Pilih nonaktif jika panitia ini mengundurkan diri atau sudah tidak berhak mengakses sistem.
                 </p>
               </div>
@@ -353,7 +353,7 @@ export default function UsersPage() {
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-medium text-sm hover:bg-slate-50 transition-colors"
+                  className="flex-1 px-4 py-2.5 rounded-xl border border-slate-700/50 text-slate-400 font-medium text-sm hover:bg-slate-50 transition-colors"
                 >
                   Batal
                 </button>

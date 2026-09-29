@@ -174,8 +174,8 @@ export default function SeminarDashboard() {
           <div className="w-20 h-20 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto">
             <Users className="w-10 h-10" />
           </div>
-          <h2 className="text-2xl font-bold text-slate-800">Akses Ditolak</h2>
-          <p className="text-slate-500 max-w-md">Anda tidak memiliki izin untuk mengakses dashboard ini.</p>
+          <h2 className="text-2xl font-bold text-slate-200">Akses Ditolak</h2>
+          <p className="text-slate-400 max-w-md">Anda tidak memiliki izin untuk mengakses dashboard ini.</p>
           <Link href="/dashboard" className="inline-block mt-4 px-6 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors">
             Kembali ke Dashboard
           </Link>
@@ -191,16 +191,16 @@ export default function SeminarDashboard() {
         <div className="flex items-center gap-4">
           <Link 
             href="/event"
-            className="w-10 h-10 bg-white border border-slate-200 rounded-xl flex items-center justify-center text-slate-500 hover:bg-slate-50 transition-colors"
+            className="w-10 h-10 bg-[#0F172A] border border-slate-700/50 rounded-xl flex items-center justify-center text-slate-400 hover:bg-slate-50 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-slate-800 tracking-tight flex items-center gap-2">
+            <h1 className="text-2xl font-bold text-slate-200 tracking-tight flex items-center gap-2">
               Seminar
               {isLoading && <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />}
             </h1>
-            <p className="text-sm text-slate-500 mt-1">
+            <p className="text-sm text-slate-400 mt-1">
               Kelola data peserta Seminar SI FEST 2026
             </p>
           </div>
@@ -223,7 +223,7 @@ export default function SeminarDashboard() {
       {/* Info Cards */}
       <div className="relative">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-bold text-slate-800">Informasi Event</h2>
+          <h2 className="text-lg font-bold text-slate-200">Informasi Event</h2>
           {hasAccess && (
             <button 
               onClick={() => setIsEditing(true)}
@@ -235,26 +235,26 @@ export default function SeminarDashboard() {
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden group">
+          <div className="bg-[#0F172A] p-5 rounded-2xl border border-slate-700/50 shadow-sm relative overflow-hidden group">
             <div className="absolute -right-6 -top-6 w-24 h-24 bg-blue-50 rounded-full group-hover:scale-150 transition-transform duration-500" />
             <div className="relative">
               <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center mb-3">
                 <Users className="w-5 h-5" />
               </div>
-              <p className="text-sm text-slate-500 font-medium">Total Peserta</p>
+              <p className="text-sm text-slate-400 font-medium">Total Peserta</p>
               <div className="flex items-baseline gap-2 mt-1">
-                <h3 className="text-2xl font-bold text-slate-800">{participants.length}</h3>
+                <h3 className="text-2xl font-bold text-slate-200">{participants.length}</h3>
                 {eventData?.kuota && <span className="text-xs text-slate-400">/ {eventData.kuota}</span>}
               </div>
             </div>
           </div>
           
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+          <div className="bg-[#0F172A] p-5 rounded-2xl border border-slate-700/50 shadow-sm">
             <div className="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center mb-3">
               <Calendar className="w-5 h-5" />
             </div>
-            <p className="text-sm text-slate-500 font-medium">Tanggal Pelaksanaan</p>
-            <h3 className="text-base font-bold text-slate-800 mt-1">
+            <p className="text-sm text-slate-400 font-medium">Tanggal Pelaksanaan</p>
+            <h3 className="text-base font-bold text-slate-200 mt-1">
               {eventData?.tanggal ? (
                 isNaN(Date.parse(eventData.tanggal)) 
                   ? eventData.tanggal 
@@ -263,20 +263,20 @@ export default function SeminarDashboard() {
             </h3>
           </div>
           
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+          <div className="bg-[#0F172A] p-5 rounded-2xl border border-slate-700/50 shadow-sm">
             <div className="w-10 h-10 rounded-xl bg-violet-100 text-violet-600 flex items-center justify-center mb-3">
               <Clock className="w-5 h-5" />
             </div>
-            <p className="text-sm text-slate-500 font-medium">Waktu (Default)</p>
-            <h3 className="text-base font-bold text-slate-800 mt-1">08:00 - Selesai</h3>
+            <p className="text-sm text-slate-400 font-medium">Waktu (Default)</p>
+            <h3 className="text-base font-bold text-slate-200 mt-1">08:00 - Selesai</h3>
           </div>
           
-          <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+          <div className="bg-[#0F172A] p-5 rounded-2xl border border-slate-700/50 shadow-sm">
             <div className="w-10 h-10 rounded-xl bg-fuchsia-100 text-fuchsia-600 flex items-center justify-center mb-3">
               <MapPin className="w-5 h-5" />
             </div>
-            <p className="text-sm text-slate-500 font-medium">Lokasi / Tempat</p>
-            <h3 className="text-base font-bold text-slate-800 mt-1 truncate" title={eventData?.tempat || eventData?.lokasi || "UPI Convention Center"}>
+            <p className="text-sm text-slate-400 font-medium">Lokasi / Tempat</p>
+            <h3 className="text-base font-bold text-slate-200 mt-1 truncate" title={eventData?.tempat || eventData?.lokasi || "UPI Convention Center"}>
               {eventData?.tempat || eventData?.lokasi || "UPI Convention Center"}
             </h3>
           </div>
@@ -284,16 +284,16 @@ export default function SeminarDashboard() {
       </div>
 
       {/* Main Content Area */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="bg-[#0F172A] rounded-2xl border border-slate-700/50 shadow-sm overflow-hidden">
         {/* Toolbar */}
-        <div className="p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="p-5 border-b border-white/5/5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
               <Users className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-800">Daftar Peserta</h2>
-              <p className="text-xs text-slate-500">{participants.length} Peserta Terdaftar (Data sinkron dengan Pendaftar Official Web)</p>
+              <h2 className="text-lg font-bold text-slate-200">Daftar Peserta</h2>
+              <p className="text-xs text-slate-400">{participants.length} Peserta Terdaftar (Data sinkron dengan Pendaftar Official Web)</p>
             </div>
           </div>
           
@@ -305,7 +305,7 @@ export default function SeminarDashboard() {
                 placeholder="Cari nama atau instansi..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 pr-4 py-2 rounded-xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 w-full sm:w-64 transition-all"
+                className="pl-9 pr-4 py-2 rounded-xl border border-slate-700/50 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 w-full sm:w-64 transition-all"
               />
             </div>
           </div>
@@ -314,10 +314,10 @@ export default function SeminarDashboard() {
         {/* Table */}
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
-            <thead className="text-xs text-slate-500 uppercase bg-slate-50/50 border-b border-slate-100">
+            <thead className="text-xs text-slate-400 uppercase bg-[#1e293b]/50 border-b border-white/5/5">
               <tr>
                 <th className="px-6 py-4 font-semibold tracking-wider">
-                  <div className="flex items-center gap-2 cursor-pointer hover:text-slate-800">
+                  <div className="flex items-center gap-2 cursor-pointer hover:text-slate-200">
                     NAMA LENGKAP
                     <ArrowUpDown className="w-3 h-3" />
                   </div>
@@ -334,7 +334,7 @@ export default function SeminarDashboard() {
                   <td colSpan={5} className="px-6 py-12 text-center">
                     <div className="flex flex-col items-center justify-center">
                       <Loader2 className="w-8 h-8 text-blue-500 animate-spin mb-4" />
-                      <p className="text-slate-500 text-sm">Memuat data peserta dari server...</p>
+                      <p className="text-slate-400 text-sm">Memuat data peserta dari server...</p>
                     </div>
                   </td>
                 </tr>
@@ -342,20 +342,20 @@ export default function SeminarDashboard() {
                 filteredParticipants.map((p, index) => (
                   <tr 
                     key={p.id_peserta || index} 
-                    className="hover:bg-slate-50/80 transition-colors"
+                    className="hover:bg-[#1e293b]/50 transition-colors"
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="font-semibold text-slate-800">{p.nama_lengkap}</div>
+                      <div className="font-semibold text-slate-200">{p.nama_lengkap}</div>
                       <div className="text-xs text-slate-400 mt-0.5">ID: {p.id_peserta}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-slate-600">{p.institusi}</div>
+                      <div className="text-slate-400">{p.institusi}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-slate-600">{p.email}</div>
+                      <div className="text-slate-400">{p.email}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-slate-600">{p.kontak}</div>
+                      <div className="text-slate-400">{p.kontak}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2.5 py-1 text-xs font-medium rounded-full border ${getStatusColor(p.status_bayar)}`}>
@@ -370,8 +370,8 @@ export default function SeminarDashboard() {
                     <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-50 mb-4">
                       <Users className="w-8 h-8 text-slate-400" />
                     </div>
-                    <h3 className="text-slate-800 font-semibold mb-1">Belum ada peserta (atau Gagal Memuat)</h3>
-                    <p className="text-sm text-slate-500 mb-2">Jika seharusnya ada peserta, pastikan Environment Variable Vercel sudah benar.</p>
+                    <h3 className="text-slate-200 font-semibold mb-1">Belum ada peserta (atau Gagal Memuat)</h3>
+                    <p className="text-sm text-slate-400 mb-2">Jika seharusnya ada peserta, pastikan Environment Variable Vercel sudah benar.</p>
                     {errorMessage && (
                       <div className="bg-rose-50 text-rose-600 text-xs p-3 rounded-lg border border-rose-100 max-w-md mx-auto text-left whitespace-pre-wrap">
                         <span className="font-bold block mb-1">Pesan Error Sistem:</span>
@@ -389,43 +389,43 @@ export default function SeminarDashboard() {
       {/* Edit Modal */}
       {isEditing && (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-              <h3 className="text-lg font-bold text-slate-800">Ubah Info Event</h3>
-              <button onClick={() => setIsEditing(false)} className="p-2 hover:bg-slate-100 rounded-full text-slate-500 transition-colors">
+          <div className="bg-[#0F172A] rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="px-6 py-4 border-b border-white/5/5 flex items-center justify-between">
+              <h3 className="text-lg font-bold text-slate-200">Ubah Info Event</h3>
+              <button onClick={() => setIsEditing(false)} className="p-2 hover:bg-slate-800 rounded-full text-slate-400 transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
             
             <form onSubmit={handleSaveEvent} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Tanggal Pelaksanaan</label>
+                <label className="block text-sm font-semibold text-slate-300 mb-1.5">Tanggal Pelaksanaan</label>
                 <input 
                   type="date" 
                   value={formData.tanggal ? new Date(formData.tanggal).toISOString().split('T')[0] : ''}
                   onChange={(e) => setFormData({...formData, tanggal: e.target.value})}
                   placeholder="Contoh: 26 Oktober 2026"
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-700/50 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                 />
               </div>
               
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Tempat / Lokasi</label>
+                <label className="block text-sm font-semibold text-slate-300 mb-1.5">Tempat / Lokasi</label>
                 <input 
                   type="text" 
                   value={formData.tempat || formData.lokasi || ''}
                   onChange={(e) => setFormData({...formData, tempat: e.target.value, lokasi: e.target.value})}
                   placeholder="Contoh: UPI Convention Center"
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-700/50 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Status Event</label>
+                <label className="block text-sm font-semibold text-slate-300 mb-1.5">Status Event</label>
                 <select 
                   value={formData.status || 'Akan Datang'}
                   onChange={(e) => setFormData({...formData, status: e.target.value})}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-700/50 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                 >
                   <option value="Akan Datang">Akan Datang</option>
                   <option value="Sedang Berlangsung">Sedang Berlangsung</option>
@@ -433,11 +433,11 @@ export default function SeminarDashboard() {
                 </select>
               </div>
 
-              <div className="pt-4 mt-6 border-t border-slate-100 flex justify-end gap-3">
+              <div className="pt-4 mt-6 border-t border-white/5/5 flex justify-end gap-3">
                 <button 
                   type="button"
                   onClick={() => setIsEditing(false)}
-                  className="px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50 rounded-xl transition-colors"
+                  className="px-4 py-2 text-sm font-semibold text-slate-400 hover:bg-slate-50 rounded-xl transition-colors"
                 >
                   Batal
                 </button>

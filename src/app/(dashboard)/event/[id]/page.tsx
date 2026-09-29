@@ -127,17 +127,17 @@ export default function EventDetailPage() {
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-4xl mx-auto">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Link href="/event" className="p-2 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors shadow-sm">
-          <ArrowLeft className="w-5 h-5 text-slate-600" />
+        <Link href="/event" className="p-2 bg-[#0F172A] border border-slate-700/50 rounded-xl hover:bg-slate-50 transition-colors shadow-sm">
+          <ArrowLeft className="w-5 h-5 text-slate-400" />
         </Link>
         <div>
-          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">{meta.name}</h1>
-          <p className="text-sm text-slate-500">Informasi Umum Event</p>
+          <h1 className="text-2xl font-bold text-slate-200 tracking-tight">{meta.name}</h1>
+          <p className="text-sm text-slate-400">Informasi Umum Event</p>
         </div>
       </div>
 
       {/* Main Content Card */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden relative">
+      <div className="bg-[#0F172A] rounded-2xl border border-slate-700/50 shadow-sm overflow-hidden relative">
         {/* Decorative Banner */}
         <div className={`h-24 bg-gradient-to-r ${meta.color} opacity-90 relative overflow-hidden`}>
           <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20 mix-blend-overlay"></div>
@@ -146,7 +146,7 @@ export default function EventDetailPage() {
         {/* Profile / Content */}
         <div className="p-6 sm:p-8 relative">
           <div className="flex justify-between items-start mb-6">
-            <div className={`-mt-16 w-20 h-20 rounded-2xl ${meta.bg} border-4 border-white shadow-lg flex items-center justify-center relative z-10`}>
+            <div className={`-mt-16 w-20 h-20 rounded-2xl ${meta.bg} border-4 border-white/5 shadow-lg flex items-center justify-center relative z-10`}>
               <Activity className={`w-8 h-8 ${meta.text}`} />
             </div>
             
@@ -166,13 +166,13 @@ export default function EventDetailPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div>
                   <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5 mb-1"><CalendarDays className="w-3.5 h-3.5" /> Tanggal Pelaksanaan</label>
-                  <p className="text-base font-semibold text-slate-800">
+                  <p className="text-base font-semibold text-slate-200">
                     {eventData.tanggal ? new Date(eventData.tanggal).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : "Belum ditentukan"}
                   </p>
                 </div>
                 <div>
                   <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5 mb-1"><MapPin className="w-3.5 h-3.5" /> Tempat / Lokasi</label>
-                  <p className="text-base font-semibold text-slate-800">{eventData.tempat || "Belum ditentukan"}</p>
+                  <p className="text-base font-semibold text-slate-200">{eventData.tempat || "Belum ditentukan"}</p>
                 </div>
                 <div>
                   <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5 mb-1"><Activity className="w-3.5 h-3.5" /> Status Event</label>
@@ -189,8 +189,8 @@ export default function EventDetailPage() {
 
               <div>
                 <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5 mb-2"><Info className="w-3.5 h-3.5" /> Deskripsi Event</label>
-                <div className="p-4 bg-slate-50 border border-slate-100 rounded-xl">
-                  <p className="text-slate-700 whitespace-pre-wrap text-sm leading-relaxed">
+                <div className="p-4 bg-slate-50 border border-white/5/5 rounded-xl">
+                  <p className="text-slate-300 whitespace-pre-wrap text-sm leading-relaxed">
                     {eventData.deskripsi || "Belum ada deskripsi untuk event ini."}
                   </p>
                 </div>
@@ -201,30 +201,30 @@ export default function EventDetailPage() {
             <form onSubmit={handleSave} className="space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Tanggal Pelaksanaan</label>
+                  <label className="block text-sm font-semibold text-slate-300 mb-1.5">Tanggal Pelaksanaan</label>
                   <input 
                     type="date" 
                     value={formData.tanggal}
                     onChange={(e) => setFormData({...formData, tanggal: e.target.value})}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-700/50 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Tempat / Lokasi</label>
+                  <label className="block text-sm font-semibold text-slate-300 mb-1.5">Tempat / Lokasi</label>
                   <input 
                     type="text" 
                     value={formData.tempat}
                     onChange={(e) => setFormData({...formData, tempat: e.target.value})}
                     placeholder="Contoh: GOR UNP"
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-700/50 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                   />
                 </div>
                 <div className="sm:col-span-2">
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Status Event</label>
+                  <label className="block text-sm font-semibold text-slate-300 mb-1.5">Status Event</label>
                   <select 
                     value={formData.status}
                     onChange={(e) => setFormData({...formData, status: e.target.value})}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-700/50 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                   >
                     <option value="Akan Datang">Akan Datang</option>
                     <option value="Sedang Berlangsung">Sedang Berlangsung</option>
@@ -233,25 +233,25 @@ export default function EventDetailPage() {
                   </select>
                 </div>
                 <div className="sm:col-span-2">
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Deskripsi Singkat</label>
+                  <label className="block text-sm font-semibold text-slate-300 mb-1.5">Deskripsi Singkat</label>
                   <textarea 
                     rows={4}
                     value={formData.deskripsi}
                     onChange={(e) => setFormData({...formData, deskripsi: e.target.value})}
                     placeholder="Tuliskan deskripsi atau catatan mengenai event ini..."
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-700/50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 resize-none"
                   />
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/5/5">
                 <button 
                   type="button"
                   onClick={() => {
                     setIsEditing(false);
                     setFormData(eventData);
                   }}
-                  className="px-5 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
+                  className="px-5 py-2.5 text-sm font-semibold text-slate-400 hover:bg-slate-800 rounded-xl transition-colors"
                 >
                   Batal
                 </button>

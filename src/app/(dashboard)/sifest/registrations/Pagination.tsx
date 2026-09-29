@@ -19,10 +19,10 @@ export function RegistrationsPagination({ totalPages, currentPage }: { totalPage
   if (totalPages <= 1) return null;
 
   return (
-    <div className="flex items-center justify-between px-4 py-3 bg-white border-t border-slate-200 sm:px-6 mt-4 rounded-b-xl">
+    <div className="flex items-center justify-between px-4 py-3 bg-[#0F172A] border-t border-slate-700/50 sm:px-6 mt-4 rounded-b-xl">
       <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
         <div>
-          <p className="text-sm text-slate-700">
+          <p className="text-sm text-slate-300">
             Halaman <span className="font-medium">{currentPage}</span> dari <span className="font-medium">{totalPages}</span>
           </p>
         </div>
@@ -32,8 +32,8 @@ export function RegistrationsPagination({ totalPages, currentPage }: { totalPage
               onClick={() => handlePageChange(currentPage - 1)}
               disabled={currentPage === 1}
               className={clsx(
-                "relative inline-flex items-center px-2 py-2 rounded-l-md border border-slate-300 bg-white text-sm font-medium",
-                currentPage === 1 ? "text-slate-300 cursor-not-allowed" : "text-slate-500 hover:bg-slate-50"
+                "relative inline-flex items-center px-2 py-2 rounded-l-md border border-slate-300 bg-[#0F172A] text-sm font-medium",
+                currentPage === 1 ? "text-slate-300 cursor-not-allowed" : "text-slate-400 hover:bg-slate-50"
               )}
             >
               <span className="sr-only">Previous</span>
@@ -48,7 +48,7 @@ export function RegistrationsPagination({ totalPages, currentPage }: { totalPage
                   "relative inline-flex items-center px-4 py-2 border text-sm font-medium",
                   currentPage === i + 1
                     ? "z-10 bg-blue-50 border-blue-500 text-blue-600"
-                    : "bg-white border-slate-300 text-slate-500 hover:bg-slate-50"
+                    : "bg-[#0F172A] border-slate-300 text-slate-400 hover:bg-slate-50"
                 )}
               >
                 {i + 1}
@@ -58,8 +58,8 @@ export function RegistrationsPagination({ totalPages, currentPage }: { totalPage
               onClick={() => handlePageChange(currentPage + 1)}
               disabled={currentPage === totalPages}
               className={clsx(
-                "relative inline-flex items-center px-2 py-2 rounded-r-md border border-slate-300 bg-white text-sm font-medium",
-                currentPage === totalPages ? "text-slate-300 cursor-not-allowed" : "text-slate-500 hover:bg-slate-50"
+                "relative inline-flex items-center px-2 py-2 rounded-r-md border border-slate-300 bg-[#0F172A] text-sm font-medium",
+                currentPage === totalPages ? "text-slate-300 cursor-not-allowed" : "text-slate-400 hover:bg-slate-50"
               )}
             >
               <span className="sr-only">Next</span>

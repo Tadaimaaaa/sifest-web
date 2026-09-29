@@ -288,8 +288,8 @@ export default function SuratPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Surat Masuk & Keluar</h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <h1 className="text-2xl font-bold text-slate-200 tracking-tight">Surat Masuk & Keluar</h1>
+          <p className="text-sm text-slate-400 mt-1">
             Sistem pengarsipan digital untuk administrasi kesekretariatan SI FEST.
           </p>
         </div>
@@ -305,7 +305,7 @@ export default function SuratPage() {
           )}
           <button 
             onClick={fetchSurat}
-            className="p-2.5 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors text-slate-600 shadow-sm"
+            className="p-2.5 bg-[#0F172A] border border-slate-700/50 rounded-xl hover:bg-slate-50 transition-colors text-slate-400 shadow-sm"
           >
             <RefreshCcw className="w-4 h-4" />
           </button>
@@ -323,41 +323,41 @@ export default function SuratPage() {
 
       {/* Dashboard Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+        <div className="bg-[#0F172A] p-6 rounded-2xl border border-slate-700/50 shadow-sm flex items-center gap-4">
           <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
             <Mail className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-sm text-slate-500 font-medium">Total Arsip</p>
-            <h3 className="text-2xl font-bold text-slate-800">{totalSurat} Surat</h3>
+            <p className="text-sm text-slate-400 font-medium">Total Arsip</p>
+            <h3 className="text-2xl font-bold text-slate-200">{totalSurat} Surat</h3>
           </div>
         </div>
         
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4 cursor-pointer hover:bg-slate-50 transition-colors" onClick={() => setJenisFilter("Surat Masuk")}>
+        <div className="bg-[#0F172A] p-6 rounded-2xl border border-slate-700/50 shadow-sm flex items-center gap-4 cursor-pointer hover:bg-slate-50 transition-colors" onClick={() => setJenisFilter("Surat Masuk")}>
           <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
             <Inbox className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-sm text-slate-500 font-medium">Surat Masuk</p>
-            <h3 className="text-2xl font-bold text-slate-800">{totalMasuk} Dokumen</h3>
+            <p className="text-sm text-slate-400 font-medium">Surat Masuk</p>
+            <h3 className="text-2xl font-bold text-slate-200">{totalMasuk} Dokumen</h3>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4 cursor-pointer hover:bg-slate-50 transition-colors" onClick={() => setJenisFilter("Surat Keluar")}>
+        <div className="bg-[#0F172A] p-6 rounded-2xl border border-slate-700/50 shadow-sm flex items-center gap-4 cursor-pointer hover:bg-slate-50 transition-colors" onClick={() => setJenisFilter("Surat Keluar")}>
           <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl">
             <Send className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-sm text-slate-500 font-medium">Surat Keluar</p>
-            <h3 className="text-2xl font-bold text-slate-800">{totalKeluar} Dokumen</h3>
+            <p className="text-sm text-slate-400 font-medium">Surat Keluar</p>
+            <h3 className="text-2xl font-bold text-slate-200">{totalKeluar} Dokumen</h3>
           </div>
         </div>
       </div>
 
       {/* Main Content Area */}
-      <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden flex flex-col">
+      <div className="bg-[#0F172A] border border-white/5/5 rounded-2xl shadow-sm overflow-hidden flex flex-col">
         {/* Toolbar */}
-        <div className="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row gap-4 justify-between items-center bg-slate-50/50">
+        <div className="p-4 sm:p-5 border-b border-white/5/5 flex flex-col sm:flex-row gap-4 justify-between items-center bg-[#1e293b]/50">
           <div className="relative w-full sm:w-80">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input 
@@ -365,18 +365,18 @@ export default function SuratPage() {
               placeholder="Cari no. surat, perihal, instansi..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm"
+              className="w-full pl-10 pr-4 py-2.5 bg-[#0F172A] border border-slate-700/50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm"
             />
           </div>
-          <div className="flex gap-2 w-full sm:w-auto p-1 bg-slate-100 rounded-xl">
+          <div className="flex gap-2 w-full sm:w-auto p-1 bg-slate-800 rounded-xl">
             {["Semua", "Surat Masuk", "Surat Keluar"].map((jenis) => (
               <button
                 key={jenis}
                 onClick={() => setJenisFilter(jenis)}
                 className={`flex-1 sm:flex-none whitespace-nowrap px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${
                   jenisFilter === jenis 
-                    ? 'bg-white text-slate-800 shadow-sm' 
-                    : 'text-slate-500 hover:text-slate-700'
+                    ? 'bg-[#0F172A] text-slate-200 shadow-sm' 
+                    : 'text-slate-400 hover:text-slate-300'
                 }`}
               >
                 {jenis}
@@ -387,8 +387,8 @@ export default function SuratPage() {
 
         {/* Table */}
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-slate-600">
-            <thead className="bg-slate-50 text-slate-500 border-b border-slate-100">
+          <table className="w-full text-left text-sm text-slate-400">
+            <thead className="bg-slate-50 text-slate-400 border-b border-white/5/5">
               <tr>
                 <th className="px-6 py-4 font-semibold w-16">Jenis</th>
                 <th className="px-6 py-4 font-semibold">Identitas Surat</th>
@@ -407,7 +407,7 @@ export default function SuratPage() {
                 </tr>
               ) : filteredSurat.length === 0 ? (
                 <tr>
-                  <td colSpan={hasAccess ? 6 : 5} className="px-6 py-12 text-center text-slate-500 flex-col items-center justify-center">
+                  <td colSpan={hasAccess ? 6 : 5} className="px-6 py-12 text-center text-slate-400 flex-col items-center justify-center">
                     <div className="bg-slate-50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-3">
                       <FileText className="w-8 h-8 text-slate-300" />
                     </div>
@@ -416,26 +416,26 @@ export default function SuratPage() {
                 </tr>
               ) : (
                 filteredSurat.map((srt) => (
-                  <tr key={srt.id_surat} className="hover:bg-slate-50/80 transition-colors group">
+                  <tr key={srt.id_surat} className="hover:bg-[#1e293b]/50 transition-colors group">
                     <td className="px-6 py-4">
                       <div className={`w-10 h-10 rounded-full flex items-center justify-center ${srt.jenis_surat === 'Surat Masuk' ? 'bg-emerald-100 text-emerald-600' : 'bg-indigo-100 text-indigo-600'}`} title={srt.jenis_surat}>
                         {srt.jenis_surat === 'Surat Masuk' ? <Inbox className="w-5 h-5" /> : <Send className="w-5 h-5" />}
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <p className="font-bold text-slate-800 text-[15px] mb-1">{srt.perihal}</p>
+                      <p className="font-bold text-slate-200 text-[15px] mb-1">{srt.perihal}</p>
                       <div className="flex flex-col gap-0.5">
-                        <span className="text-slate-500 font-mono text-xs bg-slate-100 px-1.5 py-0.5 rounded w-max">{srt.nomor_surat}</span>
+                        <span className="text-slate-400 font-mono text-xs bg-slate-800 px-1.5 py-0.5 rounded w-max">{srt.nomor_surat}</span>
                         <div className="flex items-center gap-1 text-slate-400 mt-1">
                           <CalendarClock className="w-3 h-3" /> <span className="text-xs">{formatTanggal(srt.tanggal)}</span>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="font-medium text-slate-700">{srt.instansi}</span>
+                      <span className="font-medium text-slate-300">{srt.instansi}</span>
                     </td>
                     <td className="px-6 py-4">
-                      <p className="text-sm text-slate-600 leading-relaxed max-w-xs">{srt.status}</p>
+                      <p className="text-sm text-slate-400 leading-relaxed max-w-xs">{srt.status}</p>
                     </td>
                     <td className="px-6 py-4">
                       {srt.link_file && srt.link_file !== "-" ? (
@@ -477,12 +477,12 @@ export default function SuratPage() {
       {/* Form Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="sticky top-0 bg-white border-b border-slate-100 px-6 py-4 flex items-center justify-between z-10">
-              <h2 className="text-lg font-bold text-slate-800">
+          <div className="bg-[#0F172A] rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="sticky top-0 bg-[#0F172A] border-b border-white/5/5 px-6 py-4 flex items-center justify-between z-10">
+              <h2 className="text-lg font-bold text-slate-200">
                 {editingSurat ? 'Edit Arsip Surat' : 'Arsipkan Surat Baru'}
               </h2>
-              <button onClick={() => { setIsModalOpen(false); resetForm(); }} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
+              <button onClick={() => { setIsModalOpen(false); resetForm(); }} className="p-2 text-slate-400 hover:text-slate-400 hover:bg-slate-800 rounded-full transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -491,41 +491,41 @@ export default function SuratPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 
                 <div className="sm:col-span-2">
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Jenis Surat</label>
+                  <label className="block text-sm font-semibold text-slate-300 mb-1.5">Jenis Surat</label>
                   <div className="flex gap-4">
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input type="radio" name="jenis_surat" value="Surat Masuk" checked={formData.jenis_surat === "Surat Masuk"} onChange={(e) => setFormData({...formData, jenis_surat: e.target.value})} className="w-4 h-4 text-blue-600" />
-                      <span className="text-sm font-medium text-slate-700">Surat Masuk</span>
+                      <span className="text-sm font-medium text-slate-300">Surat Masuk</span>
                     </label>
                     <label className="flex items-center gap-2 cursor-pointer">
                       <input type="radio" name="jenis_surat" value="Surat Keluar" checked={formData.jenis_surat === "Surat Keluar"} onChange={(e) => setFormData({...formData, jenis_surat: e.target.value})} className="w-4 h-4 text-blue-600" />
-                      <span className="text-sm font-medium text-slate-700">Surat Keluar</span>
+                      <span className="text-sm font-medium text-slate-300">Surat Keluar</span>
                     </label>
                   </div>
                 </div>
 
                 <div className="sm:col-span-2">
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Perihal / Judul Surat <span className="text-rose-500">*</span></label>
-                  <input type="text" required value={formData.perihal} onChange={(e) => setFormData({...formData, perihal: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" placeholder="Contoh: Undangan Menjadi Pemateri / Peminjaman Tempat" />
+                  <label className="block text-sm font-semibold text-slate-300 mb-1.5">Perihal / Judul Surat <span className="text-rose-500">*</span></label>
+                  <input type="text" required value={formData.perihal} onChange={(e) => setFormData({...formData, perihal: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-700/50 rounded-xl text-sm text-white placeholder:text-slate-400 focus:bg-[#0F172A] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" placeholder="Contoh: Undangan Menjadi Pemateri / Peminjaman Tempat" />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Nomor Surat <span className="text-rose-500">*</span></label>
-                  <input type="text" required value={formData.nomor_surat} onChange={(e) => setFormData({...formData, nomor_surat: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" placeholder="Misal: 01/A/SIFEST/VIII/2026" />
+                  <label className="block text-sm font-semibold text-slate-300 mb-1.5">Nomor Surat <span className="text-rose-500">*</span></label>
+                  <input type="text" required value={formData.nomor_surat} onChange={(e) => setFormData({...formData, nomor_surat: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-700/50 rounded-xl text-sm text-white placeholder:text-slate-400 focus:bg-[#0F172A] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" placeholder="Misal: 01/A/SIFEST/VIII/2026" />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Tanggal Surat</label>
-                  <input type="text" value={formData.tanggal} onChange={(e) => setFormData({...formData, tanggal: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" placeholder="Contoh: 12 Agustus 2026" />
+                  <label className="block text-sm font-semibold text-slate-300 mb-1.5">Tanggal Surat</label>
+                  <input type="text" value={formData.tanggal} onChange={(e) => setFormData({...formData, tanggal: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-700/50 rounded-xl text-sm text-white placeholder:text-slate-400 focus:bg-[#0F172A] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" placeholder="Contoh: 12 Agustus 2026" />
                 </div>
 
                 <div className="sm:col-span-2">
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">{formData.jenis_surat === "Surat Masuk" ? "Instansi Pengirim" : "Instansi Tujuan"}</label>
-                  <input type="text" value={formData.instansi} onChange={(e) => setFormData({...formData, instansi: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" placeholder="Misal: BEM KM Unand / PT Semen Padang" />
+                  <label className="block text-sm font-semibold text-slate-300 mb-1.5">{formData.jenis_surat === "Surat Masuk" ? "Instansi Pengirim" : "Instansi Tujuan"}</label>
+                  <input type="text" value={formData.instansi} onChange={(e) => setFormData({...formData, instansi: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-700/50 rounded-xl text-sm text-white placeholder:text-slate-400 focus:bg-[#0F172A] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" placeholder="Misal: BEM KM Unand / PT Semen Padang" />
                 </div>
 
                 <div className="sm:col-span-2">
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">File / Scan Surat <span className="text-slate-400 font-normal">(Opsional)</span></label>
+                  <label className="block text-sm font-semibold text-slate-300 mb-1.5">File / Scan Surat <span className="text-slate-400 font-normal">(Opsional)</span></label>
                   
                   {formData.link_file && formData.link_file !== "-" && (
                     <div className="mb-2 text-xs text-blue-600 flex items-center">
@@ -535,18 +535,18 @@ export default function SuratPage() {
                   )}
 
                   {formData.fileData ? (
-                    <div className="relative rounded-xl border border-slate-200 bg-slate-50 p-4 flex items-center gap-3">
+                    <div className="relative rounded-xl border border-slate-700/50 bg-slate-50 p-4 flex items-center gap-3">
                       <div className="w-10 h-10 bg-rose-100 text-rose-600 rounded-lg flex items-center justify-center shrink-0">
                         <FileText className="w-5 h-5" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-slate-800 truncate">{formData.fileName}</p>
-                        <p className="text-xs text-slate-500 truncate">Siap diunggah</p>
+                        <p className="text-sm font-medium text-slate-200 truncate">{formData.fileName}</p>
+                        <p className="text-xs text-slate-400 truncate">Siap diunggah</p>
                       </div>
                       <button 
                         type="button"
                         onClick={() => setFormData({...formData, fileData: "", fileName: "", mimeType: ""})}
-                        className="bg-white border border-slate-200 text-slate-700 p-2 rounded-full hover:bg-rose-50 hover:text-rose-600 transition-colors shadow-sm"
+                        className="bg-[#0F172A] border border-slate-700/50 text-slate-300 p-2 rounded-full hover:bg-rose-50 hover:text-rose-600 transition-colors shadow-sm"
                       >
                         <X className="w-4 h-4" />
                       </button>
@@ -557,7 +557,7 @@ export default function SuratPage() {
                         type="file" 
                         accept=".pdf,image/*"
                         onChange={handleFileChange}
-                        className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/50 focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                        className="w-full px-4 py-2.5 bg-[#0F172A] border border-slate-700/50 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/50 focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                       />
                       <p className="text-xs text-slate-400 mt-1.5">
                         Format yang didukung: PDF, JPG, PNG (Maksimal 5MB)
@@ -567,17 +567,17 @@ export default function SuratPage() {
                 </div>
 
                 <div className="sm:col-span-2">
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Status / Keterangan Tambahan</label>
-                  <textarea rows={2} value={formData.status} onChange={(e) => setFormData({...formData, status: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none" placeholder="Contoh: Sudah disetujui, Menunggu balasan, dll..." />
+                  <label className="block text-sm font-semibold text-slate-300 mb-1.5">Status / Keterangan Tambahan</label>
+                  <textarea rows={2} value={formData.status} onChange={(e) => setFormData({...formData, status: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-700/50 rounded-xl text-sm text-white placeholder:text-slate-400 focus:bg-[#0F172A] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none" placeholder="Contoh: Sudah disetujui, Menunggu balasan, dll..." />
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-slate-100 flex justify-end gap-3">
-                <button type="button" onClick={() => { setIsModalOpen(false); resetForm(); }} className="px-5 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-xl transition-colors">
+              <div className="pt-4 border-t border-white/5/5 flex justify-end gap-3">
+                <button type="button" onClick={() => { setIsModalOpen(false); resetForm(); }} className="px-5 py-2.5 text-sm font-medium text-slate-400 hover:bg-slate-800 rounded-xl transition-colors">
                   Batal
                 </button>
                 <button type="submit" disabled={isSubmitting} className="px-6 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-colors flex items-center justify-center min-w-[120px]">
-                  {isSubmitting ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : (editingSurat ? 'Simpan Perubahan' : 'Arsipkan Surat')}
+                  {isSubmitting ? <div className="w-5 h-5 border-2 border-white/5/30 border-t-white rounded-full animate-spin" /> : (editingSurat ? 'Simpan Perubahan' : 'Arsipkan Surat')}
                 </button>
               </div>
             </form>

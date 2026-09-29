@@ -281,9 +281,9 @@ export default function SponsorPage() {
       case "Ditinjau": return "bg-amber-100 text-amber-700";
       case "Sudah Dihubungi": return "bg-blue-100 text-blue-700";
       case "Sudah ke Lokasi": return "bg-indigo-100 text-indigo-700";
-      case "Tidak Ada Respons": return "bg-slate-100 text-slate-600";
+      case "Tidak Ada Respons": return "bg-slate-800 text-slate-400";
       case "Butuh Diskusi dengan Panitia": return "bg-purple-100 text-purple-700";
-      default: return "bg-slate-100 text-slate-500";
+      default: return "bg-slate-800 text-slate-400";
     }
   };
 
@@ -297,8 +297,8 @@ export default function SponsorPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Data Sponsor</h1>
-          <p className="text-sm text-slate-500 mt-1">
+          <h1 className="text-2xl font-bold text-slate-200 tracking-tight">Data Sponsor</h1>
+          <p className="text-sm text-slate-400 mt-1">
             Pantau dan kelola pencarian dana serta sponsorship SI FEST.
           </p>
         </div>
@@ -314,7 +314,7 @@ export default function SponsorPage() {
           )}
           <button 
             onClick={fetchSponsors}
-            className="p-2.5 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors text-slate-600 shadow-sm"
+            className="p-2.5 bg-[#0F172A] border border-slate-700/50 rounded-xl hover:bg-slate-50 transition-colors text-slate-400 shadow-sm"
           >
             <RefreshCcw className="w-4 h-4" />
           </button>
@@ -332,41 +332,41 @@ export default function SponsorPage() {
 
       {/* Dashboard Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+        <div className="bg-[#0F172A] p-6 rounded-2xl border border-slate-700/50 shadow-sm flex items-center gap-4">
           <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
             <Handshake className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-sm text-slate-500 font-medium">Total Sponsor</p>
-            <h3 className="text-2xl font-bold text-slate-800">{totalSponsor} Instansi</h3>
+            <p className="text-sm text-slate-400 font-medium">Total Sponsor</p>
+            <h3 className="text-2xl font-bold text-slate-200">{totalSponsor} Instansi</h3>
           </div>
         </div>
         
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+        <div className="bg-[#0F172A] p-6 rounded-2xl border border-slate-700/50 shadow-sm flex items-center gap-4">
           <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl">
             <Handshake className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-sm text-slate-500 font-medium">Deal / Potensial</p>
-            <h3 className="text-2xl font-bold text-slate-800">{totalDeal} Instansi</h3>
+            <p className="text-sm text-slate-400 font-medium">Deal / Potensial</p>
+            <h3 className="text-2xl font-bold text-slate-200">{totalDeal} Instansi</h3>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+        <div className="bg-[#0F172A] p-6 rounded-2xl border border-slate-700/50 shadow-sm flex items-center gap-4">
           <div className="p-3 bg-amber-50 text-amber-600 rounded-xl">
             <CalendarClock className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-sm text-slate-500 font-medium">Prospek / Ditinjau</p>
-            <h3 className="text-2xl font-bold text-slate-800">{totalPending} Instansi</h3>
+            <p className="text-sm text-slate-400 font-medium">Prospek / Ditinjau</p>
+            <h3 className="text-2xl font-bold text-slate-200">{totalPending} Instansi</h3>
           </div>
         </div>
       </div>
 
       {/* Main Content Area */}
-      <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden flex flex-col">
+      <div className="bg-[#0F172A] border border-white/5/5 rounded-2xl shadow-sm overflow-hidden flex flex-col">
         {/* Toolbar */}
-        <div className="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row gap-4 justify-between items-center bg-slate-50/50">
+        <div className="p-4 sm:p-5 border-b border-white/5/5 flex flex-col sm:flex-row gap-4 justify-between items-center bg-[#1e293b]/50">
           <div className="relative w-full sm:w-72">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input 
@@ -374,7 +374,7 @@ export default function SponsorPage() {
               placeholder="Cari sponsor atau PIC..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm"
+              className="w-full pl-10 pr-4 py-2.5 bg-[#0F172A] border border-slate-700/50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm"
             />
           </div>
           <div className="flex gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0 hide-scrollbar">
@@ -385,7 +385,7 @@ export default function SponsorPage() {
                 className={`whitespace-nowrap px-4 py-2 rounded-xl text-sm font-medium transition-all ${
                   statusFilter === status 
                     ? 'bg-blue-600 text-white shadow-sm shadow-blue-500/20' 
-                    : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'
+                    : 'bg-[#0F172A] text-slate-400 border border-slate-700/50 hover:bg-slate-50'
                 }`}
               >
                 {status}
@@ -396,8 +396,8 @@ export default function SponsorPage() {
 
         {/* Table */}
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm text-slate-600">
-            <thead className="bg-slate-50 text-slate-500 border-b border-slate-100">
+          <table className="w-full text-left text-sm text-slate-400">
+            <thead className="bg-slate-50 text-slate-400 border-b border-white/5/5">
               <tr>
                 <th className="px-6 py-4 font-semibold">Sponsor & Kontak</th>
                 <th className="px-6 py-4 font-semibold">Tgl Proposal & Follow Up</th>
@@ -415,17 +415,17 @@ export default function SponsorPage() {
                 </tr>
               ) : filteredSponsors.length === 0 ? (
                 <tr>
-                  <td colSpan={hasAccess ? 5 : 4} className="px-6 py-12 text-center text-slate-500">
+                  <td colSpan={hasAccess ? 5 : 4} className="px-6 py-12 text-center text-slate-400">
                     Tidak ada data sponsor yang ditemukan.
                   </td>
                 </tr>
               ) : (
                 filteredSponsors.map((spn) => (
-                  <tr key={spn.id_sponsor} className="hover:bg-slate-50/80 transition-colors group">
+                  <tr key={spn.id_sponsor} className="hover:bg-[#1e293b]/50 transition-colors group">
                     <td className="px-6 py-4">
-                      <p className="font-bold text-slate-800 text-[15px] mb-1">{spn.nama_sponsor}</p>
+                      <p className="font-bold text-slate-200 text-[15px] mb-1">{spn.nama_sponsor}</p>
                       {spn.pic && typeof spn.pic === 'string' && spn.pic !== "-" && (
-                        <div className="flex items-center gap-1.5 text-slate-500 mb-0.5">
+                        <div className="flex items-center gap-1.5 text-slate-400 mb-0.5">
                           <Tag className="w-3 h-3" /> <span className="text-xs">{spn.pic}</span>
                         </div>
                       )}
@@ -438,12 +438,12 @@ export default function SponsorPage() {
                         </div>
                       )}
                       {spn.email && typeof spn.email === 'string' && spn.email !== "-" && (
-                        <div className="flex items-center gap-1.5 text-slate-500">
+                        <div className="flex items-center gap-1.5 text-slate-400">
                           <Mail className="w-3 h-3" /> <span className="text-xs">{spn.email}</span>
                         </div>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-slate-700">
+                    <td className="px-6 py-4 whitespace-nowrap text-slate-300">
                       <div className="mb-1">
                         <span className="text-xs text-slate-400 block mb-0.5">Tgl Proposal:</span>
                         <span className="font-medium">{formatTanggal(spn.tgl_proposal)}</span>
@@ -457,10 +457,10 @@ export default function SponsorPage() {
                       <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold mb-2 ${getStatusColor(spn.status)}`}>
                         {spn.status}
                       </span>
-                      <p className="text-sm text-slate-600 leading-relaxed max-w-xs">{spn.keterangan}</p>
+                      <p className="text-sm text-slate-400 leading-relaxed max-w-xs">{spn.keterangan}</p>
                     </td>
                     <td className="px-6 py-4">
-                      <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap max-w-xs">{spn.catatan}</p>
+                      <p className="text-sm text-slate-400 leading-relaxed whitespace-pre-wrap max-w-xs">{spn.catatan}</p>
                     </td>
                     {hasAccess && (
                       <td className="px-6 py-4 text-right">
@@ -493,12 +493,12 @@ export default function SponsorPage() {
       {/* Form Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl animate-in zoom-in-95 duration-200">
-            <div className="sticky top-0 bg-white border-b border-slate-100 px-6 py-4 flex items-center justify-between z-10">
-              <h2 className="text-lg font-bold text-slate-800">
+          <div className="bg-[#0F172A] rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl animate-in zoom-in-95 duration-200">
+            <div className="sticky top-0 bg-[#0F172A] border-b border-white/5/5 px-6 py-4 flex items-center justify-between z-10">
+              <h2 className="text-lg font-bold text-slate-200">
                 {editingSponsor ? 'Edit Data Sponsor' : 'Tambah Sponsor Baru'}
               </h2>
-              <button onClick={() => { setIsModalOpen(false); resetForm(); }} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
+              <button onClick={() => { setIsModalOpen(false); resetForm(); }} className="p-2 text-slate-400 hover:text-slate-400 hover:bg-slate-800 rounded-full transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -506,59 +506,59 @@ export default function SponsorPage() {
             <form onSubmit={handleSaveSponsor} className="p-6 space-y-5">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div className="sm:col-span-2">
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Nama Sponsor / Brand <span className="text-rose-500">*</span></label>
-                  <input type="text" required value={formData.nama_sponsor} onChange={(e) => setFormData({...formData, nama_sponsor: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" placeholder="Contoh: PT. Semen Padang / Kopi Kenangan" />
+                  <label className="block text-sm font-semibold text-slate-300 mb-1.5">Nama Sponsor / Brand <span className="text-rose-500">*</span></label>
+                  <input type="text" required value={formData.nama_sponsor} onChange={(e) => setFormData({...formData, nama_sponsor: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-700/50 rounded-xl text-sm text-white placeholder:text-slate-400 focus:bg-[#0F172A] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" placeholder="Contoh: PT. Semen Padang / Kopi Kenangan" />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">PIC / Kontak Person</label>
-                  <input type="text" value={formData.pic} onChange={(e) => setFormData({...formData, pic: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" placeholder="Nama orang yg dihubungi" />
+                  <label className="block text-sm font-semibold text-slate-300 mb-1.5">PIC / Kontak Person</label>
+                  <input type="text" value={formData.pic} onChange={(e) => setFormData({...formData, pic: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-700/50 rounded-xl text-sm text-white placeholder:text-slate-400 focus:bg-[#0F172A] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" placeholder="Nama orang yg dihubungi" />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">No. HP / Link Form</label>
-                  <input type="text" value={formData.kontak} onChange={(e) => setFormData({...formData, kontak: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" placeholder="0812xxx atau link GForm" />
+                  <label className="block text-sm font-semibold text-slate-300 mb-1.5">No. HP / Link Form</label>
+                  <input type="text" value={formData.kontak} onChange={(e) => setFormData({...formData, kontak: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-700/50 rounded-xl text-sm text-white placeholder:text-slate-400 focus:bg-[#0F172A] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" placeholder="0812xxx atau link GForm" />
                 </div>
 
                 <div className="sm:col-span-2">
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Email</label>
-                  <input type="text" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" placeholder="email@perusahaan.com (opsional)" />
+                  <label className="block text-sm font-semibold text-slate-300 mb-1.5">Email</label>
+                  <input type="text" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-700/50 rounded-xl text-sm text-white placeholder:text-slate-400 focus:bg-[#0F172A] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" placeholder="email@perusahaan.com (opsional)" />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Tgl Pemberian Proposal</label>
-                  <input type="date" value={formData.tgl_proposal} onChange={(e) => setFormData({...formData, tgl_proposal: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" />
+                  <label className="block text-sm font-semibold text-slate-300 mb-1.5">Tgl Pemberian Proposal</label>
+                  <input type="date" value={formData.tgl_proposal} onChange={(e) => setFormData({...formData, tgl_proposal: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-700/50 rounded-xl text-sm text-white placeholder:text-slate-400 focus:bg-[#0F172A] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Tgl Follow Up</label>
-                  <input type="date" value={formData.tgl_followup} onChange={(e) => setFormData({...formData, tgl_followup: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" />
+                  <label className="block text-sm font-semibold text-slate-300 mb-1.5">Tgl Follow Up</label>
+                  <input type="date" value={formData.tgl_followup} onChange={(e) => setFormData({...formData, tgl_followup: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-700/50 rounded-xl text-sm text-white placeholder:text-slate-400 focus:bg-[#0F172A] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" />
                 </div>
 
                 <div className="sm:col-span-2">
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Status</label>
-                  <select value={formData.status} onChange={(e) => setFormData({...formData, status: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all appearance-none cursor-pointer">
+                  <label className="block text-sm font-semibold text-slate-300 mb-1.5">Status</label>
+                  <select value={formData.status} onChange={(e) => setFormData({...formData, status: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-700/50 rounded-xl text-sm text-white focus:bg-[#0F172A] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all appearance-none cursor-pointer">
                     {STATUS_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                   </select>
                 </div>
 
                 <div className="sm:col-span-2">
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Keterangan / Progress</label>
-                  <textarea rows={2} value={formData.keterangan} onChange={(e) => setFormData({...formData, keterangan: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none" placeholder="Penjelasan singkat mengenai respons sponsor..." />
+                  <label className="block text-sm font-semibold text-slate-300 mb-1.5">Keterangan / Progress</label>
+                  <textarea rows={2} value={formData.keterangan} onChange={(e) => setFormData({...formData, keterangan: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-700/50 rounded-xl text-sm text-white placeholder:text-slate-400 focus:bg-[#0F172A] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none" placeholder="Penjelasan singkat mengenai respons sponsor..." />
                 </div>
 
                 <div className="sm:col-span-2">
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Catatan Khusus (Internal)</label>
-                  <textarea rows={2} value={formData.catatan} onChange={(e) => setFormData({...formData, catatan: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none" placeholder="Contoh: Menunggu manajer kembali ke Padang" />
+                  <label className="block text-sm font-semibold text-slate-300 mb-1.5">Catatan Khusus (Internal)</label>
+                  <textarea rows={2} value={formData.catatan} onChange={(e) => setFormData({...formData, catatan: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-700/50 rounded-xl text-sm text-white placeholder:text-slate-400 focus:bg-[#0F172A] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none" placeholder="Contoh: Menunggu manajer kembali ke Padang" />
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-slate-100 flex justify-end gap-3">
-                <button type="button" onClick={() => { setIsModalOpen(false); resetForm(); }} className="px-5 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-xl transition-colors">
+              <div className="pt-4 border-t border-white/5/5 flex justify-end gap-3">
+                <button type="button" onClick={() => { setIsModalOpen(false); resetForm(); }} className="px-5 py-2.5 text-sm font-medium text-slate-400 hover:bg-slate-800 rounded-xl transition-colors">
                   Batal
                 </button>
                 <button type="submit" disabled={isSubmitting} className="px-6 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-colors flex items-center justify-center min-w-[120px]">
-                  {isSubmitting ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : (editingSponsor ? 'Simpan' : 'Tambah Sponsor')}
+                  {isSubmitting ? <div className="w-5 h-5 border-2 border-white/5/30 border-t-white rounded-full animate-spin" /> : (editingSponsor ? 'Simpan' : 'Tambah Sponsor')}
                 </button>
               </div>
             </form>

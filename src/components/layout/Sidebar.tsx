@@ -63,7 +63,7 @@ export function Sidebar() {
 
       {/* Sidebar Component */}
       <aside className={clsx(
-        "fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-slate-200 h-screen flex flex-col transition-transform duration-300 ease-in-out md:sticky md:top-0 md:translate-x-0 print:hidden",
+        "fixed inset-y-0 left-0 z-50 w-64 bg-[#0F172A] border-r border-slate-700/50 h-screen flex flex-col transition-transform duration-300 ease-in-out md:sticky md:top-0 md:translate-x-0 print:hidden",
         isOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         <div className="p-6 flex items-center gap-3">
@@ -71,8 +71,8 @@ export function Sidebar() {
             <img src="/logo-sifest.png" alt="SI FEST Logo" className="w-full h-full object-contain" />
           </div>
         <div>
-          <h2 className="font-bold text-slate-800 text-lg leading-tight">SI FEST</h2>
-          <p className="text-xs text-slate-500">Management</p>
+          <h2 className="font-bold text-slate-200 text-lg leading-tight">SI FEST</h2>
+          <p className="text-xs text-slate-400">Management</p>
         </div>
       </div>
 
@@ -88,7 +88,7 @@ export function Sidebar() {
                 "flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium text-sm",
                 isActive
                   ? "bg-blue-50 text-blue-700"
-                  : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                  : "text-slate-400 hover:bg-slate-50 hover:text-white"
               )}
             >
               <Icon className={clsx("w-5 h-5", isActive ? "text-blue-600" : "text-slate-400")} />
@@ -101,26 +101,26 @@ export function Sidebar() {
           <Link
             href="/logs"
             className={clsx(
-              "flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium text-sm mt-4 border border-slate-200",
+              "flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium text-sm mt-4 border border-slate-700/50",
               pathname.startsWith('/logs')
                 ? "bg-slate-800 text-white border-transparent"
-                : "text-slate-700 bg-slate-50 hover:bg-slate-100"
+                : "text-slate-300 bg-slate-50 hover:bg-slate-800"
             )}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={clsx("w-5 h-5", pathname.startsWith('/logs') ? "text-slate-300" : "text-slate-500")}><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={clsx("w-5 h-5", pathname.startsWith('/logs') ? "text-slate-300" : "text-slate-400")}><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
             Log Aktivitas
           </Link>
         )}
       </nav>
 
-      <div className="p-4 border-t border-slate-200">
+      <div className="p-4 border-t border-slate-700/50">
         <div className="flex items-center gap-3 px-4 py-3">
           <div className="w-10 h-10 rounded-full bg-slate-200 flex-shrink-0 overflow-hidden">
             <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${userData.seed}`} alt="Avatar" className="w-full h-full object-cover" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-slate-800 truncate" title={userData.name}>{userData.name}</p>
-            <p className="text-xs text-slate-500 truncate" title={userData.position}>{userData.position}</p>
+            <p className="text-sm font-semibold text-slate-200 truncate" title={userData.name}>{userData.name}</p>
+            <p className="text-xs text-slate-400 truncate" title={userData.position}>{userData.position}</p>
           </div>
         </div>
         <button

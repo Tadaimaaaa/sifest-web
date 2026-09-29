@@ -34,7 +34,7 @@ const STATUS_STYLES: Record<string, { badge: string; dot: string }> = {
   PAID:            { badge: "bg-green-100 text-green-800 border-green-300",    dot: "bg-green-500" },
   VERIFIED:        { badge: "bg-emerald-100 text-emerald-800 border-emerald-300", dot: "bg-emerald-500" },
   REJECTED:        { badge: "bg-red-100 text-red-800 border-red-300",          dot: "bg-red-500" },
-  CANCELLED:       { badge: "bg-slate-100 text-slate-700 border-slate-300",    dot: "bg-slate-400" },
+  CANCELLED:       { badge: "bg-slate-800 text-slate-300 border-slate-300",    dot: "bg-slate-400" },
   EXPIRED:         { badge: "bg-orange-100 text-orange-800 border-orange-300", dot: "bg-orange-400" },
   FAILED:          { badge: "bg-red-100 text-red-800 border-red-300",          dot: "bg-red-500" },
   INCOMPLETE:      { badge: "bg-purple-100 text-purple-800 border-purple-300", dot: "bg-purple-500" },
@@ -132,7 +132,7 @@ export function StatusUpdater({ currentStatus, type, id, registrationId, canEdit
       <div className="fixed inset-0 z-[9998]" onClick={() => setIsOpen(false)} />
       {/* Dropdown — rendered at fixed position to escape any overflow clip */}
       <div
-        className="fixed z-[9999] bg-white rounded-xl shadow-2xl border border-slate-200 overflow-hidden py-1"
+        className="fixed z-[9999] bg-[#0F172A] rounded-xl shadow-2xl border border-slate-700/50 overflow-hidden py-1"
         style={{
           top: dropdownPos.top,
           left: dropdownPos.left,
@@ -140,7 +140,7 @@ export function StatusUpdater({ currentStatus, type, id, registrationId, canEdit
           transform: 'translateX(-100%)', // Align right edge to button's right edge
         }}
       >
-        <p className="px-3 py-1.5 text-[10px] font-semibold text-slate-400 uppercase tracking-wider border-b border-slate-100">
+        <p className="px-3 py-1.5 text-[10px] font-semibold text-slate-400 uppercase tracking-wider border-b border-white/5/5">
           Pilih Status Baru
         </p>
         {options.map((opt) => {
@@ -157,7 +157,7 @@ export function StatusUpdater({ currentStatus, type, id, registrationId, canEdit
               )}
             >
               <span className={clsx("w-2 h-2 rounded-full flex-shrink-0", optStyle.dot)} />
-              <span className={clsx("font-medium flex-1", isActive ? "text-slate-500" : "text-slate-800")}>
+              <span className={clsx("font-medium flex-1", isActive ? "text-slate-400" : "text-slate-200")}>
                 {optLabel}
               </span>
               {isActive && (

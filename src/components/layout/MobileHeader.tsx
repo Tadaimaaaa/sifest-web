@@ -18,16 +18,16 @@ export function MobileHeader() {
   };
 
   return (
-    <div className="md:hidden flex items-center justify-between px-4 py-3 bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm print:hidden">
+    <div className="md:hidden flex items-center justify-between px-4 py-3 bg-[#0F172A] border-b border-slate-700/50 sticky top-0 z-50 shadow-sm print:hidden">
       <div className="flex items-center gap-3">
-        <button onClick={toggleSidebar} className="p-2 -ml-2 text-slate-500 hover:bg-slate-100 rounded-xl transition-colors">
+        <button onClick={toggleSidebar} className="p-2 -ml-2 text-slate-400 hover:bg-slate-800 rounded-xl transition-colors">
           <Menu className="w-5 h-5" />
         </button>
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 flex-shrink-0">
             <img src="/logo-sifest.png" alt="SI FEST Logo" className="w-full h-full object-contain" />
           </div>
-          <span className="font-bold text-slate-800 text-sm tracking-tight">SI FEST</span>
+          <span className="font-bold text-slate-200 text-sm tracking-tight">SI FEST</span>
         </div>
       </div>
       <button

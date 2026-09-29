@@ -66,8 +66,8 @@ export default function EventHubPage() {
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Page Header */}
       <div>
-        <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Data Event</h1>
-        <p className="text-sm text-slate-500 mt-1">
+        <h1 className="text-2xl font-bold text-slate-200 tracking-tight">Data Event</h1>
+        <p className="text-sm text-slate-400 mt-1">
           Pilih salah satu event di bawah ini untuk melihat dan mengelola datanya.
         </p>
       </div>
@@ -80,7 +80,7 @@ export default function EventHubPage() {
             <Link 
               key={event.id}
               href={`/event/${event.id}`}
-              className="group bg-white rounded-2xl border border-slate-200 p-5 shadow-sm hover:shadow-xl hover:shadow-blue-900/5 transition-all hover:-translate-y-1 relative overflow-hidden flex flex-col"
+              className="group bg-[#0F172A] rounded-2xl border border-slate-700/50 p-5 shadow-sm hover:shadow-xl hover:shadow-blue-900/5 transition-all hover:-translate-y-1 relative overflow-hidden flex flex-col"
             >
               {/* Decorative Background Blur */}
               <div className={`absolute -right-10 -top-10 w-32 h-32 bg-gradient-to-br ${event.color} rounded-full opacity-10 blur-2xl group-hover:opacity-20 transition-opacity`} />
@@ -89,14 +89,14 @@ export default function EventHubPage() {
                 <div className={`w-14 h-14 rounded-2xl ${event.bgLight} ${event.textColor} flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform duration-300`}>
                   <Icon className="w-7 h-7" />
                 </div>
-                <div className={`w-8 h-8 rounded-full bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-blue-600 group-hover:text-white group-hover:border-blue-600 transition-colors`}>
+                <div className={`w-8 h-8 rounded-full bg-slate-50 border border-white/5/5 flex items-center justify-center text-slate-400 group-hover:bg-blue-600 group-hover:text-white group-hover:border-blue-600 transition-colors`}>
                   <ArrowRight className="w-4 h-4 -rotate-45 group-hover:rotate-0 transition-transform duration-300" />
                 </div>
               </div>
               
               <div className="mt-auto relative z-10">
-                <h3 className="text-lg font-bold text-slate-800 tracking-tight mb-1 group-hover:text-slate-900">{event.name}</h3>
-                <p className="text-xs text-slate-500 line-clamp-2">{event.description}</p>
+                <h3 className="text-lg font-bold text-slate-200 tracking-tight mb-1 group-hover:text-white">{event.name}</h3>
+                <p className="text-xs text-slate-400 line-clamp-2">{event.description}</p>
               </div>
             </Link>
           );
