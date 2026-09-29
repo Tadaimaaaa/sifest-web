@@ -34,7 +34,7 @@ export default function VolunteerDashboard() {
     setIsLoading(true);
     try {
       const token = Cookies.get("session_token");
-      const res = await fetch(`${SCRIPT_URL}?action=getVolunteers&token=${token}`);
+      const res = await fetch(`${SCRIPT_URL}?action=getVolunteers&token=${token}&t=${Date.now()}`);
       const result = await res.json();
       if (result.status === "success") {
         setVolunteers(result.data.reverse()); // Terbaru di atas
