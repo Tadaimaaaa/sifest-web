@@ -18,7 +18,7 @@ export function MobileNav() {
   const pathname = usePathname();
 
   return (
-    <div className="md:hidden print:hidden fixed bottom-0 left-0 right-0 bg-[#0F172A] border-t border-slate-700/50 pb-safe z-50 shadow-[0_-4px_24px_rgba(0,0,0,0.04)] overflow-x-auto">
+    <div className="md:hidden print:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 pb-safe z-50 shadow-[0_-4px_24px_rgba(0,0,0,0.04)] overflow-x-auto">
       <nav className="flex justify-around items-center h-16 px-2 min-w-max">
         {mobileItems.map((item) => {
           const isActive = pathname.startsWith(item.href);
@@ -40,7 +40,7 @@ export function MobileNav() {
               <span
                 className={clsx(
                   "text-[10px] font-medium transition-colors",
-                  isActive ? "text-blue-600" : "text-slate-400"
+                  isActive ? "text-blue-600" : "text-slate-500"
                 )}
               >
                 {item.name}

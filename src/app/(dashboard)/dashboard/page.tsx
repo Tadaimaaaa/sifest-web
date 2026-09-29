@@ -89,32 +89,32 @@ export default function DashboardPage() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-200 tracking-tight">Dashboard</h1>
-          <p className="text-sm text-slate-400 mt-1">Halo, <span className="font-semibold text-blue-600">{userName}</span>. Selamat datang kembali!</p>
+          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Dashboard</h1>
+          <p className="text-sm text-slate-500 mt-1">Halo, <span className="font-semibold text-blue-600">{userName}</span>. Selamat datang kembali!</p>
         </div>
 
         {/* Countdown */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-[#0F172A] px-5 py-4 rounded-2xl border border-white/5/5 shadow-sm">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 bg-white px-5 py-4 rounded-2xl border border-slate-100 shadow-sm">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-indigo-50 flex items-center justify-center flex-shrink-0 relative overflow-hidden group">
               <div className="absolute inset-0 bg-indigo-100 scale-0 group-hover:scale-100 transition-transform duration-300 rounded-xl"></div>
               <Clock className="w-5 h-5 text-indigo-600 relative z-10 animate-pulse" />
             </div>
             <div>
-              <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-0.5">Menuju Hari H SI FEST</p>
+              <p className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-0.5">Menuju Hari H SI FEST</p>
               <p className="text-[10px] text-slate-400 font-medium">02 November 2026</p>
             </div>
           </div>
-          <div className="flex gap-2 text-sm font-bold text-slate-300 w-full sm:w-auto">
-            <div className="flex flex-col items-center bg-slate-50 border border-white/5/5 px-3 py-1.5 rounded-xl min-w-[50px]">
+          <div className="flex gap-2 text-sm font-bold text-slate-700 w-full sm:w-auto">
+            <div className="flex flex-col items-center bg-slate-50 border border-slate-100 px-3 py-1.5 rounded-xl min-w-[50px]">
               <span className="text-lg text-indigo-600 leading-none">{String(timeLeft.days).padStart(2, '0')}</span>
               <span className="text-[9px] text-slate-400 font-semibold uppercase tracking-wider mt-1">Hari</span>
             </div>
-            <div className="flex flex-col items-center bg-slate-50 border border-white/5/5 px-3 py-1.5 rounded-xl min-w-[50px]">
+            <div className="flex flex-col items-center bg-slate-50 border border-slate-100 px-3 py-1.5 rounded-xl min-w-[50px]">
               <span className="text-lg text-indigo-600 leading-none">{String(timeLeft.hours).padStart(2, '0')}</span>
               <span className="text-[9px] text-slate-400 font-semibold uppercase tracking-wider mt-1">Jam</span>
             </div>
-            <div className="flex flex-col items-center bg-slate-50 border border-white/5/5 px-3 py-1.5 rounded-xl min-w-[50px]">
+            <div className="flex flex-col items-center bg-slate-50 border border-slate-100 px-3 py-1.5 rounded-xl min-w-[50px]">
               <span className="text-lg text-indigo-600 leading-none">{String(timeLeft.minutes).padStart(2, '0')}</span>
               <span className="text-[9px] text-slate-400 font-semibold uppercase tracking-wider mt-1">Menit</span>
             </div>
@@ -131,12 +131,12 @@ export default function DashboardPage() {
         {statCards.map((stat) => {
           const Icon = stat.icon;
           return (
-            <div key={stat.name} className="bg-[#0F172A] p-5 rounded-2xl border border-white/5/5 shadow-sm hover:shadow-md transition-shadow">
+            <div key={stat.name} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
               <div className={`w-10 h-10 ${stat.bg} rounded-xl flex items-center justify-center mb-4`}>
                 <Icon className={`w-5 h-5 ${stat.color}`} />
               </div>
-              <p className="text-2xl font-bold text-slate-200">{stat.value}</p>
-              <p className="text-sm text-slate-400 font-medium">{stat.name}</p>
+              <p className="text-2xl font-bold text-slate-800">{stat.value}</p>
+              <p className="text-sm text-slate-500 font-medium">{stat.name}</p>
             </div>
           );
         })}
@@ -144,21 +144,21 @@ export default function DashboardPage() {
 
       {/* Analytics Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-[#0F172A] border border-white/5/5 rounded-2xl shadow-sm overflow-hidden p-5">
-          <h2 className="font-semibold text-slate-200 mb-4">Statistik Keuangan</h2>
+        <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden p-5">
+          <h2 className="font-semibold text-slate-800 mb-4">Statistik Keuangan</h2>
           <FinanceChart data={financeAnalytics} />
         </div>
-        <div className="bg-[#0F172A] border border-white/5/5 rounded-2xl shadow-sm overflow-hidden p-5">
-          <h2 className="font-semibold text-slate-200 mb-4">Sebaran Status Sponsor</h2>
+        <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden p-5">
+          <h2 className="font-semibold text-slate-800 mb-4">Sebaran Status Sponsor</h2>
           <SponsorChart data={sponsorAnalytics} />
         </div>
       </div>
 
       {/* Recent Activity */}
       {isSuperAdmin && (
-        <div className="bg-[#0F172A] border border-white/5/5 rounded-2xl shadow-sm overflow-hidden">
-          <div className="p-5 border-b border-white/5/5 flex justify-between items-center">
-            <h2 className="font-semibold text-slate-200">Aktivitas Terakhir</h2>
+        <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
+          <div className="p-5 border-b border-slate-100 flex justify-between items-center">
+            <h2 className="font-semibold text-slate-800">Aktivitas Terakhir</h2>
             <Link href="/logs" className="text-sm text-blue-600 font-medium hover:text-blue-700">Lihat Semua</Link>
           </div>
           
@@ -167,7 +167,7 @@ export default function DashboardPage() {
               <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3">
                 <Activity className="w-6 h-6 text-slate-300" />
               </div>
-              <p className="text-slate-400 text-sm">Belum ada aktivitas yang tercatat hari ini.</p>
+              <p className="text-slate-500 text-sm">Belum ada aktivitas yang tercatat hari ini.</p>
             </div>
           ) : (
             <div className="divide-y divide-slate-50">
@@ -177,8 +177,8 @@ export default function DashboardPage() {
                     <Activity className="w-5 h-5 text-blue-600" />
                   </div>
                   <div>
-                    <p className="text-sm text-slate-200 font-medium">{log.description || `${log.action} pada modul ${log.module}`}</p>
-                    <div className="flex items-center gap-2 mt-1 text-xs text-slate-400">
+                    <p className="text-sm text-slate-800 font-medium">{log.description || `${log.action} pada modul ${log.module}`}</p>
+                    <div className="flex items-center gap-2 mt-1 text-xs text-slate-500">
                       <span className="font-medium text-blue-600">{log.user_id}</span>
                       <span>•</span>
                       <span>{new Date(log.created_at).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}</span>
@@ -200,10 +200,10 @@ export default function DashboardPage() {
               Terima kasih atas dedikasi dan kerja keras Anda dalam menyukseskan acara SI FEST tahun ini. Mari kita jaga semangat, komunikasi, dan kerja sama tim. Gunakan sistem navigasi di sebelah kiri untuk mengelola data sesuai dengan peran dan tanggung jawab divisi Anda.
             </p>
             <div className="flex flex-wrap gap-3">
-              <span className="inline-flex items-center bg-[#0F172A]/20 hover:bg-[#0F172A]/30 transition-colors cursor-default px-4 py-2 rounded-xl text-sm font-medium backdrop-blur-sm">
+              <span className="inline-flex items-center bg-white/20 hover:bg-white/30 transition-colors cursor-default px-4 py-2 rounded-xl text-sm font-medium backdrop-blur-sm">
                 💡 Jaga Integritas Data
               </span>
-              <span className="inline-flex items-center bg-[#0F172A]/20 hover:bg-[#0F172A]/30 transition-colors cursor-default px-4 py-2 rounded-xl text-sm font-medium backdrop-blur-sm">
+              <span className="inline-flex items-center bg-white/20 hover:bg-white/30 transition-colors cursor-default px-4 py-2 rounded-xl text-sm font-medium backdrop-blur-sm">
                 🤝 Tetap Semangat
               </span>
             </div>

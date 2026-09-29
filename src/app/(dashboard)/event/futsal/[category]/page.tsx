@@ -416,13 +416,13 @@ export default function FutsalDashboard() {
       html:
         `<div class="flex justify-between items-center gap-4 mt-4">
           <div class="flex flex-col items-center w-[45%]">
-            <div class="text-[11px] font-bold mb-2 text-center h-10 flex flex-col justify-end text-slate-300 leading-tight w-full truncate" title="${t1.nama_tim}">${t1.nama_tim}</div>
-            <input id="swal-score1" type="number" min="0" class="w-full text-center text-3xl font-black p-4 border-2 border-slate-700/50 rounded-xl bg-slate-50 focus:border-blue-500 focus:bg-[#0F172A] transition-all outline-none" placeholder="0" value="${match.score1 ?? ''}" />
+            <div class="text-[11px] font-bold mb-2 text-center h-10 flex flex-col justify-end text-slate-700 leading-tight w-full truncate" title="${t1.nama_tim}">${t1.nama_tim}</div>
+            <input id="swal-score1" type="number" min="0" class="w-full text-center text-3xl font-black p-4 border-2 border-slate-200 rounded-xl bg-slate-50 focus:border-blue-500 focus:bg-white transition-all outline-none" placeholder="0" value="${match.score1 ?? ''}" />
           </div>
           <div class="font-black text-xl text-slate-300 w-[10%] text-center">VS</div>
           <div class="flex flex-col items-center w-[45%]">
-            <div class="text-[11px] font-bold mb-2 text-center h-10 flex flex-col justify-end text-slate-300 leading-tight w-full truncate" title="${t2.nama_tim}">${t2.nama_tim}</div>
-            <input id="swal-score2" type="number" min="0" class="w-full text-center text-3xl font-black p-4 border-2 border-slate-700/50 rounded-xl bg-slate-50 focus:border-blue-500 focus:bg-[#0F172A] transition-all outline-none" placeholder="0" value="${match.score2 ?? ''}" />
+            <div class="text-[11px] font-bold mb-2 text-center h-10 flex flex-col justify-end text-slate-700 leading-tight w-full truncate" title="${t2.nama_tim}">${t2.nama_tim}</div>
+            <input id="swal-score2" type="number" min="0" class="w-full text-center text-3xl font-black p-4 border-2 border-slate-200 rounded-xl bg-slate-50 focus:border-blue-500 focus:bg-white transition-all outline-none" placeholder="0" value="${match.score2 ?? ''}" />
           </div>
         </div>`,
       focusConfirm: false,
@@ -456,9 +456,9 @@ export default function FutsalDashboard() {
   // Helper for rendering team slot in Group Stage
   const renderTeamSlot = (team: Team | null, round: number, slotIndex: number, isTop: boolean) => {
     const isEliminated = team && eliminatedTeams.has(team.id_tim);
-    const bgClass = isTop ? 'bg-slate-50 border-b border-white/5/5' : 'bg-[#0F172A]';
-    const cursorClass = team && hasAccess ? 'cursor-pointer hover:bg-slate-800 transition-colors' : '';
-    const textClass = team ? (isEliminated ? 'text-slate-400 line-through' : 'text-slate-200') : 'text-slate-400';
+    const bgClass = isTop ? 'bg-slate-50 border-b border-slate-100' : 'bg-white';
+    const cursorClass = team && hasAccess ? 'cursor-pointer hover:bg-slate-100 transition-colors' : '';
+    const textClass = team ? (isEliminated ? 'text-slate-400 line-through' : 'text-slate-800') : 'text-slate-400';
     
     return (
       <div 
@@ -508,21 +508,21 @@ export default function FutsalDashboard() {
         `<div class="flex flex-col gap-4 mt-4">
           <div class="flex justify-between items-center gap-4">
             <div class="flex flex-col items-center w-[45%]">
-              <div class="text-[11px] font-bold mb-2 text-center h-10 flex flex-col justify-end text-slate-300 leading-tight w-full truncate" title="${t1.nama_tim}">${t1.nama_tim}</div>
-              <input id="swal-kscore1" type="number" min="0" class="w-full text-center text-3xl font-black p-4 border-2 border-slate-700/50 rounded-xl bg-slate-50 focus:border-blue-500 focus:bg-[#0F172A] transition-all outline-none" placeholder="0" value="${existingMatch?.score1 ?? ''}" />
+              <div class="text-[11px] font-bold mb-2 text-center h-10 flex flex-col justify-end text-slate-700 leading-tight w-full truncate" title="${t1.nama_tim}">${t1.nama_tim}</div>
+              <input id="swal-kscore1" type="number" min="0" class="w-full text-center text-3xl font-black p-4 border-2 border-slate-200 rounded-xl bg-slate-50 focus:border-blue-500 focus:bg-white transition-all outline-none" placeholder="0" value="${existingMatch?.score1 ?? ''}" />
             </div>
             <div class="font-black text-xl text-slate-300 w-[10%] text-center">VS</div>
             <div class="flex flex-col items-center w-[45%]">
-              <div class="text-[11px] font-bold mb-2 text-center h-10 flex flex-col justify-end text-slate-300 leading-tight w-full truncate" title="${t2.nama_tim}">${t2.nama_tim}</div>
-              <input id="swal-kscore2" type="number" min="0" class="w-full text-center text-3xl font-black p-4 border-2 border-slate-700/50 rounded-xl bg-slate-50 focus:border-blue-500 focus:bg-[#0F172A] transition-all outline-none" placeholder="0" value="${existingMatch?.score2 ?? ''}" />
+              <div class="text-[11px] font-bold mb-2 text-center h-10 flex flex-col justify-end text-slate-700 leading-tight w-full truncate" title="${t2.nama_tim}">${t2.nama_tim}</div>
+              <input id="swal-kscore2" type="number" min="0" class="w-full text-center text-3xl font-black p-4 border-2 border-slate-200 rounded-xl bg-slate-50 focus:border-blue-500 focus:bg-white transition-all outline-none" placeholder="0" value="${existingMatch?.score2 ?? ''}" />
             </div>
           </div>
           <div id="penalty-section" class="flex flex-col gap-2 p-4 bg-orange-50 border border-orange-200 rounded-xl mt-2 hidden">
             <div class="text-xs font-bold text-orange-600 text-center uppercase tracking-wider">Hasil Adu Penalti</div>
             <div class="flex justify-between items-center gap-4">
-              <input id="swal-pen1" type="number" min="0" class="w-full text-center text-xl font-bold p-2 border-2 border-orange-200 rounded-lg focus:border-orange-500 outline-none bg-[#0F172A]" placeholder="0" value="${existingMatch?.pen1 ?? ''}" />
+              <input id="swal-pen1" type="number" min="0" class="w-full text-center text-xl font-bold p-2 border-2 border-orange-200 rounded-lg focus:border-orange-500 outline-none bg-white" placeholder="0" value="${existingMatch?.pen1 ?? ''}" />
               <div class="text-orange-300 font-bold">-</div>
-              <input id="swal-pen2" type="number" min="0" class="w-full text-center text-xl font-bold p-2 border-2 border-orange-200 rounded-lg focus:border-orange-500 outline-none bg-[#0F172A]" placeholder="0" value="${existingMatch?.pen2 ?? ''}" />
+              <input id="swal-pen2" type="number" min="0" class="w-full text-center text-xl font-bold p-2 border-2 border-orange-200 rounded-lg focus:border-orange-500 outline-none bg-white" placeholder="0" value="${existingMatch?.pen2 ?? ''}" />
             </div>
           </div>
         </div>`,
@@ -640,26 +640,26 @@ export default function FutsalDashboard() {
 
     return (
       <div 
-        className={`w-full bg-[#0F172A] border ${isFinal ? 'border-amber-300 shadow-md' : 'border-slate-700/50 shadow-sm'} rounded-lg overflow-hidden flex flex-col text-xs relative ${hasAccess && !isSpinning ? 'cursor-pointer hover:border-blue-400 hover:shadow-md transition-all' : ''}`}
+        className={`w-full bg-white border ${isFinal ? 'border-amber-300 shadow-md' : 'border-slate-200 shadow-sm'} rounded-lg overflow-hidden flex flex-col text-xs relative ${hasAccess && !isSpinning ? 'cursor-pointer hover:border-blue-400 hover:shadow-md transition-all' : ''}`}
         onClick={() => handleKnockoutMatchClick(round, matchIndex)}
         title={hasAccess && !isSpinning ? "Klik untuk input skor pertandingan" : ""}
       >
         {isFinal && (
           <div className="bg-amber-100 text-amber-700 text-[10px] font-bold text-center py-1 uppercase tracking-wider">Final Match</div>
         )}
-        <div className={`px-3 py-2 flex justify-between items-center bg-slate-50 border-b border-white/5/5 ${t1Eliminated ? 'opacity-50 grayscale' : ''}`}>
-          <span className={`font-semibold ${t1 ? (t1Eliminated ? 'text-slate-400 line-through' : 'text-slate-200') : 'text-slate-400'} truncate max-w-[140px]`}>
+        <div className={`px-3 py-2 flex justify-between items-center bg-slate-50 border-b border-slate-100 ${t1Eliminated ? 'opacity-50 grayscale' : ''}`}>
+          <span className={`font-semibold ${t1 ? (t1Eliminated ? 'text-slate-400 line-through' : 'text-slate-800') : 'text-slate-400'} truncate max-w-[140px]`}>
             {t1 ? t1.nama_tim : 'TBD (BYE)'}
           </span>
-          <span className={`font-black ${hasScore ? 'text-slate-200' : 'text-slate-300'}`}>
+          <span className={`font-black ${hasScore ? 'text-slate-800' : 'text-slate-300'}`}>
             {formatScore(match?.score1 ?? null, isPen ? match?.pen1 ?? null : null)}
           </span>
         </div>
-        <div className={`px-3 py-2 flex justify-between items-center bg-[#0F172A] ${t2Eliminated ? 'opacity-50 grayscale' : ''}`}>
-          <span className={`font-semibold ${t2 ? (t2Eliminated ? 'text-slate-400 line-through' : 'text-slate-200') : 'text-slate-400'} truncate max-w-[140px]`}>
+        <div className={`px-3 py-2 flex justify-between items-center bg-white ${t2Eliminated ? 'opacity-50 grayscale' : ''}`}>
+          <span className={`font-semibold ${t2 ? (t2Eliminated ? 'text-slate-400 line-through' : 'text-slate-800') : 'text-slate-400'} truncate max-w-[140px]`}>
             {t2 ? t2.nama_tim : 'TBD (BYE)'}
           </span>
-          <span className={`font-black ${hasScore ? 'text-slate-200' : 'text-slate-300'}`}>
+          <span className={`font-black ${hasScore ? 'text-slate-800' : 'text-slate-300'}`}>
             {formatScore(match?.score2 ?? null, isPen ? match?.pen2 ?? null : null)}
           </span>
         </div>
@@ -719,26 +719,26 @@ export default function FutsalDashboard() {
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-5xl mx-auto">
       {/* Header Utama */}
       <div className="flex items-center gap-4">
-        <Link href="/event/futsal" className="p-2 bg-[#0F172A] border border-slate-700/50 rounded-xl hover:bg-slate-50 transition-colors shadow-sm">
-          <ArrowLeft className="w-5 h-5 text-slate-400" />
+        <Link href="/event/futsal" className="p-2 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors shadow-sm">
+          <ArrowLeft className="w-5 h-5 text-slate-600" />
         </Link>
         <div>
-          <h1 className="text-2xl font-bold text-slate-200 tracking-tight flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-slate-800 tracking-tight flex items-center gap-2">
             {eventData.nama_event}
           </h1>
-          <p className="text-sm text-slate-400">Informasi Umum Event</p>
+          <p className="text-sm text-slate-500">Informasi Umum Event</p>
         </div>
       </div>
 
       {/* SECTION 1: Informasi Umum Event */}
-      <div className="bg-[#0F172A] rounded-2xl border border-slate-700/50 shadow-sm overflow-hidden relative">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden relative">
         <div className="h-24 bg-gradient-to-r from-emerald-500 to-emerald-700 opacity-90 relative overflow-hidden">
           <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20 mix-blend-overlay"></div>
         </div>
         
         <div className="p-6 sm:p-8 relative">
           <div className="flex justify-between items-start mb-6">
-            <div className="-mt-16 w-20 h-20 rounded-2xl bg-emerald-50 border-4 border-white/5 shadow-lg flex items-center justify-center relative z-10">
+            <div className="-mt-16 w-20 h-20 rounded-2xl bg-emerald-50 border-4 border-white shadow-lg flex items-center justify-center relative z-10">
               <Activity className="w-8 h-8 text-emerald-600" />
             </div>
             
@@ -757,13 +757,13 @@ export default function FutsalDashboard() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div>
                   <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5 mb-1"><CalendarDays className="w-3.5 h-3.5" /> Tanggal Pelaksanaan</label>
-                  <p className="text-base font-semibold text-slate-200">
+                  <p className="text-base font-semibold text-slate-800">
                     {eventData.tanggal ? new Date(eventData.tanggal).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : "Belum ditentukan"}
                   </p>
                 </div>
                 <div>
                   <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5 mb-1"><MapPin className="w-3.5 h-3.5" /> Tempat / Lokasi</label>
-                  <p className="text-base font-semibold text-slate-200">{eventData.tempat || "Belum ditentukan"}</p>
+                  <p className="text-base font-semibold text-slate-800">{eventData.tempat || "Belum ditentukan"}</p>
                 </div>
                 <div>
                   <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5 mb-1"><Activity className="w-3.5 h-3.5" /> Status Event</label>
@@ -780,8 +780,8 @@ export default function FutsalDashboard() {
 
               <div>
                 <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5 mb-2"><Info className="w-3.5 h-3.5" /> Deskripsi Singkat</label>
-                <div className="bg-slate-50 p-4 rounded-xl border border-white/5/5">
-                  <p className="text-slate-400 leading-relaxed text-sm whitespace-pre-wrap">
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                  <p className="text-slate-600 leading-relaxed text-sm whitespace-pre-wrap">
                     {eventData.deskripsi || "Belum ada deskripsi untuk event ini."}
                   </p>
                 </div>
@@ -791,30 +791,30 @@ export default function FutsalDashboard() {
             <form onSubmit={handleSaveEvent} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-semibold text-slate-300 mb-2">Tanggal Pelaksanaan</label>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Tanggal Pelaksanaan</label>
                   <input 
                     type="date" 
                     value={formDataEvent.tanggal ? new Date(formDataEvent.tanggal).toISOString().split('T')[0] : ""}
                     onChange={(e) => setFormDataEvent({...formDataEvent, tanggal: e.target.value})}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-700/50 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-slate-300 mb-2">Tempat / Lokasi</label>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Tempat / Lokasi</label>
                   <input 
                     type="text" 
                     value={formDataEvent.tempat}
                     onChange={(e) => setFormDataEvent({...formDataEvent, tempat: e.target.value})}
                     placeholder="Contoh: GOR UNP"
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-700/50 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
                   />
                 </div>
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-semibold text-slate-300 mb-2">Status Event</label>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Status Event</label>
                   <select 
                     value={formDataEvent.status}
                     onChange={(e) => setFormDataEvent({...formDataEvent, status: e.target.value})}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-700/50 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
                   >
                     <option value="Akan Datang">Akan Datang</option>
                     <option value="Sedang Berlangsung">Sedang Berlangsung</option>
@@ -823,13 +823,13 @@ export default function FutsalDashboard() {
                   </select>
                 </div>
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-semibold text-slate-300 mb-2">Deskripsi Singkat</label>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Deskripsi Singkat</label>
                   <textarea 
                     value={formDataEvent.deskripsi}
                     onChange={(e) => setFormDataEvent({...formDataEvent, deskripsi: e.target.value})}
                     rows={4}
                     placeholder="Tuliskan deskripsi atau catatan mengenai event ini..."
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-700/50 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 resize-none"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 resize-none"
                   />
                 </div>
               </div>
@@ -838,7 +838,7 @@ export default function FutsalDashboard() {
                 <button 
                   type="button"
                   onClick={() => setIsEditingEvent(false)}
-                  className="px-5 py-2.5 text-sm font-semibold text-slate-400 hover:bg-slate-800 rounded-xl transition-colors"
+                  className="px-5 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
                 >
                   Batal
                 </button>
@@ -856,15 +856,15 @@ export default function FutsalDashboard() {
       </div>
 
       {/* SECTION 2: Data Tim (Tabel) */}
-      <div className="bg-[#0F172A] rounded-2xl border border-slate-700/50 shadow-sm overflow-hidden relative">
-        <div className="p-6 border-b border-white/5/5 flex justify-between items-center bg-[#1e293b]/50">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden relative">
+        <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center border border-purple-100">
               <Users className="w-5 h-5 text-purple-600" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-200">Daftar Tim Bertanding</h2>
-              <p className="text-xs text-slate-400">
+              <h2 className="text-lg font-bold text-slate-800">Daftar Tim Bertanding</h2>
+              <p className="text-xs text-slate-500">
                 {teams.length} Tim Terdaftar (Data sinkron dengan Pendaftar Official Web)
               </p>
             </div>
@@ -874,7 +874,7 @@ export default function FutsalDashboard() {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-700/50 text-slate-400 text-xs uppercase tracking-wider">
+              <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 text-xs uppercase tracking-wider">
                 <th className="px-6 py-4 font-semibold">Nama Tim</th>
                 <th className="px-6 py-4 font-semibold">Kapten</th>
                 <th className="px-6 py-4 font-semibold">Kontak WA</th>
@@ -888,8 +888,8 @@ export default function FutsalDashboard() {
                     <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-50 mb-4">
                       <Users className="w-8 h-8 text-slate-400" />
                     </div>
-                    <h3 className="text-slate-200 font-semibold mb-1">Belum ada tim (atau Gagal Memuat)</h3>
-                    <p className="text-sm text-slate-400 mb-2">Jika seharusnya ada tim, pastikan Environment Variable Vercel sudah benar.</p>
+                    <h3 className="text-slate-800 font-semibold mb-1">Belum ada tim (atau Gagal Memuat)</h3>
+                    <p className="text-sm text-slate-500 mb-2">Jika seharusnya ada tim, pastikan Environment Variable Vercel sudah benar.</p>
                     {errorMessage && (
                       <div className="bg-rose-50 text-rose-600 text-xs p-3 rounded-lg border border-rose-100 max-w-md mx-auto text-left whitespace-pre-wrap">
                         <span className="font-bold block mb-1">Pesan Error Sistem:</span>
@@ -900,19 +900,19 @@ export default function FutsalDashboard() {
                 </tr>
               ) : (
                 teams.map((team, idx) => (
-                  <tr key={idx} className="hover:bg-[#1e293b]/50 transition-colors">
+                  <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
                     <td className="px-6 py-4">
-                      <div className="font-bold text-slate-200">{team.nama_tim}</div>
+                      <div className="font-bold text-slate-800">{team.nama_tim}</div>
                       <div className="text-[10px] text-slate-400 font-mono mt-0.5">{team.id_tim}</div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-2 text-sm text-slate-400">
+                      <div className="flex items-center gap-2 text-sm text-slate-600">
                         <User className="w-3.5 h-3.5 text-slate-400" />
                         {team.kapten}
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-2 text-sm text-slate-400">
+                      <div className="flex items-center gap-2 text-sm text-slate-600">
                         <Phone className="w-3.5 h-3.5 text-slate-400" />
                         {team.kontak}
                       </div>
@@ -935,15 +935,15 @@ export default function FutsalDashboard() {
       </div>
 
       {/* SECTION 3: Turnamen Bracket Viewer (Visual Only) */}
-      <div className="bg-[#0F172A] rounded-2xl border border-slate-700/50 shadow-sm overflow-hidden relative">
-        <div className="p-6 border-b border-white/5/5 bg-[#1e293b]/50 flex justify-between items-center">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden relative">
+        <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center border border-amber-100">
               <Trophy className="w-5 h-5 text-amber-600" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-200">Bagan Pertandingan</h2>
-              <p className="text-xs text-slate-400">Preview Bracket Turnamen & Pengundian</p>
+              <h2 className="text-lg font-bold text-slate-800">Bagan Pertandingan</h2>
+              <p className="text-xs text-slate-500">Preview Bracket Turnamen & Pengundian</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -981,14 +981,14 @@ export default function FutsalDashboard() {
             )}
             <button 
               onClick={toggleFullscreen}
-              className="p-2.5 text-slate-400 hover:bg-slate-200 bg-slate-800 rounded-xl transition-colors"
+              className="p-2.5 text-slate-600 hover:bg-slate-200 bg-slate-100 rounded-xl transition-colors"
               title="Layar Penuh"
             >
               <Maximize className="w-4 h-4" />
             </button>
           </div>
         </div>
-        <div ref={bracketRef} className={`w-full overflow-x-auto relative ${isFullscreen ? 'bg-slate-50 p-12 h-screen' : 'bg-[#1e293b]/50 p-8'}`}>
+        <div ref={bracketRef} className={`w-full overflow-x-auto relative ${isFullscreen ? 'bg-slate-50 p-12 h-screen' : 'bg-slate-50/50 p-8'}`}>
           <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.02)_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none"></div>
           
           {isFullscreen && (
@@ -1027,7 +1027,7 @@ export default function FutsalDashboard() {
               )}
               <button 
                 onClick={toggleFullscreen}
-                className="p-2.5 bg-[#131B2F]/80 backdrop-blur text-slate-300 hover:bg-[#0F172A] rounded-xl shadow-sm border border-slate-700/50 transition-all"
+                className="p-2.5 bg-white/80 backdrop-blur text-slate-700 hover:bg-white rounded-xl shadow-sm border border-slate-200 transition-all"
                 title="Keluar Layar Penuh"
               >
                 <Minimize className="w-5 h-5" />
@@ -1037,8 +1037,8 @@ export default function FutsalDashboard() {
 
 
           {category === 'sma' && (
-            <div className="flex flex-col gap-8 mb-12 relative z-10 w-full max-w-[1400px] mx-auto bg-[#1e293b]/50 p-6 rounded-3xl border border-slate-700/50">
-              <h2 className="text-xl font-black text-slate-200 flex items-center gap-2"><Trophy className="w-5 h-5 text-emerald-500" /> Fase Grup & Jadwal Pertandingan</h2>
+            <div className="flex flex-col gap-8 mb-12 relative z-10 w-full max-w-[1400px] mx-auto bg-slate-50/50 p-6 rounded-3xl border border-slate-200">
+              <h2 className="text-xl font-black text-slate-800 flex items-center gap-2"><Trophy className="w-5 h-5 text-emerald-500" /> Fase Grup & Jadwal Pertandingan</h2>
               
               <div className="flex flex-col gap-10 items-start w-full">
                  {/* TOP: 2x2 Grid for Standings */}
@@ -1048,7 +1048,7 @@ export default function FutsalDashboard() {
                       const standings = calculateGroupStandings(gIndex);
                       
                       return (
-                        <div key={`group-${gIndex}`} className="w-full bg-[#0F172A] border border-slate-700/50 shadow-sm rounded-xl overflow-hidden flex flex-col text-xs relative">
+                        <div key={`group-${gIndex}`} className="w-full bg-white border border-slate-200 shadow-sm rounded-xl overflow-hidden flex flex-col text-xs relative">
                           <div className="bg-slate-800 text-white font-bold text-center py-3 uppercase tracking-wider text-[12px] flex justify-between px-5">
                             <span>{groupName}</span>
                             <span className="text-slate-400 font-normal tracking-normal flex gap-5">
@@ -1064,7 +1064,7 @@ export default function FutsalDashboard() {
                             {standings.map((stat, i) => {
                               const isQualify = i < 2; // Top 2
                               return (
-                                <div key={`g${gIndex}-team${i}`} className={`flex justify-between items-center px-4 py-3 border-b border-white/5/5 ${isQualify ? 'bg-emerald-50 hover:bg-emerald-100' : 'bg-rose-50'} transition-colors ${isQualify ? 'cursor-pointer' : 'cursor-not-allowed'}`} onClick={() => handleTeamClick(stat.team, 1, gIndex * 4 + i)}>
+                                <div key={`g${gIndex}-team${i}`} className={`flex justify-between items-center px-4 py-3 border-b border-slate-100 ${isQualify ? 'bg-emerald-50 hover:bg-emerald-100' : 'bg-rose-50'} transition-colors ${isQualify ? 'cursor-pointer' : 'cursor-not-allowed'}`} onClick={() => handleTeamClick(stat.team, 1, gIndex * 4 + i)}>
                                   <div className="flex items-center gap-3 overflow-hidden flex-1 mr-4">
                                     <span className={`w-6 h-6 shrink-0 flex items-center justify-center rounded-full text-xs font-bold ${isQualify ? 'bg-emerald-500 text-white' : 'bg-rose-200 text-rose-700'}`}>{i + 1}</span>
                                     <span className={`font-bold text-sm truncate ${isQualify ? 'text-emerald-900' : 'text-rose-900'}`}>{stat.team ? stat.team.nama_tim : 'TBD'}</span>
@@ -1087,9 +1087,9 @@ export default function FutsalDashboard() {
                  </div>
                  
                  {/* BOTTOM: Match List */}
-                 <div className="w-full bg-[#0F172A] border border-slate-700/50 rounded-xl shadow-sm flex flex-col overflow-hidden">
-                    <div className="bg-slate-800 border-b border-slate-700/50 p-4 shrink-0">
-                      <h3 className="font-bold text-slate-200 text-sm flex items-center gap-2"><CalendarDays className="w-4 h-4 text-blue-500" /> Hasil & Jadwal Pertandingan Fase Grup</h3>
+                 <div className="w-full bg-white border border-slate-200 rounded-xl shadow-sm flex flex-col overflow-hidden">
+                    <div className="bg-slate-100 border-b border-slate-200 p-4 shrink-0">
+                      <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2"><CalendarDays className="w-4 h-4 text-blue-500" /> Hasil & Jadwal Pertandingan Fase Grup</h3>
                     </div>
                     <div className="p-6 bg-slate-50 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                        {groupMatches.map(match => {
@@ -1099,14 +1099,14 @@ export default function FutsalDashboard() {
                          const hasScore = match.score1 !== null && match.score2 !== null;
                          
                          return (
-                           <div key={match.id} onClick={() => handleMatchClick(match)} className="bg-[#0F172A] border border-slate-700/50 rounded-xl p-4 cursor-pointer hover:border-blue-400 hover:shadow-md transition-all group flex flex-col gap-3">
+                           <div key={match.id} onClick={() => handleMatchClick(match)} className="bg-white border border-slate-200 rounded-xl p-4 cursor-pointer hover:border-blue-400 hover:shadow-md transition-all group flex flex-col gap-3">
                              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider text-center">{groupName}</div>
                              <div className="flex justify-between items-center gap-3">
-                               <div className="flex-1 text-right text-sm font-bold text-slate-300 truncate" title={t1 ? t1.nama_tim : 'TBD'}>{t1 ? t1.nama_tim : 'TBD'}</div>
-                               <div className={`px-3 py-1.5 rounded-lg text-sm font-black min-w-[60px] text-center shrink-0 ${hasScore ? 'bg-blue-100 text-blue-700' : 'bg-slate-800 text-slate-400'}`}>
+                               <div className="flex-1 text-right text-sm font-bold text-slate-700 truncate" title={t1 ? t1.nama_tim : 'TBD'}>{t1 ? t1.nama_tim : 'TBD'}</div>
+                               <div className={`px-3 py-1.5 rounded-lg text-sm font-black min-w-[60px] text-center shrink-0 ${hasScore ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-400'}`}>
                                  {hasScore ? `${match.score1} - ${match.score2}` : 'VS'}
                                </div>
-                               <div className="flex-1 text-left text-sm font-bold text-slate-300 truncate" title={t2 ? t2.nama_tim : 'TBD'}>{t2 ? t2.nama_tim : 'TBD'}</div>
+                               <div className="flex-1 text-left text-sm font-bold text-slate-700 truncate" title={t2 ? t2.nama_tim : 'TBD'}>{t2 ? t2.nama_tim : 'TBD'}</div>
                              </div>
                            </div>
                          );
@@ -1167,12 +1167,12 @@ export default function FutsalDashboard() {
                 className={`p-4 border rounded-xl flex flex-col items-center justify-center gap-2 shadow-sm text-center transition-all ${
                   champion 
                     ? 'bg-gradient-to-r from-amber-100 to-amber-50 border-amber-300 shadow-amber-200/50' 
-                    : 'bg-slate-50 border-slate-700/50'
+                    : 'bg-slate-50 border-slate-200'
                 }`}
               >
                 <Trophy className={`w-8 h-8 mb-1 ${champion ? 'text-amber-500' : 'text-slate-300'}`} />
                 <span className={`text-[10px] font-bold uppercase tracking-widest ${champion ? 'text-amber-700' : 'text-slate-400'}`}>Champion</span>
-                <span className={`font-bold text-lg ${champion ? 'text-slate-200' : 'text-slate-400'}`}>
+                <span className={`font-bold text-lg ${champion ? 'text-slate-800' : 'text-slate-400'}`}>
                   {champion ? champion.nama_tim : 'TBD'}
                 </span>
               </div>

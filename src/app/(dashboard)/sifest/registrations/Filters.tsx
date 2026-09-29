@@ -57,43 +57,43 @@ export function RegistrationsFilters({ events }: { events: Event[] }) {
 
       <div className="flex gap-2">
         <select
-          className="block w-full pl-3 pr-10 py-2 text-white text-base border-slate-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-lg"
+          className="block w-full pl-3 pr-10 py-2 text-slate-900 text-base border-slate-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-lg"
           onChange={(e) => handleFilterChange('event_id', e.target.value)}
           defaultValue={searchParams.get('event_id') || 'ALL'}
         >
-          <option value="ALL" className="text-white">Semua Event</option>
+          <option value="ALL" className="text-slate-900">Semua Event</option>
           {events.map((e) => (
-            <option key={e.id} value={e.id} className="text-white">
+            <option key={e.id} value={e.id} className="text-slate-900">
               {e.name}
             </option>
           ))}
         </select>
 
         <select
-          className="block w-full pl-3 pr-10 py-2 text-white text-base border-slate-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-lg"
+          className="block w-full pl-3 pr-10 py-2 text-slate-900 text-base border-slate-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-lg"
           onChange={(e) => handleFilterChange('status', e.target.value)}
           defaultValue={searchParams.get('status') || 'ALL'}
         >
-          <option value="ALL" className="text-white">Semua Status</option>
-          <option value="PENDING" className="text-white">Menunggu</option>
-          <option value="WAITING_PAYMENT" className="text-white">Menunggu Pembayaran</option>
-          <option value="PAID" className="text-white">Sudah Bayar</option>
-          <option value="VERIFIED" className="text-white">Terverifikasi</option>
-          <option value="REJECTED" className="text-white">Ditolak</option>
-          <option value="INCOMPLETE" className="text-white">Lengkapi Berkas</option>
-          <option value="CANCELLED" className="text-white">Dibatalkan</option>
+          <option value="ALL" className="text-slate-900">Semua Status</option>
+          <option value="PENDING" className="text-slate-900">Menunggu</option>
+          <option value="WAITING_PAYMENT" className="text-slate-900">Menunggu Pembayaran</option>
+          <option value="PAID" className="text-slate-900">Sudah Bayar</option>
+          <option value="VERIFIED" className="text-slate-900">Terverifikasi</option>
+          <option value="REJECTED" className="text-slate-900">Ditolak</option>
+          <option value="INCOMPLETE" className="text-slate-900">Lengkapi Berkas</option>
+          <option value="CANCELLED" className="text-slate-900">Dibatalkan</option>
         </select>
 
         <select
-          className="block w-full pl-3 pr-10 py-2 text-white text-base border-slate-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-lg"
+          className="block w-full pl-3 pr-10 py-2 text-slate-900 text-base border-slate-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-lg"
           onChange={(e) => handleFilterChange('payment_status', e.target.value)}
           defaultValue={searchParams.get('payment_status') || 'ALL'}
         >
-          <option value="ALL" className="text-white">Semua Pembayaran</option>
-          <option value="PENDING" className="text-white">Menunggu</option>
-          <option value="PAID" className="text-white">Sudah Bayar</option>
-          <option value="FAILED" className="text-white">Gagal</option>
-          <option value="EXPIRED" className="text-white">Kedaluwarsa</option>
+          <option value="ALL" className="text-slate-900">Semua Pembayaran</option>
+          <option value="PENDING" className="text-slate-900">Menunggu</option>
+          <option value="PAID" className="text-slate-900">Sudah Bayar</option>
+          <option value="FAILED" className="text-slate-900">Gagal</option>
+          <option value="EXPIRED" className="text-slate-900">Kedaluwarsa</option>
         </select>
       </div>
     </div>

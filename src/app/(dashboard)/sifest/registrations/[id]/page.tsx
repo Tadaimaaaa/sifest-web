@@ -29,10 +29,10 @@ function canEditRegistrationStatus(roleId: string, eventSlug: string | undefined
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function SectionCard({ title, icon: Icon, children }: { title: string, icon: any, children: React.ReactNode }) {
   return (
-    <div className="bg-[#0F172A] rounded-xl shadow-sm border border-slate-700/50">
-      <div className="border-b border-slate-700/50 bg-slate-50 px-6 py-4 flex items-center gap-2">
-        <Icon className="w-5 h-5 text-slate-400" />
-        <h3 className="text-lg font-semibold text-slate-200">{title}</h3>
+    <div className="bg-white rounded-xl shadow-sm border border-slate-200">
+      <div className="border-b border-slate-200 bg-slate-50 px-6 py-4 flex items-center gap-2">
+        <Icon className="w-5 h-5 text-slate-500" />
+        <h3 className="text-lg font-semibold text-slate-800">{title}</h3>
       </div>
       <div className="p-6 space-y-4">
         {children}
@@ -43,9 +43,9 @@ function SectionCard({ title, icon: Icon, children }: { title: string, icon: any
 
 function InfoRow({ label, value }: { label: string, value: React.ReactNode }) {
   return (
-    <div className="flex flex-col sm:flex-row sm:justify-between py-2 border-b border-white/5/5 last:border-0 last:pb-0">
-      <span className="text-sm font-medium text-slate-400">{label}</span>
-      <span className="text-sm text-white font-medium sm:text-right mt-1 sm:mt-0">{value || '-'}</span>
+    <div className="flex flex-col sm:flex-row sm:justify-between py-2 border-b border-slate-100 last:border-0 last:pb-0">
+      <span className="text-sm font-medium text-slate-500">{label}</span>
+      <span className="text-sm text-slate-900 font-medium sm:text-right mt-1 sm:mt-0">{value || '-'}</span>
     </div>
   );
 }
@@ -94,21 +94,21 @@ export default async function RegistrationDetailPage({
         <div className="flex items-center gap-4">
           <Link
             href="/sifest/registrations"
-            className="p-2 bg-[#0F172A] border border-slate-700/50 rounded-lg text-slate-400 hover:text-white hover:bg-slate-50 transition-colors"
+            className="p-2 bg-white border border-slate-200 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div>
-            <h1 className="text-2xl font-bold text-white">Detail Pendaftar</h1>
-            <p className="text-sm text-slate-400 mt-1">ID: {registration.id}</p>
+            <h1 className="text-2xl font-bold text-slate-900">Detail Pendaftar</h1>
+            <p className="text-sm text-slate-500 mt-1">ID: {registration.id}</p>
           </div>
         </div>
         <PrintButton />
       </div>
 
       <div className="hidden print:block mb-8 text-center border-b pb-4">
-        <h1 className="text-2xl font-bold text-white">Formulir Pendaftaran {events?.name}</h1>
-        <p className="text-sm text-slate-400 mt-1">Kode Pendaftaran: {registration.registration_code}</p>
+        <h1 className="text-2xl font-bold text-slate-900">Formulir Pendaftaran {events?.name}</h1>
+        <p className="text-sm text-slate-500 mt-1">Kode Pendaftaran: {registration.registration_code}</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -148,7 +148,7 @@ export default async function RegistrationDetailPage({
                 <InfoRow label="No. HP / WhatsApp" value={participants?.whatsapp} />
                 <InfoRow label={events?.slug?.startsWith('open-bazaar') ? "Nama Usaha/Brand" : "Asal Institusi"} value={participants?.institution} />
                 {events?.slug?.startsWith('open-bazaar') && participants?.metadata && (
-                  <div className="pt-2 mt-2 border-t border-white/5/5">
+                  <div className="pt-2 mt-2 border-t border-slate-100">
                     <InfoRow label="Alamat" value={participants.metadata.address} />
                     <InfoRow label="Instagram" value={participants.metadata.instagram} />
                     <InfoRow label="Kategori Usaha" value={participants.metadata.category} />
@@ -156,7 +156,7 @@ export default async function RegistrationDetailPage({
                   </div>
                 )}
                 {events?.slug === 'lomba-keagamaan' && participants?.metadata && (
-                  <div className="pt-2 mt-2 border-t border-white/5/5">
+                  <div className="pt-2 mt-2 border-t border-slate-100">
                     <InfoRow label="Nama Pembimbing" value={participants.metadata.guruPendamping || "-"} />
                     <InfoRow label="WA Pembimbing" value={participants.metadata.nowaGuruPendamping || "-"} />
                   </div>
@@ -208,11 +208,11 @@ export default async function RegistrationDetailPage({
               )}
               {/* Tampilkan bukti pembayaran manual selalu jika ada */}
               {(!transactions || transactions.payment_method !== 'FREE') && (
-                <div className="p-4 bg-slate-50 rounded-lg border border-white/5/5 text-center space-y-3">
-                  <p className="text-sm text-slate-400">Menggunakan sistem pembayaran manual.</p>
+                <div className="p-4 bg-slate-50 rounded-lg border border-slate-100 text-center space-y-3">
+                  <p className="text-sm text-slate-500">Menggunakan sistem pembayaran manual.</p>
                   {registration.payment_proof_url ? (
                     <div className="space-y-2">
-                      <p className="text-sm font-semibold text-slate-300">Bukti Pembayaran Diunggah:</p>
+                      <p className="text-sm font-semibold text-slate-700">Bukti Pembayaran Diunggah:</p>
                       <a href={registration.payment_proof_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-green-50 text-green-700 hover:bg-green-100 font-medium text-xs border border-green-200 transition-colors">
                         <FileText className="w-3.5 h-3.5" />
                         Bukti Valid (Lihat)
@@ -261,8 +261,8 @@ export default async function RegistrationDetailPage({
         <div className="mt-6">
           <SectionCard title={`Daftar Pemain (${participants?.metadata?.players?.length || 0})`} icon={Users}>
             <div className="overflow-x-auto -mx-6 px-6">
-              <table className="w-full text-sm text-left text-slate-400 whitespace-nowrap">
-                <thead className="text-xs text-slate-300 uppercase bg-slate-50">
+              <table className="w-full text-sm text-left text-slate-500 whitespace-nowrap">
+                <thead className="text-xs text-slate-700 uppercase bg-slate-50">
                   <tr>
                     <th className="px-4 py-2">No</th>
                     <th className="px-4 py-2">Nama</th>
@@ -286,9 +286,9 @@ export default async function RegistrationDetailPage({
                 <tbody>
                   {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                   {participants?.metadata?.players?.map((p: any, idx: number) => (
-                    <tr key={idx} className="bg-[#0F172A] border-b hover:bg-slate-50">
+                    <tr key={idx} className="bg-white border-b hover:bg-slate-50">
                       <td className="px-4 py-2">{idx + 1} {idx === 0 && "(Kapten)"}</td>
-                      <td className="px-4 py-2 font-medium text-white">{p.name}</td>
+                      <td className="px-4 py-2 font-medium text-slate-900">{p.name}</td>
                       {participants?.metadata?.teamData && !events?.slug?.includes('futsal') ? (
                         <>
                           <td className="px-4 py-2">{p.nickname || "-"}</td>

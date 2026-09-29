@@ -42,11 +42,11 @@ export default function ScannerPage() {
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <div className="flex flex-col gap-2">
-        <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+        <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
           <ScanLine className="w-6 h-6 text-blue-600" />
           Scanner Tiket Peserta
         </h1>
-        <p className="text-slate-400">
+        <p className="text-slate-600">
           Arahkan kamera ke QR Code pada E-Ticket peserta untuk melihat detail dan melakukan validasi pendaftaran.
         </p>
       </div>
@@ -69,12 +69,12 @@ export default function ScannerPage() {
       )}
 
       {scanStatus === 'success' && (
-        <div className="p-12 text-center bg-[#0F172A] border border-slate-700/50 rounded-2xl shadow-sm">
+        <div className="p-12 text-center bg-white border border-slate-200 rounded-2xl shadow-sm">
           <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce">
             <ScanLine className="w-8 h-8 text-green-600" />
           </div>
-          <h3 className="text-lg font-bold text-white mb-2">QR Code Ditemukan!</h3>
-          <p className="text-slate-400 animate-pulse">Mengalihkan ke halaman detail peserta...</p>
+          <h3 className="text-lg font-bold text-slate-900 mb-2">QR Code Ditemukan!</h3>
+          <p className="text-slate-600 animate-pulse">Mengalihkan ke halaman detail peserta...</p>
         </div>
       )}
 

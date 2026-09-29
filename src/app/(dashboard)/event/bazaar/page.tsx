@@ -212,7 +212,7 @@ export default function BazaarDashboard() {
 
   const getTendaColor = (id_tenda: string) => {
     const data = tenants[id_tenda];
-    if (!data) return "bg-[#0F172A] border-slate-300 text-slate-400 hover:bg-slate-50 hover:border-slate-400"; // Kosong (Tersedia)
+    if (!data) return "bg-white border-slate-300 text-slate-500 hover:bg-slate-50 hover:border-slate-400"; // Kosong (Tersedia)
     
     if (data.kategori === "Sponsor/Corporate") return "bg-amber-50 border-amber-400 text-amber-700 shadow-sm shadow-amber-500/20";
     if (data.kategori === "Panitia/Internal") return "bg-purple-50 border-purple-400 text-purple-700 shadow-sm shadow-purple-500/20";
@@ -246,26 +246,26 @@ export default function BazaarDashboard() {
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-5xl mx-auto">
       {/* Header Utama */}
       <div className="flex items-center gap-4">
-        <Link href="/event" className="p-2 bg-[#0F172A] border border-slate-700/50 rounded-xl hover:bg-slate-50 transition-colors shadow-sm">
-          <ArrowLeft className="w-5 h-5 text-slate-400" />
+        <Link href="/event" className="p-2 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors shadow-sm">
+          <ArrowLeft className="w-5 h-5 text-slate-600" />
         </Link>
         <div>
-          <h1 className="text-2xl font-bold text-slate-200 tracking-tight flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-slate-800 tracking-tight flex items-center gap-2">
             Bazaar
           </h1>
-          <p className="text-sm text-slate-400">Informasi Umum Event</p>
+          <p className="text-sm text-slate-500">Informasi Umum Event</p>
         </div>
       </div>
 
       {/* SECTION 1: Informasi Umum Event */}
-      <div className="bg-[#0F172A] rounded-2xl border border-slate-700/50 shadow-sm overflow-hidden relative">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden relative">
         <div className="h-24 bg-gradient-to-r from-amber-500 to-orange-700 opacity-90 relative overflow-hidden">
           <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20 mix-blend-overlay"></div>
         </div>
         
         <div className="p-6 sm:p-8 relative">
           <div className="flex justify-between items-start mb-6">
-            <div className="-mt-16 w-20 h-20 rounded-2xl bg-amber-50 border-4 border-white/5 shadow-lg flex items-center justify-center relative z-10">
+            <div className="-mt-16 w-20 h-20 rounded-2xl bg-amber-50 border-4 border-white shadow-lg flex items-center justify-center relative z-10">
               <Store className="w-8 h-8 text-amber-600" />
             </div>
             
@@ -284,13 +284,13 @@ export default function BazaarDashboard() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div>
                   <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5 mb-1"><CalendarDays className="w-3.5 h-3.5" /> Tanggal Pelaksanaan</label>
-                  <p className="text-base font-semibold text-slate-200">
+                  <p className="text-base font-semibold text-slate-800">
                     {eventData.tanggal ? new Date(eventData.tanggal).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : "Belum ditentukan"}
                   </p>
                 </div>
                 <div>
                   <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5 mb-1"><MapPin className="w-3.5 h-3.5" /> Tempat / Lokasi</label>
-                  <p className="text-base font-semibold text-slate-200">{eventData.tempat || "Belum ditentukan"}</p>
+                  <p className="text-base font-semibold text-slate-800">{eventData.tempat || "Belum ditentukan"}</p>
                 </div>
                 <div>
                   <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5 mb-1"><Activity className="w-3.5 h-3.5" /> Status Event</label>
@@ -307,8 +307,8 @@ export default function BazaarDashboard() {
 
               <div>
                 <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5 mb-2"><Info className="w-3.5 h-3.5" /> Deskripsi Event</label>
-                <div className="p-4 bg-slate-50 border border-white/5/5 rounded-xl">
-                  <p className="text-slate-300 whitespace-pre-wrap text-sm leading-relaxed">
+                <div className="p-4 bg-slate-50 border border-slate-100 rounded-xl">
+                  <p className="text-slate-700 whitespace-pre-wrap text-sm leading-relaxed">
                     {eventData.deskripsi || "Belum ada deskripsi untuk event ini."}
                   </p>
                 </div>
@@ -318,30 +318,30 @@ export default function BazaarDashboard() {
             <form onSubmit={handleSaveEvent} className="space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div>
-                  <label className="block text-sm font-semibold text-slate-300 mb-1.5">Tanggal Pelaksanaan</label>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Tanggal Pelaksanaan</label>
                   <input 
                     type="date" 
                     value={formDataEvent.tanggal}
                     onChange={(e) => setFormDataEvent({...formDataEvent, tanggal: e.target.value})}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-700/50 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-slate-300 mb-1.5">Tempat / Lokasi</label>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Tempat / Lokasi</label>
                   <input 
                     type="text" 
                     value={formDataEvent.tempat}
                     onChange={(e) => setFormDataEvent({...formDataEvent, tempat: e.target.value})}
                     placeholder="Contoh: Lapangan Parkir"
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-700/50 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
                   />
                 </div>
                 <div className="sm:col-span-2">
-                  <label className="block text-sm font-semibold text-slate-300 mb-1.5">Status Event</label>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Status Event</label>
                   <select 
                     value={formDataEvent.status}
                     onChange={(e) => setFormDataEvent({...formDataEvent, status: e.target.value})}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-700/50 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
                   >
                     <option value="Akan Datang">Akan Datang</option>
                     <option value="Sedang Berlangsung">Sedang Berlangsung</option>
@@ -350,25 +350,25 @@ export default function BazaarDashboard() {
                   </select>
                 </div>
                 <div className="sm:col-span-2">
-                  <label className="block text-sm font-semibold text-slate-300 mb-1.5">Deskripsi Singkat</label>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Deskripsi Singkat</label>
                   <textarea 
                     rows={4}
                     value={formDataEvent.deskripsi}
                     onChange={(e) => setFormDataEvent({...formDataEvent, deskripsi: e.target.value})}
                     placeholder="Tuliskan deskripsi atau catatan mengenai event ini..."
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-700/50 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 resize-none"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 resize-none"
                   />
                 </div>
               </div>
 
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/5/5">
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
                 <button 
                   type="button"
                   onClick={() => {
                     setIsEditingEvent(false);
                     setFormDataEvent(eventData);
                   }}
-                  className="px-5 py-2.5 text-sm font-semibold text-slate-400 hover:bg-slate-800 rounded-xl transition-colors"
+                  className="px-5 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
                 >
                   Batal
                 </button>
@@ -390,16 +390,16 @@ export default function BazaarDashboard() {
       <div className="space-y-4">
         <div className="flex items-center justify-between gap-4 flex-wrap px-1">
           <div>
-            <h2 className="text-xl font-bold text-slate-200 flex items-center gap-2">
+            <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
               <Store className="w-5 h-5 text-amber-500" />
               Denah Tenda Bazaar
             </h2>
-            <p className="text-sm text-slate-400 mt-1">Klik pada kotak tenda untuk melihat atau mengatur penyewa.</p>
+            <p className="text-sm text-slate-500 mt-1">Klik pada kotak tenda untuk melihat atau mengatur penyewa.</p>
           </div>
 
           {/* Legend */}
-          <div className="flex items-center gap-3 bg-[#0F172A] p-3 rounded-xl border border-slate-700/50 shadow-sm text-xs font-semibold text-slate-400 flex-wrap">
-            <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-[#0F172A] border-2 border-slate-300" /> Kosong</div>
+          <div className="flex items-center gap-3 bg-white p-3 rounded-xl border border-slate-200 shadow-sm text-xs font-semibold text-slate-600 flex-wrap">
+            <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-white border-2 border-slate-300" /> Kosong</div>
             <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-rose-50 border-2 border-rose-400" /> Booked</div>
             <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-blue-50 border-2 border-blue-400" /> DP</div>
             <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-emerald-50 border-2 border-emerald-500" /> Lunas</div>
@@ -426,7 +426,7 @@ export default function BazaarDashboard() {
                 </div>
 
                 {/* Center Island (Blok D & E) */}
-                <div className="flex-1 mx-8 md:mx-12 flex flex-col justify-center gap-0 bg-slate-200/50 p-3 rounded-2xl border border-slate-700/50 border-dashed">
+                <div className="flex-1 mx-8 md:mx-12 flex flex-col justify-center gap-0 bg-slate-200/50 p-3 rounded-2xl border border-slate-200 border-dashed">
                   <div className="grid grid-cols-6 gap-2 md:gap-3 mb-1">
                     {layoutConfig.blokD.map(id => <TendaBox key={id} id={id} />)}
                   </div>
@@ -458,15 +458,15 @@ export default function BazaarDashboard() {
       </div>
 
       {/* SECTION 3: Tabel Data Penyewa */}
-      <div className="bg-[#0F172A] rounded-3xl p-6 md:p-8 border border-white/5/5 shadow-sm relative overflow-hidden">
-        <h2 className="text-xl font-bold text-slate-200 flex items-center gap-2 mb-6">
+      <div className="bg-white rounded-3xl p-6 md:p-8 border border-slate-100 shadow-sm relative overflow-hidden">
+        <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2 mb-6">
           <Store className="w-5 h-5 text-amber-500" />
           Daftar Penyewa Tenda
         </h2>
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-sm">
             <thead>
-              <tr className="border-b-2 border-white/5/5 text-slate-400">
+              <tr className="border-b-2 border-slate-100 text-slate-500">
                 <th className="pb-3 px-4 font-semibold">Tenda</th>
                 <th className="pb-3 px-4 font-semibold">Nama Usaha / Brand</th>
                 <th className="pb-3 px-4 font-semibold">Penanggung Jawab</th>
@@ -476,19 +476,19 @@ export default function BazaarDashboard() {
             </thead>
             <tbody>
               {Object.values(tenants).length > 0 ? Object.values(tenants).sort((a, b) => a.id_tenda.localeCompare(b.id_tenda, undefined, { numeric: true })).map(tenant => (
-                <tr key={tenant.id_tenda} className="border-b border-slate-50 hover:bg-[#1e293b]/50 transition-colors">
+                <tr key={tenant.id_tenda} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
                   <td className="py-4 px-4 font-bold text-amber-600">{tenant.id_tenda}</td>
-                  <td className="py-4 px-4 font-medium text-slate-200">{tenant.nama_brand}</td>
-                  <td className="py-4 px-4 text-slate-400">
+                  <td className="py-4 px-4 font-medium text-slate-800">{tenant.nama_brand}</td>
+                  <td className="py-4 px-4 text-slate-600">
                     <div>{tenant.pic}</div>
                     <div className="text-xs text-slate-400 mt-0.5">{tenant.kontak}</div>
                   </td>
-                  <td className="py-4 px-4 text-slate-400">{tenant.kategori}</td>
+                  <td className="py-4 px-4 text-slate-600">{tenant.kategori}</td>
                   <td className="py-4 px-4">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-md ${
                       tenant.status_bayar === 'Lunas' ? 'bg-emerald-100 text-emerald-700' :
                       tenant.status_bayar === 'DP' ? 'bg-blue-100 text-blue-700' :
-                      tenant.status_bayar === 'Kosong' ? 'bg-slate-800 text-slate-300' :
+                      tenant.status_bayar === 'Kosong' ? 'bg-slate-100 text-slate-700' :
                       'bg-rose-100 text-rose-700'
                     }`}>
                       {tenant.status_bayar}
@@ -497,7 +497,7 @@ export default function BazaarDashboard() {
                 </tr>
               )) : (
                 <tr>
-                  <td colSpan={5} className="py-8 text-center text-slate-400">Belum ada penyewa tenda yang terdaftar.</td>
+                  <td colSpan={5} className="py-8 text-center text-slate-500">Belum ada penyewa tenda yang terdaftar.</td>
                 </tr>
               )}
             </tbody>
@@ -508,27 +508,27 @@ export default function BazaarDashboard() {
       {/* Modal Tenant */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-[#0F172A] rounded-3xl w-full max-w-lg shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden">
-            <div className={`p-6 border-b ${tenants[formDataTenant.id_tenda] ? 'bg-amber-50 border-amber-100' : 'bg-slate-50 border-white/5/5'} flex items-center justify-between`}>
+          <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden">
+            <div className={`p-6 border-b ${tenants[formDataTenant.id_tenda] ? 'bg-amber-50 border-amber-100' : 'bg-slate-50 border-slate-100'} flex items-center justify-between`}>
               <div>
-                <h2 className="text-xl font-bold text-slate-200 flex items-center gap-2">
+                <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
                   <Store className="w-5 h-5 text-amber-500" />
                   Stand {formDataTenant.id_tenda}
                 </h2>
-                <p className="text-sm text-slate-400 mt-0.5">
+                <p className="text-sm text-slate-500 mt-0.5">
                   {tenants[formDataTenant.id_tenda] ? "Informasi Tenant" : "Tenda ini masih tersedia. Daftarkan tenant baru."}
                 </p>
               </div>
-              <button onClick={() => setIsModalOpen(false)} className="p-2 text-slate-400 hover:text-slate-400 hover:bg-[#0F172A] rounded-full transition-colors">
+              <button onClick={() => setIsModalOpen(false)} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-white rounded-full transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
             
             <form onSubmit={handleSaveTenant} className="p-6 space-y-5">
               <div>
-                <label className="block text-sm font-semibold text-slate-300 mb-1.5 flex items-center gap-1.5"><Store className="w-4 h-4 text-slate-400" /> Pilih dari Pendaftar SI FEST</label>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5"><Store className="w-4 h-4 text-slate-400" /> Pilih dari Pendaftar SI FEST</label>
                 <select
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-700/50 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
                   onChange={(e) => {
                     const selected = bazaarParticipants.find(p => p.id === e.target.value);
                     if (selected) {
@@ -550,41 +550,41 @@ export default function BazaarDashboard() {
                     </option>
                   ))}
                 </select>
-                <p className="text-[11px] text-slate-400 mt-1 ml-1">Memilih pendaftar akan otomatis mengisi kolom di bawah.</p>
+                <p className="text-[11px] text-slate-500 mt-1 ml-1">Memilih pendaftar akan otomatis mengisi kolom di bawah.</p>
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-slate-300 mb-1.5 flex items-center gap-1.5"><Tag className="w-4 h-4 text-slate-400" /> Nama Brand / Toko</label>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5"><Tag className="w-4 h-4 text-slate-400" /> Nama Brand / Toko</label>
                 <input 
                   type="text" 
                   required
                   value={formDataTenant.nama_brand}
                   onChange={(e) => setFormDataTenant({...formDataTenant, nama_brand: e.target.value})}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-700/50 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
                   placeholder="Contoh: Es Teh Solo"
                 />
               </div>
               
               <div className="grid grid-cols-2 gap-5">
                 <div>
-                  <label className="block text-sm font-semibold text-slate-300 mb-1.5 flex items-center gap-1.5"><User className="w-4 h-4 text-slate-400" /> PIC (Penyewa)</label>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5"><User className="w-4 h-4 text-slate-400" /> PIC (Penyewa)</label>
                   <input 
                     type="text" 
                     required
                     value={formDataTenant.pic}
                     onChange={(e) => setFormDataTenant({...formDataTenant, pic: e.target.value})}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-700/50 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
                     placeholder="Nama pemilik"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-slate-300 mb-1.5 flex items-center gap-1.5"><Phone className="w-4 h-4 text-slate-400" /> No. WA</label>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5"><Phone className="w-4 h-4 text-slate-400" /> No. WA</label>
                   <input 
                     type="text" 
                     required
                     value={formDataTenant.kontak}
                     onChange={(e) => setFormDataTenant({...formDataTenant, kontak: e.target.value})}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-700/50 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
                     placeholder="0812xxx"
                   />
                 </div>
@@ -592,7 +592,7 @@ export default function BazaarDashboard() {
 
               <div className="grid grid-cols-2 gap-5">
                 <div>
-                  <label className="block text-sm font-semibold text-slate-300 mb-1.5">Kategori Jualan</label>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Kategori Jualan</label>
                   <select 
                     value={formDataTenant.kategori}
                     onChange={(e) => {
@@ -610,7 +610,7 @@ export default function BazaarDashboard() {
                         setFormDataTenant({...formDataTenant, kategori: val});
                       }
                     }}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-700/50 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
                   >
                     <option value="Makanan">Makanan</option>
                     <option value="Minuman">Minuman</option>
@@ -621,11 +621,11 @@ export default function BazaarDashboard() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-slate-300 mb-1.5">Status Pembayaran</label>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Status Pembayaran</label>
                   <select 
                     value={formDataTenant.status_bayar}
                     onChange={(e) => setFormDataTenant({...formDataTenant, status_bayar: e.target.value})}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-700/50 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 font-medium"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 font-medium"
                   >
                     <option value="Belum Bayar">Belum Bayar (Merah)</option>
                     <option value="DP">DP (Biru)</option>
@@ -635,7 +635,7 @@ export default function BazaarDashboard() {
               </div>
 
               {hasAccess && (
-                <div className="flex justify-end gap-3 pt-6 mt-2 border-t border-white/5/5">
+                <div className="flex justify-end gap-3 pt-6 mt-2 border-t border-slate-100">
                   {tenants[formDataTenant.id_tenda] && (
                     <button 
                       type="button"

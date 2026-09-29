@@ -139,11 +139,11 @@ export default function ProdukSponsorPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-200 tracking-tight">Katalog Produk Sponsor</h1>
-          <p className="text-sm text-slate-400 mt-1">Klik kartu produk untuk melihat detail dan memperbarui penjualan.</p>
+          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Katalog Produk Sponsor</h1>
+          <p className="text-sm text-slate-500 mt-1">Klik kartu produk untuk melihat detail dan memperbarui penjualan.</p>
         </div>
         <div className="flex items-center gap-3">
-          <button onClick={() => mutate()} className="p-2.5 bg-[#0F172A] border border-slate-700/50 rounded-xl hover:bg-slate-50 text-slate-400 transition-colors shadow-sm">
+          <button onClick={() => mutate()} className="p-2.5 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 text-slate-500 transition-colors shadow-sm">
             <RefreshCcw className="w-4 h-4" />
           </button>
           {hasAccess && (
@@ -162,7 +162,7 @@ export default function ProdukSponsorPage() {
           placeholder="Cari produk atau sponsor..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full pl-10 pr-4 py-2.5 bg-[#0F172A] border border-slate-700/50 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm"
+          className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm"
         />
       </div>
 
@@ -174,11 +174,11 @@ export default function ProdukSponsorPage() {
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           {filtered.length === 0 ? (
-          <div className="col-span-full py-24 flex flex-col items-center text-center bg-[#0F172A] rounded-2xl border border-dashed border-slate-700/50">
-            <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mb-3">
+          <div className="col-span-full py-24 flex flex-col items-center text-center bg-white rounded-2xl border border-dashed border-slate-200">
+            <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-3">
               <Package className="w-8 h-8 text-slate-300" />
             </div>
-            <p className="font-semibold text-slate-400">Belum ada produk</p>
+            <p className="font-semibold text-slate-600">Belum ada produk</p>
             <p className="text-sm text-slate-400 mt-1">Tambahkan produk dari sponsor untuk mulai melacak penjualan.</p>
           </div>
         ) : (
@@ -191,10 +191,10 @@ export default function ProdukSponsorPage() {
                 onClick={() => router.push(`/produk/${prd.id_produk}`)} 
                 className="group block cursor-pointer"
               >
-                <div className="bg-[#0F172A] rounded-2xl border border-white/5/5 shadow-sm overflow-hidden hover:shadow-md hover:-translate-y-1 transition-all duration-200">
+                <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden hover:shadow-md hover:-translate-y-1 transition-all duration-200">
                   
                   {/* Foto */}
-                  <div className="aspect-square w-full bg-slate-800 relative overflow-hidden">
+                  <div className="aspect-square w-full bg-slate-100 relative overflow-hidden">
                     {thumb ? (
                       <img src={thumb} alt={prd.nama_produk} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
                     ) : (
@@ -206,7 +206,7 @@ export default function ProdukSponsorPage() {
                     {hasAccess && (
                       <button
                         onClick={(e) => confirmDelete(e, prd.id_produk)}
-                        className="absolute top-2 left-2 p-1.5 bg-[#0F172A]/90 backdrop-blur text-rose-500 rounded-lg opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity shadow-sm hover:bg-rose-50 z-10"
+                        className="absolute top-2 left-2 p-1.5 bg-white/90 backdrop-blur text-rose-500 rounded-lg opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity shadow-sm hover:bg-rose-50 z-10"
                         title="Hapus"
                       >
                         <Trash2 className="w-3 h-3" />
@@ -216,7 +216,7 @@ export default function ProdukSponsorPage() {
 
                   {/* Info */}
                   <div className="px-3 py-3">
-                    <p className="font-bold text-slate-200 text-sm leading-tight line-clamp-2">{prd.nama_produk}</p>
+                    <p className="font-bold text-slate-800 text-sm leading-tight line-clamp-2">{prd.nama_produk}</p>
                     <p className="text-[11px] text-blue-600 font-medium mt-0.5 truncate">{prd.asal_sponsor}</p>
                   </div>
                 </div>
@@ -230,13 +230,13 @@ export default function ProdukSponsorPage() {
       {/* Delete Confirmation Modal */}
       {deletingId && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => !isDeleting && setDeletingId(null)}>
-          <div className="bg-[#0F172A] rounded-2xl w-full max-w-sm shadow-xl overflow-hidden animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+          <div className="bg-white rounded-2xl w-full max-w-sm shadow-xl overflow-hidden animate-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
             <div className="p-6 text-center">
               <div className="w-16 h-16 bg-rose-100 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-4">
                 <Trash2 className="w-8 h-8" />
               </div>
-              <h3 className="text-xl font-bold text-slate-200 mb-2">Hapus Produk?</h3>
-              <p className="text-slate-400 text-sm mb-6">
+              <h3 className="text-xl font-bold text-slate-800 mb-2">Hapus Produk?</h3>
+              <p className="text-slate-500 text-sm mb-6">
                 Tindakan ini tidak dapat dibatalkan. Data produk akan dihapus secara permanen.
               </p>
               <div className="flex gap-3">
@@ -244,7 +244,7 @@ export default function ProdukSponsorPage() {
                   type="button"
                   onClick={() => setDeletingId(null)}
                   disabled={isDeleting}
-                  className="flex-1 px-4 py-2.5 rounded-xl border border-slate-700/50 text-slate-300 font-semibold text-sm hover:bg-slate-50 disabled:opacity-50"
+                  className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-slate-700 font-semibold text-sm hover:bg-slate-50 disabled:opacity-50"
                 >
                   Batal
                 </button>
@@ -272,38 +272,38 @@ export default function ProdukSponsorPage() {
       {/* Modal Tambah */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex flex-col justify-end sm:justify-center items-center p-0 sm:p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setIsModalOpen(false)}>
-          <div className="bg-[#0F172A] rounded-t-3xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl animate-in slide-in-from-bottom duration-300" onClick={(e) => e.stopPropagation()}>
-            <div className="sticky top-0 bg-[#0F172A] border-b border-white/5/5 px-6 py-4 flex items-center justify-between z-10">
-              <h2 className="text-lg font-bold text-slate-200">Tambah Produk Baru</h2>
-              <button onClick={() => setIsModalOpen(false)} className="p-2 text-slate-400 hover:text-slate-400 hover:bg-slate-800 rounded-full transition-colors">
+          <div className="bg-white rounded-t-3xl w-full max-w-lg max-h-[90vh] overflow-y-auto shadow-2xl animate-in slide-in-from-bottom duration-300" onClick={(e) => e.stopPropagation()}>
+            <div className="sticky top-0 bg-white border-b border-slate-100 px-6 py-4 flex items-center justify-between z-10">
+              <h2 className="text-lg font-bold text-slate-800">Tambah Produk Baru</h2>
+              <button onClick={() => setIsModalOpen(false)} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
             <form onSubmit={handleTambah} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-semibold text-slate-300 mb-1.5">Nama Produk <span className="text-rose-500">*</span></label>
-                <input required value={formData.nama_produk} onChange={(e) => setFormData({...formData, nama_produk: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-700/50 rounded-xl text-sm text-white focus:bg-[#0F172A] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" placeholder="Kopi Americano" />
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Nama Produk <span className="text-rose-500">*</span></label>
+                <input required value={formData.nama_produk} onChange={(e) => setFormData({...formData, nama_produk: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" placeholder="Kopi Americano" />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-slate-300 mb-1.5">Asal Sponsor <span className="text-rose-500">*</span></label>
-                <input required value={formData.asal_sponsor} onChange={(e) => setFormData({...formData, asal_sponsor: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-700/50 rounded-xl text-sm text-white focus:bg-[#0F172A] focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" placeholder="Nama Brand" />
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Asal Sponsor <span className="text-rose-500">*</span></label>
+                <input required value={formData.asal_sponsor} onChange={(e) => setFormData({...formData, asal_sponsor: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500" placeholder="Nama Brand" />
               </div>
               <div>
-                <label className="block text-sm font-semibold text-slate-300 mb-1.5">Foto Produk <span className="text-slate-400 font-normal">(Opsional)</span></label>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">Foto Produk <span className="text-slate-400 font-normal">(Opsional)</span></label>
                 {formData.fileData ? (
-                  <div className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-700/50 rounded-xl">
+                  <div className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-xl">
                     <img src={formData.fileData} alt="" className="w-12 h-12 rounded-lg object-cover border" />
-                    <span className="text-sm text-slate-300 flex-1 truncate">{formData.fileName}</span>
+                    <span className="text-sm text-slate-700 flex-1 truncate">{formData.fileName}</span>
                     <button type="button" onClick={() => setFormData({...formData, fileData:"", fileName:"", mimeType:""})} className="p-1 text-rose-500 hover:bg-rose-50 rounded-lg"><X className="w-4 h-4" /></button>
                   </div>
                 ) : (
-                  <input type="file" accept="image/*" onChange={handleFileChange} className="w-full px-4 py-2.5 bg-[#0F172A] border border-slate-700/50 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/50 focus:outline-none file:mr-4 file:py-1.5 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
+                  <input type="file" accept="image/*" onChange={handleFileChange} className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/50 focus:outline-none file:mr-4 file:py-1.5 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" />
                 )}
               </div>
-              <div className="pt-3 border-t border-white/5/5 flex justify-end gap-3">
-                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2.5 text-sm font-medium text-slate-400 hover:bg-slate-800 rounded-xl transition-colors">Batal</button>
+              <div className="pt-3 border-t border-slate-100 flex justify-end gap-3">
+                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-xl transition-colors">Batal</button>
                 <button type="submit" disabled={isSubmitting} className="px-5 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-xl flex items-center gap-2 min-w-[120px] justify-center">
-                  {isSubmitting ? <div className="w-4 h-4 border-2 border-white/5/30 border-t-white rounded-full animate-spin" /> : 'Simpan Produk'}
+                  {isSubmitting ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : 'Simpan Produk'}
                 </button>
               </div>
             </form>

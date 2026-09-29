@@ -250,9 +250,9 @@ export default function EsportDashboard() {
   // Helper for rendering team slot
   const renderTeamSlot = (team: Team | null, round: number, slotIndex: number, isTop: boolean) => {
     const isEliminated = team && eliminatedTeams.has(team.id_tim);
-    const bgClass = isTop ? 'bg-slate-50 border-b border-white/5/5' : 'bg-[#0F172A]';
-    const cursorClass = team && hasAccess ? 'cursor-pointer hover:bg-slate-800 transition-colors' : '';
-    const textClass = team ? (isEliminated ? 'text-slate-400 line-through' : 'text-slate-200') : 'text-slate-400';
+    const bgClass = isTop ? 'bg-slate-50 border-b border-slate-100' : 'bg-white';
+    const cursorClass = team && hasAccess ? 'cursor-pointer hover:bg-slate-100 transition-colors' : '';
+    const textClass = team ? (isEliminated ? 'text-slate-400 line-through' : 'text-slate-800') : 'text-slate-400';
     
     return (
       <div 
@@ -319,26 +319,26 @@ export default function EsportDashboard() {
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-5xl mx-auto">
       {/* Header Utama */}
       <div className="flex items-center gap-4">
-        <Link href="/event/esport" className="p-2 bg-[#0F172A] border border-slate-700/50 rounded-xl hover:bg-slate-50 transition-colors shadow-sm">
-          <ArrowLeft className="w-5 h-5 text-slate-400" />
+        <Link href="/event/esport" className="p-2 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors shadow-sm">
+          <ArrowLeft className="w-5 h-5 text-slate-600" />
         </Link>
         <div>
-          <h1 className="text-2xl font-bold text-slate-200 tracking-tight flex items-center gap-2">
+          <h1 className="text-2xl font-bold text-slate-800 tracking-tight flex items-center gap-2">
             {eventData.nama_event}
           </h1>
-          <p className="text-sm text-slate-400">Informasi Umum Event</p>
+          <p className="text-sm text-slate-500">Informasi Umum Event</p>
         </div>
       </div>
 
       {/* SECTION 1: Informasi Umum Event */}
-      <div className="bg-[#0F172A] rounded-2xl border border-slate-700/50 shadow-sm overflow-hidden relative">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden relative">
         <div className="h-24 bg-gradient-to-r from-rose-500 to-pink-700 opacity-90 relative overflow-hidden">
           <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20 mix-blend-overlay"></div>
         </div>
         
         <div className="p-6 sm:p-8 relative">
           <div className="flex justify-between items-start mb-6">
-            <div className="-mt-16 w-20 h-20 rounded-2xl bg-rose-50 border-4 border-white/5 shadow-lg flex items-center justify-center relative z-10">
+            <div className="-mt-16 w-20 h-20 rounded-2xl bg-rose-50 border-4 border-white shadow-lg flex items-center justify-center relative z-10">
               <Gamepad2 className="w-8 h-8 text-rose-600" />
             </div>
             
@@ -357,13 +357,13 @@ export default function EsportDashboard() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div>
                   <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5 mb-1"><CalendarDays className="w-3.5 h-3.5" /> Tanggal Pelaksanaan</label>
-                  <p className="text-base font-semibold text-slate-200">
+                  <p className="text-base font-semibold text-slate-800">
                     {eventData.tanggal ? new Date(eventData.tanggal).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }) : "Belum ditentukan"}
                   </p>
                 </div>
                 <div>
                   <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5 mb-1"><MapPin className="w-3.5 h-3.5" /> Tempat / Lokasi</label>
-                  <p className="text-base font-semibold text-slate-200">{eventData.tempat || "Belum ditentukan"}</p>
+                  <p className="text-base font-semibold text-slate-800">{eventData.tempat || "Belum ditentukan"}</p>
                 </div>
                 <div>
                   <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5 mb-1"><Activity className="w-3.5 h-3.5" /> Status Event</label>
@@ -380,8 +380,8 @@ export default function EsportDashboard() {
 
               <div>
                 <label className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5 mb-2"><Info className="w-3.5 h-3.5" /> Deskripsi Singkat</label>
-                <div className="bg-slate-50 p-4 rounded-xl border border-white/5/5">
-                  <p className="text-slate-400 leading-relaxed text-sm whitespace-pre-wrap">
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                  <p className="text-slate-600 leading-relaxed text-sm whitespace-pre-wrap">
                     {eventData.deskripsi || "Belum ada deskripsi untuk event ini."}
                   </p>
                 </div>
@@ -391,30 +391,30 @@ export default function EsportDashboard() {
             <form onSubmit={handleSaveEvent} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label className="block text-sm font-semibold text-slate-300 mb-2">Tanggal Pelaksanaan</label>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Tanggal Pelaksanaan</label>
                   <input 
                     type="date" 
                     value={formDataEvent.tanggal ? new Date(formDataEvent.tanggal).toISOString().split('T')[0] : ""}
                     onChange={(e) => setFormDataEvent({...formDataEvent, tanggal: e.target.value})}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-700/50 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-semibold text-slate-300 mb-2">Tempat / Lokasi</label>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Tempat / Lokasi</label>
                   <input 
                     type="text" 
                     value={formDataEvent.tempat}
                     onChange={(e) => setFormDataEvent({...formDataEvent, tempat: e.target.value})}
                     placeholder="Contoh: GOR UNP"
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-700/50 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500"
                   />
                 </div>
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-semibold text-slate-300 mb-2">Status Event</label>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Status Event</label>
                   <select 
                     value={formDataEvent.status}
                     onChange={(e) => setFormDataEvent({...formDataEvent, status: e.target.value})}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-700/50 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500"
                   >
                     <option value="Akan Datang">Akan Datang</option>
                     <option value="Sedang Berlangsung">Sedang Berlangsung</option>
@@ -423,13 +423,13 @@ export default function EsportDashboard() {
                   </select>
                 </div>
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-semibold text-slate-300 mb-2">Deskripsi Singkat</label>
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Deskripsi Singkat</label>
                   <textarea 
                     value={formDataEvent.deskripsi}
                     onChange={(e) => setFormDataEvent({...formDataEvent, deskripsi: e.target.value})}
                     rows={4}
                     placeholder="Tuliskan deskripsi atau catatan mengenai event ini..."
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-700/50 rounded-xl text-sm text-white focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 resize-none"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 resize-none"
                   />
                 </div>
               </div>
@@ -438,7 +438,7 @@ export default function EsportDashboard() {
                 <button 
                   type="button"
                   onClick={() => setIsEditingEvent(false)}
-                  className="px-5 py-2.5 text-sm font-semibold text-slate-400 hover:bg-slate-800 rounded-xl transition-colors"
+                  className="px-5 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition-colors"
                 >
                   Batal
                 </button>
@@ -456,15 +456,15 @@ export default function EsportDashboard() {
       </div>
 
       {/* SECTION 2: Data Tim (Tabel) */}
-      <div className="bg-[#0F172A] rounded-2xl border border-slate-700/50 shadow-sm overflow-hidden relative">
-        <div className="p-6 border-b border-white/5/5 flex justify-between items-center bg-[#1e293b]/50">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden relative">
+        <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center border border-purple-100">
               <Users className="w-5 h-5 text-purple-600" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-200">Daftar Tim Bertanding</h2>
-              <p className="text-xs text-slate-400">
+              <h2 className="text-lg font-bold text-slate-800">Daftar Tim Bertanding</h2>
+              <p className="text-xs text-slate-500">
                 {teams.length} Tim Terdaftar (Data sinkron dengan Pendaftar Official Web)
               </p>
             </div>
@@ -474,7 +474,7 @@ export default function EsportDashboard() {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-slate-50 border-b border-slate-700/50 text-slate-400 text-xs uppercase tracking-wider">
+              <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 text-xs uppercase tracking-wider">
                 <th className="px-6 py-4 font-semibold">{game === 'mlbb' ? 'NAMA TIM' : 'NAMA LENGKAP'}</th>
                 <th className="px-6 py-4 font-semibold">KAPTEN / PIC</th>
                 <th className="px-6 py-4 font-semibold">KONTAK WA</th>
@@ -491,25 +491,25 @@ export default function EsportDashboard() {
                     <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-50 mb-4">
                       <Gamepad2 className="w-8 h-8 text-slate-400" />
                     </div>
-                    <h3 className="text-slate-200 font-semibold mb-1">Belum ada pendaftar</h3>
-                    <p className="text-sm text-slate-400">Data dari pendaftar official web akan muncul di sini.</p>
+                    <h3 className="text-slate-800 font-semibold mb-1">Belum ada pendaftar</h3>
+                    <p className="text-sm text-slate-500">Data dari pendaftar official web akan muncul di sini.</p>
                   </td>
                 </tr>
               ) : (
                 teams.map((team, idx) => (
-                  <tr key={team.id_tim || idx} className="hover:bg-[#1e293b]/50 transition-colors">
+                  <tr key={team.id_tim || idx} className="hover:bg-slate-50/50 transition-colors">
                     <td className="px-6 py-4">
-                      <div className="font-bold text-slate-200">{team.nama_tim}</div>
+                      <div className="font-bold text-slate-800">{team.nama_tim}</div>
                       <div className="text-[10px] text-slate-400 font-mono mt-0.5">{team.id_tim}</div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-2 text-sm text-slate-400">
+                      <div className="flex items-center gap-2 text-sm text-slate-600">
                         <User className="w-3.5 h-3.5 text-slate-400" />
                         {team.kapten}
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-2 text-sm text-slate-400">
+                      <div className="flex items-center gap-2 text-sm text-slate-600">
                         <Phone className="w-3.5 h-3.5 text-slate-400" />
                         {team.kontak}
                       </div>
@@ -518,10 +518,10 @@ export default function EsportDashboard() {
                       <td className="px-6 py-4">
                         {team.slot_count === '2' ? (
                           <div className="flex flex-col gap-0.5">
-                            <span className="font-medium text-slate-200 text-sm">2 Slot</span>
-                            <span className="text-[10px] text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded-md inline-block w-fit">Tim 2: {team.in_game_slot2 || '-'}</span>
+                            <span className="font-medium text-slate-800 text-sm">2 Slot</span>
+                            <span className="text-[10px] text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded-md inline-block w-fit">Tim 2: {team.in_game_slot2 || '-'}</span>
                           </div>
-                        ) : <span className="font-medium text-slate-400 text-sm">1 Slot</span>}
+                        ) : <span className="font-medium text-slate-600 text-sm">1 Slot</span>}
                       </td>
                     )}
                     <td className="px-6 py-4 text-right">
@@ -542,15 +542,15 @@ export default function EsportDashboard() {
       </div>
 
       {/* SECTION 3: Turnamen Bracket Viewer (Visual Only) */}
-      <div className="bg-[#0F172A] rounded-2xl border border-slate-700/50 shadow-sm overflow-hidden relative">
-        <div className="p-6 border-b border-white/5/5 bg-[#1e293b]/50 flex justify-between items-center">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden relative">
+        <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center border border-amber-100">
               <Trophy className="w-5 h-5 text-amber-600" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-200">Bagan Pertandingan</h2>
-              <p className="text-xs text-slate-400">Preview Bracket Turnamen & Pengundian</p>
+              <h2 className="text-lg font-bold text-slate-800">Bagan Pertandingan</h2>
+              <p className="text-xs text-slate-500">Preview Bracket Turnamen & Pengundian</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -578,14 +578,14 @@ export default function EsportDashboard() {
             )}
             <button 
               onClick={toggleFullscreen}
-              className="p-2.5 text-slate-400 hover:bg-slate-200 bg-slate-800 rounded-xl transition-colors"
+              className="p-2.5 text-slate-600 hover:bg-slate-200 bg-slate-100 rounded-xl transition-colors"
               title="Layar Penuh"
             >
               <Maximize className="w-4 h-4" />
             </button>
           </div>
         </div>
-        <div ref={bracketRef} className={`w-full overflow-x-auto relative ${isFullscreen ? 'bg-slate-50 p-12 h-screen' : 'bg-[#1e293b]/50 p-8'}`}>
+        <div ref={bracketRef} className={`w-full overflow-x-auto relative ${isFullscreen ? 'bg-slate-50 p-12 h-screen' : 'bg-slate-50/50 p-8'}`}>
           <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.02)_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none"></div>
           
           {isFullscreen && (
@@ -614,7 +614,7 @@ export default function EsportDashboard() {
               )}
               <button 
                 onClick={toggleFullscreen}
-                className="p-2.5 bg-[#131B2F]/80 backdrop-blur text-slate-300 hover:bg-[#0F172A] rounded-xl shadow-sm border border-slate-700/50 transition-all"
+                className="p-2.5 bg-white/80 backdrop-blur text-slate-700 hover:bg-white rounded-xl shadow-sm border border-slate-200 transition-all"
                 title="Keluar Layar Penuh"
               >
                 <Minimize className="w-5 h-5" />
@@ -629,7 +629,7 @@ export default function EsportDashboard() {
             <div className="flex flex-col justify-around w-56 shrink-0 relative z-10">
               <div className="absolute -top-6 text-xs font-bold text-slate-400 uppercase tracking-widest text-center w-full">Round of 16</div>
               {Array(8).fill(0).map((_, i) => (
-                <div key={`r1-${i}`} className="w-full bg-[#0F172A] border border-slate-700/50 shadow-sm rounded-lg overflow-hidden flex flex-col text-xs relative">
+                <div key={`r1-${i}`} className="w-full bg-white border border-slate-200 shadow-sm rounded-lg overflow-hidden flex flex-col text-xs relative">
                   {renderTeamSlot(shuffledTeams[i * 2], 1, i * 2, true)}
                   {renderTeamSlot(shuffledTeams[i * 2 + 1], 1, i * 2 + 1, false)}
                 </div>
@@ -640,7 +640,7 @@ export default function EsportDashboard() {
             <div className="flex flex-col justify-around w-56 shrink-0 relative z-10">
               <div className="absolute -top-6 text-xs font-bold text-slate-400 uppercase tracking-widest text-center w-full">Quarterfinals</div>
               {Array(4).fill(0).map((_, i) => (
-                <div key={`qf-${i}`} className="w-full bg-[#0F172A] border border-slate-700/50 shadow-sm rounded-lg overflow-hidden flex flex-col text-xs relative">
+                <div key={`qf-${i}`} className="w-full bg-white border border-slate-200 shadow-sm rounded-lg overflow-hidden flex flex-col text-xs relative">
                   {renderTeamSlot(quarterFinals[i * 2], 2, i * 2, true)}
                   {renderTeamSlot(quarterFinals[i * 2 + 1], 2, i * 2 + 1, false)}
                 </div>
@@ -651,7 +651,7 @@ export default function EsportDashboard() {
             <div className="flex flex-col justify-around w-56 shrink-0 relative z-10">
               <div className="absolute -top-6 text-xs font-bold text-slate-400 uppercase tracking-widest text-center w-full">Semifinals</div>
               {Array(2).fill(0).map((_, i) => (
-                <div key={`sf-${i}`} className="w-full bg-[#0F172A] border border-slate-700/50 shadow-sm rounded-lg overflow-hidden flex flex-col text-xs relative">
+                <div key={`sf-${i}`} className="w-full bg-white border border-slate-200 shadow-sm rounded-lg overflow-hidden flex flex-col text-xs relative">
                   {renderTeamSlot(semiFinals[i * 2], 3, i * 2, true)}
                   {renderTeamSlot(semiFinals[i * 2 + 1], 3, i * 2 + 1, false)}
                 </div>
@@ -661,7 +661,7 @@ export default function EsportDashboard() {
             {/* Final */}
             <div className="flex flex-col justify-around w-56 shrink-0 relative z-10">
               <div className="absolute -top-6 text-xs font-bold text-slate-400 uppercase tracking-widest text-center w-full">Grand Final</div>
-              <div className="w-full bg-[#0F172A] border border-amber-300 shadow-md rounded-lg overflow-hidden flex flex-col text-xs relative">
+              <div className="w-full bg-white border border-amber-300 shadow-md rounded-lg overflow-hidden flex flex-col text-xs relative">
                 <div className="bg-amber-100 text-amber-700 text-[10px] font-bold text-center py-1 uppercase tracking-wider">Final Match</div>
                 {renderTeamSlot(finals[0], 4, 0, true)}
                 {renderTeamSlot(finals[1], 4, 1, false)}
@@ -674,12 +674,12 @@ export default function EsportDashboard() {
                 className={`p-4 border rounded-xl flex flex-col items-center justify-center gap-2 shadow-sm text-center transition-all ${
                   champion 
                     ? 'bg-gradient-to-r from-amber-100 to-amber-50 border-amber-300 shadow-amber-200/50' 
-                    : 'bg-slate-50 border-slate-700/50'
+                    : 'bg-slate-50 border-slate-200'
                 }`}
               >
                 <Trophy className={`w-8 h-8 mb-1 ${champion ? 'text-amber-500' : 'text-slate-300'}`} />
                 <span className={`text-[10px] font-bold uppercase tracking-widest ${champion ? 'text-amber-700' : 'text-slate-400'}`}>Champion</span>
-                <span className={`font-bold text-lg ${champion ? 'text-slate-200' : 'text-slate-400'}`}>
+                <span className={`font-bold text-lg ${champion ? 'text-slate-800' : 'text-slate-400'}`}>
                   {champion ? champion.nama_tim : 'TBD'}
                 </span>
               </div>

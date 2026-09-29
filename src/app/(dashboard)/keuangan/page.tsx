@@ -270,8 +270,8 @@ export default function KeuanganPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-200 tracking-tight">Data Keuangan</h1>
-          <p className="text-sm text-slate-400 mt-1">
+          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Data Keuangan</h1>
+          <p className="text-sm text-slate-500 mt-1">
             Buku kas digital SI FEST 2026.
           </p>
         </div>
@@ -280,7 +280,7 @@ export default function KeuanganPage() {
                 href="https://docs.google.com/spreadsheets/d/1KTpEz85NNMhap8VSzSszSptX_DLdUcPj/edit?usp=sharing&ouid=101548209300972862261&rtpof=true&sd=true"
                 target="_blank"
                 rel="noreferrer"
-                className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-200 text-slate-300 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors border border-slate-700/50 shadow-sm"
+                className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors border border-slate-200 shadow-sm"
               >
                 <FileText className="w-4 h-4" />
                 RAB
@@ -289,7 +289,7 @@ export default function KeuanganPage() {
             <>
               <button 
                 onClick={() => window.print()}
-                className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-200 text-slate-300 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors border border-slate-700/50 shadow-sm"
+                className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors border border-slate-200 shadow-sm"
               >
                 <Printer className="w-4 h-4" />
                 Cetak
@@ -325,31 +325,31 @@ export default function KeuanganPage() {
           <h3 className="text-3xl font-bold tracking-tight">{formatRupiah(totalBalance)}</h3>
         </div>
         
-        <div className="bg-[#0F172A] p-6 rounded-2xl border border-white/5/5 shadow-sm flex items-center gap-4">
+        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
           <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
             <TrendingUp className="w-6 h-6 text-emerald-600" />
           </div>
           <div>
-            <p className="text-sm text-slate-400 font-medium mb-0.5">Total Pemasukan</p>
-            <h3 className="text-xl font-bold text-slate-200">{formatRupiah(totalIncome)}</h3>
+            <p className="text-sm text-slate-500 font-medium mb-0.5">Total Pemasukan</p>
+            <h3 className="text-xl font-bold text-slate-800">{formatRupiah(totalIncome)}</h3>
           </div>
         </div>
 
-        <div className="bg-[#0F172A] p-6 rounded-2xl border border-white/5/5 shadow-sm flex items-center gap-4">
+        <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex items-center gap-4">
           <div className="w-12 h-12 rounded-full bg-rose-100 flex items-center justify-center flex-shrink-0">
             <TrendingDown className="w-6 h-6 text-rose-600" />
           </div>
           <div>
-            <p className="text-sm text-slate-400 font-medium mb-0.5">Total Pengeluaran</p>
-            <h3 className="text-xl font-bold text-slate-200">{formatRupiah(totalExpense)}</h3>
+            <p className="text-sm text-slate-500 font-medium mb-0.5">Total Pengeluaran</p>
+            <h3 className="text-xl font-bold text-slate-800">{formatRupiah(totalExpense)}</h3>
           </div>
         </div>
       </div>
 
       {/* Table Section */}
-      <div className="bg-[#0F172A] rounded-2xl border border-white/5/5 shadow-sm overflow-hidden flex flex-col print:shadow-none print:border-none">
+      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden flex flex-col print:shadow-none print:border-none">
         {/* Filters */}
-        <div className="p-4 border-b border-white/5/5 flex flex-col sm:flex-row gap-3 bg-[#1e293b]/50 print:hidden">
+        <div className="p-4 border-b border-slate-100 flex flex-col sm:flex-row gap-3 bg-slate-50/50 print:hidden">
           <div className="relative flex-1">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input 
@@ -357,13 +357,13 @@ export default function KeuanganPage() {
               placeholder="Cari keterangan / kategori..." 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 bg-[#0F172A] border border-slate-700/50 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/50 focus:outline-none"
+              className="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/50 focus:outline-none"
             />
           </div>
           <select 
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value)}
-            className="bg-[#0F172A] border border-slate-700/50 rounded-xl px-3 py-2 text-sm text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+            className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
           >
             <option value="">Semua Jenis</option>
             <option value="INCOME">Pemasukan (Masuk)</option>
@@ -373,14 +373,14 @@ export default function KeuanganPage() {
             type="month"
             value={monthFilter}
             onChange={(e) => setMonthFilter(e.target.value)}
-            className="bg-[#0F172A] border border-slate-700/50 rounded-xl px-3 py-2 text-sm text-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+            className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
           />
         </div>
 
         {/* Table */}
         <div className="overflow-x-auto print:overflow-visible">
-          <table className="w-full text-left text-sm text-slate-400 print:text-[11px]">
-            <thead className="bg-slate-50 text-slate-400 border-b border-white/5/5">
+          <table className="w-full text-left text-sm text-slate-600 print:text-[11px]">
+            <thead className="bg-slate-50 text-slate-500 border-b border-slate-100">
               <tr>
                 <th className="px-6 py-4 font-semibold">No / ID</th>
                 <th className="px-6 py-4 font-semibold">Tanggal</th>
@@ -402,26 +402,26 @@ export default function KeuanganPage() {
                 </tr>
               ) : filteredTransactions.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-6 py-12 text-center text-slate-400">
+                  <td colSpan={9} className="px-6 py-12 text-center text-slate-500">
                     Tidak ada transaksi yang ditemukan.
                   </td>
                 </tr>
               ) : (
                 filteredTransactions.map((trx, index) => (
-                  <tr key={`${trx.trx_id}-${index}`} className="hover:bg-[#1e293b]/50 transition-colors">
+                  <tr key={`${trx.trx_id}-${index}`} className="hover:bg-slate-50/50 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <p className="font-bold text-slate-300">{trx.no || "-"}</p>
+                      <p className="font-bold text-slate-700">{trx.no || "-"}</p>
                       <p className="text-xs text-slate-400 mt-0.5">{trx.trx_id}</p>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <p className="font-medium text-slate-300">{new Date(trx.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
+                      <p className="font-medium text-slate-700">{new Date(trx.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
                     </td>
                     <td className="px-6 py-4">
                       <span className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium mb-1.5
                         ${trx.jenis === 'INCOME' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
                         {trx.kategori}
                       </span>
-                      <p className="text-slate-200 line-clamp-2 print:line-clamp-none">{trx.keterangan || "-"}</p>
+                      <p className="text-slate-800 line-clamp-2 print:line-clamp-none">{trx.keterangan || "-"}</p>
                     </td>
                     <td className="px-6 py-4 text-center">
                       {trx.bukti_url && trx.bukti_url !== "-" ? (
@@ -431,7 +431,7 @@ export default function KeuanganPage() {
                             <img 
                               src={getDriveThumbnail(trx.bukti_url)!} 
                               alt="Bukti" 
-                              className="hidden print:block h-16 w-auto object-cover rounded border border-slate-700/50 mb-1" 
+                              className="hidden print:block h-16 w-auto object-cover rounded border border-slate-200 mb-1" 
                             />
                           )}
                           
@@ -447,7 +447,7 @@ export default function KeuanganPage() {
                         <span className="text-xs text-slate-300">-</span>
                       )}
                     </td>
-                    <td className="px-6 py-4 text-slate-300">
+                    <td className="px-6 py-4 text-slate-700">
                       {trx.vol !== "-" && trx.vol ? `${trx.vol} ${trx.satuan}` : "-"}
                     </td>
                     <td className="px-6 py-4 text-right whitespace-nowrap">
@@ -456,12 +456,12 @@ export default function KeuanganPage() {
                       </p>
                     </td>
                     <td className="px-6 py-4 text-right whitespace-nowrap">
-                      <p className="font-bold text-slate-200">
+                      <p className="font-bold text-slate-800">
                         {formatRupiah(trx.saldo_akhir || 0)}
                       </p>
                     </td>
                     <td className="px-6 py-4">
-                      <p className="text-slate-200 font-medium text-sm">{trx.penanggung_jawab || trx.recorded_by}</p>
+                      <p className="text-slate-800 font-medium text-sm">{trx.penanggung_jawab || trx.recorded_by}</p>
                       <span className={`inline-flex mt-1 items-center px-2 py-0.5 rounded text-[10px] font-medium border
                         ${trx.status === 'Lunas' ? 'border-emerald-200 bg-emerald-50 text-emerald-600' : 'border-amber-200 bg-amber-50 text-amber-600'}`}>
                         {trx.status || "Lunas"}
@@ -500,9 +500,9 @@ export default function KeuanganPage() {
       {/* Modal Add Transaction */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-[#0F172A] rounded-2xl shadow-xl w-full max-w-md max-h-[95vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between p-5 border-b border-white/5/5">
-              <h3 className="text-xl font-bold text-slate-200">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md max-h-[95vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between p-5 border-b border-slate-100">
+              <h3 className="text-xl font-bold text-slate-800">
                 {editTrxId ? 'Edit Transaksi' : 'Catat Transaksi Baru'}
               </h3>
               <button 
@@ -511,7 +511,7 @@ export default function KeuanganPage() {
                   setEditTrxId(null);
                   setNewTrx({ ...newTrx, keterangan: "", nominal: "", vol: "", satuan: "", penanggung_jawab: "", status: "Lunas", fileData: "", fileName: "", mimeType: "", bukti_url: "" } as any);
                 }}
-                className="p-2 text-slate-400 hover:text-slate-400 hover:bg-slate-800 rounded-lg transition-colors"
+                className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -520,25 +520,25 @@ export default function KeuanganPage() {
             <form onSubmit={handleAddTransaction} className="p-6 space-y-4 overflow-y-auto flex-1">
               
               {/* Jenis Transaksi Toggle */}
-              <div className="flex p-1 bg-slate-800 rounded-xl">
+              <div className="flex p-1 bg-slate-100 rounded-xl">
                 <button
                   type="button"
                   onClick={() => setNewTrx({...newTrx, jenis: 'INCOME', kategori: KATEGORI_INCOME[0]})}
-                  className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${newTrx.jenis === 'INCOME' ? 'bg-[#0F172A] text-emerald-600 shadow-sm' : 'text-slate-400 hover:text-slate-300'}`}
+                  className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${newTrx.jenis === 'INCOME' ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                 >
                   Pemasukan
                 </button>
                 <button
                   type="button"
                   onClick={() => setNewTrx({...newTrx, jenis: 'EXPENSE', kategori: KATEGORI_EXPENSE[0]})}
-                  className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${newTrx.jenis === 'EXPENSE' ? 'bg-[#0F172A] text-rose-600 shadow-sm' : 'text-slate-400 hover:text-slate-300'}`}
+                  className={`flex-1 py-2 text-sm font-medium rounded-lg transition-all ${newTrx.jenis === 'EXPENSE' ? 'bg-white text-rose-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
                 >
                   Pengeluaran
                 </button>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-slate-300">Tanggal Transaksi</label>
+                <label className="text-sm font-medium text-slate-700">Tanggal Transaksi</label>
                 <div className="relative">
                   <Calendar className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                   <input 
@@ -546,20 +546,20 @@ export default function KeuanganPage() {
                     required
                     value={newTrx.tanggal}
                     onChange={(e) => setNewTrx({...newTrx, tanggal: e.target.value})}
-                    className="w-full pl-10 pr-4 py-2.5 bg-[#0F172A] border border-slate-700/50 rounded-xl text-sm text-slate-200 focus:ring-2 focus:ring-blue-500/50 focus:outline-none"
+                    className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 focus:ring-2 focus:ring-blue-500/50 focus:outline-none"
                   />
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-slate-300">Kategori</label>
+                <label className="text-sm font-medium text-slate-700">Kategori</label>
                 <div className="relative">
                   <Tag className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                   <select 
                     required
                     value={newTrx.kategori}
                     onChange={(e) => setNewTrx({...newTrx, kategori: e.target.value})}
-                    className="w-full pl-10 pr-4 py-2.5 bg-[#0F172A] border border-slate-700/50 rounded-xl text-sm text-slate-200 focus:ring-2 focus:ring-blue-500/50 focus:outline-none"
+                    className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 focus:ring-2 focus:ring-blue-500/50 focus:outline-none"
                   >
                     {currentCategories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
                   </select>
@@ -567,7 +567,7 @@ export default function KeuanganPage() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-slate-300">Nominal Total (Rp)</label>
+                <label className="text-sm font-medium text-slate-700">Nominal Total (Rp)</label>
                 <input 
                   type="text"
                   required
@@ -577,64 +577,64 @@ export default function KeuanganPage() {
                     const val = e.target.value.replace(/\D/g, '');
                     setNewTrx({...newTrx, nominal: val ? parseInt(val).toLocaleString('id-ID') : ''})
                   }}
-                  className="w-full px-4 py-2.5 bg-[#0F172A] border border-slate-700/50 rounded-xl text-sm text-slate-200 font-semibold focus:ring-2 focus:ring-blue-500/50 focus:outline-none placeholder:text-slate-400"
+                  className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 font-semibold focus:ring-2 focus:ring-blue-500/50 focus:outline-none placeholder:text-slate-400"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-slate-300">Volume (Opsional)</label>
+                  <label className="text-sm font-medium text-slate-700">Volume (Opsional)</label>
                   <input 
                     type="number"
                     placeholder="Contoh: 10"
                     value={newTrx.vol}
                     onChange={(e) => setNewTrx({...newTrx, vol: e.target.value})}
-                    className="w-full px-4 py-2.5 bg-[#0F172A] border border-slate-700/50 rounded-xl text-sm text-slate-200 focus:ring-2 focus:ring-blue-500/50 focus:outline-none placeholder:text-slate-400"
+                    className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 focus:ring-2 focus:ring-blue-500/50 focus:outline-none placeholder:text-slate-400"
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-slate-300">Satuan</label>
+                  <label className="text-sm font-medium text-slate-700">Satuan</label>
                   <input 
                     type="text"
                     placeholder="Contoh: Pcs, Rim, dll"
                     value={newTrx.satuan}
                     onChange={(e) => setNewTrx({...newTrx, satuan: e.target.value})}
-                    className="w-full px-4 py-2.5 bg-[#0F172A] border border-slate-700/50 rounded-xl text-sm text-slate-200 focus:ring-2 focus:ring-blue-500/50 focus:outline-none placeholder:text-slate-400"
+                    className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 focus:ring-2 focus:ring-blue-500/50 focus:outline-none placeholder:text-slate-400"
                   />
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-slate-300">Detail / Keterangan</label>
+                <label className="text-sm font-medium text-slate-700">Detail / Keterangan</label>
                 <textarea 
                   required
                   rows={2}
                   placeholder="Misal: Pembayaran DP gedung..."
                   value={newTrx.keterangan}
                   onChange={(e) => setNewTrx({...newTrx, keterangan: e.target.value})}
-                  className="w-full px-4 py-2.5 bg-[#0F172A] border border-slate-700/50 rounded-xl text-sm text-slate-200 focus:ring-2 focus:ring-blue-500/50 focus:outline-none resize-none placeholder:text-slate-400"
+                  className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 focus:ring-2 focus:ring-blue-500/50 focus:outline-none resize-none placeholder:text-slate-400"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-slate-300">Penanggung Jawab</label>
+                  <label className="text-sm font-medium text-slate-700">Penanggung Jawab</label>
                   <input 
                     type="text"
                     required
                     placeholder="Nama PJ"
                     value={newTrx.penanggung_jawab}
                     onChange={(e) => setNewTrx({...newTrx, penanggung_jawab: e.target.value})}
-                    className="w-full px-4 py-2.5 bg-[#0F172A] border border-slate-700/50 rounded-xl text-sm text-slate-200 focus:ring-2 focus:ring-blue-500/50 focus:outline-none placeholder:text-slate-400"
+                    className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 focus:ring-2 focus:ring-blue-500/50 focus:outline-none placeholder:text-slate-400"
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-slate-300">Status Pembayaran</label>
+                  <label className="text-sm font-medium text-slate-700">Status Pembayaran</label>
                   <select 
                     required
                     value={newTrx.status}
                     onChange={(e) => setNewTrx({...newTrx, status: e.target.value})}
-                    className="w-full px-4 py-2.5 bg-[#0F172A] border border-slate-700/50 rounded-xl text-sm text-slate-200 focus:ring-2 focus:ring-blue-500/50 focus:outline-none"
+                    className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 focus:ring-2 focus:ring-blue-500/50 focus:outline-none"
                   >
                     <option value="Lunas">Lunas</option>
                     <option value="Belum Lunas">Belum Lunas</option>
@@ -644,7 +644,7 @@ export default function KeuanganPage() {
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-slate-300">Foto Bukti / Nota <span className="text-slate-400 font-normal">(Opsional)</span></label>
+                <label className="text-sm font-medium text-slate-700">Foto Bukti / Nota <span className="text-slate-400 font-normal">(Opsional)</span></label>
                 {(newTrx as any).bukti_url && (
                   <div className="mb-2 text-xs text-blue-600 flex items-center">
                     <span>File saat ini: </span>
@@ -653,16 +653,16 @@ export default function KeuanganPage() {
                 )}
                 
                 {newTrx.fileData ? (
-                  <div className="relative rounded-xl border border-slate-700/50 bg-slate-50 p-2">
+                  <div className="relative rounded-xl border border-slate-200 bg-slate-50 p-2">
                     <img src={newTrx.fileData} alt="Preview" className="w-full h-32 object-cover rounded-lg mb-2" />
                     <button 
                       type="button"
                       onClick={() => setNewTrx({...newTrx, fileData: "", fileName: "", mimeType: ""})}
-                      className="absolute top-4 right-4 bg-[#131B2F]/80 backdrop-blur text-slate-300 p-1.5 rounded-full hover:bg-rose-100 hover:text-rose-600 transition-colors shadow-sm"
+                      className="absolute top-4 right-4 bg-white/80 backdrop-blur text-slate-700 p-1.5 rounded-full hover:bg-rose-100 hover:text-rose-600 transition-colors shadow-sm"
                     >
                       <X className="w-4 h-4" />
                     </button>
-                    <p className="text-xs text-slate-400 truncate text-center px-2 pb-1">{newTrx.fileName}</p>
+                    <p className="text-xs text-slate-500 truncate text-center px-2 pb-1">{newTrx.fileName}</p>
                   </div>
                 ) : (
                   <div className="relative">
@@ -670,7 +670,7 @@ export default function KeuanganPage() {
                       type="file" 
                       accept="image/*"
                       onChange={handleFileChange}
-                      className="w-full px-4 py-2.5 bg-[#0F172A] border border-slate-700/50 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/50 focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                      className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/50 focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
                     />
                     <p className="text-xs text-slate-400 mt-1.5">
                       Bisa mengambil langsung dari kamera perangkat (HP) atau memilih dari Galeri.
