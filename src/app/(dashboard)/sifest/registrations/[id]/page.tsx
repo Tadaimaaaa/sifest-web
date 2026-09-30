@@ -305,9 +305,13 @@ export default async function RegistrationDetailPage({
                         <th className="px-4 py-2">No. Punggung</th>
                       </>
                     )}
-                    <th className="px-4 py-2">{(events?.slug === 'turnamen-futsal-mahasiswa' || events?.slug === 'turnamen-futsal-umum') ? 'KTM' : 'KTS'}</th>
-                    <th className="px-4 py-2">Foto</th>
-                    <th className="px-4 py-2">{(events?.slug === 'turnamen-futsal-mahasiswa' || events?.slug === 'turnamen-futsal-umum') ? 'KRS' : 'Akta'}</th>
+                    <th className="px-4 py-2">{events?.slug?.includes('esport') ? 'Identitas' : (events?.slug === 'turnamen-futsal-mahasiswa' || events?.slug === 'turnamen-futsal-umum') ? 'KTM' : 'KTS'}</th>
+                    {events?.slug?.includes('futsal') && (
+                      <>
+                        <th className="px-4 py-2">Foto</th>
+                        <th className="px-4 py-2">{(events?.slug === 'turnamen-futsal-mahasiswa' || events?.slug === 'turnamen-futsal-umum') ? 'KRS' : 'Akta'}</th>
+                      </>
+                    )}
                   </tr>
                 </thead>
                 <tbody>
@@ -315,7 +319,7 @@ export default async function RegistrationDetailPage({
                   {participants?.metadata?.players?.map((p: any, idx: number) => (
                     <tr key={idx} className="bg-white border-b hover:bg-slate-50">
                       <td className="px-4 py-2">{idx + 1} {idx === 0 && "(Kapten)"}</td>
-                      <td className="px-4 py-2 font-medium text-slate-900">{p.name}</td>
+                      <td className="px-4 py-2 font-medium text-slate-900">{idx === 0 && !p.name ? participants?.full_name : (p.name || "-")}</td>
                       {participants?.metadata?.teamData && !events?.slug?.includes('futsal') ? (
                         <>
                           <td className="px-4 py-2">{p.nickname || "-"}</td>
@@ -338,20 +342,24 @@ export default async function RegistrationDetailPage({
                           <span className="text-slate-400">-</span>
                         )}
                       </td>
-                      <td className="px-4 py-2">
-                        {p.photoUrl ? (
-                          <a href={p.photoUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-green-50 text-green-700 hover:bg-green-100 font-medium text-[11px] border border-green-200 transition-colors">Lihat</a>
-                        ) : (
-                          <span className="text-slate-400">-</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-2">
-                        {p.birthCertificateUrl ? (
-                          <a href={p.birthCertificateUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-green-50 text-green-700 hover:bg-green-100 font-medium text-[11px] border border-green-200 transition-colors">Lihat</a>
-                        ) : (
-                          <span className="text-slate-400">-</span>
-                        )}
-                      </td>
+                      {events?.slug?.includes('futsal') && (
+                        <>
+                          <td className="px-4 py-2">
+                            {p.photoUrl ? (
+                              <a href={p.photoUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-green-50 text-green-700 hover:bg-green-100 font-medium text-[11px] border border-green-200 transition-colors">Lihat</a>
+                            ) : (
+                              <span className="text-slate-400">-</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-2">
+                            {p.birthCertificateUrl ? (
+                              <a href={p.birthCertificateUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-green-50 text-green-700 hover:bg-green-100 font-medium text-[11px] border border-green-200 transition-colors">Lihat</a>
+                            ) : (
+                              <span className="text-slate-400">-</span>
+                            )}
+                          </td>
+                        </>
+                      )}
                     </tr>
                   ))}
                 </tbody>
