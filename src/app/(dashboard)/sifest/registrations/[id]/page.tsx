@@ -245,13 +245,30 @@ export default async function RegistrationDetailPage({
           )}
 
           {participants?.metadata?.schoolData && events?.slug?.startsWith('turnamen-futsal') && (
-            <SectionCard title="Data Sekolah (Futsal)" icon={School}>
-              <InfoRow label="Nama Sekolah" value={participants.metadata.schoolData.schoolName} />
-              <InfoRow label="Jenjang" value={participants.metadata.schoolData.level} />
-              <InfoRow label="Alamat" value={participants.metadata.schoolData.address} />
-              <InfoRow label="Kota/Kab" value={participants.metadata.schoolData.city} />
-              <InfoRow label="Penanggung Jawab / Pembina" value={participants.metadata.schoolData.coachName} />
-              <InfoRow label="WA Penanggung Jawab" value={participants.metadata.schoolData.coachWhatsapp} />
+            <SectionCard title={events?.slug === 'turnamen-futsal-mahasiswa' ? "Data Tim (Futsal Mahasiswa)" : "Data Sekolah (Futsal)"} icon={School}>
+              <InfoRow label={events?.slug === 'turnamen-futsal-mahasiswa' ? "Nama Tim" : "Nama Sekolah"} value={participants.metadata.schoolData.schoolName} />
+              {events?.slug !== 'turnamen-futsal-mahasiswa' && (
+                <>
+                  <InfoRow label="Jenjang" value={participants.metadata.schoolData.level} />
+                  <InfoRow label="Alamat" value={participants.metadata.schoolData.address} />
+                </>
+              )}
+              <InfoRow label={events?.slug === 'turnamen-futsal-mahasiswa' ? "Asal Kota/Kab" : "Kota/Kab"} value={participants.metadata.schoolData.city} />
+              {events?.slug === 'turnamen-futsal-slta' && (
+                <>
+                  <InfoRow label="Penanggung Jawab / Pembina" value={participants.metadata.schoolData.coachName} />
+                  <InfoRow label="WA Penanggung Jawab" value={participants.metadata.schoolData.coachWhatsapp} />
+                </>
+              )}
+              {participants.metadata.teamData && (
+                <>
+                  <InfoRow label="Pelatih" value={participants.metadata.teamData.coachName || "-"} />
+                  <InfoRow label="WA Pelatih" value={participants.metadata.teamData.coachWhatsapp || "-"} />
+                  {participants.metadata.teamData.assistantCoachName && (
+                    <InfoRow label="Asisten Pelatih" value={participants.metadata.teamData.assistantCoachName} />
+                  )}
+                </>
+              )}
             </SectionCard>
           )}
         </div>
@@ -273,14 +290,17 @@ export default async function RegistrationDetailPage({
                       </>
                     ) : (
                       <>
-                        <th className="px-4 py-2">NISN</th>
+                        <th className="px-4 py-2">{events?.slug === 'turnamen-futsal-mahasiswa' ? 'NIM / NoBP' : 'NISN'}</th>
+                        {events?.slug === 'turnamen-futsal-mahasiswa' && (
+                          <th className="px-4 py-2">Asal PT</th>
+                        )}
                         <th className="px-4 py-2">Posisi</th>
                         <th className="px-4 py-2">No. Punggung</th>
                       </>
                     )}
-                    <th className="px-4 py-2">KTS</th>
+                    <th className="px-4 py-2">{events?.slug === 'turnamen-futsal-mahasiswa' ? 'KTM' : 'KTS'}</th>
                     <th className="px-4 py-2">Foto</th>
-                    <th className="px-4 py-2">Akta</th>
+                    <th className="px-4 py-2">{events?.slug === 'turnamen-futsal-mahasiswa' ? 'KRS' : 'Akta'}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -297,27 +317,30 @@ export default async function RegistrationDetailPage({
                       ) : (
                         <>
                           <td className="px-4 py-2">{p.nisn}</td>
+                          {events?.slug === 'turnamen-futsal-mahasiswa' && (
+                            <td className="px-4 py-2">{p.university || "-"}</td>
+                          )}
                           <td className="px-4 py-2">{p.posisi || "-"}</td>
                           <td className="px-4 py-2">{p.jerseyNumber || "-"}</td>
                         </>
                       )}
                       <td className="px-4 py-2">
                         {p.studentCardUrl ? (
-                          <a href={p.studentCardUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-green-50 text-green-700 hover:bg-green-100 font-medium text-[11px] border border-green-200 transition-colors">Data Valid (Lihat)</a>
+                          <a href={p.studentCardUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-green-50 text-green-700 hover:bg-green-100 font-medium text-[11px] border border-green-200 transition-colors">Lihat</a>
                         ) : (
                           <span className="text-slate-400">-</span>
                         )}
                       </td>
                       <td className="px-4 py-2">
                         {p.photoUrl ? (
-                          <a href={p.photoUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-green-50 text-green-700 hover:bg-green-100 font-medium text-[11px] border border-green-200 transition-colors">Data Valid (Lihat)</a>
+                          <a href={p.photoUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-green-50 text-green-700 hover:bg-green-100 font-medium text-[11px] border border-green-200 transition-colors">Lihat</a>
                         ) : (
                           <span className="text-slate-400">-</span>
                         )}
                       </td>
                       <td className="px-4 py-2">
                         {p.birthCertificateUrl ? (
-                          <a href={p.birthCertificateUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-green-50 text-green-700 hover:bg-green-100 font-medium text-[11px] border border-green-200 transition-colors">Data Valid (Lihat)</a>
+                          <a href={p.birthCertificateUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-green-50 text-green-700 hover:bg-green-100 font-medium text-[11px] border border-green-200 transition-colors">Lihat</a>
                         ) : (
                           <span className="text-slate-400">-</span>
                         )}
