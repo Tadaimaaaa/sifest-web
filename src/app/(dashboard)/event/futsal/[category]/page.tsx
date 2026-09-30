@@ -284,6 +284,30 @@ export default function FutsalDashboard() {
     }
   };
 
+  const handleInsertToBracket = (team: Team) => {
+    if (!hasAccess || isSpinning) return;
+    
+    const isExist = shuffledTeams.some(t => t?.id_tim === team.id_tim);
+    if (isExist) {
+      toast.warning("Tim ini sudah ada di dalam bagan!");
+      return;
+    }
+    
+    const emptySlotIndex = shuffledTeams.findIndex(t => t === null);
+    if (emptySlotIndex === -1) {
+      toast.error("Bagan sudah penuh! (Maksimal 16 Tim)");
+      return;
+    }
+    
+    setShuffledTeams(prev => {
+      const newBracket = [...prev];
+      newBracket[emptySlotIndex] = team;
+      return newBracket;
+    });
+    
+    toast.success(`Berhasil memasukkan ${team.nama_tim} ke bagan!`);
+  };
+
   const handleTeamClick = async (team: Team | null, round: number, slotIndex: number) => {
     if (!team || !hasAccess || isSpinning) return;
 
@@ -885,6 +909,7 @@ export default function FutsalDashboard() {
                 <th className="px-6 py-4 font-semibold">Kapten</th>
                 <th className="px-6 py-4 font-semibold">Kontak WA</th>
                 <th className="px-6 py-4 font-semibold">Status Bayar</th>
+                <th className="px-6 py-4 font-semibold text-right">Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -931,6 +956,17 @@ export default function FutsalDashboard() {
                       }`}>
                         {team.status_bayar}
                       </span>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      {hasAccess && (
+                        <button
+                          onClick={() => handleInsertToBracket(team)}
+                          disabled={isSpinning || shuffledTeams.some(t => t?.id_tim === team.id_tim)}
+                          className="px-3 py-1.5 bg-brand-accent/10 hover:bg-brand-accent/20 text-brand-accent text-xs font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {shuffledTeams.some(t => t?.id_tim === team.id_tim) ? 'Di Bagan' : 'Masukkan ke Bagan'}
+                        </button>
+                      )}
                     </td>
                   </tr>
                 ))
