@@ -56,7 +56,7 @@ export async function getFutsalData(gameSlug: string) {
         id_tim: reg.registration_code,
         nama_tim: participant.institution_name || participant.full_name || "Unknown Squad",
         kapten: participant.full_name,
-        kontak: participant.phone_number,
+        kontak: participant.whatsapp || participant.phone_number || "-",
         status_bayar: paymentStatus
       };
     }) || [];

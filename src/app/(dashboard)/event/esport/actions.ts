@@ -43,7 +43,7 @@ export async function getEsportRegistrations(gameSlug: string) {
           ? participant.full_name
           : (participant.institution_name || participant.full_name || "Unknown Squad"),
         kapten: participant.full_name,
-        kontak: participant.phone_number,
+        kontak: participant.whatsapp || participant.phone_number || "-",
         status_bayar: paymentStatus,
         slot_count: participant.metadata?.slotCount || '1',
         in_game_slot2: participant.metadata?.teamName2 || null,
