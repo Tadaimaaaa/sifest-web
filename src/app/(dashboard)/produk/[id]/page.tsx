@@ -222,17 +222,26 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
     // Titik awal perhitungan: 25 Agustus 2026, 00:00:00
     const startDate = new Date(2026, 7, 25, 0, 0, 0);
     
+    let saynanaP3Count = 0;
+    let saynanaP4Count = 0;
+    const isSaynana = produk?.nama_produk.toLowerCase().includes("saynana");
+
     produk.penjualan_bundle.forEach(sale => {
       let d = new Date(sale.tanggal);
+      const salePcs = sale.items.reduce((sum, i) => sum + (i.jumlah || 0), 0);
       
-      // HACK: Perbaiki salah input Saynana dengan memindah tanggal penjualan lama
-      // Data lama P3 (26 pcs) -> dipindah ke P4
-      // Data lama P4 sebelum 30 Sept (135 pcs) -> dipindah ke P3
-      if (produk?.nama_produk.toLowerCase().includes("saynana")) {
-        if (d >= new Date('2026-09-14') && d <= new Date('2026-09-23T23:59:59')) {
-          d = new Date('2026-09-24T12:00:00'); // Pindah ke Periode 4
-        } else if (d >= new Date('2026-09-24') && d <= new Date('2026-09-29T23:59:59')) {
-          d = new Date('2026-09-14T12:00:00'); // Pindah ke Periode 3
+      // HACK: Tukar tepat 26 pcs pertama dari P3 ke P4, dan 135 pcs pertama dari P4 ke P3
+      if (isSaynana) {
+        const nativeDiff = d.getTime() - startDate.getTime();
+        const nativeDays = Math.max(0, Math.floor(nativeDiff / (1000 * 60 * 60 * 24)));
+        const nativePeriod = Math.floor(nativeDays / 10);
+        
+        if (nativePeriod === 2 && saynanaP3Count < 26) {
+          d = new Date(startDate.getTime() + (35 * 24 * 60 * 60 * 1000)); // Pindah ke P4 (29 Sept)
+          saynanaP3Count += salePcs;
+        } else if (nativePeriod === 3 && saynanaP4Count < 135) {
+          d = new Date(startDate.getTime() + (25 * 24 * 60 * 60 * 1000)); // Pindah ke P3 (19 Sept)
+          saynanaP4Count += salePcs;
         }
       }
 
