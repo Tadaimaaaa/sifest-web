@@ -221,27 +221,21 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
     
     // Titik awal perhitungan: 25 Agustus 2026, 00:00:00
     const startDate = new Date(2026, 7, 25, 0, 0, 0);
-    
-    let saynanaP3Count = 0;
-    let saynanaP4Count = 0;
     const isSaynana = produk?.nama_produk.toLowerCase().includes("saynana");
 
     produk.penjualan_bundle.forEach(sale => {
       let d = new Date(sale.tanggal);
-      const salePcs = sale.items.reduce((sum, i) => sum + (i.jumlah || 0), 0);
       
-      // HACK: Tukar tepat 26 pcs pertama dari P3 ke P4, dan 135 pcs pertama dari P4 ke P3
-      if (isSaynana) {
+      // HACK: Swap Data Lama P3 & P4 (yang salah input) KHUSUS sebelum 30 Sept
+      if (isSaynana && d < new Date("2026-09-30T00:00:00Z")) {
         const nativeDiff = d.getTime() - startDate.getTime();
         const nativeDays = Math.max(0, Math.floor(nativeDiff / (1000 * 60 * 60 * 24)));
         const nativePeriod = Math.floor(nativeDays / 10);
         
-        if (nativePeriod === 2 && saynanaP3Count < 26) {
+        if (nativePeriod === 2) {
           d = new Date(startDate.getTime() + (35 * 24 * 60 * 60 * 1000)); // Pindah ke P4 (29 Sept)
-          saynanaP3Count += salePcs;
-        } else if (nativePeriod === 3 && saynanaP4Count < 135) {
+        } else if (nativePeriod === 3) {
           d = new Date(startDate.getTime() + (25 * 24 * 60 * 60 * 1000)); // Pindah ke P3 (19 Sept)
-          saynanaP4Count += salePcs;
         }
       }
 
@@ -570,7 +564,7 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
         total_modal: total_modal,
         terjual_oleh: terjualOleh,
         metode_pembayaran: metodePembayaran,
-        tanggal: tanggalPenjualan,
+        tanggal: tanggalPenjualan === new Date().toISOString().split('T')[0] ? new Date().toISOString() : tanggalPenjualan + "T12:00:00.000Z",
         items
       };
       
@@ -633,7 +627,7 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
         total_modal: byuQty * 16000, // by.U modal 16rb
         terjual_oleh: terjualOleh,
         metode_pembayaran: metodePembayaran,
-        tanggal: tanggalPenjualan,
+        tanggal: tanggalPenjualan === new Date().toISOString().split('T')[0] ? new Date().toISOString() : tanggalPenjualan + "T12:00:00.000Z",
         items: [{ id_varian: 'byu', nama_varian: 'Kartu by.U', jumlah: byuQty }]
       };
       
