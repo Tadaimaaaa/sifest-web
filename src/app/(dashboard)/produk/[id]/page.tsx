@@ -152,10 +152,30 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
 
   const isByU = produk?.id_produk === "PRD-002" || produk?.nama_produk?.toLowerCase().includes("by.u");
 
+  const getSisaStokVarian = (id_varian: string) => {
+    const v = produk?.varian?.find(x => x.id_varian === id_varian);
+    if (!v) return 0;
+    
+    let totalTerjualAra = 0;
+    produk?.penjualan_bundle?.forEach(sale => {
+      if (!sale.terjual_oleh || sale.terjual_oleh === "Ara") {
+        const item = sale.items?.find(i => i.id_varian === id_varian);
+        if (item) totalTerjualAra += (item.jumlah || 0);
+      }
+    });
+
+    let totalDistribusi = 0;
+    produk?.distribusi?.forEach(d => {
+      const item = d.items?.find(i => i.id_varian === id_varian);
+      if (item) totalDistribusi += (item.jumlah || 0);
+    });
+
+    return Math.max(0, (v.jumlah || 0) - totalTerjualAra - totalDistribusi);
+  };
+
   const getMaxStockForVarian = (id_varian: string) => {
     if (terjualOleh === "Ara") {
-      const v = produk?.varian?.find(x => x.id_varian === id_varian);
-      return v?.jumlah || 0;
+      return getSisaStokVarian(id_varian);
     } else {
       let totalReceived = 0;
       produk?.distribusi?.filter(d => d.nama_penerima === terjualOleh).forEach(d => {
@@ -778,7 +798,7 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
                 📦 {isByU ? 'Stok Kartu' : 'Varian & Stok'}
                 {produk.varian && produk.varian.length > 0 && (
                   <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-[10px] font-black rounded-md">
-                    Total: {produk.varian.reduce((sum, v) => sum + (v.jumlah || 0), 0)} pcs
+                    Total: {produk.varian.reduce((sum, v) => sum + getSisaStokVarian(v.id_varian), 0)} pcs
                   </span>
                 )}
               </h3>
@@ -825,7 +845,7 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
                           <Minus className="w-3 h-3" />
                         </button>
                       )}
-                      <span className="w-12 text-center text-base font-black text-slate-700">{varItem.jumlah}</span>
+                      <span className="w-12 text-center text-base font-black text-slate-700">{getSisaStokVarian(varItem.id_varian)}</span>
                       {hasAccess && (
                         <button
                           onClick={() => handleUpdateVarianStock(varItem.id_varian, varItem.jumlah + 1)}
