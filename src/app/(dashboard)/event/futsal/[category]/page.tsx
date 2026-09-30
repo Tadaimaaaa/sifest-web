@@ -403,10 +403,18 @@ export default function FutsalDashboard() {
     if (!t1 || !t2) return;
     
     let roundName = "";
-    if (round === 1) roundName = category === 'sma' ? "Semi Final" : "Round of 16";
-    else if (round === 2) roundName = category === 'sma' ? "Grand Final" : "Perempat Final";
-    else if (round === 3) roundName = "Semi Final";
-    else if (round === 4) roundName = "Grand Final";
+    if (category === 'sma') {
+      // SMA: Round 2 = Perempat Final (4 matches), Round 3 = Semi Final (2 matches), Round 4 = Grand Final (1 match)
+      if (round === 2) roundName = "Perempat Final";
+      else if (round === 3) roundName = "Semi Final";
+      else if (round === 4) roundName = "Grand Final";
+    } else {
+      // Umum: Round 1 = R16, Round 2 = QF, Round 3 = SF, Round 4 = Final
+      if (round === 1) roundName = "Round of 16";
+      else if (round === 2) roundName = "Perempat Final";
+      else if (round === 3) roundName = "Semi Final";
+      else if (round === 4) roundName = "Grand Final";
+    }
     
     const hasScore = existingMatch && existingMatch.score1 !== null && existingMatch.score2 !== null;
     let scoreText = "";
