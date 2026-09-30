@@ -245,15 +245,15 @@ export default async function RegistrationDetailPage({
           )}
 
           {participants?.metadata?.schoolData && events?.slug?.startsWith('turnamen-futsal') && (
-            <SectionCard title={events?.slug === 'turnamen-futsal-mahasiswa' ? "Data Tim (Futsal Mahasiswa)" : "Data Sekolah (Futsal)"} icon={School}>
-              <InfoRow label={events?.slug === 'turnamen-futsal-mahasiswa' ? "Nama Tim" : "Nama Sekolah"} value={participants.metadata.schoolData.schoolName} />
-              {events?.slug !== 'turnamen-futsal-mahasiswa' && (
+            <SectionCard title={(events?.slug === 'turnamen-futsal-mahasiswa' || events?.slug === 'turnamen-futsal-umum') ? "Data Tim (Futsal Mahasiswa)" : "Data Sekolah (Futsal)"} icon={School}>
+              <InfoRow label={(events?.slug === 'turnamen-futsal-mahasiswa' || events?.slug === 'turnamen-futsal-umum') ? "Nama Tim" : "Nama Sekolah"} value={participants.metadata.schoolData.schoolName} />
+              {(events?.slug !== 'turnamen-futsal-mahasiswa' && events?.slug !== 'turnamen-futsal-umum') && (
                 <>
                   <InfoRow label="Jenjang" value={participants.metadata.schoolData.level} />
                   <InfoRow label="Alamat" value={participants.metadata.schoolData.address} />
                 </>
               )}
-              <InfoRow label={events?.slug === 'turnamen-futsal-mahasiswa' ? "Asal Kota/Kab" : "Kota/Kab"} value={participants.metadata.schoolData.city} />
+              <InfoRow label={(events?.slug === 'turnamen-futsal-mahasiswa' || events?.slug === 'turnamen-futsal-umum') ? "Asal Kota/Kab" : "Kota/Kab"} value={participants.metadata.schoolData.city} />
               {events?.slug === 'turnamen-futsal-slta' && (
                 <>
                   <InfoRow label="Penanggung Jawab / Pembina" value={participants.metadata.schoolData.coachName} />
@@ -290,17 +290,17 @@ export default async function RegistrationDetailPage({
                       </>
                     ) : (
                       <>
-                        <th className="px-4 py-2">{events?.slug === 'turnamen-futsal-mahasiswa' ? 'NIM / NoBP' : 'NISN'}</th>
-                        {events?.slug === 'turnamen-futsal-mahasiswa' && (
+                        <th className="px-4 py-2">{(events?.slug === 'turnamen-futsal-mahasiswa' || events?.slug === 'turnamen-futsal-umum') ? 'NIM / NoBP' : 'NISN'}</th>
+                        {(events?.slug === 'turnamen-futsal-mahasiswa' || events?.slug === 'turnamen-futsal-umum') && (
                           <th className="px-4 py-2">Asal PT</th>
                         )}
                         <th className="px-4 py-2">Posisi</th>
                         <th className="px-4 py-2">No. Punggung</th>
                       </>
                     )}
-                    <th className="px-4 py-2">{events?.slug === 'turnamen-futsal-mahasiswa' ? 'KTM' : 'KTS'}</th>
+                    <th className="px-4 py-2">{(events?.slug === 'turnamen-futsal-mahasiswa' || events?.slug === 'turnamen-futsal-umum') ? 'KTM' : 'KTS'}</th>
                     <th className="px-4 py-2">Foto</th>
-                    <th className="px-4 py-2">{events?.slug === 'turnamen-futsal-mahasiswa' ? 'KRS' : 'Akta'}</th>
+                    <th className="px-4 py-2">{(events?.slug === 'turnamen-futsal-mahasiswa' || events?.slug === 'turnamen-futsal-umum') ? 'KRS' : 'Akta'}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -317,7 +317,7 @@ export default async function RegistrationDetailPage({
                       ) : (
                         <>
                           <td className="px-4 py-2">{p.nisn}</td>
-                          {events?.slug === 'turnamen-futsal-mahasiswa' && (
+                          {(events?.slug === 'turnamen-futsal-mahasiswa' || events?.slug === 'turnamen-futsal-umum') && (
                             <td className="px-4 py-2">{p.university || "-"}</td>
                           )}
                           <td className="px-4 py-2">{p.posisi || "-"}</td>
