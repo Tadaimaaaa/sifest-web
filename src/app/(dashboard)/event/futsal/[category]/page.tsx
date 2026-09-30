@@ -8,7 +8,7 @@ import Cookies from "js-cookie";
 import { toast } from "sonner";
 import FullPageLoader from "@/components/FullPageLoader";
 import { getFutsalData, saveBracket } from "../actions";
-import { Loader2, Shuffle, Maximize, Minimize } from "lucide-react";
+import { Loader2, Shuffle, Maximize, Minimize, Share2 } from "lucide-react";
 import { useParams } from "next/navigation";
 import Swal from "sweetalert2";
 
@@ -384,6 +384,46 @@ export default function FutsalDashboard() {
     }
   };
 
+  const handleShareGroupMatchToWA = (e: React.MouseEvent, match: GroupMatch) => {
+    e.stopPropagation();
+    const t1 = shuffledTeams[match.team1Index];
+    const t2 = shuffledTeams[match.team2Index];
+    if (!t1 || !t2) return;
+    
+    const groupName = ['Grup A', 'Grup B', 'Grup C', 'Grup D'][match.groupId];
+    const hasScore = match.score1 !== null && match.score2 !== null;
+    
+    const text = `🏆 *HASIL PERTANDINGAN SIFEST 2026* 🏆\n⚽ *Kategori:* ${category.toUpperCase() === 'SMA' ? 'Futsal SLTA' : 'Futsal UMUM'}\n📊 *Fase Grup:* ${groupName}\n\n*${t1.nama_tim}*   ${hasScore ? match.score1 : ''}\n${hasScore ? '➖' : 'VS'}\n*${t2.nama_tim}*   ${hasScore ? match.score2 : ''}\n\n🔥 Terus dukung tim jagoanmu di SIFEST 2026! 🔥`;
+    
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+  };
+
+  const handleShareKnockoutMatchToWA = (e: React.MouseEvent, round: number, matchIndex: number, t1: Team | null, t2: Team | null, existingMatch: KnockoutMatch | undefined) => {
+    e.stopPropagation();
+    if (!t1 || !t2) return;
+    
+    let roundName = "";
+    if (round === 1) roundName = category === 'sma' ? "Semi Final" : "Round of 16";
+    else if (round === 2) roundName = category === 'sma' ? "Grand Final" : "Perempat Final";
+    else if (round === 3) roundName = "Semi Final";
+    else if (round === 4) roundName = "Grand Final";
+    
+    const hasScore = existingMatch && existingMatch.score1 !== null && existingMatch.score2 !== null;
+    let scoreText = "";
+    if (hasScore) {
+      scoreText = `*${t1.nama_tim}*   ${existingMatch.score1}\n➖\n*${t2.nama_tim}*   ${existingMatch.score2}`;
+      if (existingMatch.pen1 !== null && existingMatch.pen2 !== null) {
+         scoreText += `\n\n*(Adu Penalti: ${existingMatch.pen1} - ${existingMatch.pen2})*`;
+      }
+    } else {
+      scoreText = `*${t1.nama_tim}*\nVS\n*${t2.nama_tim}*`;
+    }
+
+    const text = `🏆 *HASIL PERTANDINGAN SIFEST 2026* 🏆\n⚽ *Kategori:* ${category.toUpperCase() === 'SMA' ? 'Futsal SLTA' : 'Futsal UMUM'}\n🔥 *Babak:* ${roundName}\n\n${scoreText}\n\nAyo dukung tim jagoanmu di SIFEST 2026! 🚀`;
+    
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+  };
+
   // Helper to calculate standings for a group
   const calculateGroupStandings = (groupId: number) => {
     const groupTeams = [
@@ -666,10 +706,19 @@ export default function FutsalDashboard() {
 
     return (
       <div 
-        className={`w-full bg-white border ${isFinal ? 'border-amber-300 shadow-md' : 'border-slate-200 shadow-sm'} rounded-lg overflow-hidden flex flex-col text-xs relative ${hasAccess && !isSpinning ? 'cursor-pointer hover:border-blue-400 hover:shadow-md transition-all' : ''}`}
+        className={`w-full bg-white border ${isFinal ? 'border-amber-300 shadow-md' : 'border-slate-200 shadow-sm'} rounded-lg overflow-hidden flex flex-col text-xs relative group ${hasAccess && !isSpinning ? 'cursor-pointer hover:border-blue-400 hover:shadow-md transition-all' : ''}`}
         onClick={() => handleKnockoutMatchClick(round, matchIndex)}
         title={hasAccess && !isSpinning ? "Klik untuk input skor pertandingan" : ""}
       >
+        {hasScore && (
+          <div 
+            onClick={(e) => handleShareKnockoutMatchToWA(e, round, matchIndex, t1, t2, match)}
+            className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 hover:scale-110 bg-green-500 text-white rounded-full p-1.5 hover:bg-green-600 transition-all cursor-pointer z-20 shadow-md"
+            title="Bagikan ke WhatsApp"
+          >
+            <Share2 size={12} />
+          </div>
+        )}
         {isFinal && (
           <div className="bg-amber-100 text-amber-700 text-[10px] font-bold text-center py-1 uppercase tracking-wider">Final Match</div>
         )}
@@ -1141,8 +1190,19 @@ export default function FutsalDashboard() {
                              <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider text-center">{groupName}</div>
                              <div className="flex justify-between items-center gap-3">
                                <div className="flex-1 text-right text-sm font-bold text-slate-700 truncate" title={t1 ? t1.nama_tim : 'TBD'}>{t1 ? t1.nama_tim : 'TBD'}</div>
-                               <div className={`px-3 py-1.5 rounded-lg text-sm font-black min-w-[60px] text-center shrink-0 ${hasScore ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-400'}`}>
-                                 {hasScore ? `${match.score1} - ${match.score2}` : 'VS'}
+                               <div className="relative group/share flex justify-center">
+                                 <div className={`px-3 py-1.5 rounded-lg text-sm font-black min-w-[60px] text-center shrink-0 transition-opacity group-hover/share:opacity-0 ${hasScore ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-400'}`}>
+                                   {hasScore ? `${match.score1} - ${match.score2}` : 'VS'}
+                                 </div>
+                                 {hasScore && (
+                                   <div 
+                                     onClick={(e) => handleShareGroupMatchToWA(e, match)}
+                                     className="absolute inset-0 bg-green-500 rounded-lg flex items-center justify-center text-white opacity-0 group-hover/share:opacity-100 cursor-pointer shadow-md transition-opacity"
+                                     title="Bagikan Hasil ke WhatsApp"
+                                   >
+                                     <Share2 size={16} />
+                                   </div>
+                                 )}
                                </div>
                                <div className="flex-1 text-left text-sm font-bold text-slate-700 truncate" title={t2 ? t2.nama_tim : 'TBD'}>{t2 ? t2.nama_tim : 'TBD'}</div>
                              </div>
