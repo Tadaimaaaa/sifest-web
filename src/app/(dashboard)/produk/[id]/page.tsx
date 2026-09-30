@@ -223,8 +223,19 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
     const startDate = new Date(2026, 7, 25, 0, 0, 0);
     
     produk.penjualan_bundle.forEach(sale => {
-      const d = new Date(sale.tanggal);
+      let d = new Date(sale.tanggal);
       
+      // HACK: Perbaiki salah input Saynana dengan memindah tanggal penjualan lama
+      // Data lama P3 (26 pcs) -> dipindah ke P4
+      // Data lama P4 sebelum 30 Sept (135 pcs) -> dipindah ke P3
+      if (produk?.nama_produk.toLowerCase().includes("saynana")) {
+        if (d >= new Date('2026-09-14') && d <= new Date('2026-09-23T23:59:59')) {
+          d = new Date('2026-09-24T12:00:00'); // Pindah ke Periode 4
+        } else if (d >= new Date('2026-09-24') && d <= new Date('2026-09-29T23:59:59')) {
+          d = new Date('2026-09-14T12:00:00'); // Pindah ke Periode 3
+        }
+      }
+
       const diffTime = d.getTime() - startDate.getTime();
       let diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
       if (diffDays < 0) diffDays = 0; // Jika ada transaksi sebelum 25 Agt, masukkan ke periode 1
