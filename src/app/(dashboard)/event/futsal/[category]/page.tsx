@@ -219,8 +219,8 @@ export default function FutsalDashboard() {
         });
       }, 50); // 50ms fast shuffle
     } else {
-      // WHEN SPIN STOPS
-      if (category === 'sma' && shuffledTeams.some(t => t !== null)) {
+      // WHEN SPIN STOPS: Only generate new matches if none exist yet (first spin)
+      if (category === 'sma' && shuffledTeams.some(t => t !== null) && groupMatches.length === 0) {
         const matches: GroupMatch[] = [];
         for (let g = 0; g < 4; g++) {
           const offset = g * 4;
@@ -240,7 +240,7 @@ export default function FutsalDashboard() {
       }
     }
     return () => clearInterval(interval);
-  }, [isSpinning, category, shuffledTeams]);
+  }, [isSpinning, category]);
 
   useEffect(() => {
     const handleFullscreenChange = () => {
