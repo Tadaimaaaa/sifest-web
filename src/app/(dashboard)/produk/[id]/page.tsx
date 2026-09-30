@@ -258,20 +258,6 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
       .sort((a, b) => b[1].dateForSort - a[1].dateForSort)
       .map(([label, data]) => ({ label, ...data, periodIndex: data.dateForSort + 1 }));
 
-    // HACK: Swap nominals for Periode 3 and 4 specifically for Saynana (karena salah input)
-    if (produk?.nama_produk.toLowerCase().includes("saynana")) {
-      const p3Idx = results.findIndex(r => r.periodIndex === 3);
-      const p4Idx = results.findIndex(r => r.periodIndex === 4);
-      
-      if (p3Idx !== -1 && p4Idx !== -1) {
-        const tempP3 = { ...results[p3Idx] };
-        const tempP4 = { ...results[p4Idx] };
-        
-        results[p3Idx] = { ...tempP4, label: tempP3.label, periodIndex: tempP3.periodIndex, dateForSort: tempP3.dateForSort };
-        results[p4Idx] = { ...tempP3, label: tempP4.label, periodIndex: tempP4.periodIndex, dateForSort: tempP4.dateForSort };
-      }
-    }
-    
     return results;
   };
 
