@@ -95,24 +95,8 @@ export default function EsportDashboard() {
       if (dataTeams.success && dataTeams.data) {
         setTeams(dataTeams.data);
         
-        // Initialize bracket with padded teams up to 16
-        const expandedBracket: Team[] = [];
-        dataTeams.data.forEach((team: Team) => {
-          expandedBracket.push(team);
-          if (gameSlug === 'turnamen-esport-efootball' && team.slot_count === '2') {
-            expandedBracket.push({
-              ...team,
-              id_tim: team.id_tim + '-2',
-              nama_tim: team.in_game_slot2 || `${team.nama_tim} (Tim 2)`,
-            });
-          }
-        });
-
-        const initialBracket: (Team | null)[] = [...expandedBracket];
-        while (initialBracket.length < 16) {
-          initialBracket.push(null);
-        }
-        setShuffledTeams(initialBracket.slice(0, 16));
+        // Initialize empty bracket
+        setShuffledTeams(Array(16).fill(null));
       }
     } catch (error) {
       console.error("Gagal mengambil data esport:", error);
@@ -580,7 +564,7 @@ export default function EsportDashboard() {
                         <button
                           onClick={() => handleInsertToBracket(team)}
                           disabled={isSpinning || shuffledTeams.some(t => t?.id_tim === team.id_tim)}
-                          className="px-3 py-1.5 bg-brand-accent/10 hover:bg-brand-accent/20 text-brand-accent text-xs font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 text-xs font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           {shuffledTeams.some(t => t?.id_tim === team.id_tim) ? 'Di Bagan' : 'Masukkan ke Bagan'}
                         </button>

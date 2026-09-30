@@ -132,12 +132,8 @@ export default function FutsalDashboard() {
           setGroupMatches(b.groupMatches || []);
           setKnockoutMatches(b.knockoutMatches || []);
         } else {
-          // Initialize bracket with padded teams up to 16
-          const initialBracket: (Team | null)[] = [...dataResult.teams];
-          while (initialBracket.length < 16) {
-            initialBracket.push(null);
-          }
-          setShuffledTeams(initialBracket.slice(0, 16));
+          // Initialize empty bracket
+          setShuffledTeams(Array(16).fill(null));
         }
         setErrorMessage(null);
       } else {
@@ -962,7 +958,7 @@ export default function FutsalDashboard() {
                         <button
                           onClick={() => handleInsertToBracket(team)}
                           disabled={isSpinning || shuffledTeams.some(t => t?.id_tim === team.id_tim)}
-                          className="px-3 py-1.5 bg-brand-accent/10 hover:bg-brand-accent/20 text-brand-accent text-xs font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 text-xs font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           {shuffledTeams.some(t => t?.id_tim === team.id_tim) ? 'Di Bagan' : 'Masukkan ke Bagan'}
                         </button>
