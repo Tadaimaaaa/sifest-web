@@ -256,7 +256,13 @@ export default function FutsalDashboard() {
 
   const toggleSpin = () => {
     if (!isSpinning) {
-      // Start spin: reset bracket progression
+      // Start spin: reset bracket progression and sync with current teams
+      const initialBracket: (Team | null)[] = [...teams];
+      while (initialBracket.length < 16) {
+        initialBracket.push(null);
+      }
+      setShuffledTeams(initialBracket.slice(0, 16));
+      
       setQuarterFinals(Array(8).fill(null));
       setSemiFinals(Array(4).fill(null));
       setFinals(Array(2).fill(null));

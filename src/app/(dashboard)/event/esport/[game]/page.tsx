@@ -178,7 +178,24 @@ export default function EsportDashboard() {
 
   const toggleSpin = () => {
     if (!isSpinning) {
-      // Start spin: reset bracket progression
+      // Start spin: reset bracket progression and sync with current teams
+      const expandedBracket: Team[] = [];
+      teams.forEach((team: Team) => {
+        expandedBracket.push(team);
+        if (game === 'efootball' && team.slot_count === '2') {
+          expandedBracket.push({
+            ...team,
+            id_tim: team.id_tim + '-2',
+            nama_tim: team.in_game_slot2 || `${team.nama_tim} (Tim 2)`,
+          });
+        }
+      });
+      const initialBracket: (Team | null)[] = [...expandedBracket];
+      while (initialBracket.length < 16) {
+        initialBracket.push(null);
+      }
+      setShuffledTeams(initialBracket.slice(0, 16));
+
       setQuarterFinals(Array(8).fill(null));
       setSemiFinals(Array(4).fill(null));
       setFinals(Array(2).fill(null));
