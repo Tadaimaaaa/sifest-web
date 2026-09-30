@@ -845,7 +845,29 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
                           <Minus className="w-3 h-3" />
                         </button>
                       )}
-                      <span className="w-12 text-center text-base font-black text-slate-700">{getSisaStokVarian(varItem.id_varian)}</span>
+                      <input
+                        key={varItem.id_varian + '-' + getSisaStokVarian(varItem.id_varian)}
+                        type="number"
+                        min={0}
+                        defaultValue={getSisaStokVarian(varItem.id_varian)}
+                        onBlur={(e) => {
+                          const newSisa = parseInt(e.target.value);
+                          if (!isNaN(newSisa)) {
+                            const currentSisa = getSisaStokVarian(varItem.id_varian);
+                            const diff = newSisa - currentSisa;
+                            if (diff !== 0) {
+                              handleUpdateVarianStock(varItem.id_varian, Math.max(0, varItem.jumlah + diff));
+                            }
+                          }
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.currentTarget.blur();
+                          }
+                        }}
+                        className="w-16 text-center text-base font-black text-slate-700 bg-white border border-slate-200 hover:border-blue-400 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 py-1 transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        disabled={!hasAccess}
+                      />
                       {hasAccess && (
                         <button
                           onClick={() => handleUpdateVarianStock(varItem.id_varian, varItem.jumlah + 1)}
