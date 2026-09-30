@@ -147,6 +147,28 @@ export default async function RegistrationDetailPage({
                 <InfoRow label="Email" value={participants?.email} />
                 <InfoRow label="No. HP / WhatsApp" value={participants?.whatsapp} />
                 <InfoRow label={events?.slug?.startsWith('open-bazaar') ? "Nama Usaha/Brand" : "Asal Institusi"} value={participants?.institution} />
+                
+                {/* UPI YPTK fields */}
+                {participants?.metadata?.institutionType === 'UPI YPTK Padang' && (
+                  <div className="pt-2 mt-2 border-t border-slate-100">
+                    <InfoRow label="Jurusan" value={participants.metadata.jurusan} />
+                    <InfoRow label="NoBP" value={participants.metadata.nobp} />
+                    <InfoRow label="Kelas" value={participants.metadata.kelas} />
+                  </div>
+                )}
+
+                {/* MTQ fields */}
+                {events?.slug === 'lomba-keagamaan' && participants?.metadata && (
+                  <div className="pt-2 mt-2 border-t border-slate-100">
+                    <InfoRow label="NISN" value={participants.metadata.nisn} />
+                    <InfoRow label="Jenis Kelamin" value={participants.metadata.gender} />
+                    <InfoRow label="Alamat" value={participants.metadata.address} />
+                    <InfoRow label="Nama Pembimbing" value={participants.metadata.guruPendamping || "-"} />
+                    <InfoRow label="WA Pembimbing" value={participants.metadata.nowaGuruPendamping || "-"} />
+                  </div>
+                )}
+
+                {/* Bazaar fields */}
                 {events?.slug?.startsWith('open-bazaar') && participants?.metadata && (
                   <div className="pt-2 mt-2 border-t border-slate-100">
                     <InfoRow label="Alamat" value={participants.metadata.address} />
@@ -155,22 +177,22 @@ export default async function RegistrationDetailPage({
                     <InfoRow label="Produk" value={participants.metadata.products} />
                   </div>
                 )}
-                {events?.slug === 'lomba-keagamaan' && participants?.metadata && (
-                  <div className="pt-2 mt-2 border-t border-slate-100">
-                    <InfoRow label="Nama Pembimbing" value={participants.metadata.guruPendamping || "-"} />
-                    <InfoRow label="WA Pembimbing" value={participants.metadata.nowaGuruPendamping || "-"} />
-                  </div>
-                )}
+
+                {/* Lampiran file */}
                 {participants?.metadata?.fotoKtpUrl && (
-                  <InfoRow label="Foto KTP" value={<a href={participants.metadata.fotoKtpUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-green-50 text-green-700 hover:bg-green-100 font-medium text-xs border border-green-200 transition-colors"><FileText className="w-3.5 h-3.5" /> Data Valid (Lihat)</a>} />
+                  <InfoRow label="Foto KTP" value={<a href={participants.metadata.fotoKtpUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-green-50 text-green-700 hover:bg-green-100 font-medium text-xs border border-green-200 transition-colors"><FileText className="w-3.5 h-3.5" /> Lihat</a>} />
                 )}
                 {participants?.metadata?.fotoKtmUrl && (
-                  <InfoRow label="Foto KTM" value={<a href={participants.metadata.fotoKtmUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-green-50 text-green-700 hover:bg-green-100 font-medium text-xs border border-green-200 transition-colors"><FileText className="w-3.5 h-3.5" /> Data Valid (Lihat)</a>} />
+                  <InfoRow label="KTM (Kartu Tanda Mahasiswa)" value={<a href={participants.metadata.fotoKtmUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-green-50 text-green-700 hover:bg-green-100 font-medium text-xs border border-green-200 transition-colors"><FileText className="w-3.5 h-3.5" /> Lihat</a>} />
+                )}
+                {participants?.metadata?.krsUrl && (
+                  <InfoRow label="KRS (Kartu Rencana Studi)" value={<a href={participants.metadata.krsUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-green-50 text-green-700 hover:bg-green-100 font-medium text-xs border border-green-200 transition-colors"><FileText className="w-3.5 h-3.5" /> Lihat</a>} />
                 )}
                 {participants?.metadata?.studentCardUrl && (
-                  <InfoRow label="Surat Keterangan/Kartu Pelajar" value={<a href={participants.metadata.studentCardUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-green-50 text-green-700 hover:bg-green-100 font-medium text-xs border border-green-200 transition-colors"><FileText className="w-3.5 h-3.5" /> Data Valid (Lihat)</a>} />
+                  <InfoRow label="Surat Keterangan/Kartu Pelajar" value={<a href={participants.metadata.studentCardUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-green-50 text-green-700 hover:bg-green-100 font-medium text-xs border border-green-200 transition-colors"><FileText className="w-3.5 h-3.5" /> Lihat</a>} />
                 )}
               </SectionCard>
+
             )}
           </div>
 
