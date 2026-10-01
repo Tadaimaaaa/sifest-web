@@ -15,8 +15,8 @@ function canEditPaymentStatus(roleId: string): boolean {
 }
 
 function canEditRegistrationStatus(roleId: string, eventSlug: string | undefined): boolean {
-  // Super Admin (001), Kestari (005), Kapel/Acara (003)
-  if (['ROLE-001', 'SUPER_ADMIN', 'ROLE-005', 'ROLE-003'].includes(roleId)) return true;
+  // Super Admin (001), Kestari (005), Kapel (003), Acara Inti (015)
+  if (['ROLE-001', 'SUPER_ADMIN', 'ROLE-005', 'ROLE-003', 'ROLE-015'].includes(roleId)) return true;
   if (!eventSlug) return false;
   
   if (eventSlug.includes('futsal') && roleId === 'ROLE-012') return true;

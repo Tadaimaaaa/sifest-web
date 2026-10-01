@@ -136,6 +136,8 @@ export default function UsersPage() {
         return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-100 text-rose-700">E-Sport</span>;
       case 'ROLE-014':
         return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">Bazaar</span>;
+      case 'ROLE-015':
+        return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-fuchsia-100 text-fuchsia-700">Acara Inti</span>;
       default:
         return <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700">Panitia</span>;
     }
@@ -208,6 +210,7 @@ export default function UsersPage() {
             <option value="ROLE-012">Futsal</option>
             <option value="ROLE-013">E-Sport</option>
             <option value="ROLE-014">Bazaar</option>
+            <option value="ROLE-015">Acara Inti</option>
           </select>
           <select 
             value={statusFilter}
@@ -330,6 +333,7 @@ export default function UsersPage() {
                   <option value="ROLE-012">Panitia Futsal</option>
                   <option value="ROLE-013">Panitia E-Sport</option>
                   <option value="ROLE-014">Panitia Bazaar</option>
+                  <option value="ROLE-015">Acara Inti</option>
                 </select>
               </div>
 

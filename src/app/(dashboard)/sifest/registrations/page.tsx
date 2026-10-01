@@ -82,7 +82,7 @@ export default async function RegistrationsPage({
     allowedEventIds = events.filter(e => e.slug.includes('seminar')).map(e => e.id);
   } else if (roleId === 'ROLE-014') { // Bazaar
     allowedEventIds = events.filter(e => e.slug.includes('bazaar')).map(e => e.id);
-  } else if (!['ROLE-001', 'SUPER_ADMIN', 'ROLE-003', 'ROLE-005', 'ROLE-006'].includes(roleId)) {
+  } else if (!['ROLE-001', 'SUPER_ADMIN', 'ROLE-003', 'ROLE-005', 'ROLE-006', 'ROLE-015'].includes(roleId)) {
     allowedEventIds = ['no-access'];
   }
 
