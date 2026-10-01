@@ -76,7 +76,7 @@ export function Sidebar() {
         </div>
       </div>
 
-      <nav className="flex-1 px-4 py-4 space-y-1">
+      <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
           const isActive = pathname.startsWith(item.href);
           const Icon = item.icon;
@@ -113,7 +113,7 @@ export function Sidebar() {
         )}
       </nav>
 
-      <div className="p-4 border-t border-slate-200">
+      <div className="p-4 border-t border-slate-200 bg-white mt-auto">
         <div className="flex items-center gap-3 px-4 py-3">
           <div className="w-10 h-10 rounded-full bg-slate-200 flex-shrink-0 overflow-hidden">
             <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${userData.seed}`} alt="Avatar" className="w-full h-full object-cover" />
