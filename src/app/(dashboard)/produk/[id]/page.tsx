@@ -75,7 +75,11 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
   const { id } = use(params);
   const router = useRouter();
   
-  const { data: resData, error, isLoading, mutate } = useSWR(`?action=getProdukById&id=${id}`, fetcher);
+  const { data: resData, error, isLoading, mutate } = useSWR(
+    `?action=getProdukById&id=${id}`, 
+    fetcher,
+    { refreshInterval: 5000 } // Auto-refresh setiap 5 detik agar realtime
+  );
   const produk: Produk | null = resData?.data || null;
 
   const [hasAccess, setHasAccess] = useState(false);
