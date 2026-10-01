@@ -2,7 +2,7 @@ import axios from "axios";
 import Cookies from "js-cookie";
 
 // Ganti URL ini dengan URL Web App (Deployment) Google Apps Script Anda nanti
-export const SCRIPT_URL = process.env.NEXT_PUBLIC_API_URL || "https://script.google.com/macros/s/AKfycbzoAvxRHV7jzm3AZstFIocKRNa1b_aFKppF4kt1CUfY_Ylw-oSkUiGOzKalR18eI2L5Qg/exec";
+export const SCRIPT_URL = process.env.NEXT_PUBLIC_API_URL || "https://script.google.com/macros/s/AKfycbzJfiEuqxyBt2uT1mg2ukqgDLtxWsLA2eLgRUYU9m_N6y_EjSe3bBkXZIwvssGGLvfx4w/exec";
 
 export const api = axios.create({
   baseURL: SCRIPT_URL,
