@@ -154,23 +154,7 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
 
   const getSisaStokVarian = (id_varian: string) => {
     const v = produk?.varian?.find(x => x.id_varian === id_varian);
-    if (!v) return 0;
-    
-    let totalTerjualAra = 0;
-    produk?.penjualan_bundle?.forEach(sale => {
-      if (!sale.terjual_oleh || sale.terjual_oleh === "Ara") {
-        const item = sale.items?.find(i => i.id_varian === id_varian);
-        if (item) totalTerjualAra += (item.jumlah || 0);
-      }
-    });
-
-    let totalDistribusi = 0;
-    produk?.distribusi?.forEach(d => {
-      const item = d.items?.find(i => i.id_varian === id_varian);
-      if (item) totalDistribusi += (item.jumlah || 0);
-    });
-
-    return Math.max(0, (v.jumlah || 0) - totalTerjualAra - totalDistribusi);
+    return v?.jumlah || 0;
   };
 
   const getMaxStockForVarian = (id_varian: string) => {

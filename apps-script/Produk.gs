@@ -47,6 +47,28 @@ const Produk = {
         });
       }
       
+      const riwayatSheet = ss.getSheetByName('Riwayat Penjualan Produk');
+      if (riwayatSheet) {
+        const rData = riwayatSheet.getDataRange().getValues();
+        for (let j = 1; j < rData.length; j++) {
+          const prodId = rData[j][1];
+          const prod = daftarProduk.find(p => p.id_produk === prodId);
+          if (prod) {
+            prod.penjualan_bundle.push({
+              id_penjualan: rData[j][0],
+              id_paket: rData[j][2],
+              nama_paket: rData[j][3],
+              total_harga: rData[j][4],
+              total_modal: rData[j][5],
+              tanggal: rData[j][6],
+              terjual_oleh: rData[j][7],
+              metode_pembayaran: rData[j][8],
+              items: typeof rData[j][9] === 'string' ? JSON.parse(rData[j][9] || '[]') : []
+            });
+          }
+        }
+      }
+      
       // Balik urutan agar yang terbaru ada di atas
       daftarProduk.reverse();
       
@@ -66,7 +88,7 @@ const Produk = {
       for (let i = 1; i < data.length; i++) {
         const row = data[i];
         if (row[0] === id_produk) {
-          return Response.success('Data produk ditemukan.', {
+          let produkData = {
             id_produk: row[0],
             nama_produk: row[1],
             asal_sponsor: row[2],
@@ -79,7 +101,29 @@ const Produk = {
             varian: row[9] ? (typeof row[9] === 'string' ? JSON.parse(row[9] || '[]') : row[9]) : [],
             distribusi: row[10] ? (typeof row[10] === 'string' ? JSON.parse(row[10] || '[]') : row[10]) : [],
             penjualan_bundle: row[11] ? (typeof row[11] === 'string' ? JSON.parse(row[11] || '[]') : row[11]) : []
-          });
+          };
+          
+          const riwayatSheet = ss.getSheetByName('Riwayat Penjualan Produk');
+          if (riwayatSheet) {
+            const rData = riwayatSheet.getDataRange().getValues();
+            for (let j = 1; j < rData.length; j++) {
+              if (rData[j][1] === id_produk) {
+                produkData.penjualan_bundle.push({
+                  id_penjualan: rData[j][0],
+                  id_paket: rData[j][2],
+                  nama_paket: rData[j][3],
+                  total_harga: rData[j][4],
+                  total_modal: rData[j][5],
+                  tanggal: rData[j][6],
+                  terjual_oleh: rData[j][7],
+                  metode_pembayaran: rData[j][8],
+                  items: typeof rData[j][9] === 'string' ? JSON.parse(rData[j][9] || '[]') : []
+                });
+              }
+            }
+          }
+          
+          return Response.success('Data produk ditemukan.', produkData);
         }
       }
       return Response.error('NOT_FOUND', 'Produk tidak ditemukan.');
@@ -609,11 +653,6 @@ const Produk = {
             try { existingVarian = typeof varStr === 'string' ? JSON.parse(varStr) : varStr; } 
             catch (e) { existingVarian = []; }
           }
-          const penStr = data[i][11]; // Kolom L (indeks 11)
-          if (penStr) {
-            try { existingPenjualan = typeof penStr === 'string' ? JSON.parse(penStr) : penStr; } 
-            catch (e) { existingPenjualan = []; }
-          }
           break;
         }
       }
@@ -652,13 +691,30 @@ const Produk = {
         items: validItems
       };
       
-      existingPenjualan.push(newSale);
       sheet.getRange(rowIndex, 10).setValue(JSON.stringify(existingVarian)); // Kolom J
-      sheet.getRange(rowIndex, 12).setValue(JSON.stringify(existingPenjualan)); // Kolom L
       
       // Update Total Terjual (Kolom F)
       const currentSudahTerjual = Number(data[rowIndex - 1][5]) || 0;
       sheet.getRange(rowIndex, 6).setValue(currentSudahTerjual + totalQty);
+
+      let riwayatSheet = ss.getSheetByName('Riwayat Penjualan Produk');
+      if (!riwayatSheet) {
+        riwayatSheet = ss.insertSheet('Riwayat Penjualan Produk');
+        riwayatSheet.appendRow(['id_penjualan', 'id_produk', 'id_paket', 'nama_paket', 'total_harga', 'total_modal', 'tanggal', 'terjual_oleh', 'metode_pembayaran', 'items']);
+      }
+      
+      riwayatSheet.appendRow([
+        newSale.id_penjualan,
+        body.id_produk,
+        newSale.id_paket,
+        newSale.nama_paket,
+        newSale.total_harga,
+        newSale.total_modal,
+        newSale.tanggal,
+        newSale.terjual_oleh,
+        newSale.metode_pembayaran,
+        JSON.stringify(newSale.items)
+      ]);
       
       if (user) {
         ActivityLogs.log(
@@ -691,41 +747,67 @@ const Produk = {
             try { existingVarian = typeof varStr === 'string' ? JSON.parse(varStr) : varStr; } 
             catch (e) { existingVarian = []; }
           }
-          const penStr = data[i][11]; // Kolom L
-          if (penStr) {
-            try { existingPenjualan = typeof penStr === 'string' ? JSON.parse(penStr) : penStr; } 
-            catch (e) { existingPenjualan = []; }
-          }
           break;
         }
       }
       
       if (rowIndex === -1) return Response.error('NOT_FOUND', 'Produk tidak ditemukan.');
       
-      const saleToDelete = existingPenjualan.find(s => s.id_penjualan === body.id_penjualan);
-      if (saleToDelete && saleToDelete.items) {
-        const terjual_oleh = saleToDelete.terjual_oleh || "Ara";
-        
-        let totalRestoreQty = 0;
-        saleToDelete.items.forEach(item => totalRestoreQty += item.jumlah);
-
-        if (terjual_oleh === "Ara") {
-          saleToDelete.items.forEach(item => {
-            const vIndex = existingVarian.findIndex(v => v.id_varian === item.id_varian);
-            if (vIndex !== -1) {
-              existingVarian[vIndex].jumlah += item.jumlah;
+      const riwayatSheet = ss.getSheetByName('Riwayat Penjualan Produk');
+      let deletedFromNew = false;
+      
+      if (riwayatSheet) {
+        const rData = riwayatSheet.getDataRange().getValues();
+        for (let j = 1; j < rData.length; j++) {
+          if (rData[j][0] === body.id_penjualan) {
+            const rItem = rData[j];
+            const terjual_oleh = rItem[7] || "Ara";
+            const items = typeof rItem[9] === 'string' ? JSON.parse(rItem[9] || '[]') : [];
+            let totalRestoreQty = 0;
+            items.forEach(item => totalRestoreQty += item.jumlah);
+            
+            if (terjual_oleh === "Ara") {
+              items.forEach(item => {
+                const vIndex = existingVarian.findIndex(v => v.id_varian === item.id_varian);
+                if (vIndex !== -1) existingVarian[vIndex].jumlah += item.jumlah;
+              });
+              sheet.getRange(rowIndex, 10).setValue(JSON.stringify(existingVarian));
             }
-          });
-          sheet.getRange(rowIndex, 10).setValue(JSON.stringify(existingVarian)); // Restore Varian stock
+            
+            const currentSudahTerjual = Number(data[rowIndex - 1][5]) || 0;
+            sheet.getRange(rowIndex, 6).setValue(Math.max(0, currentSudahTerjual - totalRestoreQty));
+            
+            riwayatSheet.deleteRow(j + 1);
+            deletedFromNew = true;
+            break;
+          }
         }
-        
-        // Restore Total Terjual (Kolom F)
-        const currentSudahTerjual = Number(data[rowIndex - 1][5]) || 0;
-        sheet.getRange(rowIndex, 6).setValue(Math.max(0, currentSudahTerjual - totalRestoreQty));
       }
       
-      const newPenjualanList = existingPenjualan.filter(s => s.id_penjualan !== body.id_penjualan);
-      sheet.getRange(rowIndex, 12).setValue(JSON.stringify(newPenjualanList)); // Kolom L
+      // Fallback delete from old column L if not found in new sheet
+      if (!deletedFromNew) {
+        const penStr = data[rowIndex - 1][11];
+        let oldPenjualan = [];
+        if (penStr) try { oldPenjualan = JSON.parse(penStr); } catch(e){}
+        
+        const saleToDelete = oldPenjualan.find(s => s.id_penjualan === body.id_penjualan);
+        if (saleToDelete && saleToDelete.items) {
+          const terjual_oleh = saleToDelete.terjual_oleh || "Ara";
+          let totalRestoreQty = 0;
+          saleToDelete.items.forEach(item => totalRestoreQty += item.jumlah);
+          if (terjual_oleh === "Ara") {
+            saleToDelete.items.forEach(item => {
+              const vIndex = existingVarian.findIndex(v => v.id_varian === item.id_varian);
+              if (vIndex !== -1) existingVarian[vIndex].jumlah += item.jumlah;
+            });
+            sheet.getRange(rowIndex, 10).setValue(JSON.stringify(existingVarian));
+          }
+          const currentSudahTerjual = Number(data[rowIndex - 1][5]) || 0;
+          sheet.getRange(rowIndex, 6).setValue(Math.max(0, currentSudahTerjual - totalRestoreQty));
+        }
+        const newPenjualanList = oldPenjualan.filter(s => s.id_penjualan !== body.id_penjualan);
+        sheet.getRange(rowIndex, 12).setValue(JSON.stringify(newPenjualanList));
+      }
       
       if (user) {
         ActivityLogs.log(
