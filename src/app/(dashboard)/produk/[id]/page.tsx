@@ -161,18 +161,31 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
     return v?.jumlah || 0;
   };
 
+  const isSameVariant = (id1: string, id2: string, name1: string, name2: string) => {
+    if (id1 && id2 && id1 === id2) return true;
+    if (!name1 || !name2) return false;
+    const n1 = name1.toLowerCase().replace(/[^a-z0-9]/g, '');
+    const n2 = name2.toLowerCase().replace(/[^a-z0-9]/g, '');
+    if (n1 === n2) return true;
+    if ((n1.includes('chocolate') && n2.includes('choklat')) || (n1.includes('choklat') && n2.includes('chocolate'))) return true;
+    if (n1.length > 10 && n2.length > 10 && (n1.includes(n2) || n2.includes(n1))) return true;
+    return false;
+  };
+
   const getMaxStockForVarian = (id_varian: string) => {
     if (terjualOleh === "Ara") {
       return getSisaStokVarian(id_varian);
     } else {
       let totalReceived = 0;
+      const v_nama = produk?.varian?.find(v => v.id_varian === id_varian)?.nama_varian || "";
+      
       produk?.distribusi?.filter(d => d.nama_penerima === terjualOleh).forEach(d => {
-        const item = d.items?.find(i => i.id_varian === id_varian);
+        const item = d.items?.find(i => isSameVariant(i.id_varian, id_varian, i.nama_varian, v_nama));
         if (item) totalReceived += (item.jumlah || 0);
       });
       let totalSold = 0;
       produk?.penjualan_bundle?.filter(p => p.terjual_oleh === terjualOleh).forEach(p => {
-        const item = p.items?.find(i => i.id_varian === id_varian);
+        const item = p.items?.find(i => isSameVariant(i.id_varian, id_varian, i.nama_varian, v_nama));
         if (item) totalSold += (item.jumlah || 0);
       });
       return Math.max(0, totalReceived - totalSold);
@@ -198,10 +211,15 @@ export default function ProdukDetailPage({ params }: { params: Promise<{ id: str
       const sellerSales = salesMap[dist.nama_penerima];
       if (sellerSales && dist.items) {
         dist.items.forEach(item => {
-          if (sellerSales[item.id_varian] > 0) {
-            const deduct = Math.min(item.jumlah, sellerSales[item.id_varian]);
+          // Find matching key in sellerSales (bisa id_varian lama atau id_varian baru yang namanya mirip)
+          let matchedKey = Object.keys(sellerSales).find(k => 
+            isSameVariant(k, item.id_varian, produk.varian?.find(v => v.id_varian === k)?.nama_varian || "", item.nama_varian)
+          );
+          
+          if (matchedKey && sellerSales[matchedKey] > 0) {
+            const deduct = Math.min(item.jumlah, sellerSales[matchedKey]);
             item.jumlah -= deduct;
-            sellerSales[item.id_varian] -= deduct;
+            sellerSales[matchedKey] -= deduct;
           }
         });
         dist.items = dist.items.filter(i => i.jumlah > 0);
