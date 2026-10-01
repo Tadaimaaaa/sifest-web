@@ -64,8 +64,8 @@ api.interceptors.response.use(
 export const fetcher = async (url: string) => {
   const token = Cookies.get("session_token");
   const fullUrl = url.includes("?") 
-    ? `${SCRIPT_URL}${url}&token=${token}` 
-    : `${SCRIPT_URL}${url}?token=${token}`;
+    ? `${SCRIPT_URL}${url}&token=${token}&t=${Date.now()}` 
+    : `${SCRIPT_URL}${url}?token=${token}&t=${Date.now()}`;
     
   const res = await fetch(fullUrl);
   if (!res.ok) throw new Error("Gagal mengambil data");

@@ -624,8 +624,13 @@ const Produk = {
       if (validItems.length === 0) return Response.error('BAD_REQUEST', 'Tidak ada item varian yang terjual.');
 
       const terjual_oleh = body.terjual_oleh || "Ara";
+      let totalQty = 0;
 
-      // Kurangi stok utama HANYA jika terjual_oleh adalah "Ara"
+      // Hitung total qty dan kurangi stok utama HANYA jika terjual_oleh adalah "Ara"
+      validItems.forEach(item => {
+        totalQty += item.jumlah;
+      });
+
       if (terjual_oleh === "Ara") {
         validItems.forEach(item => {
           const vIndex = existingVarian.findIndex(v => v.id_varian === item.id_varian);
@@ -650,6 +655,10 @@ const Produk = {
       existingPenjualan.push(newSale);
       sheet.getRange(rowIndex, 10).setValue(JSON.stringify(existingVarian)); // Kolom J
       sheet.getRange(rowIndex, 12).setValue(JSON.stringify(existingPenjualan)); // Kolom L
+      
+      // Update Total Terjual (Kolom F)
+      const currentSudahTerjual = Number(data[rowIndex - 1][5]) || 0;
+      sheet.getRange(rowIndex, 6).setValue(currentSudahTerjual + totalQty);
       
       if (user) {
         ActivityLogs.log(
@@ -696,6 +705,10 @@ const Produk = {
       const saleToDelete = existingPenjualan.find(s => s.id_penjualan === body.id_penjualan);
       if (saleToDelete && saleToDelete.items) {
         const terjual_oleh = saleToDelete.terjual_oleh || "Ara";
+        
+        let totalRestoreQty = 0;
+        saleToDelete.items.forEach(item => totalRestoreQty += item.jumlah);
+
         if (terjual_oleh === "Ara") {
           saleToDelete.items.forEach(item => {
             const vIndex = existingVarian.findIndex(v => v.id_varian === item.id_varian);
@@ -705,6 +718,10 @@ const Produk = {
           });
           sheet.getRange(rowIndex, 10).setValue(JSON.stringify(existingVarian)); // Restore Varian stock
         }
+        
+        // Restore Total Terjual (Kolom F)
+        const currentSudahTerjual = Number(data[rowIndex - 1][5]) || 0;
+        sheet.getRange(rowIndex, 6).setValue(Math.max(0, currentSudahTerjual - totalRestoreQty));
       }
       
       const newPenjualanList = existingPenjualan.filter(s => s.id_penjualan !== body.id_penjualan);
