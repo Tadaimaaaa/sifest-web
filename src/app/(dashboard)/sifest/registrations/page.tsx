@@ -69,17 +69,42 @@ export default async function RegistrationsPage({
 
 
 
-  const [registrations, events] = await Promise.all([
-    getRegistrations({
-      page,
-      limit: 20,
-      search,
-      event_id,
-      status,
-      payment_status
-    }),
-    getEvents()
-  ]);
+  const events = await getEvents();
+  let allowedEventIds: string[] | undefined = undefined; // undefined means all
+
+  if (roleId === 'ROLE-012') { // Futsal
+    allowedEventIds = events.filter(e => e.slug.includes('futsal')).map(e => e.id);
+  } else if (roleId === 'ROLE-013') { // E-Sport
+    allowedEventIds = events.filter(e => e.slug.includes('esport')).map(e => e.id);
+  } else if (roleId === 'ROLE-010') { // MTQ
+    allowedEventIds = events.filter(e => e.slug.includes('mtq') || e.slug.includes('keagamaan')).map(e => e.id);
+  } else if (roleId === 'ROLE-011') { // Seminar
+    allowedEventIds = events.filter(e => e.slug.includes('seminar')).map(e => e.id);
+  } else if (roleId === 'ROLE-014') { // Bazaar
+    allowedEventIds = events.filter(e => e.slug.includes('bazaar')).map(e => e.id);
+  } else if (!['ROLE-001', 'SUPER_ADMIN', 'ROLE-003', 'ROLE-005', 'ROLE-006'].includes(roleId)) {
+    allowedEventIds = ['no-access'];
+  }
+
+  let finalEventIdFilter: string | string[] = event_id || '';
+  if (allowedEventIds) {
+    if (finalEventIdFilter && finalEventIdFilter !== 'ALL') {
+      if (!allowedEventIds.includes(finalEventIdFilter as string)) {
+         finalEventIdFilter = 'no-access';
+      }
+    } else {
+      finalEventIdFilter = allowedEventIds;
+    }
+  }
+
+  const registrations = await getRegistrations({
+    page,
+    limit: 20,
+    search,
+    event_id: finalEventIdFilter,
+    status,
+    payment_status
+  });
 
   return (
     <div className="space-y-6">

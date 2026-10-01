@@ -6,7 +6,7 @@ export interface GetRegistrationsParams {
   page?: number;
   limit?: number;
   search?: string;
-  event_id?: string;
+  event_id?: string | string[];
   status?: string;
   payment_status?: string;
 }
@@ -55,7 +55,15 @@ export async function getRegistrations(params: GetRegistrationsParams) {
 
   // Apply Event Filter
   if (params.event_id && params.event_id !== 'ALL') {
-    query = query.eq('event_id', params.event_id);
+    if (Array.isArray(params.event_id)) {
+      if (params.event_id.length > 0) {
+        query = query.in('event_id', params.event_id);
+      } else {
+        query = query.eq('event_id', 'no-match-possible-because-empty-array');
+      }
+    } else {
+      query = query.eq('event_id', params.event_id);
+    }
   }
 
   // Apply Registration Status Filter
