@@ -34,7 +34,7 @@ const STATUS_OPTIONS = [
   "Tidak Ada Respons"
 ];
 
-export default function SponsorPage() {
+export default function MediaPartnerPage() {
   const [currentUserRole, setCurrentUserRole] = useState("ROLE-001");
   const [sponsors, setSponsors] = useState<Sponsor[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -84,7 +84,7 @@ export default function SponsorPage() {
       if (data.success) {
         setSponsors(data.data || []);
       } else {
-        toast.error(data.message || "Gagal mengambil data sponsor");
+        toast.error(data.message || "Gagal mengambil data media partner");
       }
     } catch (error) {
       toast.error("Terjadi kesalahan jaringan");
@@ -144,14 +144,14 @@ export default function SponsorPage() {
   const handleSaveSponsor = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.nama_sponsor) {
-      toast.error("Nama sponsor wajib diisi!");
+      toast.error("Nama media partner wajib diisi!");
       return;
     }
 
     setIsSubmitting(true);
     const token = Cookies.get("session_token");
     
-    const finalNama = `[Sponsor] ${formData.nama_sponsor}`;
+    const finalNama = `[Media Partner] ${formData.nama_sponsor}`;
     const payload = {
       action: editingSponsor ? "editSponsor" : "addSponsor",
       token,
@@ -185,7 +185,7 @@ export default function SponsorPage() {
 
   const handleDelete = async (id: string) => {
     const result = await Swal.fire({
-      title: 'Hapus Data Sponsor?',
+      title: 'Hapus Data Media Partner?',
       text: "Data yang dihapus tidak dapat dikembalikan!",
       icon: 'warning',
       showCancelButton: true,
@@ -210,7 +210,7 @@ export default function SponsorPage() {
       });
       const data = await res.json();
       if (data.success) {
-        toast.success("Data sponsor berhasil dihapus");
+        toast.success("Data media partner berhasil dihapus");
       } else {
         toast.error(data.message);
         setSponsors(previousSponsors); // Rollback
@@ -235,7 +235,7 @@ export default function SponsorPage() {
   const openEditModal = (spn: Sponsor) => {
     setEditingSponsor(spn);
     setFormData({
-      nama_sponsor: spn.nama_sponsor.replace("[Sponsor] ", ""),
+      nama_sponsor: spn.nama_sponsor.replace("[Media Partner] ", ""),
       pic: spn.pic,
       kontak: spn.kontak,
       email: spn.email,
@@ -264,7 +264,7 @@ export default function SponsorPage() {
   };
 
   const filteredSponsors = sponsors.filter(spn => {
-    if ((spn.nama_sponsor || "").startsWith("[Media Partner]")) return false;
+    if (!(spn.nama_sponsor || "").startsWith("[Media Partner]")) return false;
     
     const safeNama = (spn.nama_sponsor || "").toLowerCase();
     const safePic = (spn.pic || "").toLowerCase();
@@ -301,9 +301,9 @@ export default function SponsorPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Data Sponsor</h1>
+          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Data Media Partner</h1>
           <p className="text-sm text-slate-500 mt-1">
-            Pantau dan kelola pencarian dana serta sponsorship SI FEST.
+            Pantau dan kelola pencarian media partner publikasi SI FEST.
           </p>
         </div>
         <div className="flex items-center gap-3 w-full sm:w-auto">
@@ -328,7 +328,7 @@ export default function SponsorPage() {
               className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl text-sm font-medium transition-colors shadow-sm"
             >
               <Plus className="w-4 h-4" />
-              Tambah Sponsor
+              Tambah Media Partner
             </button>
           )}
         </div>
@@ -341,7 +341,7 @@ export default function SponsorPage() {
             <Handshake className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-sm text-slate-500 font-medium">Total Sponsor</p>
+            <p className="text-sm text-slate-500 font-medium">Total Media Partner</p>
             <h3 className="text-2xl font-bold text-slate-800">{totalSponsor} Instansi</h3>
           </div>
         </div>
@@ -375,7 +375,7 @@ export default function SponsorPage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input 
               type="text"
-              placeholder="Cari sponsor atau PIC..."
+              placeholder="Cari media partner atau PIC..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm"
@@ -403,7 +403,7 @@ export default function SponsorPage() {
           <table className="w-full text-left text-sm text-slate-600">
             <thead className="bg-slate-50 text-slate-500 border-b border-slate-100">
               <tr>
-                <th className="px-6 py-4 font-semibold">Sponsor & Kontak</th>
+                <th className="px-6 py-4 font-semibold">Media Partner & Kontak</th>
                 <th className="px-6 py-4 font-semibold">Tgl Proposal & Follow Up</th>
                 <th className="px-6 py-4 font-semibold">Status & Keterangan</th>
                 <th className="px-6 py-4 font-semibold">Catatan Internal</th>
@@ -414,20 +414,20 @@ export default function SponsorPage() {
               {isLoading ? (
                 <tr>
                   <td colSpan={10} className="h-64 relative p-0">
-                    <FullPageLoader message="Memuat Data Sponsor..." fullScreen={false} />
+                    <FullPageLoader message="Memuat Data Media Partner..." fullScreen={false} />
                   </td>
                 </tr>
               ) : filteredSponsors.length === 0 ? (
                 <tr>
                   <td colSpan={hasAccess ? 5 : 4} className="px-6 py-12 text-center text-slate-500">
-                    Tidak ada data sponsor yang ditemukan.
+                    Tidak ada data media partner yang ditemukan.
                   </td>
                 </tr>
               ) : (
                 filteredSponsors.map((spn) => (
                   <tr key={spn.id_sponsor} className="hover:bg-slate-50/80 transition-colors group">
                     <td className="px-6 py-4">
-                      <p className="font-bold text-slate-800 text-[15px] mb-1">{spn.nama_sponsor.replace("[Sponsor] ", "")}</p>
+                      <p className="font-bold text-slate-800 text-[15px] mb-1">{spn.nama_sponsor.replace("[Media Partner] ", "")}</p>
                       {spn.pic && typeof spn.pic === 'string' && spn.pic !== "-" && (
                         <div className="flex items-center gap-1.5 text-slate-500 mb-0.5">
                           <Tag className="w-3 h-3" /> <span className="text-xs">{spn.pic}</span>
@@ -472,14 +472,14 @@ export default function SponsorPage() {
                           <button 
                             onClick={() => openEditModal(spn)}
                             className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                            title="Edit Sponsor"
+                            title="Edit Media Partner"
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                           </button>
                           <button 
                             onClick={() => handleDelete(spn.id_sponsor)}
                             className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                            title="Hapus Sponsor"
+                            title="Hapus Media Partner"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -500,7 +500,7 @@ export default function SponsorPage() {
           <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl animate-in zoom-in-95 duration-200">
             <div className="sticky top-0 bg-white border-b border-slate-100 px-6 py-4 flex items-center justify-between z-10">
               <h2 className="text-lg font-bold text-slate-800">
-                {editingSponsor ? 'Edit Data Sponsor' : 'Tambah Sponsor Baru'}
+                {editingSponsor ? 'Edit Data Media Partner' : 'Tambah Media Partner Baru'}
               </h2>
               <button onClick={() => { setIsModalOpen(false); resetForm(); }} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
                 <X className="w-5 h-5" />
@@ -510,8 +510,8 @@ export default function SponsorPage() {
             <form onSubmit={handleSaveSponsor} className="p-6 space-y-5">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div className="sm:col-span-2">
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Nama Sponsor / Brand <span className="text-rose-500">*</span></label>
-                  <input type="text" required value={formData.nama_sponsor} onChange={(e) => setFormData({...formData, nama_sponsor: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" placeholder="Contoh: PT. Semen Padang / Kopi Kenangan" />
+                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Nama Media Partner / Portal <span className="text-rose-500">*</span></label>
+                  <input type="text" required value={formData.nama_sponsor} onChange={(e) => setFormData({...formData, nama_sponsor: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" placeholder="Contoh: Prambors Radio / Padangku.com" />
                 </div>
                 
                 <div>
@@ -562,7 +562,7 @@ export default function SponsorPage() {
                   Batal
                 </button>
                 <button type="submit" disabled={isSubmitting} className="px-6 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-colors flex items-center justify-center min-w-[120px]">
-                  {isSubmitting ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : (editingSponsor ? 'Simpan' : 'Tambah Sponsor')}
+                  {isSubmitting ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : (editingSponsor ? 'Simpan' : 'Tambah Media Partner')}
                 </button>
               </div>
             </form>
