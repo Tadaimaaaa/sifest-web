@@ -4,11 +4,16 @@ import { useState } from 'react';
 import { Trash2, AlertTriangle, X } from 'lucide-react';
 import { deleteRegistrationAction } from './actions';
 import { useRouter } from 'next/navigation';
+import { createPortal } from 'react-dom';
 
 export function DeleteButton({ id }: { id: string }) {
   const [isDeleting, setIsDeleting] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const router = useRouter();
+
+  import { useEffect } from 'react';
+  useEffect(() => setMounted(true), []);
 
   const handleDelete = async () => {
     setIsDeleting(true);
@@ -34,11 +39,11 @@ export function DeleteButton({ id }: { id: string }) {
         Hapus
       </button>
 
-      {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
+      {mounted && showModal && createPortal(
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200 whitespace-normal text-center">
             <div className="p-6">
-              <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mb-4">
+              <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mb-4 mx-auto">
                 <AlertTriangle className="w-6 h-6 text-red-600" />
               </div>
               <h3 className="text-xl font-bold text-slate-900 mb-2">Hapus Pendaftar?</h3>
@@ -46,7 +51,7 @@ export function DeleteButton({ id }: { id: string }) {
                 Apakah Anda yakin ingin menghapus data pendaftaran ini? Data peserta dan transaksi yang terkait juga akan dihapus secara permanen dan tidak dapat dikembalikan.
               </p>
             </div>
-            <div className="bg-slate-50 px-6 py-4 flex items-center justify-end gap-3 border-t border-slate-100">
+            <div className="bg-slate-50 px-6 py-4 flex items-center justify-center gap-3 border-t border-slate-100">
               <button
                 onClick={() => setShowModal(false)}
                 disabled={isDeleting}
@@ -70,7 +75,8 @@ export function DeleteButton({ id }: { id: string }) {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );
