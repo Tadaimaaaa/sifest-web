@@ -61,10 +61,22 @@ export function StatusUpdater({ currentStatus, type, id, registrationId, canEdit
   const openDropdown = useCallback(() => {
     if (!buttonRef.current) return;
     const rect = buttonRef.current.getBoundingClientRect();
+    const dropdownWidth = Math.max(rect.width, 220);
+    const windowWidth = window.innerWidth;
+    
+    let leftPos = rect.right - dropdownWidth; // align right by default
+    
+    if (leftPos < 16) { // if it goes off left
+      leftPos = rect.left; // align left
+      if (leftPos + dropdownWidth > windowWidth - 16) { // if it also goes off right
+        leftPos = 16; // force margin
+      }
+    }
+
     setDropdownPos({
-      top: rect.bottom + 6, // fixed position is viewport-relative
-      left: rect.right,
-      width: Math.max(rect.width, 220),
+      top: rect.bottom + 6,
+      left: leftPos,
+      width: dropdownWidth,
     });
     setIsOpen(true);
   }, []);
@@ -137,7 +149,6 @@ export function StatusUpdater({ currentStatus, type, id, registrationId, canEdit
           top: dropdownPos.top,
           left: dropdownPos.left,
           minWidth: `${dropdownPos.width}px`,
-          transform: 'translateX(-100%)', // Align right edge to button's right edge
         }}
       >
         <p className="px-3 py-1.5 text-[10px] font-semibold text-slate-400 uppercase tracking-wider border-b border-slate-100">

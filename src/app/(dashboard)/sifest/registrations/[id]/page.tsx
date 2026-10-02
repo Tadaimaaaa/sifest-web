@@ -102,7 +102,7 @@ export default async function RegistrationDetailPage({
           </Link>
           <div>
             <h1 className="text-2xl font-bold text-slate-900">Detail Pendaftar</h1>
-            <p className="text-sm text-slate-500 mt-1">ID: {registration.id}</p>
+            <p className="text-sm text-slate-500 mt-1 break-all">ID: {registration.id}</p>
           </div>
         </div>
         <PrintButton />
