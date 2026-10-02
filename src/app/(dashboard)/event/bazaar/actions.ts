@@ -26,6 +26,8 @@ export async function getBazaarParticipants() {
         pic: p?.full_name || 'Unknown',
         kontak: p?.whatsapp || '-',
         kategori: p?.metadata?.category || 'Makanan',
+        status_bayar: reg.transactions?.[0]?.status === 'PAID' ? 'Lunas' : 
+                      reg.transactions?.[0]?.status === 'DOWN_PAYMENT' ? 'DP' : 'Belum Bayar'
       };
     });
 

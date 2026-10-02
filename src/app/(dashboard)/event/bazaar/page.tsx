@@ -242,6 +242,34 @@ export default function BazaarDashboard() {
 
   if (isLoading) return <FullPageLoader message="Memuat informasi bazaar..." fullScreen={false} />;
 
+  // Combine data for the table
+  const combinedList: Tenant[] = [];
+  
+  bazaarParticipants.forEach(p => {
+    const assignedTent = Object.values(tenants).find(t => t.nama_brand === p.nama_brand || t.kontak === p.kontak);
+    combinedList.push({
+      id_tenda: assignedTent ? assignedTent.id_tenda : "-",
+      nama_brand: p.nama_brand,
+      pic: p.pic,
+      kontak: p.kontak,
+      kategori: assignedTent ? assignedTent.kategori : p.kategori,
+      status_bayar: assignedTent ? assignedTent.status_bayar : p.status_bayar,
+    });
+  });
+
+  Object.values(tenants).forEach(t => {
+    if (!combinedList.find(c => c.id_tenda === t.id_tenda)) {
+      combinedList.push(t);
+    }
+  });
+
+  combinedList.sort((a, b) => {
+    if (a.id_tenda === "-" && b.id_tenda !== "-") return 1;
+    if (a.id_tenda !== "-" && b.id_tenda === "-") return -1;
+    if (a.id_tenda === "-" && b.id_tenda === "-") return a.nama_brand.localeCompare(b.nama_brand);
+    return a.id_tenda.localeCompare(b.id_tenda, undefined, { numeric: true });
+  });
+
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-5xl mx-auto">
       {/* Header Utama */}
@@ -475,9 +503,15 @@ export default function BazaarDashboard() {
               </tr>
             </thead>
             <tbody>
-              {Object.values(tenants).length > 0 ? Object.values(tenants).sort((a, b) => a.id_tenda.localeCompare(b.id_tenda, undefined, { numeric: true })).map(tenant => (
-                <tr key={tenant.id_tenda} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
-                  <td className="py-4 px-4 font-bold text-amber-600">{tenant.id_tenda}</td>
+              {combinedList.length > 0 ? combinedList.map((tenant, idx) => (
+                <tr key={`${tenant.id_tenda}-${idx}`} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
+                  <td className="py-4 px-4 font-bold text-amber-600">
+                    {tenant.id_tenda === "-" ? (
+                      <span className="text-xs font-semibold px-2 py-1 bg-slate-100 text-slate-500 rounded">Belum Ditentukan</span>
+                    ) : (
+                      tenant.id_tenda
+                    )}
+                  </td>
                   <td className="py-4 px-4 font-medium text-slate-800">{tenant.nama_brand}</td>
                   <td className="py-4 px-4 text-slate-600">
                     <div>{tenant.pic}</div>
@@ -538,7 +572,7 @@ export default function BazaarDashboard() {
                         pic: selected.pic,
                         kontak: selected.kontak,
                         kategori: selected.kategori || 'Makanan',
-                        status_bayar: 'Lunas' // Assuming they've paid if they are on this list, or you can check if they are VERIFIED/PAID
+                        status_bayar: selected.status_bayar || 'Belum Bayar'
                       });
                     }
                   }}
