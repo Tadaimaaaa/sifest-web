@@ -466,39 +466,51 @@ export default function MediaPartnerPage() {
                   return (
                   <tr key={spn.id_sponsor} className="hover:bg-slate-50/80 transition-colors group">
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-3 mb-2">
+                      <div className="flex items-start gap-3 mb-2">
                         {logoUrl ? (
-                          <div className="w-10 h-10 rounded-lg border border-slate-200 overflow-hidden bg-white shrink-0 relative flex items-center justify-center">
-                            <Image src={logoUrl} alt={cleanNama} fill className="object-contain p-1" sizes="40px" />
+                          <div className="flex flex-col items-center gap-1.5 shrink-0 mt-0.5">
+                            <div className="w-12 h-12 rounded-lg border border-slate-200 overflow-hidden bg-white relative flex items-center justify-center shadow-sm">
+                              <img src={logoUrl} alt={cleanNama} className="w-full h-full object-contain p-1" />
+                            </div>
+                            <a 
+                              href={logoUrl} 
+                              download 
+                              target="_blank" 
+                              rel="noopener noreferrer" 
+                              className="text-[10px] font-medium text-blue-600 hover:text-blue-700 hover:underline flex items-center gap-1 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100 transition-colors"
+                              title="Unduh Logo"
+                            >
+                              <Download className="w-3 h-3" /> Unduh
+                            </a>
                           </div>
                         ) : (
-                          <div className="w-10 h-10 rounded-lg border border-slate-200 overflow-hidden bg-slate-50 shrink-0 flex items-center justify-center">
+                          <div className="w-10 h-10 rounded-lg border border-slate-200 overflow-hidden bg-slate-50 shrink-0 flex items-center justify-center mt-0.5">
                             <ImageIcon className="w-5 h-5 text-slate-400" />
                           </div>
                         )}
-                        <div>
-                          <p className="font-bold text-slate-800 text-[15px] leading-tight">{cleanNama}</p>
+                        <div className="pt-1">
+                          <p className="font-bold text-slate-800 text-[15px] leading-tight mb-1">{cleanNama}</p>
+                          
+                          {spn.pic && typeof spn.pic === 'string' && spn.pic !== "-" && (
+                            <div className="flex items-center gap-1.5 text-slate-500 mb-0.5">
+                              <Tag className="w-3 h-3" /> <span className="text-xs">{spn.pic}</span>
+                            </div>
+                          )}
+                          {spn.kontak && typeof spn.kontak === 'string' && spn.kontak !== "-" && (
+                            <div className="flex items-center gap-1.5 text-blue-600 mb-0.5">
+                              <Phone className="w-3 h-3" /> 
+                              <a href={spn.kontak.startsWith('http') ? spn.kontak : `tel:${spn.kontak}`} target="_blank" rel="noreferrer" className="text-xs hover:underline truncate max-w-[200px]">
+                                {spn.kontak}
+                              </a>
+                            </div>
+                          )}
+                          {spn.email && typeof spn.email === 'string' && spn.email !== "-" && (
+                            <div className="flex items-center gap-1.5 text-slate-500">
+                              <Mail className="w-3 h-3" /> <span className="text-xs">{spn.email}</span>
+                            </div>
+                          )}
                         </div>
                       </div>
-                      
-                      {spn.pic && typeof spn.pic === 'string' && spn.pic !== "-" && (
-                        <div className="flex items-center gap-1.5 text-slate-500 mb-0.5">
-                          <Tag className="w-3 h-3" /> <span className="text-xs">{spn.pic}</span>
-                        </div>
-                      )}
-                      {spn.kontak && typeof spn.kontak === 'string' && spn.kontak !== "-" && (
-                        <div className="flex items-center gap-1.5 text-blue-600 mb-0.5">
-                          <Phone className="w-3 h-3" /> 
-                          <a href={spn.kontak.startsWith('http') ? spn.kontak : `tel:${spn.kontak}`} target="_blank" rel="noreferrer" className="text-xs hover:underline truncate max-w-[200px]">
-                            {spn.kontak}
-                          </a>
-                        </div>
-                      )}
-                      {spn.email && typeof spn.email === 'string' && spn.email !== "-" && (
-                        <div className="flex items-center gap-1.5 text-slate-500">
-                          <Mail className="w-3 h-3" /> <span className="text-xs">{spn.email}</span>
-                        </div>
-                      )}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-slate-700">
                       <div className="mb-1">
@@ -567,9 +579,9 @@ export default function MediaPartnerPage() {
               <div className="flex flex-col items-center justify-center mb-6">
                 <label className="relative flex flex-col items-center justify-center w-32 h-32 bg-slate-50 border-2 border-dashed border-slate-300 rounded-2xl cursor-pointer hover:bg-slate-100 hover:border-blue-500 transition-all overflow-hidden group">
                   {logoFile ? (
-                    <Image src={URL.createObjectURL(logoFile)} alt="Preview" fill className="object-contain p-2" />
+                    <img src={URL.createObjectURL(logoFile)} alt="Preview" className="w-full h-full object-contain p-2" />
                   ) : formData.logo_url ? (
-                    <Image src={formData.logo_url} alt="Logo" fill className="object-contain p-2" />
+                    <img src={formData.logo_url} alt="Logo" className="w-full h-full object-contain p-2" />
                   ) : (
                     <div className="flex flex-col items-center justify-center text-slate-500">
                       <Upload className="w-6 h-6 mb-2 group-hover:text-blue-500 transition-colors" />
