@@ -62,6 +62,7 @@ export default function SponsorPage() {
   
   const [formData, setFormData] = useState({
     nama_sponsor: "",
+    tipe: "Sponsor",
     pic: "",
     kontak: "",
     email: "",
@@ -151,11 +152,14 @@ export default function SponsorPage() {
     setIsSubmitting(true);
     const token = Cookies.get("session_token");
     
+    const finalNama = `[${formData.tipe}] ${formData.nama_sponsor}`;
+
     const payload = {
       action: editingSponsor ? "editSponsor" : "addSponsor",
       token,
       ...(editingSponsor ? { id_sponsor: editingSponsor.id_sponsor } : {}),
-      ...formData
+      ...formData,
+      nama_sponsor: finalNama
     };
 
     try {
@@ -233,7 +237,8 @@ export default function SponsorPage() {
   const openEditModal = (spn: Sponsor) => {
     setEditingSponsor(spn);
     setFormData({
-      nama_sponsor: spn.nama_sponsor,
+      nama_sponsor: spn.nama_sponsor.replace("[Media Partner] ", "").replace("[Sponsor] ", ""),
+      tipe: spn.nama_sponsor.startsWith("[Media Partner]") ? "Media Partner" : "Sponsor",
       pic: spn.pic,
       kontak: spn.kontak,
       email: spn.email,
@@ -250,6 +255,7 @@ export default function SponsorPage() {
     setEditingSponsor(null);
     setFormData({
       nama_sponsor: "",
+      tipe: "Sponsor",
       pic: "",
       kontak: "",
       email: "",
@@ -297,9 +303,9 @@ export default function SponsorPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Data Sponsor</h1>
+          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Sponsor & Media Partner</h1>
           <p className="text-sm text-slate-500 mt-1">
-            Pantau dan kelola pencarian dana serta sponsorship SI FEST.
+            Pantau dan kelola pencarian dana serta media partner SI FEST.
           </p>
         </div>
         <div className="flex items-center gap-3 w-full sm:w-auto">
@@ -324,7 +330,7 @@ export default function SponsorPage() {
               className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl text-sm font-medium transition-colors shadow-sm"
             >
               <Plus className="w-4 h-4" />
-              Tambah Sponsor
+              Tambah Mitra
             </button>
           )}
         </div>
@@ -399,7 +405,7 @@ export default function SponsorPage() {
           <table className="w-full text-left text-sm text-slate-600">
             <thead className="bg-slate-50 text-slate-500 border-b border-slate-100">
               <tr>
-                <th className="px-6 py-4 font-semibold">Sponsor & Kontak</th>
+                <th className="px-6 py-4 font-semibold">Mitra & Kontak</th>
                 <th className="px-6 py-4 font-semibold">Tgl Proposal & Follow Up</th>
                 <th className="px-6 py-4 font-semibold">Status & Keterangan</th>
                 <th className="px-6 py-4 font-semibold">Catatan Internal</th>
@@ -423,7 +429,14 @@ export default function SponsorPage() {
                 filteredSponsors.map((spn) => (
                   <tr key={spn.id_sponsor} className="hover:bg-slate-50/80 transition-colors group">
                     <td className="px-6 py-4">
-                      <p className="font-bold text-slate-800 text-[15px] mb-1">{spn.nama_sponsor}</p>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${spn.nama_sponsor.startsWith('[Media Partner]') ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'}`}>
+                          {spn.nama_sponsor.startsWith('[Media Partner]') ? 'Media Partner' : 'Sponsor'}
+                        </span>
+                      </div>
+                      <p className="font-bold text-slate-800 text-[15px] mb-1">
+                        {spn.nama_sponsor.replace("[Media Partner] ", "").replace("[Sponsor] ", "")}
+                      </p>
                       {spn.pic && typeof spn.pic === 'string' && spn.pic !== "-" && (
                         <div className="flex items-center gap-1.5 text-slate-500 mb-0.5">
                           <Tag className="w-3 h-3" /> <span className="text-xs">{spn.pic}</span>
@@ -496,7 +509,7 @@ export default function SponsorPage() {
           <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl animate-in zoom-in-95 duration-200">
             <div className="sticky top-0 bg-white border-b border-slate-100 px-6 py-4 flex items-center justify-between z-10">
               <h2 className="text-lg font-bold text-slate-800">
-                {editingSponsor ? 'Edit Data Sponsor' : 'Tambah Sponsor Baru'}
+                {editingSponsor ? 'Edit Data Mitra' : 'Tambah Mitra Baru'}
               </h2>
               <button onClick={() => { setIsModalOpen(false); resetForm(); }} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors">
                 <X className="w-5 h-5" />
@@ -506,8 +519,36 @@ export default function SponsorPage() {
             <form onSubmit={handleSaveSponsor} className="p-6 space-y-5">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div className="sm:col-span-2">
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Nama Sponsor / Brand <span className="text-rose-500">*</span></label>
-                  <input type="text" required value={formData.nama_sponsor} onChange={(e) => setFormData({...formData, nama_sponsor: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" placeholder="Contoh: PT. Semen Padang / Kopi Kenangan" />
+                  <label className="block text-sm font-semibold text-slate-700 mb-2">Jenis Kemitraan</label>
+                  <div className="flex items-center gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input 
+                        type="radio" 
+                        name="tipe" 
+                        value="Sponsor" 
+                        checked={formData.tipe === "Sponsor"}
+                        onChange={(e) => setFormData({...formData, tipe: e.target.value})}
+                        className="w-4 h-4 text-blue-600 focus:ring-blue-500" 
+                      />
+                      <span className="text-sm text-slate-700">Sponsorship</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input 
+                        type="radio" 
+                        name="tipe" 
+                        value="Media Partner" 
+                        checked={formData.tipe === "Media Partner"}
+                        onChange={(e) => setFormData({...formData, tipe: e.target.value})}
+                        className="w-4 h-4 text-purple-600 focus:ring-purple-500" 
+                      />
+                      <span className="text-sm text-slate-700">Media Partner</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div className="sm:col-span-2">
+                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Nama Instansi / Brand <span className="text-rose-500">*</span></label>
+                  <input type="text" required value={formData.nama_sponsor} onChange={(e) => setFormData({...formData, nama_sponsor: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" placeholder="Contoh: PT. Semen Padang / Prambors Radio" />
                 </div>
                 
                 <div>
@@ -558,7 +599,7 @@ export default function SponsorPage() {
                   Batal
                 </button>
                 <button type="submit" disabled={isSubmitting} className="px-6 py-2.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition-colors flex items-center justify-center min-w-[120px]">
-                  {isSubmitting ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : (editingSponsor ? 'Simpan' : 'Tambah Sponsor')}
+                  {isSubmitting ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : (editingSponsor ? 'Simpan' : 'Tambah Mitra')}
                 </button>
               </div>
             </form>
