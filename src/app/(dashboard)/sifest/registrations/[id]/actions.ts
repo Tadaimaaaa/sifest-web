@@ -74,3 +74,44 @@ export async function updatePaymentStatus(transactionId: string, newStatus: stri
     return { success: false, error: err.message || "Failed to update payment status" };
   }
 }
+
+export async function uploadPaymentProof(registrationId: string, formData: FormData) {
+  try {
+    const file = formData.get('file') as File;
+    if (!file) throw new Error('No file provided');
+
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
+
+    const fileExt = file.name.split('.').pop();
+    const fileName = `payment_proofs/${registrationId}_pelunasan_${Date.now()}.${fileExt}`;
+
+    const { error: uploadError } = await supabaseServer.storage
+      .from('registration-files')
+      .upload(fileName, buffer, {
+        contentType: file.type,
+        upsert: true,
+      });
+
+    if (uploadError) throw uploadError;
+
+    const { data: publicUrlData } = supabaseServer.storage
+      .from('registration-files')
+      .getPublicUrl(fileName);
+
+    const publicUrl = publicUrlData.publicUrl;
+
+    const { error: dbError } = await supabaseServer
+      .from('registrations')
+      .update({ payment_proof_url: publicUrl })
+      .eq('id', registrationId);
+
+    if (dbError) throw dbError;
+
+    revalidatePath(`/sifest/registrations/${registrationId}`);
+    return { success: true, url: publicUrl };
+  } catch (err: any) {
+    console.error('Upload proof error:', err);
+    return { success: false, error: err.message || 'Failed to upload proof' };
+  }
+}

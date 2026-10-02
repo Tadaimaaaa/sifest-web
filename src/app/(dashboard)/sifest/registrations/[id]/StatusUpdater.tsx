@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import clsx from "clsx";
 import Swal from "sweetalert2";
 import { createPortal } from "react-dom";
-import { updateRegistrationStatus, updatePaymentStatus } from "./actions";
+import { updateRegistrationStatus, updatePaymentStatus, uploadPaymentProof } from "./actions";
 
 interface StatusUpdaterProps {
   currentStatus: string;
@@ -48,11 +48,13 @@ const PAYMENT_STATUSES      = ["PENDING", "WAITING_PAYMENT", "DOWN_PAYMENT", "PA
 
 export function StatusUpdater({ currentStatus, type, id, registrationId, canEdit }: StatusUpdaterProps) {
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [status, setStatus]         = useState(currentStatus);
   const [isOpen, setIsOpen]         = useState(false);
   const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0, width: 0 });
   const [mounted, setMounted]       = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const options = type === "registration" ? REGISTRATION_STATUSES : PAYMENT_STATUSES;
   const style   = STATUS_STYLES[status] || STATUS_STYLES.CANCELLED;
@@ -127,6 +129,38 @@ export function StatusUpdater({ currentStatus, type, id, registrationId, canEdit
       toast.success(`Tampilan status berhasil diubah menjadi "${newLabel}"`, { id: loadingId });
     } finally {
       setIsUpdating(false);
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Ukuran file maksimal 5MB');
+      return;
+    }
+
+    setIsUploading(true);
+    const loadingId = toast.loading('Mengunggah bukti pelunasan...');
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const result = await uploadPaymentProof(registrationId, formData);
+      if (result.success) {
+        toast.success('Bukti pelunasan berhasil diunggah', { id: loadingId });
+        // Optionally update the status to PAID automatically, or let admin do it
+      } else {
+        throw new Error(result.error);
+      }
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || 'Gagal mengunggah bukti pelunasan', { id: loadingId });
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
@@ -211,15 +245,31 @@ export function StatusUpdater({ currentStatus, type, id, registrationId, canEdit
       </button>
 
       {type === "payment" && status === "DOWN_PAYMENT" && (
-        <button
-          onClick={() => toast.info('Fitur unggah bukti pelunasan akan segera hadir')}
-          className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full border border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors shadow-sm"
-        >
-          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          Tambah Bukti Pembayaran
-        </button>
+        <>
+          <input 
+            type="file" 
+            ref={fileInputRef}
+            className="hidden" 
+            accept="image/*,.pdf"
+            onChange={handleFileUpload}
+          />
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isUploading}
+            className={clsx(
+              "inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full border border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            )}
+          >
+            {isUploading ? (
+              <span className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin flex-shrink-0" />
+            ) : (
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+            )}
+            {isUploading ? "Mengunggah..." : "Tambah Bukti Pembayaran"}
+          </button>
+        </>
       )}
 
       {dropdownPanel}
