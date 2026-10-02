@@ -8,7 +8,7 @@ export async function getBazaarParticipants() {
       .from('registrations')
       .select('*, events!inner(slug), participants(*), transactions(*)')
       .ilike('events.slug', 'open-bazaar%')
-      .in('transactions.status', ['PAID', 'VERIFIED', 'FREE', 'PENDING'])
+      .in('transactions.status', ['PAID', 'VERIFIED', 'FREE', 'PENDING', 'DOWN_PAYMENT'])
       .order('created_at', { ascending: false });
 
     if (error) {
@@ -26,7 +26,7 @@ export async function getBazaarParticipants() {
         pic: p?.full_name || 'Unknown',
         kontak: p?.whatsapp || '-',
         kategori: p?.metadata?.category || 'Makanan',
-        status_bayar: reg.transactions?.[0]?.status === 'PAID' ? 'Lunas' : 
+        status_bayar: ['PAID', 'VERIFIED'].includes(reg.transactions?.[0]?.status) ? 'Lunas' : 
                       reg.transactions?.[0]?.status === 'DOWN_PAYMENT' ? 'DP' : 'Belum Bayar'
       };
     });
