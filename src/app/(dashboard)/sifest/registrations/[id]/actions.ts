@@ -87,7 +87,7 @@ export async function uploadPaymentProof(registrationId: string, formData: FormD
     const fileName = `payment_proofs/${registrationId}_pelunasan_${Date.now()}.${fileExt}`;
 
     const { error: uploadError } = await supabaseServer.storage
-      .from('registration-files')
+      .from('registration_files')
       .upload(fileName, buffer, {
         contentType: file.type,
         upsert: true,
@@ -96,14 +96,30 @@ export async function uploadPaymentProof(registrationId: string, formData: FormD
     if (uploadError) throw uploadError;
 
     const { data: publicUrlData } = supabaseServer.storage
-      .from('registration-files')
+      .from('registration_files')
       .getPublicUrl(fileName);
 
     const publicUrl = publicUrlData.publicUrl;
 
+    const { data: regData } = await supabaseServer
+      .from('registrations')
+      .select('payment_proof_url')
+      .eq('id', registrationId)
+      .single();
+
+    let newPaymentProofUrl = publicUrl;
+    if (regData?.payment_proof_url) {
+      // Avoid appending duplicates if somehow called twice
+      if (!regData.payment_proof_url.includes(publicUrl)) {
+        newPaymentProofUrl = `${regData.payment_proof_url},${publicUrl}`;
+      } else {
+        newPaymentProofUrl = regData.payment_proof_url;
+      }
+    }
+
     const { error: dbError } = await supabaseServer
       .from('registrations')
-      .update({ payment_proof_url: publicUrl })
+      .update({ payment_proof_url: newPaymentProofUrl })
       .eq('id', registrationId);
 
     if (dbError) throw dbError;
