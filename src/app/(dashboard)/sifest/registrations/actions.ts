@@ -20,18 +20,7 @@ export async function deleteRegistrationAction(id: string) {
       return { success: false, error: 'Unauthorized' };
     }
 
-    // Get registration first to get participant_id and transaction_id
-    const { data: reg, error: fetchError } = await supabaseServer
-      .from('registrations')
-      .select('participant_id, transaction_id')
-      .eq('id', id)
-      .single();
-
-    if (fetchError) {
-      return { success: false, error: fetchError.message };
-    }
-
-    // Delete the registration
+    // Delete the registration (it cascades to participants and transactions automatically due to ON DELETE CASCADE)
     const { error: deleteRegError } = await supabaseServer
       .from('registrations')
       .delete()
@@ -39,16 +28,6 @@ export async function deleteRegistrationAction(id: string) {
 
     if (deleteRegError) {
       return { success: false, error: deleteRegError.message };
-    }
-
-    // Delete related transaction and participant
-    if (reg) {
-      if (reg.transaction_id) {
-        await supabaseServer.from('transactions').delete().eq('id', reg.transaction_id);
-      }
-      if (reg.participant_id) {
-        await supabaseServer.from('participants').delete().eq('id', reg.participant_id);
-      }
     }
 
     revalidatePath('/sifest/registrations');
