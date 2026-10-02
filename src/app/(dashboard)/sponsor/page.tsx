@@ -291,9 +291,10 @@ export default function SponsorPage() {
     }
   };
 
-  const totalSponsor = sponsors.length;
-  const totalDeal = sponsors.filter(s => s.status === "Deal / Potensial").length;
-  const totalPending = sponsors.filter(s => s.status === "Ditinjau" || s.status === "Sudah Dihubungi").length;
+  const realSponsors = sponsors.filter(spn => !(spn.nama_sponsor || "").startsWith("[Media Partner]"));
+  const totalSponsor = realSponsors.length;
+  const totalDeal = realSponsors.filter(s => s.status === "Deal / Potensial").length;
+  const totalPending = realSponsors.filter(s => s.status === "Ditinjau" || s.status === "Sudah Dihubungi").length;
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">

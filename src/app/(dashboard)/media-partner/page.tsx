@@ -291,9 +291,10 @@ export default function MediaPartnerPage() {
     }
   };
 
-  const totalSponsor = sponsors.length;
-  const totalDeal = sponsors.filter(s => s.status === "Deal / MoU Diteken").length;
-  const totalPending = sponsors.filter(s => s.status === "Menunggu Jawaban" || s.status === "MoU Sedang Direview").length;
+  const mediaPartners = sponsors.filter(spn => (spn.nama_sponsor || "").startsWith("[Media Partner]"));
+  const totalSponsor = mediaPartners.length;
+  const totalDeal = mediaPartners.filter(s => s.status === "Deal / MoU Diteken").length;
+  const totalPending = mediaPartners.filter(s => s.status === "Menunggu Jawaban" || s.status === "MoU Sedang Direview").length;
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
