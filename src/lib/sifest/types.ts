@@ -1,5 +1,5 @@
 export type RegistrationStatus = 'PENDING' | 'WAITING_PAYMENT' | 'PAID' | 'VERIFIED' | 'REJECTED' | 'CANCELLED';
-export type PaymentStatus = 'PENDING' | 'PAID' | 'EXPIRED' | 'FAILED' | 'REFUNDED';
+export type PaymentStatus = 'PENDING' | 'DOWN_PAYMENT' | 'PAID' | 'EXPIRED' | 'FAILED' | 'REFUNDED';
 
 export interface Event {
   id: string;

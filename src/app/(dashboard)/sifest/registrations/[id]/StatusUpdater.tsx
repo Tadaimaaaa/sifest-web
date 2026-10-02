@@ -18,7 +18,8 @@ interface StatusUpdaterProps {
 const STATUS_LABELS: Record<string, string> = {
   PENDING: "Menunggu",
   WAITING_PAYMENT: "Menunggu Pembayaran",
-  PAID: "Sudah Bayar",
+  DOWN_PAYMENT: "Uang Muka",
+  PAID: "Sudah Lunas",
   VERIFIED: "Terverifikasi",
   REJECTED: "Ditolak",
   CANCELLED: "Dibatalkan",
@@ -31,6 +32,7 @@ const STATUS_LABELS: Record<string, string> = {
 const STATUS_STYLES: Record<string, { badge: string; dot: string }> = {
   PENDING:         { badge: "bg-yellow-100 text-yellow-800 border-yellow-300", dot: "bg-yellow-400" },
   WAITING_PAYMENT: { badge: "bg-blue-100 text-blue-800 border-blue-300",       dot: "bg-blue-400" },
+  DOWN_PAYMENT:    { badge: "bg-indigo-100 text-indigo-800 border-indigo-300", dot: "bg-indigo-500" },
   PAID:            { badge: "bg-green-100 text-green-800 border-green-300",    dot: "bg-green-500" },
   VERIFIED:        { badge: "bg-emerald-100 text-emerald-800 border-emerald-300", dot: "bg-emerald-500" },
   REJECTED:        { badge: "bg-red-100 text-red-800 border-red-300",          dot: "bg-red-500" },
@@ -42,7 +44,7 @@ const STATUS_STYLES: Record<string, { badge: string; dot: string }> = {
 };
 
 const REGISTRATION_STATUSES = ["VERIFIED", "REJECTED", "INCOMPLETE"];
-const PAYMENT_STATUSES      = ["PENDING", "WAITING_PAYMENT", "PAID", "FAILED", "EXPIRED"];
+const PAYMENT_STATUSES      = ["PENDING", "WAITING_PAYMENT", "DOWN_PAYMENT", "PAID", "FAILED", "EXPIRED"];
 
 export function StatusUpdater({ currentStatus, type, id, registrationId, canEdit }: StatusUpdaterProps) {
   const [isUpdating, setIsUpdating] = useState(false);
@@ -185,7 +187,7 @@ export function StatusUpdater({ currentStatus, type, id, registrationId, canEdit
   );
 
   return (
-    <>
+    <div className="flex items-center gap-2">
       <button
         ref={buttonRef}
         onClick={openDropdown}
@@ -207,7 +209,20 @@ export function StatusUpdater({ currentStatus, type, id, registrationId, canEdit
           </svg>
         )}
       </button>
+
+      {type === "payment" && status === "DOWN_PAYMENT" && (
+        <button
+          onClick={() => toast.info('Fitur unggah bukti pelunasan akan segera hadir')}
+          className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-full border border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors shadow-sm"
+        >
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          Tambah Bukti Pembayaran
+        </button>
+      )}
+
       {dropdownPanel}
-    </>
+    </div>
   );
 }

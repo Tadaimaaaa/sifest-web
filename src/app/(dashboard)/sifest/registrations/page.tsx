@@ -12,7 +12,8 @@ export const dynamic = 'force-dynamic';
 const STATUS_LABELS: Record<string, string> = {
   PENDING: 'Menunggu',
   WAITING_PAYMENT: 'Menunggu Bayar',
-  PAID: 'Sudah Bayar',
+  DOWN_PAYMENT: 'Uang Muka',
+  PAID: 'Sudah Lunas',
   VERIFIED: 'Terverifikasi',
   REJECTED: 'Ditolak',
   CANCELLED: 'Dibatalkan',
@@ -25,6 +26,7 @@ const STATUS_LABELS: Record<string, string> = {
 const STATUS_STYLES: Record<string, { badge: string; dot: string }> = {
   PENDING:         { badge: 'bg-yellow-100 text-yellow-800 border border-yellow-200', dot: 'bg-yellow-400' },
   WAITING_PAYMENT: { badge: 'bg-blue-100 text-blue-800 border border-blue-200',       dot: 'bg-blue-400' },
+  DOWN_PAYMENT:    { badge: 'bg-indigo-100 text-indigo-800 border border-indigo-200', dot: 'bg-indigo-500' },
   PAID:            { badge: 'bg-green-100 text-green-800 border border-green-200',    dot: 'bg-green-500' },
   VERIFIED:        { badge: 'bg-emerald-100 text-emerald-800 border border-emerald-200', dot: 'bg-emerald-500' },
   REJECTED:        { badge: 'bg-red-100 text-red-800 border border-red-200',          dot: 'bg-red-500' },
