@@ -1,13 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Search, X, Trash2, Tag, Handshake, Mail, Phone, CalendarClock, Download, RefreshCcw } from "lucide-react";
+import { Plus, Search, X, Trash2, Tag, Handshake, Mail, Phone, CalendarClock, Download, RefreshCcw, Upload, Image as ImageIcon } from "lucide-react";
 import * as XLSX from 'xlsx';
 import { SCRIPT_URL } from "@/lib/api";
 import Cookies from "js-cookie";
 import { toast } from "sonner";
 import FullPageLoader from "@/components/FullPageLoader";
 import Swal from "sweetalert2";
+import Image from "next/image";
+import { uploadLogo } from "./actions";
 
 type Sponsor = {
   id_sponsor: string;
@@ -69,8 +71,10 @@ export default function MediaPartnerPage() {
     tgl_followup: "",
     status: "Belum Dihubungi",
     keterangan: "",
-    catatan: ""
+    catatan: "",
+    logo_url: ""
   });
+  const [logoFile, setLogoFile] = useState<File | null>(null);
 
   const hasAccess = ["ROLE-001", "ROLE-007", "ROLE-008"].includes(currentUserRole);
   const canPrint = ["ROLE-001", "ROLE-002", "ROLE-003", "ROLE-007", "ROLE-008"].includes(currentUserRole);
@@ -106,11 +110,15 @@ export default function MediaPartnerPage() {
 
   const handleExportExcel = () => {
     try {
-      const exportData = filteredSponsors.map((spn, index) => ({
-        "No": index + 1,
-        "ID Sponsor": spn.id_sponsor,
-        "Nama Sponsor / Brand": spn.nama_sponsor,
-        "PIC / Kontak": spn.pic,
+      const exportData = filteredSponsors.map((spn, index) => {
+        const parts = spn.nama_sponsor.split("||LOGO||");
+        const cleanNama = parts[0].replace("[Media Partner] ", "").trim();
+
+        return {
+          "No": index + 1,
+          "ID Sponsor": spn.id_sponsor,
+          "Nama Media Partner / Portal": cleanNama,
+          "PIC / Kontak": spn.pic,
         "No. HP / Link Form": spn.kontak,
         "Email": spn.email,
         "Tanggal Pemberian Proposal": formatTanggal(spn.tgl_proposal),
@@ -119,7 +127,8 @@ export default function MediaPartnerPage() {
         "Keterangan": spn.keterangan,
         "Catatan": spn.catatan,
         "Ditambahkan Oleh": spn.added_by
-      }));
+        };
+      });
 
       const worksheet = XLSX.utils.json_to_sheet(exportData);
       const workbook = XLSX.utils.book_new();
@@ -149,9 +158,25 @@ export default function MediaPartnerPage() {
     }
 
     setIsSubmitting(true);
+    let finalLogoUrl = formData.logo_url;
+
+    if (logoFile) {
+      const uploadData = new FormData();
+      uploadData.append("file", logoFile);
+      const res = await uploadLogo(uploadData);
+      if (res.success && res.url) {
+        finalLogoUrl = res.url;
+      } else {
+        toast.error("Gagal mengunggah logo: " + res.message);
+        setIsSubmitting(false);
+        return;
+      }
+    }
+
     const token = Cookies.get("session_token");
     
-    const finalNama = `[Media Partner] ${formData.nama_sponsor}`;
+    let cleanNama = formData.nama_sponsor.split("||LOGO||")[0].trim();
+    const finalNama = `[Media Partner] ${cleanNama}${finalLogoUrl ? ` ||LOGO|| ${finalLogoUrl}` : ''}`;
     const payload = {
       action: editingSponsor ? "editSponsor" : "addSponsor",
       token,
@@ -234,8 +259,12 @@ export default function MediaPartnerPage() {
 
   const openEditModal = (spn: Sponsor) => {
     setEditingSponsor(spn);
+    const parts = spn.nama_sponsor.split("||LOGO||");
+    const cleanNama = parts[0].replace("[Media Partner] ", "").trim();
+    const existingLogoUrl = parts[1] ? parts[1].trim() : "";
+
     setFormData({
-      nama_sponsor: spn.nama_sponsor.replace("[Media Partner] ", ""),
+      nama_sponsor: cleanNama,
       pic: spn.pic,
       kontak: spn.kontak,
       email: spn.email,
@@ -243,8 +272,10 @@ export default function MediaPartnerPage() {
       tgl_followup: formatDateForInput(spn.tgl_followup),
       status: spn.status,
       keterangan: spn.keterangan,
-      catatan: spn.catatan
+      catatan: spn.catatan,
+      logo_url: existingLogoUrl
     });
+    setLogoFile(null);
     setIsModalOpen(true);
   };
 
@@ -259,8 +290,10 @@ export default function MediaPartnerPage() {
       tgl_followup: "",
       status: "Belum Dihubungi",
       keterangan: "",
-      catatan: ""
+      catatan: "",
+      logo_url: ""
     });
+    setLogoFile(null);
   };
 
   const filteredSponsors = sponsors.filter(spn => {
@@ -425,10 +458,29 @@ export default function MediaPartnerPage() {
                   </td>
                 </tr>
               ) : (
-                filteredSponsors.map((spn) => (
+                filteredSponsors.map((spn) => {
+                  const parts = spn.nama_sponsor.split("||LOGO||");
+                  const cleanNama = parts[0].replace("[Media Partner] ", "").trim();
+                  const logoUrl = parts[1] ? parts[1].trim() : null;
+                  
+                  return (
                   <tr key={spn.id_sponsor} className="hover:bg-slate-50/80 transition-colors group">
                     <td className="px-6 py-4">
-                      <p className="font-bold text-slate-800 text-[15px] mb-1">{spn.nama_sponsor.replace("[Media Partner] ", "")}</p>
+                      <div className="flex items-center gap-3 mb-2">
+                        {logoUrl ? (
+                          <div className="w-10 h-10 rounded-lg border border-slate-200 overflow-hidden bg-white shrink-0 relative flex items-center justify-center">
+                            <Image src={logoUrl} alt={cleanNama} fill className="object-contain p-1" sizes="40px" />
+                          </div>
+                        ) : (
+                          <div className="w-10 h-10 rounded-lg border border-slate-200 overflow-hidden bg-slate-50 shrink-0 flex items-center justify-center">
+                            <ImageIcon className="w-5 h-5 text-slate-400" />
+                          </div>
+                        )}
+                        <div>
+                          <p className="font-bold text-slate-800 text-[15px] leading-tight">{cleanNama}</p>
+                        </div>
+                      </div>
+                      
                       {spn.pic && typeof spn.pic === 'string' && spn.pic !== "-" && (
                         <div className="flex items-center gap-1.5 text-slate-500 mb-0.5">
                           <Tag className="w-3 h-3" /> <span className="text-xs">{spn.pic}</span>
@@ -488,7 +540,8 @@ export default function MediaPartnerPage() {
                       </td>
                     )}
                   </tr>
-                ))
+                )
+                })
               )}
             </tbody>
           </table>
@@ -509,6 +562,31 @@ export default function MediaPartnerPage() {
             </div>
             
             <form onSubmit={handleSaveSponsor} className="p-6 space-y-5">
+              
+              {/* Logo Upload Area */}
+              <div className="flex flex-col items-center justify-center mb-6">
+                <label className="relative flex flex-col items-center justify-center w-32 h-32 bg-slate-50 border-2 border-dashed border-slate-300 rounded-2xl cursor-pointer hover:bg-slate-100 hover:border-blue-500 transition-all overflow-hidden group">
+                  {logoFile ? (
+                    <Image src={URL.createObjectURL(logoFile)} alt="Preview" fill className="object-contain p-2" />
+                  ) : formData.logo_url ? (
+                    <Image src={formData.logo_url} alt="Logo" fill className="object-contain p-2" />
+                  ) : (
+                    <div className="flex flex-col items-center justify-center text-slate-500">
+                      <Upload className="w-6 h-6 mb-2 group-hover:text-blue-500 transition-colors" />
+                      <span className="text-xs font-medium text-center px-2">Upload<br/>Logo</span>
+                    </div>
+                  )}
+                  <input type="file" accept="image/*" onChange={(e) => {
+                    if (e.target.files?.[0]) setLogoFile(e.target.files[0]);
+                  }} className="hidden" />
+                </label>
+                {(logoFile || formData.logo_url) && (
+                  <button type="button" onClick={() => { setLogoFile(null); setFormData({...formData, logo_url: ""}) }} className="text-xs text-rose-500 font-medium mt-2 hover:underline">
+                    Hapus Logo
+                  </button>
+                )}
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                 <div className="sm:col-span-2">
                   <label className="block text-sm font-semibold text-slate-700 mb-1.5">Nama Media Partner / Portal <span className="text-rose-500">*</span></label>
