@@ -222,10 +222,14 @@ export default async function RegistrationDetailPage({
                   {registration.payment_proof_url ? (
                     <div className="space-y-2">
                       <p className="text-sm font-semibold text-slate-700">Bukti Pembayaran Diunggah:</p>
-                      <a href={registration.payment_proof_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-green-50 text-green-700 hover:bg-green-100 font-medium text-xs border border-green-200 transition-colors">
-                        <FileText className="w-3.5 h-3.5" />
-                        Bukti Valid (Lihat)
-                      </a>
+                      <div className="flex flex-col gap-2 items-center">
+                        {registration.payment_proof_url.split(',').map((url, idx) => (
+                          <a key={idx} href={url.trim()} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-green-50 text-green-700 hover:bg-green-100 font-medium text-xs border border-green-200 transition-colors">
+                            <FileText className="w-3.5 h-3.5" />
+                            {idx === 0 ? "Bukti Valid (Lihat)" : "Bukti Pelunasan (Lihat)"}
+                          </a>
+                        ))}
+                      </div>
                     </div>
                   ) : (
                     <p className="text-sm text-amber-600 font-medium">Peserta belum mengunggah bukti pembayaran.</p>
