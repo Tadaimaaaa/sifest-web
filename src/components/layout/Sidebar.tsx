@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Users, Handshake, Mail, Package, LogOut, Wallet, Camera, Calendar, ScanLine, Image as ImageIcon, UserPlus } from "lucide-react";
+import { LayoutDashboard, Users, Handshake, Mail, Package, Box, LogOut, Wallet, Camera, Calendar, ScanLine, Image as ImageIcon, UserPlus } from "lucide-react";
 import clsx from "clsx";
 import { useState, useEffect } from "react";
 import Cookies from "js-cookie";
@@ -17,6 +17,7 @@ const navItems = [
   { name: "Surat Masuk & Keluar", href: "/surat", icon: Mail },
   { name: "Produk Sponsor", href: "/produk", icon: Package },
   { name: "Data Event", href: "/event", icon: Calendar },
+  { name: "Data Perlengkapan", href: "/perlengkapan", icon: Box },
   { name: "Pubdok", href: "/pubdok", icon: Camera },
   { name: "Scanner Tiket", href: "/sifest/scanner", icon: ScanLine },
 ];
