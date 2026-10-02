@@ -26,10 +26,10 @@ type Sponsor = {
 const STATUS_OPTIONS = [
   "Belum Dihubungi",
   "Sudah Dihubungi",
-  "Ditinjau",
-  "Butuh Diskusi dengan Panitia",
-  "Sudah ke Lokasi",
-  "Deal / Potensial",
+  "Menunggu Jawaban",
+  "MoU Sedang Direview",
+  "Deal / MoU Diteken",
+  "Batal / Syarat Memberatkan",
   "Ditolak",
   "Tidak Ada Respons"
 ];
@@ -280,20 +280,20 @@ export default function MediaPartnerPage() {
 
   const getStatusColor = (status: string) => {
     switch(status) {
-      case "Deal / Potensial": return "bg-emerald-100 text-emerald-700";
+      case "Deal / MoU Diteken": return "bg-emerald-100 text-emerald-700";
       case "Ditolak": return "bg-rose-100 text-rose-700";
-      case "Ditinjau": return "bg-amber-100 text-amber-700";
+      case "Batal / Syarat Memberatkan": return "bg-rose-50 text-rose-600 border border-rose-200";
+      case "Menunggu Jawaban": return "bg-amber-100 text-amber-700";
       case "Sudah Dihubungi": return "bg-blue-100 text-blue-700";
-      case "Sudah ke Lokasi": return "bg-indigo-100 text-indigo-700";
+      case "MoU Sedang Direview": return "bg-purple-100 text-purple-700";
       case "Tidak Ada Respons": return "bg-slate-100 text-slate-600";
-      case "Butuh Diskusi dengan Panitia": return "bg-purple-100 text-purple-700";
       default: return "bg-slate-100 text-slate-500";
     }
   };
 
   const totalSponsor = sponsors.length;
-  const totalDeal = sponsors.filter(s => s.status === "Deal / Potensial").length;
-  const totalPending = sponsors.filter(s => s.status === "Ditinjau" || s.status === "Sudah Dihubungi").length;
+  const totalDeal = sponsors.filter(s => s.status === "Deal / MoU Diteken").length;
+  const totalPending = sponsors.filter(s => s.status === "Menunggu Jawaban" || s.status === "MoU Sedang Direview").length;
 
   return (
     <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
@@ -351,7 +351,7 @@ export default function MediaPartnerPage() {
             <Handshake className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-sm text-slate-500 font-medium">Deal / Potensial</p>
+            <p className="text-sm text-slate-500 font-medium">Deal / Ttd MoU</p>
             <h3 className="text-2xl font-bold text-slate-800">{totalDeal} Instansi</h3>
           </div>
         </div>
@@ -361,7 +361,7 @@ export default function MediaPartnerPage() {
             <CalendarClock className="w-6 h-6" />
           </div>
           <div>
-            <p className="text-sm text-slate-500 font-medium">Prospek / Ditinjau</p>
+            <p className="text-sm text-slate-500 font-medium">Menunggu Jawaban</p>
             <h3 className="text-2xl font-bold text-slate-800">{totalPending} Instansi</h3>
           </div>
         </div>
@@ -382,7 +382,7 @@ export default function MediaPartnerPage() {
             />
           </div>
           <div className="flex gap-2 w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0 hide-scrollbar">
-            {["Semua", "Jadwal Follow Up", "Deal / Potensial", "Ditinjau", "Sudah Dihubungi", "Ditolak"].map((status) => (
+            {["Semua", "Jadwal Follow Up", "Deal / MoU Diteken", "Menunggu Jawaban", "Sudah Dihubungi", "Ditolak"].map((status) => (
               <button
                 key={status}
                 onClick={() => setStatusFilter(status)}
@@ -404,8 +404,8 @@ export default function MediaPartnerPage() {
             <thead className="bg-slate-50 text-slate-500 border-b border-slate-100">
               <tr>
                 <th className="px-6 py-4 font-semibold">Media Partner & Kontak</th>
-                <th className="px-6 py-4 font-semibold">Tgl Proposal & Follow Up</th>
-                <th className="px-6 py-4 font-semibold">Status & Keterangan</th>
+                <th className="px-6 py-4 font-semibold">Tgl Pengajuan & Follow Up</th>
+                <th className="px-6 py-4 font-semibold">Status & Barter Value</th>
                 <th className="px-6 py-4 font-semibold">Catatan Internal</th>
                 {hasAccess && <th className="px-6 py-4 font-semibold text-right">Aksi</th>}
               </tr>
@@ -449,7 +449,7 @@ export default function MediaPartnerPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-slate-700">
                       <div className="mb-1">
-                        <span className="text-xs text-slate-400 block mb-0.5">Tgl Proposal:</span>
+                        <span className="text-xs text-slate-400 block mb-0.5">Tgl Pengajuan:</span>
                         <span className="font-medium">{formatTanggal(spn.tgl_proposal)}</span>
                       </div>
                       <div>
@@ -530,7 +530,7 @@ export default function MediaPartnerPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Tgl Pemberian Proposal</label>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Tgl Pengajuan Proposal/MoU</label>
                   <input type="date" value={formData.tgl_proposal} onChange={(e) => setFormData({...formData, tgl_proposal: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all" />
                 </div>
 
@@ -547,8 +547,8 @@ export default function MediaPartnerPage() {
                 </div>
 
                 <div className="sm:col-span-2">
-                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Keterangan / Progress</label>
-                  <textarea rows={2} value={formData.keterangan} onChange={(e) => setFormData({...formData, keterangan: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none" placeholder="Penjelasan singkat mengenai respons sponsor..." />
+                  <label className="block text-sm font-semibold text-slate-700 mb-1.5">Detail Barter Value / Progress</label>
+                  <textarea rows={2} value={formData.keterangan} onChange={(e) => setFormData({...formData, keterangan: e.target.value})} className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all resize-none" placeholder="Misal: Kesepakatan posting feed/story, jumlah tiket yang diminta, dll..." />
                 </div>
 
                 <div className="sm:col-span-2">
