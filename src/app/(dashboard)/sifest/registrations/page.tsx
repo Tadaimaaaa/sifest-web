@@ -5,6 +5,7 @@ import Link from 'next/link';
 import clsx from 'clsx';
 import { Eye } from 'lucide-react';
 import { cookies } from 'next/headers';
+import { DeleteButton } from './DeleteButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -70,6 +71,7 @@ export default async function RegistrationsPage({
 
 
   const events = await getEvents();
+  const isSuperAdmin = ['ROLE-001', 'SUPER_ADMIN'].includes(roleId);
   let allowedEventIds: string[] | undefined = undefined; // undefined means all
 
   if (roleId === 'ROLE-012') { // Futsal
@@ -162,13 +164,18 @@ export default async function RegistrationsPage({
                     <StatusBadge status={reg.transactions?.payment_method === 'FREE' ? 'FREE' : (reg.transactions?.status || 'PENDING')} />
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <Link
-                      href={`/sifest/registrations/${reg.id}`}
-                      className="text-blue-600 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 p-2 rounded-lg inline-flex items-center gap-2 transition-colors"
-                    >
-                      <Eye className="w-4 h-4" />
-                      Detail
-                    </Link>
+                    <div className="flex items-center justify-end gap-2">
+                      <Link
+                        href={`/sifest/registrations/${reg.id}`}
+                        className="text-blue-600 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 p-2 rounded-lg inline-flex items-center gap-2 transition-colors"
+                      >
+                        <Eye className="w-4 h-4" />
+                        Detail
+                      </Link>
+                      {isSuperAdmin && (
+                        <DeleteButton id={reg.id} />
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
