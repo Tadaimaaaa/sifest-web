@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Trash2, AlertTriangle, X } from 'lucide-react';
 import { deleteRegistrationAction } from './actions';
 import { useRouter } from 'next/navigation';
@@ -12,7 +12,6 @@ export function DeleteButton({ id }: { id: string }) {
   const [mounted, setMounted] = useState(false);
   const router = useRouter();
 
-  import { useEffect } from 'react';
   useEffect(() => setMounted(true), []);
 
   const handleDelete = async () => {
