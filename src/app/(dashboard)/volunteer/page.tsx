@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Search, Loader2, CheckCircle2, XCircle, Trash2, ExternalLink, Info, X, Download } from "lucide-react";
 import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
+import { jsPDF } from "jspdf";
 import Cookies from "js-cookie";
 
 import { SCRIPT_URL } from "@/lib/api";
@@ -128,9 +128,9 @@ export default function VolunteerDashboard() {
       }
       
       pdf.save(`Volunteer_${selectedVolunteer.nama.replace(/\s+/g, '_')}.pdf`);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Gagal cetak PDF:", error);
-      alert("Terjadi kesalahan saat mencetak PDF.");
+      alert("Terjadi kesalahan saat mencetak PDF: " + (error.message || error.toString()));
     } finally {
       setIsExporting(false);
     }
