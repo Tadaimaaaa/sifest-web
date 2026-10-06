@@ -405,28 +405,28 @@ export default function VolunteerDashboard() {
           {/* KOP SURAT */}
           <div className="flex items-center justify-between pb-1">
             {/* Logo Kiri: REMA */}
-            <img src="/logo-rema.jpg" alt="Logo REMA" className="w-[125px] object-contain mix-blend-multiply" />
+            <img src="/logo-rema.jpg" alt="Logo REMA" className="w-[105px] object-contain mix-blend-multiply" />
             
             {/* Teks Tengah */}
             <div className="text-center flex-1 px-1 text-black font-serif">
-              <h1 className="text-[17px] font-bold leading-[1.1]">PANITIA PELAKSANA SISTEM INFORMASI FESTIVAL</h1>
-              <h2 className="text-[17px] font-bold leading-[1.1]">HIMPUNAN MAHASISWA JURUSAN SISTEM INFORMASI</h2>
-              <h3 className="text-[17px] font-bold leading-[1.1]">FAKULTAS ILMU KOMPUTER</h3>
-              <h4 className="text-[15px] font-bold leading-[1.1]">REPUBLIK MAHASISWA UNIVERSITAS PUTRA INDONESIA "YPTK" PADANG</h4>
-              <p className="text-[13px] leading-[1.15] mt-1">Sekretariat Jl. Raya Lubuk Begalung, Student Center Lt. 1 Padang Sumbar</p>
-              <p className="text-[13px] leading-[1.15]">Email : <span className="text-blue-700 underline">sinformationfest@gmail.com</span> Instagram : @sifest.hmjsi</p>
+              <h1 className="text-[14pt] font-bold leading-snug">PANITIA PELAKSANA SISTEM INFORMASI FESTIVAL</h1>
+              <h2 className="text-[14pt] font-bold leading-snug">HIMPUNAN MAHASISWA JURUSAN SISTEM INFORMASI</h2>
+              <h3 className="text-[14pt] font-bold leading-snug">FAKULTAS ILMU KOMPUTER</h3>
+              <h4 className="text-[14pt] font-bold leading-snug">REPUBLIK MAHASISWA UNIVERSITAS PUTRA INDONESIA “YPTK” PADANG</h4>
+              <p className="text-[11.5pt] leading-snug mt-1">Sekretariat Jl. Raya Lubuk Begalung, Student Center Lt. 1 Padang Sumbar</p>
+              <p className="text-[11.5pt] leading-snug">Email : <span className="text-blue-700 underline">sinformationfest@gmail.com</span> Instagram : @sifest.hmjsi</p>
             </div>
             
             {/* Logo Kanan: HMJSI & SIFEST */}
-            <div className="flex items-center justify-end gap-1.5 w-[140px]">
-              <img src="/logo-hmjsi.png" alt="Logo HMJSI" className="w-[85px] h-auto object-contain mix-blend-multiply" />
+            <div className="flex items-center justify-end gap-2 w-[130px]">
+              <img src="/logo-hmjsi.png" alt="Logo HMJSI" className="w-[75px] h-auto object-contain mix-blend-multiply" />
               <img src="/logo-sifest.png" alt="Logo SIFEST" className="w-[50px] h-auto object-contain mix-blend-multiply" />
             </div>
           </div>
           
           {/* Garis Kop Surat Ganda */}
-          <div className="w-full border-b-[2px] border-black mt-1 mb-[2px]"></div>
-          <div className="w-full border-b-[4px] border-black mb-8"></div>
+          <div className="w-full border-b-[1.5px] border-black mt-2 mb-[2.5px]"></div>
+          <div className="w-full border-b-[3.5px] border-black mb-8"></div>
           
           {/* JUDUL */}
           <h4 className="text-center text-lg font-bold uppercase mb-8 underline decoration-2 underline-offset-4">
