@@ -413,7 +413,7 @@ export default function VolunteerDashboard() {
               <p className="text-[14px] leading-tight" style={{ fontFamily: '"Times New Roman", Times, serif' }}>Email : <span className="text-blue-700 underline">sinformationfest@gmail.com</span> Instagram : @sifest.hmjsi</p>
             </div>
             <div className="flex items-center gap-1">
-              <img src="/logo-hmjsi.png" alt="Logo HMJ SI" className="w-[75px] object-contain" />
+              <img src="/logo-hmjsi.jpg" alt="Logo HMJ SI" className="w-[75px] object-contain" />
               <img src="/logo-sifest.png" alt="Logo SIFEST" className="w-[80px] object-contain" />
             </div>
           </div>
