@@ -45,7 +45,8 @@ export default function KeuanganPage() {
     status: "Lunas",
     fileData: "",
     fileName: "",
-    mimeType: ""
+    mimeType: "",
+    bukti_url: ""
   });
 
   const hasAccess = ["ROLE-001", "ROLE-006"].includes(currentUserRole);
