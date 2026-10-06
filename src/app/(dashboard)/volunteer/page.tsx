@@ -148,8 +148,9 @@ export default function VolunteerDashboard() {
           <table className="w-full text-sm text-left">
             <thead className="bg-slate-50 border-b border-slate-100 text-slate-600 font-semibold">
               <tr>
-                <th className="px-6 py-4">Pendaftar</th>
-                <th className="px-6 py-4">Kontak & Sosmed</th>
+                <th className="px-6 py-4">Nama</th>
+                <th className="px-6 py-4">No. BP</th>
+                <th className="px-6 py-4">No. WhatsApp</th>
                 <th className="px-6 py-4">Status</th>
                 <th className="px-6 py-4 text-right">Aksi</th>
               </tr>
@@ -157,30 +158,28 @@ export default function VolunteerDashboard() {
             <tbody className="divide-y divide-slate-100">
               {isLoading ? (
                 <tr>
-                  <td colSpan={4} className="px-6 py-12 text-center">
+                  <td colSpan={5} className="px-6 py-12 text-center">
                     <Loader2 className="w-8 h-8 animate-spin mx-auto text-blue-500 mb-3" />
                     <p className="text-slate-500">Memuat data volunteer...</p>
                   </td>
                 </tr>
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={4} className="px-6 py-12 text-center text-slate-500">
+                  <td colSpan={5} className="px-6 py-12 text-center text-slate-500">
                     Tidak ada pendaftar yang cocok.
                   </td>
                 </tr>
               ) : (
                 filtered.map((v) => (
                   <tr key={v.id_volunteer} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="px-6 py-4">
-                      <p className="font-bold text-slate-800">{v.nama}</p>
-                      <p className="text-xs text-slate-500">{v.no_bp} • {v.jurusan}</p>
-                      <p className="text-xs text-slate-400 mt-1">{v.alamat}</p>
+                    <td className="px-6 py-4 font-bold text-slate-800">
+                      {v.nama}
                     </td>
-                    <td className="px-6 py-4">
-                      <p className="font-medium text-slate-700">{v.no_hp}</p>
-                      <a href={v.link_ig} target="_blank" rel="noreferrer" className="text-xs text-blue-600 hover:underline flex items-center gap-1 mt-1">
-                        Instagram <ExternalLink className="w-3 h-3" />
-                      </a>
+                    <td className="px-6 py-4 text-slate-700 font-medium">
+                      {v.no_bp}
+                    </td>
+                    <td className="px-6 py-4 text-slate-700 font-medium">
+                      {v.no_hp}
                     </td>
                     <td className="px-6 py-4">
                       {getStatusBadge(v.status)}
