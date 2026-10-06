@@ -5,6 +5,7 @@ import { Search, Loader2, CheckCircle2, XCircle, Trash2, ExternalLink, Info, X, 
 import { toPng } from "html-to-image";
 import { jsPDF } from "jspdf";
 import Cookies from "js-cookie";
+import Swal from "sweetalert2";
 
 import { SCRIPT_URL } from "@/lib/api";
 
@@ -57,7 +58,18 @@ export default function VolunteerDashboard() {
   }, []);
 
   const updateStatus = async (id_volunteer: string, status: string) => {
-    if (!confirm(`Yakin ingin mengubah status menjadi ${status}?`)) return;
+    const confirmation = await Swal.fire({
+      title: 'Konfirmasi',
+      text: `Yakin ingin mengubah status menjadi ${status}?`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Ya, ubah!',
+      cancelButtonText: 'Batal',
+      confirmButtonColor: '#3085d6',
+      cancelButtonColor: '#d33'
+    });
+    
+    if (!confirmation.isConfirmed) return;
     
     try {
       const token = Cookies.get("session_token");
@@ -68,17 +80,29 @@ export default function VolunteerDashboard() {
       });
       const result = await res.json();
       if (result.success === true) {
+        Swal.fire('Berhasil!', 'Status berhasil diubah.', 'success');
         fetchVolunteers();
       } else {
-        alert("Gagal: " + result.message);
+        Swal.fire('Gagal!', result.message, 'error');
       }
     } catch (e) {
-      alert("Error jaringan.");
+      Swal.fire('Error!', 'Terjadi kesalahan jaringan.', 'error');
     }
   };
 
   const deleteVolunteer = async (id_volunteer: string) => {
-    if (!confirm("Yakin ingin menghapus data ini secara permanen?")) return;
+    const confirmation = await Swal.fire({
+      title: 'Hapus Data?',
+      text: "Data yang dihapus tidak dapat dikembalikan!",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#d33',
+      cancelButtonColor: '#3085d6',
+      confirmButtonText: 'Ya, hapus!',
+      cancelButtonText: 'Batal'
+    });
+    
+    if (!confirmation.isConfirmed) return;
     
     try {
       const token = Cookies.get("session_token");
@@ -89,12 +113,13 @@ export default function VolunteerDashboard() {
       });
       const result = await res.json();
       if (result.success === true) {
+        Swal.fire('Terhapus!', 'Data volunteer telah dihapus.', 'success');
         fetchVolunteers();
       } else {
-        alert("Gagal: " + result.message);
+        Swal.fire('Gagal!', result.message, 'error');
       }
     } catch (e) {
-      alert("Error jaringan.");
+      Swal.fire('Error!', 'Terjadi kesalahan jaringan.', 'error');
     }
   };
 
