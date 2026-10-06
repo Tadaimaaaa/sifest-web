@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Search, Loader2, CheckCircle2, XCircle, Trash2, ExternalLink, Info, X } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Search, Loader2, CheckCircle2, XCircle, Trash2, ExternalLink, Info, X, Download } from "lucide-react";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 import Cookies from "js-cookie";
 
 import { SCRIPT_URL } from "@/lib/api";
@@ -30,6 +32,8 @@ export default function VolunteerDashboard() {
   const [search, setSearch] = useState("");
   const [filterEvent, setFilterEvent] = useState("");
   const [selectedVolunteer, setSelectedVolunteer] = useState<Volunteer | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
+  const modalRef = useRef<HTMLDivElement>(null);
 
   const fetchVolunteers = async () => {
     setIsLoading(true);
@@ -90,6 +94,45 @@ export default function VolunteerDashboard() {
       }
     } catch (e) {
       alert("Error jaringan.");
+    }
+  };
+
+  const exportPDF = async () => {
+    if (!selectedVolunteer || !modalRef.current) return;
+    
+    setIsExporting(true);
+    try {
+      const canvas = await html2canvas(modalRef.current, {
+        scale: 2,
+        backgroundColor: "#ffffff",
+        logging: false
+      });
+      
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4"
+      });
+      
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      
+      // Jika tinggi modal melebihi halaman A4
+      if (pdfHeight > pdf.internal.pageSize.getHeight()) {
+        pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+      } else {
+        // Center vertically if smaller
+        const marginY = (pdf.internal.pageSize.getHeight() - pdfHeight) / 2;
+        pdf.addImage(imgData, "PNG", 0, marginY, pdfWidth, pdfHeight);
+      }
+      
+      pdf.save(`Volunteer_${selectedVolunteer.nama.replace(/\s+/g, '_')}.pdf`);
+    } catch (error) {
+      console.error("Gagal cetak PDF:", error);
+      alert("Terjadi kesalahan saat mencetak PDF.");
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -215,7 +258,7 @@ export default function VolunteerDashboard() {
       {/* Modal Detail */}
       {selectedVolunteer && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
-          <div className="bg-white/95 backdrop-blur-xl border border-white rounded-3xl w-full max-w-3xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] animate-in zoom-in-95 duration-300 overflow-hidden flex flex-col max-h-[90vh]">
+          <div ref={modalRef} className="bg-white/95 backdrop-blur-xl border border-white rounded-3xl w-full max-w-3xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] animate-in zoom-in-95 duration-300 overflow-hidden flex flex-col max-h-[90vh]">
             
             {/* Header Modal */}
             <div className="relative px-8 py-6 border-b border-slate-100 bg-gradient-to-r from-blue-50/50 to-indigo-50/50 flex items-center justify-between shrink-0">
@@ -231,7 +274,7 @@ export default function VolunteerDashboard() {
                   </div>
                 </div>
               </div>
-              <button onClick={() => setSelectedVolunteer(null)} className="p-2.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-full transition-all">
+              <button data-html2canvas-ignore onClick={() => setSelectedVolunteer(null)} className="p-2.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-full transition-all">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -313,14 +356,24 @@ export default function VolunteerDashboard() {
             </div>
 
             {/* Footer Modal */}
-            <div className="border-t border-slate-100 px-8 py-5 bg-white flex justify-between items-center shrink-0">
+            <div data-html2canvas-ignore className="border-t border-slate-100 px-8 py-5 bg-white flex justify-between items-center shrink-0">
               <div className="flex items-center gap-3">
                 <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Status:</span>
                 {getStatusBadge(selectedVolunteer.status)}
               </div>
-              <button onClick={() => setSelectedVolunteer(null)} className="px-6 py-2.5 bg-slate-800 text-white text-sm font-semibold rounded-xl hover:bg-slate-700 hover:shadow-lg hover:shadow-slate-800/20 transition-all transform hover:-translate-y-0.5">
-                Tutup Detail
-              </button>
+              <div className="flex gap-3">
+                <button 
+                  onClick={exportPDF} 
+                  disabled={isExporting}
+                  className="px-5 py-2.5 bg-blue-50 text-blue-600 text-sm font-semibold rounded-xl hover:bg-blue-600 hover:text-white transition-all shadow-sm flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                >
+                  {isExporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                  Cetak PDF
+                </button>
+                <button onClick={() => setSelectedVolunteer(null)} className="px-6 py-2.5 bg-slate-800 text-white text-sm font-semibold rounded-xl hover:bg-slate-700 hover:shadow-lg hover:shadow-slate-800/20 transition-all transform hover:-translate-y-0.5">
+                  Tutup Detail
+                </button>
+              </div>
             </div>
           </div>
         </div>
