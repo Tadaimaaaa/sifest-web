@@ -458,18 +458,18 @@ export default function VolunteerDashboard() {
 
       {/* Hidden Report Template for PDF */}
       <div style={{ position: "absolute", left: "-9999px", top: "-9999px", pointerEvents: "none" }}>
-        <div ref={printRef} className="w-[210mm] min-h-[297mm] bg-white text-black p-12 flex flex-col" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
+        <div ref={printRef} className="w-[794px] h-[1123px] bg-white text-black p-12 flex flex-col relative" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
           
           {/* KOP SURAT */}
           <div className="flex items-center justify-between pb-3">
             <img src="/logo-hmjsi.jpg" alt="Logo HMJ SI" className="w-[90px] h-[90px] object-contain" />
             <div className="text-center flex-1 px-4 text-black">
-              <h1 className="text-[17px] font-bold leading-snug" style={{ fontFamily: '"Times New Roman", Times, serif' }}>PANITIA PELAKSANA SISTEM INFORMASI FESTIVAL</h1>
-              <h2 className="text-[17px] font-bold leading-snug" style={{ fontFamily: '"Times New Roman", Times, serif' }}>HIMPUNAN MAHASISWA JURUSAN SISTEM INFORMASI</h2>
-              <h3 className="text-[17px] font-bold leading-snug" style={{ fontFamily: '"Times New Roman", Times, serif' }}>FAKULTAS ILMU KOMPUTER</h3>
-              <h4 className="text-[17px] font-bold leading-snug" style={{ fontFamily: '"Times New Roman", Times, serif' }}>REPUBLIK MAHASISWA UNIVERSITAS PUTRA INDONESIA "YPTK" PADANG</h4>
-              <p className="text-[14px] leading-snug mt-1" style={{ fontFamily: '"Times New Roman", Times, serif' }}>Sekretariat Jl. Raya Lubuk Begalung, Student Center Lt. 1 Padang Sumbar</p>
-              <p className="text-[14px] leading-snug" style={{ fontFamily: '"Times New Roman", Times, serif' }}>Email : <span className="text-blue-700 underline">sinformationfest@gmail.com</span> Instagram : @sifest.hmjsi</p>
+              <h1 className="text-[15px] font-bold leading-snug" style={{ fontFamily: '"Times New Roman", Times, serif' }}>PANITIA PELAKSANA SISTEM INFORMASI FESTIVAL</h1>
+              <h2 className="text-[15px] font-bold leading-snug" style={{ fontFamily: '"Times New Roman", Times, serif' }}>HIMPUNAN MAHASISWA JURUSAN SISTEM INFORMASI</h2>
+              <h3 className="text-[15px] font-bold leading-snug" style={{ fontFamily: '"Times New Roman", Times, serif' }}>FAKULTAS ILMU KOMPUTER</h3>
+              <h4 className="text-[15px] font-bold leading-snug" style={{ fontFamily: '"Times New Roman", Times, serif' }}>REPUBLIK MAHASISWA UNIVERSITAS PUTRA INDONESIA "YPTK" PADANG</h4>
+              <p className="text-[12px] leading-snug mt-1" style={{ fontFamily: '"Times New Roman", Times, serif' }}>Sekretariat Jl. Raya Lubuk Begalung, Student Center Lt. 1 Padang Sumbar</p>
+              <p className="text-[12px] leading-snug" style={{ fontFamily: '"Times New Roman", Times, serif' }}>Email : <span className="text-blue-700 underline">sinformationfest@gmail.com</span> Instagram : @sifest.hmjsi</p>
             </div>
             <div className="flex items-center gap-2">
               <img src="/logo-rema.png" alt="Logo REMA" className="w-[85px] h-[85px] object-contain" />
@@ -548,9 +548,9 @@ export default function VolunteerDashboard() {
           )}
           
           {/* TTD */}
-          <div className="mt-auto pt-16 flex justify-end">
+          <div className="absolute bottom-16 right-16 flex justify-end">
             <div className="text-center w-64">
-              <p className="mb-24">Padang, {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+              <p className="mb-20">Padang, {selectedVolunteer ? new Date(selectedVolunteer.waktu_daftar).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
               <p className="font-bold border-b border-black inline-block px-4 pb-1">
                 {selectedVolunteer?.nama || 'Pendaftar'}
               </p>

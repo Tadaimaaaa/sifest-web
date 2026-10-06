@@ -96,18 +96,18 @@ export default function PrintButton({ registration }: { registration?: any }) {
 
       {/* HIDDEN PRINT TEMPLATE */}
       <div className="overflow-hidden h-0 w-0 absolute left-[-9999px] top-[-9999px]">
-        <div ref={printRef} className="w-[800px] bg-white text-black p-10 font-serif" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
+        <div ref={printRef} className="w-[794px] h-[1123px] bg-white text-black px-10 py-12 font-serif relative" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
           
           {/* KOP SURAT */}
           <div className="flex items-center justify-between pb-3">
             <img src="/logo-hmjsi.jpg" alt="Logo HMJ SI" className="w-[90px] h-[90px] object-contain" />
             <div className="text-center flex-1 px-4 text-black">
-              <h1 className="text-[17px] font-bold leading-snug" style={{ fontFamily: '"Times New Roman", Times, serif' }}>PANITIA PELAKSANA SISTEM INFORMASI FESTIVAL</h1>
-              <h2 className="text-[17px] font-bold leading-snug" style={{ fontFamily: '"Times New Roman", Times, serif' }}>HIMPUNAN MAHASISWA JURUSAN SISTEM INFORMASI</h2>
-              <h3 className="text-[17px] font-bold leading-snug" style={{ fontFamily: '"Times New Roman", Times, serif' }}>FAKULTAS ILMU KOMPUTER</h3>
-              <h4 className="text-[17px] font-bold leading-snug" style={{ fontFamily: '"Times New Roman", Times, serif' }}>REPUBLIK MAHASISWA UNIVERSITAS PUTRA INDONESIA "YPTK" PADANG</h4>
-              <p className="text-[14px] leading-snug mt-1" style={{ fontFamily: '"Times New Roman", Times, serif' }}>Sekretariat Jl. Raya Lubuk Begalung, Student Center Lt. 1 Padang Sumbar</p>
-              <p className="text-[14px] leading-snug" style={{ fontFamily: '"Times New Roman", Times, serif' }}>Email : <span className="text-blue-700 underline">sinformationfest@gmail.com</span> Instagram : @sifest.hmjsi</p>
+              <h1 className="text-[15px] font-bold leading-snug" style={{ fontFamily: '"Times New Roman", Times, serif' }}>PANITIA PELAKSANA SISTEM INFORMASI FESTIVAL</h1>
+              <h2 className="text-[15px] font-bold leading-snug" style={{ fontFamily: '"Times New Roman", Times, serif' }}>HIMPUNAN MAHASISWA JURUSAN SISTEM INFORMASI</h2>
+              <h3 className="text-[15px] font-bold leading-snug" style={{ fontFamily: '"Times New Roman", Times, serif' }}>FAKULTAS ILMU KOMPUTER</h3>
+              <h4 className="text-[15px] font-bold leading-snug" style={{ fontFamily: '"Times New Roman", Times, serif' }}>REPUBLIK MAHASISWA UNIVERSITAS PUTRA INDONESIA "YPTK" PADANG</h4>
+              <p className="text-[12px] leading-snug mt-1" style={{ fontFamily: '"Times New Roman", Times, serif' }}>Sekretariat Jl. Raya Lubuk Begalung, Student Center Lt. 1 Padang Sumbar</p>
+              <p className="text-[12px] leading-snug" style={{ fontFamily: '"Times New Roman", Times, serif' }}>Email : <span className="text-blue-700 underline">sinformationfest@gmail.com</span> Instagram : @sifest.hmjsi</p>
             </div>
             <div className="flex items-center gap-2">
               <img src="/logo-rema.png" alt="Logo REMA" className="w-[85px] h-[85px] object-contain" />
@@ -125,7 +125,7 @@ export default function PrintButton({ registration }: { registration?: any }) {
           </h2>
 
           {/* Konten Data Utama */}
-          <table className="w-full text-[15px] mb-6" style={{ fontFamily: '"Times New Roman", Times, serif', lineHeight: '1.8' }}>
+          <table className="w-full text-[14px] mb-6" style={{ fontFamily: '"Times New Roman", Times, serif', lineHeight: '1.8' }}>
             <tbody>
               <tr>
                 <td className="w-[35%] font-bold align-top">Kode Pendaftaran</td>
@@ -287,7 +287,7 @@ export default function PrintButton({ registration }: { registration?: any }) {
           </table>
 
           {/* Tanda Tangan */}
-          <div className="flex justify-end mt-16" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
+          <div className="absolute bottom-16 right-16 flex justify-end" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
             <div className="text-center w-[250px]">
               <p className="mb-20">Padang, {new Date(registration.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
               <p className="font-bold border-b border-black inline-block px-4 pb-1">{p.full_name}</p>
