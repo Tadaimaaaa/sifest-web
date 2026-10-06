@@ -448,7 +448,7 @@ export default function KeuanganPage() {
                       )}
                     </td>
                     <td className="px-6 py-4 text-slate-700">
-                      {trx.vol !== "-" && trx.vol ? `${trx.vol} ${trx.satuan}` : "-"}
+                      {(trx.vol && trx.vol !== "-" && trx.vol !== "0") ? `${trx.vol} ${trx.satuan || ''}` : (trx.satuan && trx.satuan !== "-" ? trx.satuan : "-")}
                     </td>
                     <td className="px-6 py-4 text-right whitespace-nowrap">
                       <p className={`font-bold ${trx.jenis === 'INCOME' ? 'text-emerald-600' : 'text-rose-600'}`}>
