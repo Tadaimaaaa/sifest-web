@@ -186,20 +186,20 @@ export default function VolunteerDashboard() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2">
-                        <button onClick={() => setSelectedVolunteer(v)} className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-100 transition-colors" title="Detail">
-                          <Info className="w-4 h-4" />
+                        <button onClick={() => setSelectedVolunteer(v)} className="px-3 py-1.5 rounded-lg bg-blue-50 text-blue-600 font-medium text-xs flex items-center gap-1.5 hover:bg-blue-600 hover:text-white transition-all shadow-sm" title="Lihat Detail">
+                          <Info className="w-4 h-4" /> Detail
                         </button>
                         {v.status !== 'Diterima' && (
-                          <button onClick={() => updateStatus(v.id_volunteer, 'Diterima')} className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center hover:bg-emerald-100 transition-colors" title="Terima">
-                            <CheckCircle2 className="w-4 h-4" />
+                          <button onClick={() => updateStatus(v.id_volunteer, 'Diterima')} className="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-600 font-medium text-xs flex items-center gap-1.5 hover:bg-emerald-600 hover:text-white transition-all shadow-sm" title="Terima">
+                            <CheckCircle2 className="w-4 h-4" /> Terima
                           </button>
                         )}
                         {v.status !== 'Ditolak' && (
-                          <button onClick={() => updateStatus(v.id_volunteer, 'Ditolak')} className="w-8 h-8 rounded-lg bg-rose-50 text-rose-600 flex items-center justify-center hover:bg-rose-100 transition-colors" title="Tolak">
-                            <XCircle className="w-4 h-4" />
+                          <button onClick={() => updateStatus(v.id_volunteer, 'Ditolak')} className="px-3 py-1.5 rounded-lg bg-rose-50 text-rose-600 font-medium text-xs flex items-center gap-1.5 hover:bg-rose-600 hover:text-white transition-all shadow-sm" title="Tolak">
+                            <XCircle className="w-4 h-4" /> Tolak
                           </button>
                         )}
-                        <button onClick={() => deleteVolunteer(v.id_volunteer)} className="w-8 h-8 rounded-lg bg-slate-100 text-slate-400 flex items-center justify-center hover:bg-slate-200 hover:text-slate-600 transition-colors" title="Hapus">
+                        <button onClick={() => deleteVolunteer(v.id_volunteer)} className="p-1.5 rounded-lg bg-slate-50 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-all shadow-sm" title="Hapus">
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
@@ -214,66 +214,88 @@ export default function VolunteerDashboard() {
 
       {/* Modal Detail */}
       {selectedVolunteer && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl w-full max-w-2xl shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="border-b border-slate-100 px-6 py-4 flex items-center justify-between shrink-0 bg-blue-50">
-              <div>
-                <h2 className="text-lg font-bold text-slate-800">Detail Volunteer</h2>
-                <p className="text-xs text-blue-600 font-medium mt-0.5">{selectedVolunteer.nama}</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="bg-white/95 backdrop-blur-xl border border-white rounded-3xl w-full max-w-3xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.3)] animate-in zoom-in-95 duration-300 overflow-hidden flex flex-col max-h-[90vh]">
+            
+            {/* Header Modal */}
+            <div className="relative px-8 py-6 border-b border-slate-100 bg-gradient-to-r from-blue-50/50 to-indigo-50/50 flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-blue-500/30">
+                  {selectedVolunteer.nama.charAt(0).toUpperCase()}
+                </div>
+                <div>
+                  <h2 className="text-xl font-extrabold text-slate-800 tracking-tight">{selectedVolunteer.nama}</h2>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-xs font-semibold text-blue-600 bg-blue-100/50 px-2.5 py-0.5 rounded-full">{selectedVolunteer.no_bp}</span>
+                    <span className="text-xs font-medium text-slate-500">{selectedVolunteer.jurusan}</span>
+                  </div>
+                </div>
               </div>
-              <button onClick={() => setSelectedVolunteer(null)} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-white rounded-full transition-colors">
+              <button onClick={() => setSelectedVolunteer(null)} className="p-2.5 text-slate-400 hover:text-rose-500 hover:bg-rose-50 rounded-full transition-all">
                 <X className="w-5 h-5" />
               </button>
             </div>
             
-            <div className="flex-1 overflow-y-auto p-6 space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Informasi Pribadi</h3>
-                  <div className="space-y-3">
-                    <div>
-                      <p className="text-xs text-slate-500">Nama Lengkap</p>
-                      <p className="text-sm font-medium text-slate-900">{selectedVolunteer.nama}</p>
+            {/* Body Modal */}
+            <div className="flex-1 overflow-y-auto p-8 space-y-8">
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* Kontak Card */}
+                <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm shadow-slate-200/50">
+                  <h3 className="flex items-center gap-2 text-sm font-bold text-slate-800 mb-5">
+                    <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-blue-500">
+                      <ExternalLink className="w-4 h-4" />
                     </div>
-                    <div>
-                      <p className="text-xs text-slate-500">NIM / No. BP</p>
-                      <p className="text-sm font-medium text-slate-900">{selectedVolunteer.no_bp}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-slate-500">Jurusan</p>
-                      <p className="text-sm font-medium text-slate-900">{selectedVolunteer.jurusan}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-slate-500">No. HP / WhatsApp</p>
+                    Kontak & Sosial Media
+                  </h3>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center pb-3 border-b border-slate-50">
+                      <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">WhatsApp</p>
                       <p className="text-sm font-medium text-slate-900">{selectedVolunteer.no_hp}</p>
                     </div>
-                    <div>
-                      <p className="text-xs text-slate-500">Instagram</p>
-                      <a href={selectedVolunteer.link_ig} target="_blank" rel="noreferrer" className="text-sm font-medium text-blue-600 hover:underline flex items-center gap-1">
-                        Buka Instagram <ExternalLink className="w-3 h-3" />
+                    <div className="flex justify-between items-center pb-3 border-b border-slate-50">
+                      <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Instagram</p>
+                      <a href={selectedVolunteer.link_ig} target="_blank" rel="noreferrer" className="text-sm font-bold text-blue-600 hover:text-blue-700 hover:underline">
+                        Buka Profil ↗
                       </a>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-1">Alamat Lengkap</p>
+                      <p className="text-sm text-slate-700 leading-relaxed">{selectedVolunteer.alamat}</p>
                     </div>
                   </div>
                 </div>
 
-                <div>
-                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Pilihan & Berkas</h3>
-                  <div className="space-y-3">
-                    <div>
-                      <p className="text-xs text-slate-500">Pilihan Event 1</p>
-                      <p className="text-sm font-medium text-slate-900">{selectedVolunteer.event_1}</p>
+                {/* Event & Berkas Card */}
+                <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm shadow-slate-200/50">
+                  <h3 className="flex items-center gap-2 text-sm font-bold text-slate-800 mb-5">
+                    <div className="w-8 h-8 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-500">
+                      <Info className="w-4 h-4" />
+                    </div>
+                    Pilihan Event & Berkas
+                  </h3>
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center pb-3 border-b border-slate-50">
+                      <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Pilihan 1</p>
+                      <p className="text-sm font-bold text-slate-800">{selectedVolunteer.event_1}</p>
+                    </div>
+                    <div className="flex justify-between items-center pb-3 border-b border-slate-50">
+                      <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Pilihan 2</p>
+                      <p className="text-sm font-bold text-slate-800">{selectedVolunteer.event_2}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-slate-500">Pilihan Event 2</p>
-                      <p className="text-sm font-medium text-slate-900">{selectedVolunteer.event_2}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-slate-500">Berkas Pendukung</p>
-                      <div className="flex flex-wrap gap-2 mt-1">
-                        <a href={selectedVolunteer.link_bukti} target="_blank" rel="noreferrer" className="text-[11px] px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors flex items-center gap-1">Bukti IG <ExternalLink className="w-3 h-3" /></a>
-                        <a href={selectedVolunteer.link_krs} target="_blank" rel="noreferrer" className="text-[11px] px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors flex items-center gap-1">KRS <ExternalLink className="w-3 h-3" /></a>
+                      <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Berkas Pendukung</p>
+                      <div className="flex flex-wrap gap-2">
+                        <a href={selectedVolunteer.link_bukti} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-xs font-semibold px-4 py-2 bg-indigo-50 text-indigo-700 rounded-full hover:bg-indigo-600 hover:text-white transition-all shadow-sm">
+                          Bukti IG <ExternalLink className="w-3 h-3" />
+                        </a>
+                        <a href={selectedVolunteer.link_krs} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-xs font-semibold px-4 py-2 bg-purple-50 text-purple-700 rounded-full hover:bg-purple-600 hover:text-white transition-all shadow-sm">
+                          KRS <ExternalLink className="w-3 h-3" />
+                        </a>
                         {selectedVolunteer.link_sertifikat && selectedVolunteer.link_sertifikat.split(',').map((link, idx) => (
-                          <a key={idx} href={link.trim()} target="_blank" rel="noreferrer" className="text-[11px] px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors flex items-center gap-1">Sertifikat {idx + 1} <ExternalLink className="w-3 h-3" /></a>
+                          <a key={idx} href={link.trim()} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-xs font-semibold px-4 py-2 bg-pink-50 text-pink-700 rounded-full hover:bg-pink-600 hover:text-white transition-all shadow-sm">
+                            Sertif {idx + 1} <ExternalLink className="w-3 h-3" />
+                          </a>
                         ))}
                       </div>
                     </div>
@@ -281,24 +303,23 @@ export default function VolunteerDashboard() {
                 </div>
               </div>
 
-              <div>
-                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Alamat Lengkap</h3>
-                <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 text-sm text-slate-700">
-                  {selectedVolunteer.alamat}
-                </div>
-              </div>
-
-              <div>
+              {/* Motivasi */}
+              <div className="bg-slate-50/50 rounded-2xl p-6 border border-slate-100">
                 <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Motivasi Bergabung</h3>
-                <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 text-sm text-slate-700 whitespace-pre-wrap">
-                  {selectedVolunteer.motivasi}
-                </div>
+                <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap italic">
+                  "{selectedVolunteer.motivasi}"
+                </p>
               </div>
             </div>
 
-            <div className="border-t border-slate-100 p-4 bg-slate-50 flex justify-end">
-              <button onClick={() => setSelectedVolunteer(null)} className="px-5 py-2 bg-white border border-slate-200 text-slate-700 text-sm font-medium rounded-xl hover:bg-slate-50 transition-colors shadow-sm">
-                Tutup
+            {/* Footer Modal */}
+            <div className="border-t border-slate-100 px-8 py-5 bg-white flex justify-between items-center shrink-0">
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Status:</span>
+                {getStatusBadge(selectedVolunteer.status)}
+              </div>
+              <button onClick={() => setSelectedVolunteer(null)} className="px-6 py-2.5 bg-slate-800 text-white text-sm font-semibold rounded-xl hover:bg-slate-700 hover:shadow-lg hover:shadow-slate-800/20 transition-all transform hover:-translate-y-0.5">
+                Tutup Detail
               </button>
             </div>
           </div>
