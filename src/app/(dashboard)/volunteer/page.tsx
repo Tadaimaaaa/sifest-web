@@ -399,28 +399,34 @@ export default function VolunteerDashboard() {
 
       {/* Hidden Report Template for PDF */}
       <div style={{ position: "absolute", left: "-9999px", top: "-9999px", pointerEvents: "none" }}>
-        <div ref={printRef} className="w-[210mm] min-h-[297mm] bg-white text-black p-12 flex flex-col" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
+        {/* Menggunakan persis dimensi A4 (210x297mm) dengan margin standar (2.54cm) */}
+        <div ref={printRef} className="w-[210mm] min-h-[297mm] bg-white text-black px-[2.54cm] py-[2.54cm] flex flex-col" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
           
           {/* KOP SURAT */}
-          <div className="flex items-center justify-between pb-3">
-            <img src="/logo-rema.jpg" alt="Logo REMA" className="w-[85px] object-contain mix-blend-multiply" />
-            <div className="text-center flex-1 px-2 text-black">
-              <h1 className="text-[16.5px] font-bold leading-tight" style={{ fontFamily: '"Times New Roman", Times, serif' }}>PANITIA PELAKSANA SISTEM INFORMASI FESTIVAL</h1>
-              <h2 className="text-[16.5px] font-bold leading-tight" style={{ fontFamily: '"Times New Roman", Times, serif' }}>HIMPUNAN MAHASISWA JURUSAN SISTEM INFORMASI</h2>
-              <h3 className="text-[16.5px] font-bold leading-tight" style={{ fontFamily: '"Times New Roman", Times, serif' }}>FAKULTAS ILMU KOMPUTER</h3>
-              <h4 className="text-[16.5px] font-bold leading-tight" style={{ fontFamily: '"Times New Roman", Times, serif' }}>REPUBLIK MAHASISWA UNIVERSITAS PUTRA INDONESIA "YPTK" PADANG</h4>
-              <p className="text-[14px] leading-tight mt-1.5" style={{ fontFamily: '"Times New Roman", Times, serif' }}>Sekretariat Jl. Raya Lubuk Begalung, Student Center Lt. 1 Padang Sumbar</p>
-              <p className="text-[14px] leading-tight" style={{ fontFamily: '"Times New Roman", Times, serif' }}>Email : <span className="text-blue-700 underline">sinformationfest@gmail.com</span> Instagram : @sifest.hmjsi</p>
+          <div className="flex items-center justify-between pb-2">
+            {/* Logo Kiri: REMA */}
+            <img src="/logo-rema.jpg" alt="Logo REMA" className="w-[100px] object-contain mix-blend-multiply" />
+            
+            {/* Teks Tengah */}
+            <div className="text-center flex-1 px-4 text-black">
+              <h1 className="text-[17px] font-bold leading-[1.2]">PANITIA PELAKSANA SISTEM INFORMASI FESTIVAL</h1>
+              <h2 className="text-[17px] font-bold leading-[1.2]">HIMPUNAN MAHASISWA JURUSAN SISTEM INFORMASI</h2>
+              <h3 className="text-[17px] font-bold leading-[1.2]">FAKULTAS ILMU KOMPUTER</h3>
+              <h4 className="text-[15.5px] font-bold leading-[1.2]">REPUBLIK MAHASISWA UNIVERSITAS PUTRA INDONESIA "YPTK" PADANG</h4>
+              <p className="text-[14px] leading-[1.3] mt-1">Sekretariat Jl. Raya Lubuk Begalung, Student Center Lt. 1 Padang Sumbar</p>
+              <p className="text-[14px] leading-[1.3]">Email : <span className="text-blue-700 underline">sinformationfest@gmail.com</span> Instagram : @sifest.hmjsi</p>
             </div>
-            <div className="flex items-center gap-1">
-              <img src="/logo-hmjsi.png" alt="Logo HMJSI" className="w-[85px] object-contain mix-blend-multiply" />
-              <img src="/logo-sifest.png" alt="Logo SIFEST" className="w-[80px] object-contain mix-blend-multiply" />
+            
+            {/* Logo Kanan: HMJSI & SIFEST */}
+            <div className="flex items-center justify-end gap-1 w-[120px]">
+              <img src="/logo-hmjsi.png" alt="Logo HMJSI" className="w-[75px] h-auto object-contain mix-blend-multiply" />
+              <img src="/logo-sifest.png" alt="Logo SIFEST" className="w-[50px] h-auto object-contain mix-blend-multiply" />
             </div>
           </div>
           
           {/* Garis Kop Surat Ganda */}
-          <div className="w-full border-b-[1.5px] border-black mb-[2px]"></div>
-          <div className="w-full border-b-[3.5px] border-black mb-8"></div>
+          <div className="w-full border-b-[2px] border-black mb-[2px]"></div>
+          <div className="w-full border-b-[4px] border-black mb-8"></div>
           
           {/* JUDUL */}
           <h4 className="text-center text-lg font-bold uppercase mb-8 underline decoration-2 underline-offset-4">
