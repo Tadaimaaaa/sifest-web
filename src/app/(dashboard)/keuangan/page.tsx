@@ -639,6 +639,8 @@ export default function KeuanganPage() {
                     <option value="Lunas">Lunas</option>
                     <option value="Belum Lunas">Belum Lunas</option>
                     <option value="Hutang">Hutang</option>
+                    <option value="Uang Muka">Uang Muka</option>
+                    <option value="Pelunasan">Pelunasan</option>
                   </select>
                 </div>
               </div>
