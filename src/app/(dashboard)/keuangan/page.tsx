@@ -585,7 +585,7 @@ export default function KeuanganPage() {
                 />
               </div>
 
-              {newTrx.kategori === 'Pendaftaran' ? (
+              {newTrx.kategori?.trim().toLowerCase() === 'pendaftaran' ? (
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <label className="text-sm font-medium text-slate-700">Volume (Jml Pendaftar)</label>
