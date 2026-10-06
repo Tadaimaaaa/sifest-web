@@ -463,7 +463,11 @@ export default function KeuanganPage() {
                     <td className="px-6 py-4">
                       <p className="text-slate-800 font-medium text-sm">{trx.penanggung_jawab || trx.recorded_by}</p>
                       <span className={`inline-flex mt-1 items-center px-2 py-0.5 rounded text-[10px] font-medium border
-                        ${trx.status === 'Lunas' ? 'border-emerald-200 bg-emerald-50 text-emerald-600' : 'border-amber-200 bg-amber-50 text-amber-600'}`}>
+                        ${trx.status === 'Lunas' ? 'border-emerald-200 bg-emerald-50 text-emerald-600' 
+                        : trx.status === 'Uang Muka' ? 'border-purple-200 bg-purple-50 text-purple-600'
+                        : trx.status === 'Pelunasan' ? 'border-blue-200 bg-blue-50 text-blue-600'
+                        : trx.status === 'Hutang' ? 'border-rose-200 bg-rose-50 text-rose-600'
+                        : 'border-amber-200 bg-amber-50 text-amber-600'}`}>
                         {trx.status || "Lunas"}
                       </span>
                     </td>
