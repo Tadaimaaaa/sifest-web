@@ -704,14 +704,31 @@ export default function KeuanganPage() {
                     <p className="text-xs text-slate-500 truncate text-center px-2 pb-1">{newTrx.fileName}</p>
                   </div>
                 ) : (
-                  <div className="relative">
+                  <div className="space-y-3">
+                    <div className="relative">
+                      <input 
+                        type="file" 
+                        accept="image/*"
+                        onChange={handleFileChange}
+                        className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/50 focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                      />
+                    </div>
+                    
+                    <div className="flex items-center gap-3 px-1">
+                      <div className="flex-1 h-px bg-slate-200"></div>
+                      <span className="text-[11px] font-medium text-slate-400 uppercase tracking-wider">Atau Paste Link</span>
+                      <div className="flex-1 h-px bg-slate-200"></div>
+                    </div>
+                    
                     <input 
-                      type="file" 
-                      accept="image/*"
-                      onChange={handleFileChange}
-                      className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/50 focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                      type="url"
+                      placeholder="Paste link dari Bukti Pembayaran Pendaftar..."
+                      value={(newTrx as any).bukti_url || ''}
+                      onChange={(e) => setNewTrx({...newTrx, bukti_url: e.target.value})}
+                      className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/50 focus:outline-none placeholder:text-slate-400"
                     />
-                    <p className="text-xs text-slate-400 mt-1.5">
+                    
+                    <p className="text-xs text-slate-400 mt-1.5 hidden">
                       Bisa mengambil langsung dari kamera perangkat (HP) atau memilih dari Galeri.
                     </p>
                     <div className="mt-2 p-2.5 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-2">
