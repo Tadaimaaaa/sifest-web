@@ -71,6 +71,15 @@ export default function VolunteerDashboard() {
     
     if (!confirmation.isConfirmed) return;
     
+    Swal.fire({
+      title: 'Memproses...',
+      text: 'Mohon tunggu sebentar',
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading();
+      }
+    });
+    
     try {
       const token = Cookies.get("session_token");
       const res = await fetch(`${SCRIPT_URL}?action=updateStatusVolunteer`, {
@@ -103,6 +112,15 @@ export default function VolunteerDashboard() {
     });
     
     if (!confirmation.isConfirmed) return;
+    
+    Swal.fire({
+      title: 'Menghapus...',
+      text: 'Mohon tunggu sebentar',
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading();
+      }
+    });
     
     try {
       const token = Cookies.get("session_token");
