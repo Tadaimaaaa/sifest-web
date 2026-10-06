@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, Loader2, CheckCircle2, XCircle, Trash2, ExternalLink } from "lucide-react";
+import { Search, Loader2, CheckCircle2, XCircle, Trash2, ExternalLink, Info, X } from "lucide-react";
 import Cookies from "js-cookie";
 
 import { SCRIPT_URL } from "@/lib/api";
@@ -29,6 +29,7 @@ export default function VolunteerDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterEvent, setFilterEvent] = useState("");
+  const [selectedVolunteer, setSelectedVolunteer] = useState<Volunteer | null>(null);
 
   const fetchVolunteers = async () => {
     setIsLoading(true);
@@ -149,8 +150,6 @@ export default function VolunteerDashboard() {
               <tr>
                 <th className="px-6 py-4">Pendaftar</th>
                 <th className="px-6 py-4">Kontak & Sosmed</th>
-                <th className="px-6 py-4">Pilihan Event</th>
-                <th className="px-6 py-4">Berkas</th>
                 <th className="px-6 py-4">Status</th>
                 <th className="px-6 py-4 text-right">Aksi</th>
               </tr>
@@ -158,14 +157,14 @@ export default function VolunteerDashboard() {
             <tbody className="divide-y divide-slate-100">
               {isLoading ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center">
+                  <td colSpan={4} className="px-6 py-12 text-center">
                     <Loader2 className="w-8 h-8 animate-spin mx-auto text-blue-500 mb-3" />
                     <p className="text-slate-500">Memuat data volunteer...</p>
                   </td>
                 </tr>
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-slate-500">
+                  <td colSpan={4} className="px-6 py-12 text-center text-slate-500">
                     Tidak ada pendaftar yang cocok.
                   </td>
                 </tr>
@@ -184,23 +183,13 @@ export default function VolunteerDashboard() {
                       </a>
                     </td>
                     <td className="px-6 py-4">
-                      <p className="text-xs font-semibold text-slate-700"><span className="text-slate-400 font-normal">1:</span> {v.event_1}</p>
-                      <p className="text-xs font-semibold text-slate-700"><span className="text-slate-400 font-normal">2:</span> {v.event_2}</p>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex flex-col gap-1">
-                        <a href={v.link_bukti} target="_blank" rel="noreferrer" className="text-[11px] px-2 py-1 bg-slate-100 text-slate-600 rounded hover:bg-slate-200 truncate max-w-[120px]">Bukti IG</a>
-                        <a href={v.link_krs} target="_blank" rel="noreferrer" className="text-[11px] px-2 py-1 bg-slate-100 text-slate-600 rounded hover:bg-slate-200 truncate max-w-[120px]">KRS</a>
-                        {v.link_sertifikat && v.link_sertifikat.split(',').map((link, idx) => (
-                          <a key={idx} href={link.trim()} target="_blank" rel="noreferrer" className="text-[11px] px-2 py-1 bg-blue-50 text-blue-600 rounded hover:bg-blue-100 truncate max-w-[120px]">Sertif {idx + 1}</a>
-                        ))}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
                       {getStatusBadge(v.status)}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2">
+                        <button onClick={() => setSelectedVolunteer(v)} className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-100 transition-colors" title="Detail">
+                          <Info className="w-4 h-4" />
+                        </button>
                         {v.status !== 'Diterima' && (
                           <button onClick={() => updateStatus(v.id_volunteer, 'Diterima')} className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center hover:bg-emerald-100 transition-colors" title="Terima">
                             <CheckCircle2 className="w-4 h-4" />
@@ -223,6 +212,99 @@ export default function VolunteerDashboard() {
           </table>
         </div>
       </div>
+
+      {/* Modal Detail */}
+      {selectedVolunteer && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl w-full max-w-2xl shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="border-b border-slate-100 px-6 py-4 flex items-center justify-between shrink-0 bg-blue-50">
+              <div>
+                <h2 className="text-lg font-bold text-slate-800">Detail Volunteer</h2>
+                <p className="text-xs text-blue-600 font-medium mt-0.5">{selectedVolunteer.nama}</p>
+              </div>
+              <button onClick={() => setSelectedVolunteer(null)} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-white rounded-full transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Informasi Pribadi</h3>
+                  <div className="space-y-3">
+                    <div>
+                      <p className="text-xs text-slate-500">Nama Lengkap</p>
+                      <p className="text-sm font-medium text-slate-900">{selectedVolunteer.nama}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-500">NIM / No. BP</p>
+                      <p className="text-sm font-medium text-slate-900">{selectedVolunteer.no_bp}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-500">Jurusan</p>
+                      <p className="text-sm font-medium text-slate-900">{selectedVolunteer.jurusan}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-500">No. HP / WhatsApp</p>
+                      <p className="text-sm font-medium text-slate-900">{selectedVolunteer.no_hp}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-500">Instagram</p>
+                      <a href={selectedVolunteer.link_ig} target="_blank" rel="noreferrer" className="text-sm font-medium text-blue-600 hover:underline flex items-center gap-1">
+                        Buka Instagram <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Pilihan & Berkas</h3>
+                  <div className="space-y-3">
+                    <div>
+                      <p className="text-xs text-slate-500">Pilihan Event 1</p>
+                      <p className="text-sm font-medium text-slate-900">{selectedVolunteer.event_1}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-500">Pilihan Event 2</p>
+                      <p className="text-sm font-medium text-slate-900">{selectedVolunteer.event_2}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-500">Berkas Pendukung</p>
+                      <div className="flex flex-wrap gap-2 mt-1">
+                        <a href={selectedVolunteer.link_bukti} target="_blank" rel="noreferrer" className="text-[11px] px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors flex items-center gap-1">Bukti IG <ExternalLink className="w-3 h-3" /></a>
+                        <a href={selectedVolunteer.link_krs} target="_blank" rel="noreferrer" className="text-[11px] px-3 py-1.5 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition-colors flex items-center gap-1">KRS <ExternalLink className="w-3 h-3" /></a>
+                        {selectedVolunteer.link_sertifikat && selectedVolunteer.link_sertifikat.split(',').map((link, idx) => (
+                          <a key={idx} href={link.trim()} target="_blank" rel="noreferrer" className="text-[11px] px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors flex items-center gap-1">Sertifikat {idx + 1} <ExternalLink className="w-3 h-3" /></a>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Alamat Lengkap</h3>
+                <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 text-sm text-slate-700">
+                  {selectedVolunteer.alamat}
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Motivasi Bergabung</h3>
+                <div className="p-4 bg-slate-50 rounded-xl border border-slate-100 text-sm text-slate-700 whitespace-pre-wrap">
+                  {selectedVolunteer.motivasi}
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t border-slate-100 p-4 bg-slate-50 flex justify-end">
+              <button onClick={() => setSelectedVolunteer(null)} className="px-5 py-2 bg-white border border-slate-200 text-slate-700 text-sm font-medium rounded-xl hover:bg-slate-50 transition-colors shadow-sm">
+                Tutup
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
