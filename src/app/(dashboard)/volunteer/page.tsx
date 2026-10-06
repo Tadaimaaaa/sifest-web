@@ -61,7 +61,7 @@ export default function VolunteerDashboard() {
     
     try {
       const token = Cookies.get("session_token");
-      const res = await fetch(SCRIPT_URL, {
+      const res = await fetch(`${SCRIPT_URL}?action=updateStatusVolunteer`, {
         method: "POST",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify({ action: "updateStatusVolunteer", id_volunteer, status, token })
@@ -82,7 +82,7 @@ export default function VolunteerDashboard() {
     
     try {
       const token = Cookies.get("session_token");
-      const res = await fetch(SCRIPT_URL, {
+      const res = await fetch(`${SCRIPT_URL}?action=deleteVolunteer`, {
         method: "POST",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify({ action: "deleteVolunteer", id_volunteer, token })
