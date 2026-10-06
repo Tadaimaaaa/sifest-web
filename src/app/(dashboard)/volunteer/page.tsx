@@ -403,29 +403,29 @@ export default function VolunteerDashboard() {
         <div ref={printRef} className="w-[210mm] min-h-[297mm] bg-white text-black px-[2.54cm] py-[2.54cm] flex flex-col" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
           
           {/* KOP SURAT */}
-          <div className="flex items-center justify-between pb-2">
+          <div className="flex items-center justify-between pb-1">
             {/* Logo Kiri: REMA */}
-            <img src="/logo-rema.jpg" alt="Logo REMA" className="w-[100px] object-contain mix-blend-multiply" />
+            <img src="/logo-rema.jpg" alt="Logo REMA" className="w-[125px] object-contain mix-blend-multiply" />
             
             {/* Teks Tengah */}
-            <div className="text-center flex-1 px-4 text-black">
-              <h1 className="text-[17px] font-bold leading-[1.2]">PANITIA PELAKSANA SISTEM INFORMASI FESTIVAL</h1>
-              <h2 className="text-[17px] font-bold leading-[1.2]">HIMPUNAN MAHASISWA JURUSAN SISTEM INFORMASI</h2>
-              <h3 className="text-[17px] font-bold leading-[1.2]">FAKULTAS ILMU KOMPUTER</h3>
-              <h4 className="text-[15.5px] font-bold leading-[1.2]">REPUBLIK MAHASISWA UNIVERSITAS PUTRA INDONESIA "YPTK" PADANG</h4>
-              <p className="text-[14px] leading-[1.3] mt-1">Sekretariat Jl. Raya Lubuk Begalung, Student Center Lt. 1 Padang Sumbar</p>
-              <p className="text-[14px] leading-[1.3]">Email : <span className="text-blue-700 underline">sinformationfest@gmail.com</span> Instagram : @sifest.hmjsi</p>
+            <div className="text-center flex-1 px-1 text-black font-serif">
+              <h1 className="text-[17px] font-bold leading-[1.1]">PANITIA PELAKSANA SISTEM INFORMASI FESTIVAL</h1>
+              <h2 className="text-[17px] font-bold leading-[1.1]">HIMPUNAN MAHASISWA JURUSAN SISTEM INFORMASI</h2>
+              <h3 className="text-[17px] font-bold leading-[1.1]">FAKULTAS ILMU KOMPUTER</h3>
+              <h4 className="text-[15px] font-bold leading-[1.1]">REPUBLIK MAHASISWA UNIVERSITAS PUTRA INDONESIA "YPTK" PADANG</h4>
+              <p className="text-[13px] leading-[1.15] mt-1">Sekretariat Jl. Raya Lubuk Begalung, Student Center Lt. 1 Padang Sumbar</p>
+              <p className="text-[13px] leading-[1.15]">Email : <span className="text-blue-700 underline">sinformationfest@gmail.com</span> Instagram : @sifest.hmjsi</p>
             </div>
             
             {/* Logo Kanan: HMJSI & SIFEST */}
-            <div className="flex items-center justify-end gap-1 w-[120px]">
-              <img src="/logo-hmjsi.png" alt="Logo HMJSI" className="w-[75px] h-auto object-contain mix-blend-multiply" />
+            <div className="flex items-center justify-end gap-1.5 w-[140px]">
+              <img src="/logo-hmjsi.png" alt="Logo HMJSI" className="w-[85px] h-auto object-contain mix-blend-multiply" />
               <img src="/logo-sifest.png" alt="Logo SIFEST" className="w-[50px] h-auto object-contain mix-blend-multiply" />
             </div>
           </div>
           
           {/* Garis Kop Surat Ganda */}
-          <div className="w-full border-b-[2px] border-black mb-[2px]"></div>
+          <div className="w-full border-b-[2px] border-black mt-1 mb-[2px]"></div>
           <div className="w-full border-b-[4px] border-black mb-8"></div>
           
           {/* JUDUL */}
