@@ -105,7 +105,7 @@ export default async function RegistrationDetailPage({
             <p className="text-sm text-slate-500 mt-1 break-all">ID: {registration.id}</p>
           </div>
         </div>
-        <PrintButton />
+        <PrintButton registration={registration} />
       </div>
 
       <div className="hidden print:block mb-8 text-center border-b pb-4">
