@@ -61,10 +61,42 @@ const Volunteer = {
     let urlSertif = '';
     
     try {
-      // Karena file sudah di-upload ke Supabase oleh frontend, kita tinggal simpan URL-nya
-      if (body.link_bukti) urlBukti = body.link_bukti;
-      if (body.link_krs) urlKrs = body.link_krs;
-      if (body.link_sertifikat) urlSertif = body.link_sertifikat;
+      const folderName = 'SIFEST_Volunteer';
+      const folderIter = DriveApp.getFoldersByName(folderName);
+      let folder;
+      if (folderIter.hasNext()) {
+        folder = folderIter.next();
+      } else {
+        folder = DriveApp.createFolder(folderName);
+        folder.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      }
+      
+      // Upload Bukti Follow
+      if (body.buktiData && body.buktiName) {
+        const base64Data = body.buktiData.split(',')[1] || body.buktiData;
+        const blob = Utilities.newBlob(Utilities.base64Decode(base64Data), body.buktiMime || 'image/jpeg', volId + '_Bukti_' + body.buktiName);
+        urlBukti = folder.createFile(blob).getUrl();
+      }
+      
+      // Upload KRS
+      if (body.krsData && body.krsName) {
+        const base64Data = body.krsData.split(',')[1] || body.krsData;
+        const blob = Utilities.newBlob(Utilities.base64Decode(base64Data), body.krsMime || 'application/pdf', volId + '_KRS_' + body.krsName);
+        urlKrs = folder.createFile(blob).getUrl();
+      }
+      
+      // Upload Sertifikat (Multiple)
+      if (body.sertifikatFiles && body.sertifikatFiles.length > 0) {
+        const urls = [];
+        body.sertifikatFiles.forEach((file, index) => {
+          if (file.data && file.name) {
+            const base64Data = file.data.split(',')[1] || file.data;
+            const blob = Utilities.newBlob(Utilities.base64Decode(base64Data), file.mime || 'application/pdf', volId + '_Sertif' + (index+1) + '_' + file.name);
+            urls.push(folder.createFile(blob).getUrl());
+          }
+        });
+        urlSertif = urls.join(', ');
+      }
       
     } catch (e) {
       return Response.error('UPLOAD_FAILED', 'Gagal mengunggah berkas: ' + e.toString());
