@@ -141,7 +141,10 @@ export default function VolunteerDashboard() {
         pdf.addImage(dataUrl, "PNG", 0, marginY, pdfWidth, pdfHeight);
       }
       
-      pdf.save(`Volunteer_${selectedVolunteer.nama.replace(/\s+/g, '_')}.pdf`);
+      // Output as blob url for preview
+      const blob = pdf.output('blob');
+      const blobUrl = URL.createObjectURL(blob);
+      window.open(blobUrl, '_blank');
     } catch (error: any) {
       console.error("Gagal cetak PDF:", error);
       alert("Terjadi kesalahan saat mencetak PDF: " + (error.message || error.toString()));
