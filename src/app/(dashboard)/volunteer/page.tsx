@@ -34,6 +34,7 @@ export default function VolunteerDashboard() {
   const [selectedVolunteer, setSelectedVolunteer] = useState<Volunteer | null>(null);
   const [isExporting, setIsExporting] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
+  const printRef = useRef<HTMLDivElement>(null);
 
   const fetchVolunteers = async () => {
     setIsLoading(true);
@@ -98,22 +99,22 @@ export default function VolunteerDashboard() {
   };
 
   const exportPDF = async () => {
-    if (!selectedVolunteer || !modalRef.current) return;
+    if (!selectedVolunteer || !printRef.current) return;
     
     setIsExporting(true);
     try {
-      // Sembunyikan elemen yang tidak perlu dicetak
-      const ignoreElements = document.querySelectorAll('[data-html2canvas-ignore]');
-      ignoreElements.forEach((el: any) => el.style.display = 'none');
-      
-      const dataUrl = await toPng(modalRef.current, { 
+      // Mengambil elemen printRef (format laporan resmi)
+      const dataUrl = await toPng(printRef.current, { 
         quality: 1,
         pixelRatio: 2,
-        backgroundColor: '#ffffff'
+        backgroundColor: '#ffffff',
+        // Penting untuk memastikan elemen yang disembunyikan (-9999px) dirender dengan benar
+        style: {
+          position: 'static',
+          left: 'auto',
+          top: 'auto'
+        }
       });
-      
-      // Kembalikan elemen yang disembunyikan
-      ignoreElements.forEach((el: any) => el.style.display = '');
       
       const pdf = new jsPDF({
         orientation: "portrait",
@@ -395,6 +396,104 @@ export default function VolunteerDashboard() {
           </div>
         </div>
       )}
+
+      {/* Hidden Report Template for PDF */}
+      <div style={{ position: "absolute", left: "-9999px", top: "-9999px", pointerEvents: "none" }}>
+        <div ref={printRef} className="w-[210mm] min-h-[297mm] bg-white text-black p-12 flex flex-col" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
+          
+          {/* KOP SURAT */}
+          <div className="flex items-center justify-between border-b-4 border-black pb-4 mb-1">
+            <img src="/logo-sifest.png" alt="Logo SIFEST" className="w-24 object-contain" />
+            <div className="text-center flex-1">
+              <h1 className="text-xl font-bold uppercase tracking-wider">Sistem Informasi Festival (SIFEST) 2026</h1>
+              <h2 className="text-lg font-bold uppercase tracking-wide">Himpunan Mahasiswa Jurusan Sistem Informasi</h2>
+              <h3 className="text-md font-bold uppercase tracking-wide">Universitas Andalas</h3>
+              <p className="text-sm mt-1">Sekretariat: Gedung PKM Universitas Andalas, Limau Manis, Padang</p>
+              <p className="text-sm">Email: sifest.unand@gmail.com | Website: sifest.my.id</p>
+            </div>
+            {/* Menggunakan placeholder yang sama jika logo HMJSI tidak ada */}
+            <img src="/logo-sifest.png" alt="Logo Kanan" className="w-24 object-contain opacity-0" />
+          </div>
+          <div className="border-b-[1.5px] border-black w-full mb-8"></div>
+          
+          {/* JUDUL */}
+          <h4 className="text-center text-lg font-bold uppercase mb-8 underline decoration-2 underline-offset-4">
+            Formulir Pendaftaran Volunteer
+          </h4>
+          
+          {/* KONTEN */}
+          {selectedVolunteer && (
+            <div className="flex-1 text-base leading-relaxed">
+              <table className="w-full mb-8 border-collapse">
+                <tbody>
+                  <tr>
+                    <td className="py-2.5 w-1/3 font-semibold">Nama Lengkap</td>
+                    <td className="py-2.5 w-4">:</td>
+                    <td className="py-2.5">{selectedVolunteer.nama}</td>
+                  </tr>
+                  <tr>
+                    <td className="py-2.5 font-semibold">NIM / No. BP</td>
+                    <td className="py-2.5">:</td>
+                    <td className="py-2.5">{selectedVolunteer.no_bp}</td>
+                  </tr>
+                  <tr>
+                    <td className="py-2.5 font-semibold">Jurusan</td>
+                    <td className="py-2.5">:</td>
+                    <td className="py-2.5">{selectedVolunteer.jurusan}</td>
+                  </tr>
+                  <tr>
+                    <td className="py-2.5 font-semibold">No. WhatsApp</td>
+                    <td className="py-2.5">:</td>
+                    <td className="py-2.5">{selectedVolunteer.no_hp}</td>
+                  </tr>
+                  <tr>
+                    <td className="py-2.5 font-semibold">Instagram</td>
+                    <td className="py-2.5">:</td>
+                    <td className="py-2.5">{selectedVolunteer.link_ig}</td>
+                  </tr>
+                  <tr>
+                    <td className="py-2.5 font-semibold align-top">Alamat Lengkap</td>
+                    <td className="py-2.5 align-top">:</td>
+                    <td className="py-2.5 text-justify">{selectedVolunteer.alamat}</td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <h5 className="font-bold text-lg mb-3 border-b border-gray-300 pb-1">Pilihan Event</h5>
+              <table className="w-full mb-8 border-collapse">
+                <tbody>
+                  <tr>
+                    <td className="py-2.5 w-1/3 font-semibold">Pilihan Utama</td>
+                    <td className="py-2.5 w-4">:</td>
+                    <td className="py-2.5">{selectedVolunteer.event_1}</td>
+                  </tr>
+                  <tr>
+                    <td className="py-2.5 font-semibold">Pilihan Kedua</td>
+                    <td className="py-2.5">:</td>
+                    <td className="py-2.5">{selectedVolunteer.event_2}</td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <h5 className="font-bold text-lg mb-3 border-b border-gray-300 pb-1">Motivasi Bergabung</h5>
+              <p className="text-justify italic mb-8 border border-gray-300 p-5 rounded-lg bg-gray-50/50 min-h-[100px]">
+                "{selectedVolunteer.motivasi}"
+              </p>
+            </div>
+          )}
+          
+          {/* TTD */}
+          <div className="mt-auto pt-16 flex justify-end">
+            <div className="text-center w-64">
+              <p className="mb-24">Padang, {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+              <p className="font-bold border-b border-black inline-block px-4 pb-1">
+                {selectedVolunteer?.nama || 'Pendaftar'}
+              </p>
+              <p className="mt-1">NIM: {selectedVolunteer?.no_bp}</p>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
