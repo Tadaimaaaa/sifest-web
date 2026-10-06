@@ -74,9 +74,14 @@ export default function VolunteerDashboard() {
     Swal.fire({
       title: 'Memproses...',
       text: 'Mohon tunggu sebentar',
+      imageUrl: '/logo-sifest.png',
+      imageWidth: 80,
+      imageAlt: 'Logo SIFEST',
       allowOutsideClick: false,
+      showConfirmButton: false,
       didOpen: () => {
-        Swal.showLoading();
+        const image = Swal.getImage();
+        if (image) image.classList.add('animate-pulse');
       }
     });
     
@@ -116,9 +121,14 @@ export default function VolunteerDashboard() {
     Swal.fire({
       title: 'Menghapus...',
       text: 'Mohon tunggu sebentar',
+      imageUrl: '/logo-sifest.png',
+      imageWidth: 80,
+      imageAlt: 'Logo SIFEST',
       allowOutsideClick: false,
+      showConfirmButton: false,
       didOpen: () => {
-        Swal.showLoading();
+        const image = Swal.getImage();
+        if (image) image.classList.add('animate-pulse');
       }
     });
     
@@ -262,9 +272,11 @@ export default function VolunteerDashboard() {
             <tbody className="divide-y divide-slate-100">
               {isLoading ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center">
-                    <Loader2 className="w-8 h-8 animate-spin mx-auto text-blue-500 mb-3" />
-                    <p className="text-slate-500">Memuat data volunteer...</p>
+                  <td colSpan={5} className="px-6 py-16 text-center">
+                    <div className="flex flex-col items-center justify-center">
+                      <img src="/logo-sifest.png" alt="Logo SIFEST" className="w-16 h-16 object-contain animate-pulse mb-4 drop-shadow-lg" />
+                      <p className="text-slate-500 font-semibold tracking-wide animate-pulse">Memuat data volunteer...</p>
+                    </div>
                   </td>
                 </tr>
               ) : filtered.length === 0 ? (
