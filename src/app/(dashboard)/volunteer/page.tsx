@@ -402,19 +402,25 @@ export default function VolunteerDashboard() {
         <div ref={printRef} className="w-[210mm] min-h-[297mm] bg-white text-black p-12 flex flex-col" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
           
           {/* KOP SURAT */}
-          <div className="flex items-center justify-between border-b-4 border-black pb-4 mb-1">
-            <img src="/logo-sifest.png" alt="Logo SIFEST" className="w-24 object-contain" />
-            <div className="text-center flex-1">
-              <h1 className="text-xl font-bold uppercase tracking-wider">Sistem Informasi Festival (SIFEST) 2026</h1>
-              <h2 className="text-lg font-bold uppercase tracking-wide">Himpunan Mahasiswa Jurusan Sistem Informasi</h2>
-              <h3 className="text-md font-bold uppercase tracking-wide">Universitas Andalas</h3>
-              <p className="text-sm mt-1">Sekretariat: Gedung PKM Universitas Andalas, Limau Manis, Padang</p>
-              <p className="text-sm">Email: sifest.unand@gmail.com | Website: sifest.my.id</p>
+          <div className="flex items-center justify-between pb-3">
+            <img src="/logo.png" alt="Logo Universitas" className="w-[85px] object-contain" />
+            <div className="text-center flex-1 px-2 text-black">
+              <h1 className="text-[16.5px] font-bold leading-tight" style={{ fontFamily: '"Times New Roman", Times, serif' }}>PANITIA PELAKSANA SISTEM INFORMASI FESTIVAL</h1>
+              <h2 className="text-[16.5px] font-bold leading-tight" style={{ fontFamily: '"Times New Roman", Times, serif' }}>HIMPUNAN MAHASISWA JURUSAN SISTEM INFORMASI</h2>
+              <h3 className="text-[16.5px] font-bold leading-tight" style={{ fontFamily: '"Times New Roman", Times, serif' }}>FAKULTAS ILMU KOMPUTER</h3>
+              <h4 className="text-[16.5px] font-bold leading-tight" style={{ fontFamily: '"Times New Roman", Times, serif' }}>REPUBLIK MAHASISWA UNIVERSITAS PUTRA INDONESIA "YPTK" PADANG</h4>
+              <p className="text-[14px] leading-tight mt-1.5" style={{ fontFamily: '"Times New Roman", Times, serif' }}>Sekretariat Jl. Raya Lubuk Begalung, Student Center Lt. 1 Padang Sumbar</p>
+              <p className="text-[14px] leading-tight" style={{ fontFamily: '"Times New Roman", Times, serif' }}>Email : <span className="text-blue-700 underline">sinformationfest@gmail.com</span> Instagram : @sifest.hmjsi</p>
             </div>
-            {/* Menggunakan placeholder yang sama jika logo HMJSI tidak ada */}
-            <img src="/logo-sifest.png" alt="Logo Kanan" className="w-24 object-contain opacity-0" />
+            <div className="flex items-center gap-1">
+              {/* Tempat untuk logo lain jika ada, sementara gunakan SIFEST */}
+              <img src="/logo-sifest.png" alt="Logo SIFEST" className="w-[80px] object-contain" />
+            </div>
           </div>
-          <div className="border-b-[1.5px] border-black w-full mb-8"></div>
+          
+          {/* Garis Kop Surat Ganda */}
+          <div className="w-full border-b-[1.5px] border-black mb-[2px]"></div>
+          <div className="w-full border-b-[3.5px] border-black mb-8"></div>
           
           {/* JUDUL */}
           <h4 className="text-center text-lg font-bold uppercase mb-8 underline decoration-2 underline-offset-4">
