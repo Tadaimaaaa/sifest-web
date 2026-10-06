@@ -403,7 +403,7 @@ export default function VolunteerDashboard() {
           
           {/* KOP SURAT */}
           <div className="flex items-center justify-between pb-3">
-            <img src="/logo.png" alt="Logo Universitas" className="w-[85px] object-contain" />
+            <img src="/logo-rema.jpg" alt="Logo REMA" className="w-[85px] object-contain mix-blend-multiply" />
             <div className="text-center flex-1 px-2 text-black">
               <h1 className="text-[16.5px] font-bold leading-tight" style={{ fontFamily: '"Times New Roman", Times, serif' }}>PANITIA PELAKSANA SISTEM INFORMASI FESTIVAL</h1>
               <h2 className="text-[16.5px] font-bold leading-tight" style={{ fontFamily: '"Times New Roman", Times, serif' }}>HIMPUNAN MAHASISWA JURUSAN SISTEM INFORMASI</h2>
@@ -413,8 +413,8 @@ export default function VolunteerDashboard() {
               <p className="text-[14px] leading-tight" style={{ fontFamily: '"Times New Roman", Times, serif' }}>Email : <span className="text-blue-700 underline">sinformationfest@gmail.com</span> Instagram : @sifest.hmjsi</p>
             </div>
             <div className="flex items-center gap-1">
-              {/* Tempat untuk logo lain jika ada, sementara gunakan SIFEST */}
-              <img src="/logo-sifest.png" alt="Logo SIFEST" className="w-[80px] object-contain" />
+              <img src="/logo-hmjsi.png" alt="Logo HMJSI" className="w-[85px] object-contain mix-blend-multiply" />
+              <img src="/logo-sifest.png" alt="Logo SIFEST" className="w-[80px] object-contain mix-blend-multiply" />
             </div>
           </div>
           
