@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { Search, Loader2, CheckCircle2, XCircle, Trash2, ExternalLink, Info, X, Download } from "lucide-react";
+import { Search, Loader2, CheckCircle2, XCircle, Trash2, ExternalLink, Info, X, Download, RotateCcw } from "lucide-react";
 import { toPng } from "html-to-image";
 import { jsPDF } from "jspdf";
 import Cookies from "js-cookie";
@@ -305,14 +305,18 @@ export default function VolunteerDashboard() {
                         <button onClick={() => setSelectedVolunteer(v)} className="px-3 py-1.5 rounded-lg bg-blue-50 text-blue-600 font-medium text-xs flex items-center gap-1.5 hover:bg-blue-600 hover:text-white transition-all shadow-sm" title="Lihat Detail">
                           <Info className="w-4 h-4" /> Detail
                         </button>
-                        {v.status !== 'Diterima' && (
-                          <button onClick={() => updateStatus(v.id_volunteer, 'Diterima')} className="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-600 font-medium text-xs flex items-center gap-1.5 hover:bg-emerald-600 hover:text-white transition-all shadow-sm" title="Terima">
-                            <CheckCircle2 className="w-4 h-4" /> Terima
-                          </button>
-                        )}
-                        {v.status !== 'Ditolak' && (
-                          <button onClick={() => updateStatus(v.id_volunteer, 'Ditolak')} className="px-3 py-1.5 rounded-lg bg-rose-50 text-rose-600 font-medium text-xs flex items-center gap-1.5 hover:bg-rose-600 hover:text-white transition-all shadow-sm" title="Tolak">
-                            <XCircle className="w-4 h-4" /> Tolak
+                        {v.status === 'Menunggu Seleksi' ? (
+                          <>
+                            <button onClick={() => updateStatus(v.id_volunteer, 'Diterima')} className="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-600 font-medium text-xs flex items-center gap-1.5 hover:bg-emerald-600 hover:text-white transition-all shadow-sm" title="Terima">
+                              <CheckCircle2 className="w-4 h-4" /> Terima
+                            </button>
+                            <button onClick={() => updateStatus(v.id_volunteer, 'Ditolak')} className="px-3 py-1.5 rounded-lg bg-rose-50 text-rose-600 font-medium text-xs flex items-center gap-1.5 hover:bg-rose-600 hover:text-white transition-all shadow-sm" title="Tolak">
+                              <XCircle className="w-4 h-4" /> Tolak
+                            </button>
+                          </>
+                        ) : (
+                          <button onClick={() => updateStatus(v.id_volunteer, 'Menunggu Seleksi')} className="px-3 py-1.5 rounded-lg bg-amber-50 text-amber-600 font-medium text-xs flex items-center gap-1.5 hover:bg-amber-600 hover:text-white transition-all shadow-sm" title="Batalkan Keputusan">
+                            <RotateCcw className="w-4 h-4" /> Batal
                           </button>
                         )}
                         <button onClick={() => deleteVolunteer(v.id_volunteer)} className="p-1.5 rounded-lg bg-slate-50 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-all shadow-sm" title="Hapus">

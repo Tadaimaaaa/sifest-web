@@ -30,14 +30,21 @@ const Utils = {
     const sheet = this.getSheet(sheetName);
     const lastRow = sheet.getLastRow();
     
-    // Jika hanya ada header, kembalikan 001
     if (lastRow <= 1) return prefix + "-001";
     
-    // Asumsi ID selalu berurutan sesuai baris terakhir, cth: USER-070
-    // Kita kurangi 1 karena baris pertama adalah header
-    const num = lastRow; 
-    const numStr = num.toString().padStart(3, '0');
-    return prefix + "-" + numStr;
+    // Ambil ID dari baris terakhir untuk menghindari duplikasi saat baris dihapus
+    const lastId = sheet.getRange(lastRow, 1).getValue();
+    let nextNum = lastRow; // Fallback ke row count
+    
+    if (lastId && typeof lastId === 'string' && lastId.includes('-')) {
+      const parts = lastId.split('-');
+      const lastNum = parseInt(parts[parts.length - 1], 10);
+      if (!isNaN(lastNum)) {
+        nextNum = lastNum + 1;
+      }
+    }
+    
+    return prefix + "-" + nextNum.toString().padStart(3, '0');
   },
 
   bytesToHex: function (bytes) {
