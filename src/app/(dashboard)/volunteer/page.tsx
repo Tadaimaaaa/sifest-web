@@ -399,33 +399,27 @@ export default function VolunteerDashboard() {
 
       {/* Hidden Report Template for PDF */}
       <div style={{ position: "absolute", left: "-9999px", top: "-9999px", pointerEvents: "none" }}>
-        {/* Menggunakan persis dimensi A4 (210x297mm) dengan margin standar (2.54cm) */}
-        <div ref={printRef} className="w-[210mm] min-h-[297mm] bg-white text-black px-[2.54cm] py-[2.54cm] flex flex-col" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
+        <div ref={printRef} className="w-[210mm] min-h-[297mm] bg-white text-black p-12 flex flex-col" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
           
           {/* KOP SURAT */}
-          <div className="flex items-center justify-between pb-1">
-            {/* Logo Kiri: REMA */}
-            <img src="/logo-rema.jpg" alt="Logo REMA" className="w-[105px] object-contain mix-blend-multiply" />
-            
-            {/* Teks Tengah */}
-            <div className="text-center flex-1 px-1 text-black font-serif">
-              <h1 className="text-[14pt] font-bold leading-snug">PANITIA PELAKSANA SISTEM INFORMASI FESTIVAL</h1>
-              <h2 className="text-[14pt] font-bold leading-snug">HIMPUNAN MAHASISWA JURUSAN SISTEM INFORMASI</h2>
-              <h3 className="text-[14pt] font-bold leading-snug">FAKULTAS ILMU KOMPUTER</h3>
-              <h4 className="text-[14pt] font-bold leading-snug">REPUBLIK MAHASISWA UNIVERSITAS PUTRA INDONESIA “YPTK” PADANG</h4>
-              <p className="text-[11.5pt] leading-snug mt-1">Sekretariat Jl. Raya Lubuk Begalung, Student Center Lt. 1 Padang Sumbar</p>
-              <p className="text-[11.5pt] leading-snug">Email : <span className="text-blue-700 underline">sinformationfest@gmail.com</span> Instagram : @sifest.hmjsi</p>
+          <div className="flex items-center justify-between pb-3">
+            <img src="/logo-rema.png" alt="Logo REMA" className="w-[85px] object-contain" />
+            <div className="text-center flex-1 px-2 text-black">
+              <h1 className="text-[16.5px] font-bold leading-tight" style={{ fontFamily: '"Times New Roman", Times, serif' }}>PANITIA PELAKSANA SISTEM INFORMASI FESTIVAL</h1>
+              <h2 className="text-[16.5px] font-bold leading-tight" style={{ fontFamily: '"Times New Roman", Times, serif' }}>HIMPUNAN MAHASISWA JURUSAN SISTEM INFORMASI</h2>
+              <h3 className="text-[16.5px] font-bold leading-tight" style={{ fontFamily: '"Times New Roman", Times, serif' }}>FAKULTAS ILMU KOMPUTER</h3>
+              <h4 className="text-[16.5px] font-bold leading-tight" style={{ fontFamily: '"Times New Roman", Times, serif' }}>REPUBLIK MAHASISWA UNIVERSITAS PUTRA INDONESIA "YPTK" PADANG</h4>
+              <p className="text-[14px] leading-tight mt-1.5" style={{ fontFamily: '"Times New Roman", Times, serif' }}>Sekretariat Jl. Raya Lubuk Begalung, Student Center Lt. 1 Padang Sumbar</p>
+              <p className="text-[14px] leading-tight" style={{ fontFamily: '"Times New Roman", Times, serif' }}>Email : <span className="text-blue-700 underline">sinformationfest@gmail.com</span> Instagram : @sifest.hmjsi</p>
             </div>
-            
-            {/* Logo Kanan: HMJSI & SIFEST */}
-            <div className="flex items-center justify-end gap-2 w-[130px]">
-              <img src="/logo-hmjsi.png" alt="Logo HMJSI" className="w-[75px] h-auto object-contain mix-blend-multiply" />
-              <img src="/logo-sifest.png" alt="Logo SIFEST" className="w-[50px] h-auto object-contain mix-blend-multiply" />
+            <div className="flex items-center gap-1">
+              <img src="/logo-hmjsi.png" alt="Logo HMJ SI" className="w-[75px] object-contain" />
+              <img src="/logo-sifest.png" alt="Logo SIFEST" className="w-[80px] object-contain" />
             </div>
           </div>
           
           {/* Garis Kop Surat Ganda */}
-          <div className="w-full border-b-[1.5px] border-black mt-2 mb-[2.5px]"></div>
+          <div className="w-full border-b-[1.5px] border-black mb-[2px]"></div>
           <div className="w-full border-b-[3.5px] border-black mb-8"></div>
           
           {/* JUDUL */}
