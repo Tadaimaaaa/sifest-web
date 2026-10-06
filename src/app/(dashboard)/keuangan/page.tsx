@@ -585,28 +585,59 @@ export default function KeuanganPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-slate-700">Volume (Opsional)</label>
-                  <input 
-                    type="number"
-                    placeholder="Contoh: 10"
-                    value={newTrx.vol}
-                    onChange={(e) => setNewTrx({...newTrx, vol: e.target.value})}
-                    className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 focus:ring-2 focus:ring-blue-500/50 focus:outline-none placeholder:text-slate-400"
-                  />
+              {newTrx.kategori === 'Pendaftaran' ? (
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium text-slate-700">Volume (Jml Pendaftar)</label>
+                    <input 
+                      type="number"
+                      placeholder="Contoh: 1"
+                      value={newTrx.vol}
+                      onChange={(e) => setNewTrx({...newTrx, vol: e.target.value})}
+                      className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 focus:ring-2 focus:ring-blue-500/50 focus:outline-none placeholder:text-slate-400"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium text-slate-700">Event</label>
+                    <select
+                      value={newTrx.satuan}
+                      onChange={(e) => setNewTrx({...newTrx, satuan: e.target.value})}
+                      className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 focus:ring-2 focus:ring-blue-500/50 focus:outline-none"
+                    >
+                      <option value="">Pilih Event...</option>
+                      <option value="Turnamen Futsal">Turnamen Futsal</option>
+                      <option value="Turnamen E-Sport">Turnamen E-Sport</option>
+                      <option value="Seminar Nasional">Seminar Nasional</option>
+                      <option value="Open Bazaar">Open Bazaar</option>
+                      <option value="Lomba Keagamaan">Lomba Keagamaan</option>
+                      <option value="Talk Show">Talk Show</option>
+                    </select>
+                  </div>
                 </div>
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-slate-700">Satuan</label>
-                  <input 
-                    type="text"
-                    placeholder="Contoh: Pcs, Rim, dll"
-                    value={newTrx.satuan}
-                    onChange={(e) => setNewTrx({...newTrx, satuan: e.target.value})}
-                    className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 focus:ring-2 focus:ring-blue-500/50 focus:outline-none placeholder:text-slate-400"
-                  />
+              ) : (
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium text-slate-700">Volume (Opsional)</label>
+                    <input 
+                      type="number"
+                      placeholder="Contoh: 10"
+                      value={newTrx.vol}
+                      onChange={(e) => setNewTrx({...newTrx, vol: e.target.value})}
+                      className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 focus:ring-2 focus:ring-blue-500/50 focus:outline-none placeholder:text-slate-400"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium text-slate-700">Satuan</label>
+                    <input 
+                      type="text"
+                      placeholder="Contoh: Pcs, Rim, dll"
+                      value={newTrx.satuan}
+                      onChange={(e) => setNewTrx({...newTrx, satuan: e.target.value})}
+                      className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 focus:ring-2 focus:ring-blue-500/50 focus:outline-none placeholder:text-slate-400"
+                    />
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div className="space-y-1.5">
                 <label className="text-sm font-medium text-slate-700">Detail / Keterangan</label>
