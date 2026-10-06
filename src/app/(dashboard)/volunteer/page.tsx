@@ -462,18 +462,18 @@ export default function VolunteerDashboard() {
           
           {/* KOP SURAT */}
           <div className="flex items-center justify-between pb-3">
-            <img src="/logo-rema.png" alt="Logo REMA" className="w-[85px] object-contain" />
-            <div className="text-center flex-1 px-2 text-black">
-              <h1 className="text-[16.5px] font-bold leading-tight" style={{ fontFamily: '"Times New Roman", Times, serif' }}>PANITIA PELAKSANA SISTEM INFORMASI FESTIVAL</h1>
-              <h2 className="text-[16.5px] font-bold leading-tight" style={{ fontFamily: '"Times New Roman", Times, serif' }}>HIMPUNAN MAHASISWA JURUSAN SISTEM INFORMASI</h2>
-              <h3 className="text-[16.5px] font-bold leading-tight" style={{ fontFamily: '"Times New Roman", Times, serif' }}>FAKULTAS ILMU KOMPUTER</h3>
-              <h4 className="text-[16.5px] font-bold leading-tight" style={{ fontFamily: '"Times New Roman", Times, serif' }}>REPUBLIK MAHASISWA UNIVERSITAS PUTRA INDONESIA "YPTK" PADANG</h4>
-              <p className="text-[14px] leading-tight mt-1.5" style={{ fontFamily: '"Times New Roman", Times, serif' }}>Sekretariat Jl. Raya Lubuk Begalung, Student Center Lt. 1 Padang Sumbar</p>
-              <p className="text-[14px] leading-tight" style={{ fontFamily: '"Times New Roman", Times, serif' }}>Email : <span className="text-blue-700 underline">sinformationfest@gmail.com</span> Instagram : @sifest.hmjsi</p>
+            <img src="/logo-hmjsi.jpg" alt="Logo HMJ SI" className="w-[90px] h-[90px] object-contain" />
+            <div className="text-center flex-1 px-4 text-black">
+              <h1 className="text-[17px] font-bold leading-snug" style={{ fontFamily: '"Times New Roman", Times, serif' }}>PANITIA PELAKSANA SISTEM INFORMASI FESTIVAL</h1>
+              <h2 className="text-[17px] font-bold leading-snug" style={{ fontFamily: '"Times New Roman", Times, serif' }}>HIMPUNAN MAHASISWA JURUSAN SISTEM INFORMASI</h2>
+              <h3 className="text-[17px] font-bold leading-snug" style={{ fontFamily: '"Times New Roman", Times, serif' }}>FAKULTAS ILMU KOMPUTER</h3>
+              <h4 className="text-[17px] font-bold leading-snug" style={{ fontFamily: '"Times New Roman", Times, serif' }}>REPUBLIK MAHASISWA UNIVERSITAS PUTRA INDONESIA "YPTK" PADANG</h4>
+              <p className="text-[14px] leading-snug mt-1" style={{ fontFamily: '"Times New Roman", Times, serif' }}>Sekretariat Jl. Raya Lubuk Begalung, Student Center Lt. 1 Padang Sumbar</p>
+              <p className="text-[14px] leading-snug" style={{ fontFamily: '"Times New Roman", Times, serif' }}>Email : <span className="text-blue-700 underline">sinformationfest@gmail.com</span> Instagram : @sifest.hmjsi</p>
             </div>
-            <div className="flex items-center gap-1">
-              <img src="/logo-hmjsi.jpg" alt="Logo HMJ SI" className="w-[75px] object-contain" />
-              <img src="/logo-sifest.png" alt="Logo SIFEST" className="w-[80px] object-contain" />
+            <div className="flex items-center gap-2">
+              <img src="/logo-rema.png" alt="Logo REMA" className="w-[85px] h-[85px] object-contain" />
+              <img src="/logo-sifest.png" alt="Logo SIFEST" className="w-[90px] h-[90px] object-contain" />
             </div>
           </div>
           
