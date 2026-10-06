@@ -605,12 +605,14 @@ export default function KeuanganPage() {
                       className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 focus:ring-2 focus:ring-blue-500/50 focus:outline-none"
                     >
                       <option value="">Pilih Event...</option>
-                      <option value="Turnamen Futsal">Turnamen Futsal</option>
-                      <option value="Turnamen E-Sport">Turnamen E-Sport</option>
-                      <option value="Seminar Nasional">Seminar Nasional</option>
-                      <option value="Open Bazaar">Open Bazaar</option>
-                      <option value="Lomba Keagamaan">Lomba Keagamaan</option>
-                      <option value="Talk Show">Talk Show</option>
+                      <option value="Bazaar Umum">Bazaar Umum</option>
+                      <option value="Bazaar Mahasiswa">Bazaar Mahasiswa</option>
+                      <option value="Futsal SLTA">Futsal SLTA</option>
+                      <option value="Futsal Umum">Futsal Umum</option>
+                      <option value="Seminar">Seminar</option>
+                      <option value="Event MTQ">Event MTQ</option>
+                      <option value="Event MLBB">Event MLBB</option>
+                      <option value="Event E-Football">Event E-Football</option>
                     </select>
                   </div>
                 </div>
