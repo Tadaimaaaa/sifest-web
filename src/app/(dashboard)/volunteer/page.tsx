@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Search, Loader2, CheckCircle2, XCircle, Trash2, ExternalLink, Info, X, Download } from "lucide-react";
-import html2canvas from "html2canvas";
+import { toPng } from "html-to-image";
 import { jsPDF } from "jspdf";
 import Cookies from "js-cookie";
 
@@ -102,29 +102,43 @@ export default function VolunteerDashboard() {
     
     setIsExporting(true);
     try {
-      const canvas = await html2canvas(modalRef.current, {
-        scale: 2,
-        backgroundColor: "#ffffff",
-        logging: false
+      // Sembunyikan elemen yang tidak perlu dicetak
+      const ignoreElements = document.querySelectorAll('[data-html2canvas-ignore]');
+      ignoreElements.forEach((el: any) => el.style.display = 'none');
+      
+      const dataUrl = await toPng(modalRef.current, { 
+        quality: 1,
+        pixelRatio: 2,
+        backgroundColor: '#ffffff'
       });
       
-      const imgData = canvas.toDataURL("image/png");
+      // Kembalikan elemen yang disembunyikan
+      ignoreElements.forEach((el: any) => el.style.display = '');
+      
       const pdf = new jsPDF({
         orientation: "portrait",
         unit: "mm",
         format: "a4"
       });
       
+      // Buat image object untuk mendapatkan dimensinya
+      const img = new Image();
+      img.src = dataUrl;
+      
+      await new Promise((resolve) => {
+        img.onload = resolve;
+      });
+      
       const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      const pdfHeight = (img.height * pdfWidth) / img.width;
       
       // Jika tinggi modal melebihi halaman A4
       if (pdfHeight > pdf.internal.pageSize.getHeight()) {
-        pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+        pdf.addImage(dataUrl, "PNG", 0, 0, pdfWidth, pdfHeight);
       } else {
         // Center vertically if smaller
         const marginY = (pdf.internal.pageSize.getHeight() - pdfHeight) / 2;
-        pdf.addImage(imgData, "PNG", 0, marginY, pdfWidth, pdfHeight);
+        pdf.addImage(dataUrl, "PNG", 0, marginY, pdfWidth, pdfHeight);
       }
       
       pdf.save(`Volunteer_${selectedVolunteer.nama.replace(/\s+/g, '_')}.pdf`);
