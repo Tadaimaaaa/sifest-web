@@ -184,17 +184,36 @@ export default function KeuanganPage() {
 
   // Filter List
   const filteredTransactions = transactions.filter(t => {
-    const matchSearch = (t.keterangan && t.keterangan.toLowerCase().includes(searchQuery.toLowerCase())) || 
-                       (t.kategori && t.kategori.toLowerCase().includes(searchQuery.toLowerCase()));
-    const matchType = typeFilter ? t.jenis === typeFilter : true;
-    
-    const trxMonth = new Date(t.tanggal).toISOString().slice(0, 7); // YYYY-MM
-    const matchMonth = monthFilter ? trxMonth === monthFilter : true;
+    try {
+      const matchSearch = (!searchQuery) || 
+                         (t.keterangan?.toLowerCase() || '').includes(searchQuery.toLowerCase()) || 
+                         (t.kategori?.toLowerCase() || '').includes(searchQuery.toLowerCase());
+      
+      const matchType = typeFilter ? t.jenis === typeFilter : true;
+      
+      let matchMonth = true;
+      if (monthFilter && t.tanggal) {
+        const dateObj = new Date(t.tanggal);
+        if (!isNaN(dateObj.getTime())) {
+          const trxMonth = dateObj.toISOString().slice(0, 7);
+          matchMonth = trxMonth === monthFilter;
+        }
+      }
 
-    const trxDate = new Date(t.tanggal).toISOString().slice(0, 10); // YYYY-MM-DD
-    const matchDate = dateFilter ? trxDate === dateFilter : true;
+      let matchDate = true;
+      if (dateFilter && t.tanggal) {
+        const dateObj = new Date(t.tanggal);
+        if (!isNaN(dateObj.getTime())) {
+          const trxDate = dateObj.toISOString().slice(0, 10);
+          matchDate = trxDate === dateFilter;
+        }
+      }
 
-    return matchSearch && matchType && matchMonth && matchDate;
+      return matchSearch && matchType && matchMonth && matchDate;
+    } catch (e) {
+      console.error("Filter error on transaction:", t, e);
+      return false;
+    }
   }).sort((a, b) => Number(b.no) - Number(a.no));
 
   // Kalkulasi Saldo
