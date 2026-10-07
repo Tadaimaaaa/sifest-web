@@ -409,12 +409,11 @@ export default function KeuanganPage() {
               <tr>
                 <th className="px-6 py-4 font-semibold">No / ID</th>
                 <th className="px-6 py-4 font-semibold">Tanggal</th>
-                <th className="px-6 py-4 font-semibold">Kategori & Keterangan</th>
-                <th className="px-6 py-4 font-semibold text-center">Foto / Bukti</th>
-                <th className="px-6 py-4 font-semibold">Vol</th>
-                <th className="px-6 py-4 font-semibold text-right">Nominal</th>
+                <th className="px-6 py-4 font-semibold">Kategori</th>
+                <th className="px-6 py-4 font-semibold text-right">Debit (Masuk)</th>
+                <th className="px-6 py-4 font-semibold text-right">Kredit (Keluar)</th>
                 <th className="px-6 py-4 font-semibold text-right">Saldo</th>
-                <th className="px-6 py-4 font-semibold">PJ & Status</th>
+                <th className="px-6 py-4 font-semibold">PJ</th>
                 {hasAccess && <th className="px-6 py-4 font-semibold text-right print:hidden">Aksi</th>}
               </tr>
             </thead>
@@ -446,38 +445,15 @@ export default function KeuanganPage() {
                         ${trx.jenis === 'INCOME' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
                         {trx.kategori}
                       </span>
-                      <p className="text-slate-800 line-clamp-2 print:line-clamp-none">{trx.keterangan || "-"}</p>
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      {trx.bukti_url && trx.bukti_url !== "-" ? (
-                        <div className="flex flex-col items-center justify-center">
-                          {/* Gambar HANYA dimuat dan ditampilkan saat mode Cetak (Print) */}
-                          {getDriveThumbnail(trx.bukti_url) && (
-                            <img 
-                              src={getDriveThumbnail(trx.bukti_url)!} 
-                              alt="Bukti" 
-                              className="hidden print:block h-16 w-auto object-cover rounded border border-slate-200 mb-1" 
-                            />
-                          )}
-                          
-                          {/* Tombol Buka HANYA ditampilkan di layar Web (Sembunyi saat cetak) */}
-                          <div className="print:hidden flex flex-col items-center">
-                            <span className="text-xs text-slate-400">Ada File</span>
-                            <a href={trx.bukti_url} target="_blank" rel="noreferrer" className="text-[10.5px] font-medium text-blue-600 hover:underline mt-0.5">
-                              Lihat Bukti
-                            </a>
-                          </div>
-                        </div>
-                      ) : (
-                        <span className="text-xs text-slate-300">-</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 text-slate-700">
-                      {(trx.vol && trx.vol !== "-" && trx.vol !== "0") ? `${trx.vol} ${trx.satuan || ''}` : (trx.satuan && trx.satuan !== "-" ? trx.satuan : "-")}
                     </td>
                     <td className="px-6 py-4 text-right whitespace-nowrap">
-                      <p className={`font-bold ${trx.jenis === 'INCOME' ? 'text-emerald-600' : 'text-rose-600'}`}>
-                        {trx.jenis === 'INCOME' ? '+' : '-'}{formatRupiah(trx.nominal)}
+                      <p className="font-medium text-emerald-600">
+                        {trx.jenis === 'INCOME' ? formatRupiah(trx.nominal) : '-'}
+                      </p>
+                    </td>
+                    <td className="px-6 py-4 text-right whitespace-nowrap">
+                      <p className="font-medium text-rose-600">
+                        {trx.jenis === 'EXPENSE' ? formatRupiah(trx.nominal) : '-'}
                       </p>
                     </td>
                     <td className="px-6 py-4 text-right whitespace-nowrap">
@@ -487,14 +463,6 @@ export default function KeuanganPage() {
                     </td>
                     <td className="px-6 py-4">
                       <p className="text-slate-800 font-medium text-sm">{trx.penanggung_jawab || trx.recorded_by}</p>
-                      <span className={`inline-flex mt-1 items-center px-2 py-0.5 rounded text-[10px] font-medium border
-                        ${trx.status === 'Lunas' ? 'border-emerald-200 bg-emerald-50 text-emerald-600' 
-                        : trx.status === 'Uang Muka' ? 'border-purple-200 bg-purple-50 text-purple-600'
-                        : trx.status === 'Pelunasan' ? 'border-blue-200 bg-blue-50 text-blue-600'
-                        : trx.status === 'Hutang' ? 'border-rose-200 bg-rose-50 text-rose-600'
-                        : 'border-amber-200 bg-amber-50 text-amber-600'}`}>
-                        {trx.status || "Lunas"}
-                      </span>
                     </td>
                     {hasAccess && (
                       <td className="px-6 py-4 text-right print:hidden">
@@ -610,143 +578,16 @@ export default function KeuanganPage() {
                 />
               </div>
 
-              {newTrx.kategori?.trim().toLowerCase() === 'pendaftaran' ? (
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-slate-700">Volume (Jml Pendaftar)</label>
-                    <input 
-                      type="number"
-                      placeholder="Contoh: 1"
-                      value={newTrx.vol}
-                      onChange={(e) => setNewTrx({...newTrx, vol: e.target.value})}
-                      className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 focus:ring-2 focus:ring-blue-500/50 focus:outline-none placeholder:text-slate-400"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-slate-700">Event</label>
-                    <select
-                      value={newTrx.satuan}
-                      onChange={(e) => setNewTrx({...newTrx, satuan: e.target.value})}
-                      className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 focus:ring-2 focus:ring-blue-500/50 focus:outline-none"
-                    >
-                      <option value="">Pilih Event...</option>
-                      <option value="Bazaar Umum">Bazaar Umum</option>
-                      <option value="Bazaar Mahasiswa">Bazaar Mahasiswa</option>
-                      <option value="Futsal SLTA">Futsal SLTA</option>
-                      <option value="Futsal Umum">Futsal Umum</option>
-                      <option value="Seminar">Seminar</option>
-                      <option value="Event MTQ">Event MTQ</option>
-                      <option value="Event MLBB">Event MLBB</option>
-                      <option value="Event E-Football">Event E-Football</option>
-                    </select>
-                  </div>
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-slate-700">Volume (Opsional)</label>
-                    <input 
-                      type="number"
-                      placeholder="Contoh: 10"
-                      value={newTrx.vol}
-                      onChange={(e) => setNewTrx({...newTrx, vol: e.target.value})}
-                      className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 focus:ring-2 focus:ring-blue-500/50 focus:outline-none placeholder:text-slate-400"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-medium text-slate-700">Satuan</label>
-                    <input 
-                      type="text"
-                      placeholder="Contoh: Pcs, Rim, dll"
-                      value={newTrx.satuan}
-                      onChange={(e) => setNewTrx({...newTrx, satuan: e.target.value})}
-                      className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 focus:ring-2 focus:ring-blue-500/50 focus:outline-none placeholder:text-slate-400"
-                    />
-                  </div>
-                </div>
-              )}
-
               <div className="space-y-1.5">
-                <label className="text-sm font-medium text-slate-700">Detail / Keterangan</label>
-                <textarea 
+                <label className="text-sm font-medium text-slate-700">Penanggung Jawab</label>
+                <input 
+                  type="text"
                   required
-                  rows={2}
-                  placeholder="Misal: Pembayaran DP gedung..."
-                  value={newTrx.keterangan}
-                  onChange={(e) => setNewTrx({...newTrx, keterangan: e.target.value})}
-                  className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 focus:ring-2 focus:ring-blue-500/50 focus:outline-none resize-none placeholder:text-slate-400"
+                  placeholder="Nama PJ"
+                  value={newTrx.penanggung_jawab}
+                  onChange={(e) => setNewTrx({...newTrx, penanggung_jawab: e.target.value})}
+                  className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 focus:ring-2 focus:ring-blue-500/50 focus:outline-none placeholder:text-slate-400"
                 />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-slate-700">Penanggung Jawab</label>
-                  <input 
-                    type="text"
-                    required
-                    placeholder="Nama PJ"
-                    value={newTrx.penanggung_jawab}
-                    onChange={(e) => setNewTrx({...newTrx, penanggung_jawab: e.target.value})}
-                    className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 focus:ring-2 focus:ring-blue-500/50 focus:outline-none placeholder:text-slate-400"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium text-slate-700">Status Pembayaran</label>
-                  <select 
-                    required
-                    value={newTrx.status}
-                    onChange={(e) => setNewTrx({...newTrx, status: e.target.value})}
-                    className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 focus:ring-2 focus:ring-blue-500/50 focus:outline-none"
-                  >
-                    <option value="Lunas">Lunas</option>
-                    <option value="Belum Lunas">Belum Lunas</option>
-                    <option value="Hutang">Hutang</option>
-                    <option value="Uang Muka">Uang Muka</option>
-                    <option value="Pelunasan">Pelunasan</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium text-slate-700">Foto Bukti / Nota <span className="text-slate-400 font-normal">(Opsional)</span></label>
-                {(newTrx as any).bukti_url && (
-                  <div className="mb-2 text-xs text-blue-600 flex items-center">
-                    <span>File saat ini: </span>
-                    <a href={(newTrx as any).bukti_url} target="_blank" rel="noreferrer" className="ml-1 underline hover:text-blue-800">Lihat File</a>
-                  </div>
-                )}
-                
-                {newTrx.fileData ? (
-                  <div className="relative rounded-xl border border-slate-200 bg-slate-50 p-2">
-                    <img src={newTrx.fileData} alt="Preview" className="w-full h-32 object-cover rounded-lg mb-2" />
-                    <button 
-                      type="button"
-                      onClick={() => setNewTrx({...newTrx, fileData: "", fileName: "", mimeType: ""})}
-                      className="absolute top-4 right-4 bg-white/80 backdrop-blur text-slate-700 p-1.5 rounded-full hover:bg-rose-100 hover:text-rose-600 transition-colors shadow-sm"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                    <p className="text-xs text-slate-500 truncate text-center px-2 pb-1">{newTrx.fileName}</p>
-                  </div>
-                ) : (
-                  <div className="relative">
-                    <input 
-                      type="file" 
-                      accept="image/*"
-                      onChange={handleFileChange}
-                      className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/50 focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                    />
-                    <p className="text-xs text-slate-400 mt-1.5">
-                      Bisa mengambil langsung dari kamera perangkat (HP) atau memilih dari Galeri.
-                    </p>
-                    <div className="mt-2 p-2.5 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-2">
-                      <span className="text-[13px] leading-none mt-0.5">⚠️</span>
-                      <p className="text-xs text-amber-700 font-medium leading-relaxed">
-                        Pastikan foto / bukti nota yang diunggah terlihat jelas dan benar (sesuai dengan nominal transaksi).
-                      </p>
-                    </div>
-                  </div>
-                )}
               </div>
 
               <div className="pt-2">
