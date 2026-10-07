@@ -286,7 +286,7 @@ export default function KeuanganPage() {
                 className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors border border-blue-200 shadow-sm"
               >
                 <Wallet className="w-4 h-4" />
-                Keuangan Terkini
+                Data Insert Pendaftaran
               </Link>
               <a 
                 href="https://docs.google.com/spreadsheets/d/1KTpEz85NNMhap8VSzSszSptX_DLdUcPj/edit?usp=sharing&ouid=101548209300972862261&rtpof=true&sd=true"

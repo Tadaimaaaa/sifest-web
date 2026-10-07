@@ -22,15 +22,15 @@ function doPost(e) {
       case 'editKeuangan':
         return Keuangan.editTransaction(body, Auth.validateToken(body.token));
       
-      // Keuangan Terkini Routes
-      case 'getKeuanganTerkini':
-        return KeuanganTerkini.getTransactions();
-      case 'addKeuanganTerkini':
-        return KeuanganTerkini.addTransaction(body, Auth.validateToken(body.token));
-      case 'deleteKeuanganTerkini':
-        return KeuanganTerkini.deleteTransaction(body, Auth.validateToken(body.token));
-      case 'editKeuanganTerkini':
-        return KeuanganTerkini.editTransaction(body, Auth.validateToken(body.token));
+      // Insert Pendaftaran Routes
+      case 'getInsertPendaftaran':
+        return InsertPendaftaran.getTransactions();
+      case 'addInsertPendaftaran':
+        return InsertPendaftaran.addTransaction(body, Auth.validateToken(body.token));
+      case 'deleteInsertPendaftaran':
+        return InsertPendaftaran.deleteTransaction(body, Auth.validateToken(body.token));
+      case 'editInsertPendaftaran':
+        return InsertPendaftaran.editTransaction(body, Auth.validateToken(body.token));
       case 'addSponsor':
         return Sponsor.addSponsor(body, Auth.validateToken(body.token));
       case 'editSponsor':
@@ -128,8 +128,8 @@ function doGet(e) {
         return Users.getUsers();
       case 'getKeuangan':
         return Keuangan.getTransactions();
-      case 'getKeuanganTerkini':
-        return KeuanganTerkini.getTransactions();
+      case 'getInsertPendaftaran':
+        return InsertPendaftaran.getTransactions();
       case 'getSponsors':
         return Sponsor.getSponsors();
       case 'getSurat':
