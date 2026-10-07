@@ -184,8 +184,8 @@ export default function KeuanganPage() {
 
   // Filter List
   const filteredTransactions = transactions.filter(t => {
-    const matchSearch = t.keterangan?.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                       t.kategori?.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchSearch = (t.keterangan && t.keterangan.toLowerCase().includes(searchQuery.toLowerCase())) || 
+                       (t.kategori && t.kategori.toLowerCase().includes(searchQuery.toLowerCase()));
     const matchType = typeFilter ? t.jenis === typeFilter : true;
     
     const trxMonth = new Date(t.tanggal).toISOString().slice(0, 7); // YYYY-MM
@@ -238,15 +238,10 @@ export default function KeuanganPage() {
         "ID Transaksi": trx.trx_id,
         "Tanggal": new Date(trx.tanggal).toLocaleDateString('id-ID'),
         "Kategori": trx.kategori,
-        "Keterangan": trx.keterangan || "-",
-        "Jenis": trx.jenis === 'INCOME' ? 'Pemasukan' : 'Pengeluaran',
-        "Volume": trx.vol !== "-" && trx.vol ? `${trx.vol} ${trx.satuan}` : "-",
-        "Masuk": trx.jenis === 'INCOME' ? trx.nominal : 0,
-        "Keluar": trx.jenis === 'EXPENSE' ? trx.nominal : 0,
+        "Debit (Masuk)": trx.jenis === 'INCOME' ? trx.nominal : 0,
+        "Kredit (Keluar)": trx.jenis === 'EXPENSE' ? trx.nominal : 0,
         "Saldo Akhir": trx.saldo_akhir,
-        "Penanggung Jawab": trx.penanggung_jawab || trx.recorded_by,
-        "Status": trx.status || "Lunas",
-        "Link Bukti": trx.bukti_url !== "-" ? trx.bukti_url : "Tidak ada"
+        "Penanggung Jawab": trx.penanggung_jawab || trx.recorded_by
       }));
 
       const worksheet = XLSX.utils.json_to_sheet(exportData);
