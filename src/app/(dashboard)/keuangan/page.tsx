@@ -28,6 +28,7 @@ export default function KeuanganPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
   const [monthFilter, setMonthFilter] = useState("");
+  const [dateFilter, setDateFilter] = useState("");
 
   // Modal States
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -180,15 +181,6 @@ export default function KeuanganPage() {
     }
   };
 
-  // Kalkulasi Saldo
-  const totalIncome = transactions.filter(t => t.jenis === 'INCOME').reduce((acc, curr) => acc + Number(curr.nominal), 0);
-  const totalExpense = transactions.filter(t => t.jenis === 'EXPENSE').reduce((acc, curr) => acc + Number(curr.nominal), 0);
-  const totalBalance = totalIncome - totalExpense;
-
-  const formatRupiah = (angka: number) => {
-    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
-  };
-
   // Filter List
   const filteredTransactions = transactions.filter(t => {
     const matchSearch = t.keterangan?.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -198,8 +190,20 @@ export default function KeuanganPage() {
     const trxMonth = new Date(t.tanggal).toISOString().slice(0, 7); // YYYY-MM
     const matchMonth = monthFilter ? trxMonth === monthFilter : true;
 
-    return matchSearch && matchType && matchMonth;
+    const trxDate = new Date(t.tanggal).toISOString().slice(0, 10); // YYYY-MM-DD
+    const matchDate = dateFilter ? trxDate === dateFilter : true;
+
+    return matchSearch && matchType && matchMonth && matchDate;
   }).sort((a, b) => Number(b.no) - Number(a.no));
+
+  // Kalkulasi Saldo
+  const totalBalance = transactions.filter(t => t.jenis === 'INCOME').reduce((acc, curr) => acc + Number(curr.nominal), 0) - transactions.filter(t => t.jenis === 'EXPENSE').reduce((acc, curr) => acc + Number(curr.nominal), 0);
+  const filteredIncome = filteredTransactions.filter(t => t.jenis === 'INCOME').reduce((acc, curr) => acc + Number(curr.nominal), 0);
+  const filteredExpense = filteredTransactions.filter(t => t.jenis === 'EXPENSE').reduce((acc, curr) => acc + Number(curr.nominal), 0);
+
+  const formatRupiah = (angka: number) => {
+    return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
+  };
 
   const KATEGORI_INCOME = ["Sponsorship", "Dana Usaha", "Dana Produk", "Pendaftaran", "Donatur", "Lainnya"];
   const KATEGORI_EXPENSE = ["Logistik", "Konsumsi", "Acara", "Humas", "Pubdok", "Kesekretariatan", "Operasional", "Lainnya"];
@@ -330,8 +334,8 @@ export default function KeuanganPage() {
             <TrendingUp className="w-6 h-6 text-emerald-600" />
           </div>
           <div>
-            <p className="text-sm text-slate-500 font-medium mb-0.5">Total Pemasukan</p>
-            <h3 className="text-xl font-bold text-slate-800">{formatRupiah(totalIncome)}</h3>
+            <p className="text-sm text-slate-500 font-medium mb-0.5">Pemasukan {dateFilter ? 'Harian' : monthFilter ? 'Bulan Ini' : 'Total'}</p>
+            <h3 className="text-xl font-bold text-slate-800">{formatRupiah(filteredIncome)}</h3>
           </div>
         </div>
 
@@ -340,8 +344,8 @@ export default function KeuanganPage() {
             <TrendingDown className="w-6 h-6 text-rose-600" />
           </div>
           <div>
-            <p className="text-sm text-slate-500 font-medium mb-0.5">Total Pengeluaran</p>
-            <h3 className="text-xl font-bold text-slate-800">{formatRupiah(totalExpense)}</h3>
+            <p className="text-sm text-slate-500 font-medium mb-0.5">Pengeluaran {dateFilter ? 'Harian' : monthFilter ? 'Bulan Ini' : 'Total'}</p>
+            <h3 className="text-xl font-bold text-slate-800">{formatRupiah(filteredExpense)}</h3>
           </div>
         </div>
       </div>
@@ -372,9 +376,31 @@ export default function KeuanganPage() {
           <input 
             type="month"
             value={monthFilter}
-            onChange={(e) => setMonthFilter(e.target.value)}
+            onChange={(e) => {
+              setMonthFilter(e.target.value);
+              if (e.target.value) setDateFilter("");
+            }}
             className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
           />
+          <button
+            onClick={() => {
+              const d = new Date();
+              const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+              if (dateFilter === today) {
+                setDateFilter("");
+              } else {
+                setDateFilter(today);
+                setMonthFilter("");
+              }
+            }}
+            className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors border ${
+              dateFilter 
+                ? 'bg-blue-100 border-blue-300 text-blue-700 shadow-inner' 
+                : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+            }`}
+          >
+            Hari Ini
+          </button>
         </div>
 
         {/* Table */}
