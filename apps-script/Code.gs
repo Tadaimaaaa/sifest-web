@@ -21,6 +21,16 @@ function doPost(e) {
         return Keuangan.deleteTransaction(body, Auth.validateToken(body.token));
       case 'editKeuangan':
         return Keuangan.editTransaction(body, Auth.validateToken(body.token));
+      
+      // Keuangan Terkini Routes
+      case 'getKeuanganTerkini':
+        return KeuanganTerkini.getTransactions();
+      case 'addKeuanganTerkini':
+        return KeuanganTerkini.addTransaction(body, Auth.validateToken(body.token));
+      case 'deleteKeuanganTerkini':
+        return KeuanganTerkini.deleteTransaction(body, Auth.validateToken(body.token));
+      case 'editKeuanganTerkini':
+        return KeuanganTerkini.editTransaction(body, Auth.validateToken(body.token));
       case 'addSponsor':
         return Sponsor.addSponsor(body, Auth.validateToken(body.token));
       case 'editSponsor':

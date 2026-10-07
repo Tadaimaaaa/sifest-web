@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Wallet, TrendingUp, TrendingDown, Search, X, Trash2, Calendar, Tag, FileText, Printer, Download } from "lucide-react";
-import * as XLSX from 'xlsx';
+import { Plus, Wallet, TrendingUp, TrendingDown, Search, X, Trash2, Calendar, Tag, FileText, Printer, Download, ArrowLeft } from "lucide-react";
 import Link from "next/link";
+import * as XLSX from 'xlsx';
 import { SCRIPT_URL } from "@/lib/api";
 import Cookies from "js-cookie";
 import { toast } from "sonner";
@@ -57,7 +57,7 @@ export default function KeuanganPage() {
     setIsLoading(true);
     try {
       const token = Cookies.get("session_token") || "";
-      const response = await fetch(`${SCRIPT_URL}?action=getKeuangan&token=${token}`);
+      const response = await fetch(`${SCRIPT_URL}?action=getKeuanganTerkini&token=${token}`);
       if (!response.ok) throw new Error("Gagal mengambil data");
       
       const resData = await response.json();
@@ -90,7 +90,7 @@ export default function KeuanganPage() {
     
     try {
       const token = Cookies.get("session_token") || "";
-      const action = editTrxId ? 'editKeuangan' : 'addKeuangan';
+      const action = editTrxId ? 'editKeuanganTerkini' : 'addKeuanganTerkini';
       
       const payload = {
         ...newTrx,
@@ -163,7 +163,7 @@ export default function KeuanganPage() {
     
     try {
       const token = Cookies.get("session_token") || "";
-      const response = await fetch(`${SCRIPT_URL}?action=deleteKeuangan`, {
+      const response = await fetch(`${SCRIPT_URL}?action=deleteKeuanganTerkini`, {
         method: "POST",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify({ trx_id, token })
@@ -274,29 +274,19 @@ export default function KeuanganPage() {
       
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Data Keuangan</h1>
+          <h1 className="text-2xl font-bold text-slate-800 tracking-tight">Keuangan Terkini</h1>
           <p className="text-sm text-slate-500 mt-1">
-            Buku kas digital SI FEST 2026.
+            Data Pemasukan/Pengeluaran Sementara (Belum masuk ke uang kas).
           </p>
         </div>
         <div className="flex items-center gap-3 w-full sm:w-auto print:hidden">
               <Link 
-                href="/keuangan/terkini"
-                className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors border border-blue-200 shadow-sm"
-              >
-                <Wallet className="w-4 h-4" />
-                Keuangan Terkini
-              </Link>
-              <a 
-                href="https://docs.google.com/spreadsheets/d/1KTpEz85NNMhap8VSzSszSptX_DLdUcPj/edit?usp=sharing&ouid=101548209300972862261&rtpof=true&sd=true"
-                target="_blank"
-                rel="noreferrer"
+                href="/keuangan"
                 className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors border border-slate-200 shadow-sm"
               >
-                <FileText className="w-4 h-4" />
-                RAB
-              </a>
+                <ArrowLeft className="w-4 h-4" />
+                Buku Kas Utama
+              </Link>
           {canPrint && (
             <>
               <button 
