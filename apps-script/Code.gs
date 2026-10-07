@@ -128,6 +128,8 @@ function doGet(e) {
         return Users.getUsers();
       case 'getKeuangan':
         return Keuangan.getTransactions();
+      case 'getKeuanganTerkini':
+        return KeuanganTerkini.getTransactions();
       case 'getSponsors':
         return Sponsor.getSponsors();
       case 'getSurat':
