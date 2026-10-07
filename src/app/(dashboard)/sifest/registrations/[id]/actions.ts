@@ -2,8 +2,6 @@
 
 import { supabaseServer } from '@/lib/sifest/supabase';
 import { revalidatePath } from 'next/cache';
-import { cookies } from 'next/headers';
-import { SCRIPT_URL } from '@/lib/api';
 
 export async function updateRegistrationStatus(registrationId: string, newStatus: string) {
   try {
@@ -67,63 +65,6 @@ export async function updatePaymentStatus(transactionId: string, newStatus: stri
         })
         .eq('id', transactionId);
       if (error) throw error;
-    }
-
-    // SYNC TO KEUANGAN IF PAID OR DOWN_PAYMENT
-    if (newStatus === 'PAID' || newStatus === 'DOWN_PAYMENT') {
-      try {
-        const cookieStore = cookies();
-        // @ts-ignore - Next.js 15+ uses async cookies, Next.js 14 uses sync
-        const token = (typeof cookieStore.then === 'function' ? await cookieStore : cookieStore).get('session_token')?.value || '';
-
-        const { data: reg } = await supabaseServer
-          .from('registrations')
-          .select(`
-            *,
-            events(name, price),
-            participants(name, institution)
-          `)
-          .eq('id', registrationId)
-          .single();
-
-        if (reg) {
-          const { data: trx } = await supabaseServer
-            .from('transactions')
-            .select('amount')
-            .eq('registration_id', registrationId)
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .maybeSingle();
-
-          const nominal = trx?.amount || reg.events?.price || 0;
-          const statusKeuangan = newStatus === 'PAID' ? 'Lunas' : 'Uang Muka';
-          const keterangan = `Pendaftaran ${reg.participants?.name || 'Peserta'} (${reg.participants?.institution || 'Umum'})`;
-          const satuan = reg.events?.name || 'Event';
-          const buktiUrls = (reg.payment_proof_url || "").split(',').map((u: string) => u.trim()).filter(Boolean);
-          const buktiUrl = buktiUrls.length > 0 ? buktiUrls[0] : "";
-
-          // Fetch POST to Apps Script backend
-          await fetch(`${SCRIPT_URL}?action=addKeuangan`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({
-              tanggal: new Date().toISOString().split('T')[0],
-              jenis: "INCOME",
-              kategori: "Pendaftaran",
-              nominal: nominal.toString(),
-              vol: "1",
-              satuan: satuan,
-              keterangan: keterangan,
-              penanggung_jawab: "Sistem Registrasi",
-              status: statusKeuangan,
-              bukti_url: buktiUrl,
-              token: token
-            })
-          });
-        }
-      } catch (e) {
-        console.error('Failed to sync to Keuangan:', e);
-      }
     }
 
     revalidatePath(`/sifest/registrations/${registrationId}`);
