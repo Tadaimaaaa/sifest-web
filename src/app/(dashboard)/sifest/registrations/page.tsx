@@ -153,7 +153,7 @@ export default async function RegistrationsPage({
               {registrations.data.map((reg, index) => (
                 <tr key={reg.id} className="hover:bg-slate-50 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 text-center">
-                    {(page - 1) * 20 + index + 1}
+                    {registrations.count - ((page - 1) * 20 + index)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">
                     {reg.registration_code}
