@@ -60,6 +60,7 @@ const Dashboard = {
     // Agregasi pemasukan & pengeluaran per bulan
     const keuanganData = keuanganSheet.getDataRange().getValues();
     const monthlyFinance = {};
+    const dailyFinance = {};
     const monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"];
     
     for (let i = 1; i < keuanganData.length; i++) {
@@ -69,16 +70,22 @@ const Dashboard = {
       if (isNaN(date.getTime())) continue; // Skip invalid dates
       
       const monthYearKey = monthNames[date.getMonth()] + ' ' + date.getFullYear().toString().substring(2);
+      const dateKey = date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
       
       if (!monthlyFinance[monthYearKey]) {
         monthlyFinance[monthYearKey] = { name: monthYearKey, income: 0, expense: 0, sortKey: date.getFullYear() * 100 + date.getMonth() };
+      }
+      if (!dailyFinance[dateKey]) {
+        dailyFinance[dateKey] = { date: dateKey, income: 0, expense: 0, time: date.getTime() };
       }
       
       const jenis = keuanganData[i][5]; // 'Masuk' atau 'Keluar'
       if (jenis === 'Masuk') {
         monthlyFinance[monthYearKey].income += Number(keuanganData[i][8] || 0);
+        dailyFinance[dateKey].income += Number(keuanganData[i][8] || 0);
       } else if (jenis === 'Keluar') {
         monthlyFinance[monthYearKey].expense += Number(keuanganData[i][9] || 0);
+        dailyFinance[dateKey].expense += Number(keuanganData[i][9] || 0);
       }
     }
     
@@ -86,6 +93,11 @@ const Dashboard = {
     const financeAnalytics = Object.values(monthlyFinance)
       .sort((a, b) => a.sortKey - b.sortKey)
       .map(({ name, income, expense }) => ({ name, income, expense }));
+      
+    // Sort harian chronologically
+    const dailyFinanceAnalytics = Object.values(dailyFinance)
+      .sort((a, b) => a.time - b.time)
+      .map(({ date, income, expense }) => ({ date, income, expense }));
       
     // 5. Analytics Sponsor
     // Agregasi jumlah sponsor per status
@@ -122,6 +134,7 @@ const Dashboard = {
       },
       recentLogs: recentLogs,
       financeAnalytics: financeAnalytics,
+      dailyFinanceAnalytics: dailyFinanceAnalytics,
       sponsorAnalytics: sponsorAnalytics
     });
   }

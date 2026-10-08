@@ -16,6 +16,7 @@ export default function DashboardPage() {
   const [userName, setUserName] = useState("Admin");
   const [currentUserRole, setCurrentUserRole] = useState("ROLE-004");
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+  const [financeFilter, setFinanceFilter] = useState("semua");
 
   useEffect(() => {
     const targetDate = new Date('2026-11-02T08:00:00+07:00').getTime();
@@ -67,7 +68,47 @@ export default function DashboardPage() {
   };
   const recentLogs = resData?.data?.recentLogs || [];
   const financeAnalytics = resData?.data?.financeAnalytics || [];
+  const dailyFinanceAnalytics = resData?.data?.dailyFinanceAnalytics || [];
   const sponsorAnalytics = resData?.data?.sponsorAnalytics || [];
+
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Ags', 'Sep', 'Okt', 'Nov', 'Des'];
+  let filteredFinanceData: any[] = [];
+  
+  if (financeFilter === "semua") {
+    const now = new Date();
+    const last6Months: string[] = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const name = monthNames[d.getMonth()] + ' ' + d.getFullYear().toString().substring(2);
+      last6Months.push(name);
+    }
+    const paddedData = last6Months.map(name => {
+      const existing = financeAnalytics.find((d: any) => d.name === name);
+      return existing || { name, income: 0, expense: 0 };
+    });
+    const olderData = financeAnalytics.filter((d: any) => !last6Months.includes(d.name));
+    filteredFinanceData = [...olderData, ...paddedData];
+  } else {
+    let daysToKeep = 0;
+    if (financeFilter === "hari ini") daysToKeep = 0;
+    else if (financeFilter === "3 hari") daysToKeep = 2;
+    else if (financeFilter === "7 hari") daysToKeep = 6;
+    else if (financeFilter === "1 bulan") daysToKeep = 29;
+
+    const now = new Date();
+    const paddedDaily = [];
+    for (let i = daysToKeep; i >= 0; i--) {
+      const pd = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+      const dateKey = pd.getFullYear() + '-' + String(pd.getMonth() + 1).padStart(2, '0') + '-' + String(pd.getDate()).padStart(2, '0');
+      const existing = dailyFinanceAnalytics.find((d: any) => d.date === dateKey);
+      paddedDaily.push({
+        name: pd.getDate() + ' ' + monthNames[pd.getMonth()],
+        income: existing ? existing.income : 0,
+        expense: existing ? existing.expense : 0
+      });
+    }
+    filteredFinanceData = paddedDaily;
+  }
 
   const statCards = [
     { name: "Total Panitia", value: stats.totalPanitia, icon: Users, color: "text-blue-600", bg: "bg-blue-100" },
@@ -145,8 +186,21 @@ export default function DashboardPage() {
       {/* Analytics Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden p-5">
-          <h2 className="font-semibold text-slate-800 mb-4">Statistik Keuangan</h2>
-          <FinanceChart data={financeAnalytics} />
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
+            <h2 className="font-semibold text-slate-800">Statistik Keuangan</h2>
+            <select 
+              value={financeFilter}
+              onChange={(e) => setFinanceFilter(e.target.value)}
+              className="text-sm border border-slate-200 rounded-lg text-slate-600 px-3 py-1.5 focus:ring-blue-500 focus:border-blue-500 bg-slate-50 outline-none"
+            >
+              <option value="hari ini">Hari Ini</option>
+              <option value="3 hari">3 Hari</option>
+              <option value="7 hari">7 Hari</option>
+              <option value="1 bulan">1 Bulan</option>
+              <option value="semua">Semua Waktu</option>
+            </select>
+          </div>
+          <FinanceChart data={filteredFinanceData} />
         </div>
         <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden p-5">
           <h2 className="font-semibold text-slate-800 mb-4">Sebaran Status Sponsor</h2>
