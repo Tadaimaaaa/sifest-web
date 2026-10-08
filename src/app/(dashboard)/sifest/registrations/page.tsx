@@ -126,6 +126,9 @@ export default async function RegistrationsPage({
           <table className="min-w-full divide-y divide-slate-200">
             <thead className="bg-slate-50">
               <tr>
+                <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-slate-500 uppercase tracking-wider w-16">
+                  No
+                </th>
                 <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                   Kode
                 </th>
@@ -147,8 +150,11 @@ export default async function RegistrationsPage({
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-slate-200">
-              {registrations.data.map((reg) => (
+              {registrations.data.map((reg, index) => (
                 <tr key={reg.id} className="hover:bg-slate-50 transition-colors">
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 text-center">
+                    {(page - 1) * 20 + index + 1}
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">
                     {reg.registration_code}
                   </td>
@@ -184,7 +190,7 @@ export default async function RegistrationsPage({
               
               {registrations.data.length === 0 && (
                 <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-slate-500">
+                  <td colSpan={7} className="px-6 py-8 text-center text-slate-500">
                     Tidak ada data pendaftar yang ditemukan.
                   </td>
                 </tr>
