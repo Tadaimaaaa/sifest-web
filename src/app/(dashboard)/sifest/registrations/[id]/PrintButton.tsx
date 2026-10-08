@@ -68,7 +68,16 @@ export default function PrintButton({ registration }: { registration?: any }) {
       
       const blob = pdf.output('blob');
       const blobUrl = URL.createObjectURL(blob);
-      window.open(blobUrl, '_blank');
+      
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = `Formulir_${registration.registration_code}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 500);
+      
       Swal.close();
     } catch (error: any) {
       console.error("Gagal cetak PDF:", error);
