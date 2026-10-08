@@ -312,11 +312,8 @@ export default async function RegistrationDetailPage({
                       </>
                     )}
                     <th className="px-4 py-2">{events?.slug?.includes('esport') ? 'Identitas' : (events?.slug === 'turnamen-futsal-mahasiswa' || events?.slug === 'turnamen-futsal-umum') ? 'KTM' : 'KTS'}</th>
-                    {events?.slug?.includes('futsal') && (
-                      <>
-                        <th className="px-4 py-2">Foto</th>
-                        <th className="px-4 py-2">{(events?.slug === 'turnamen-futsal-mahasiswa' || events?.slug === 'turnamen-futsal-umum') ? 'KRS' : 'Akta'}</th>
-                      </>
+                    {(events?.slug === 'turnamen-futsal-mahasiswa' || events?.slug === 'turnamen-futsal-umum') && (
+                      <th className="px-4 py-2">KRS</th>
                     )}
                   </tr>
                 </thead>
@@ -348,23 +345,14 @@ export default async function RegistrationDetailPage({
                           <span className="text-slate-400">-</span>
                         )}
                       </td>
-                      {events?.slug?.includes('futsal') && (
-                        <>
-                          <td className="px-4 py-2">
-                            {p.photoUrl ? (
-                              <a href={p.photoUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-green-50 text-green-700 hover:bg-green-100 font-medium text-[11px] border border-green-200 transition-colors">Lihat</a>
-                            ) : (
-                              <span className="text-slate-400">-</span>
-                            )}
-                          </td>
-                          <td className="px-4 py-2">
-                            {p.birthCertificateUrl ? (
-                              <a href={p.birthCertificateUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-green-50 text-green-700 hover:bg-green-100 font-medium text-[11px] border border-green-200 transition-colors">Lihat</a>
-                            ) : (
-                              <span className="text-slate-400">-</span>
-                            )}
-                          </td>
-                        </>
+                      {(events?.slug === 'turnamen-futsal-mahasiswa' || events?.slug === 'turnamen-futsal-umum') && (
+                        <td className="px-4 py-2">
+                          {p.birthCertificateUrl ? (
+                            <a href={p.birthCertificateUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-green-50 text-green-700 hover:bg-green-100 font-medium text-[11px] border border-green-200 transition-colors">Lihat</a>
+                          ) : (
+                            <span className="text-slate-400">-</span>
+                          )}
+                        </td>
                       )}
                     </tr>
                   ))}
