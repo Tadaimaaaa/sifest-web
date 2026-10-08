@@ -248,13 +248,16 @@ export default function PrintButton({ registration }: { registration?: any }) {
                 <thead>
                   <tr className="bg-gray-100">
                     <th className="border border-black px-2 py-1 text-center w-[10%]">No</th>
-                    <th className="border border-black px-2 py-1 text-left w-[40%]">Nama Lengkap</th>
+                    <th className="border border-black px-2 py-1 text-left w-[35%]">Nama Lengkap</th>
                     {e.slug?.includes('esport') || e.slug === 'mlbb' ? (
                       <th className="border border-black px-2 py-1 text-left">Nickname / ID</th>
                     ) : (
                       <th className="border border-black px-2 py-1 text-left">NISN / No. BP</th>
                     )}
                     <th className="border border-black px-2 py-1 text-center w-[20%]">Status / Posisi</th>
+                    {e.slug?.includes('futsal') && (
+                      <th className="border border-black px-2 py-1 text-center w-[15%]">No. Punggung</th>
+                    )}
                   </tr>
                 </thead>
                 <tbody>
@@ -268,6 +271,9 @@ export default function PrintButton({ registration }: { registration?: any }) {
                         <td className="border border-black px-2 py-1">{player.nisn || player.nobp || '-'}</td>
                       )}
                       <td className="border border-black px-2 py-1 text-center">{player.posisi || player.role || (idx === 0 ? 'Kapten' : 'Anggota')}</td>
+                      {e.slug?.includes('futsal') && (
+                        <td className="border border-black px-2 py-1 text-center">{player.jerseyNumber || '-'}</td>
+                      )}
                     </tr>
                   ))}
                 </tbody>
