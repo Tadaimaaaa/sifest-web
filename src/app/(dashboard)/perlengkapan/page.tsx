@@ -27,37 +27,31 @@ export default function PerlengkapanPage() {
     keterangan: "-"
   });
 
-  const LOCAL_STORAGE_KEY = "sifest_rab_logistik_data_v2";
+  const LOCAL_STORAGE_KEY = "sifest_rab_logistik_data_v3";
 
   useEffect(() => {
     fetchData();
   }, []);
 
-  const fetchData = async () => {
+  const fetchData = () => {
     setIsLoading(true);
     try {
-      const localData = localStorage.getItem(LOCAL_STORAGE_KEY);
-      if (localData) {
-        try {
-          const parsed = JSON.parse(localData);
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            setEquipments(parsed);
-            setIsLoading(false);
-            return;
-          }
-        } catch (e) {}
+      if (typeof window !== "undefined") {
+        const localData = localStorage.getItem(LOCAL_STORAGE_KEY);
+        if (localData) {
+          try {
+            const parsed = JSON.parse(localData);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              setEquipments(parsed);
+              setIsLoading(false);
+              return;
+            }
+          } catch (e) {}
+        }
       }
-
-      const res = await getEquipments();
-      if (res.success && res.data) {
-        setEquipments(res.data);
-        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(res.data));
-      }
-    } catch (err) {
-      setEquipments(INITIAL_EQUIPMENTS);
-    } finally {
-      setIsLoading(false);
-    }
+    } catch (err) {}
+    setEquipments(INITIAL_EQUIPMENTS);
+    setIsLoading(false);
   };
 
   const handleResetToSpreadsheet = () => {
