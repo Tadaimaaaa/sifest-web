@@ -235,7 +235,7 @@ export default function DashboardPage() {
                     <div className="flex items-center gap-2 mt-1 text-xs text-slate-500">
                       <span className="font-medium text-blue-600">{log.user_id}</span>
                       <span>•</span>
-                      <span>{new Date(log.created_at).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short' })}</span>
+                      <span>{new Date(log.created_at).toLocaleString('id-ID', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Jakarta' }) + ' WIB'}</span>
                     </div>
                   </div>
                 </div>

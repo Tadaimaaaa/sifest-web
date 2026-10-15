@@ -128,7 +128,7 @@ export default async function RegistrationDetailPage({
                   canEdit={canEditRegistrationStatus(roleId, events?.slug)} 
                 />
               } />
-              <InfoRow label="Waktu Daftar" value={new Date(registration.created_at).toLocaleString('id-ID')} />
+              <InfoRow label="Waktu Daftar" value={new Date(registration.created_at).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' }) + ' WIB'} />
             </SectionCard>
 
             {events?.slug === 'turnamen-futsal-slta' ? (
@@ -211,7 +211,7 @@ export default async function RegistrationDetailPage({
                   <InfoRow label="Metode Pembayaran" value={transactions.payment_method} />
                   <InfoRow label="Tipe Pembayaran" value={transactions.payment_type} />
                   <InfoRow label="Nominal" value={new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(transactions.amount)} />
-                  <InfoRow label="Waktu Pembayaran" value={transactions.paid_at ? new Date(transactions.paid_at).toLocaleString('id-ID') : '-'} />
+                  <InfoRow label="Waktu Pembayaran" value={transactions.paid_at ? new Date(transactions.paid_at).toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' }) + ' WIB' : '-'} />
                   <InfoRow label="Transaction ID" value={<span className="font-mono text-xs break-all">{transactions.id}</span>} />
                 </>
               )}

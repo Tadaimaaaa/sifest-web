@@ -304,7 +304,7 @@ export default function PrintButton({ registration }: { registration?: any }) {
           {/* Tanda Tangan */}
           <div className="absolute bottom-16 right-16 flex justify-end" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
             <div className="text-center w-[250px]">
-              <p className="mb-20">Padang, {new Date(registration.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+              <p className="mb-20">Padang, {new Date(registration.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Jakarta' })}</p>
               <p className="font-bold border-b border-black inline-block px-4 pb-1">{p.full_name}</p>
               <p className="mt-1">Pendaftar</p>
             </div>
