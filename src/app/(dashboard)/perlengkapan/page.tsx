@@ -1,15 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Package, Plus, Search, Edit3, Trash2, X, Download, RotateCcw, CheckCircle2, DollarSign, Layers, Tag, Info } from "lucide-react";
+import { Package, Plus, Search, Edit3, Trash2, X, Download, RotateCcw, CheckCircle2, DollarSign, Layers } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
-import FullPageLoader from "@/components/FullPageLoader";
-import { getEquipments, saveEquipment, deleteEquipment, EquipmentItem, INITIAL_EQUIPMENTS } from "./actions";
+import { INITIAL_LOGISTIK, LogistikItem as EquipmentItem } from "@/data/logistik";
 
 export default function PerlengkapanPage() {
-  const [equipments, setEquipments] = useState<EquipmentItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [equipments, setEquipments] = useState<EquipmentItem[]>(INITIAL_LOGISTIK);
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("Semua");
   
@@ -27,38 +25,29 @@ export default function PerlengkapanPage() {
     keterangan: "-"
   });
 
-  const LOCAL_STORAGE_KEY = "sifest_rab_logistik_data_v3";
+  const LOCAL_STORAGE_KEY = "sifest_rab_logistik_v4";
 
   useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = () => {
-    setIsLoading(true);
     try {
       if (typeof window !== "undefined") {
         const localData = localStorage.getItem(LOCAL_STORAGE_KEY);
         if (localData) {
-          try {
-            const parsed = JSON.parse(localData);
-            if (Array.isArray(parsed) && parsed.length > 0) {
-              setEquipments(parsed);
-              setIsLoading(false);
-              return;
-            }
-          } catch (e) {}
+          const parsed = JSON.parse(localData);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setEquipments(parsed);
+          }
         }
       }
-    } catch (err) {}
-    setEquipments(INITIAL_EQUIPMENTS);
-    setIsLoading(false);
-  };
+    } catch (e) {}
+  }, []);
 
   const handleResetToSpreadsheet = () => {
-    if (!confirm("Apakah Anda yakin ingin menyinkronkan ulang data ke versi asli spreadsheet? Perubahan manual lokal akan direset.")) return;
-    setEquipments(INITIAL_EQUIPMENTS);
+    if (!confirm("Apakah Anda yakin ingin menyinkronkan ulang data ke versi asli spreadsheet?")) return;
+    setEquipments(INITIAL_LOGISTIK);
     try {
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(INITIAL_EQUIPMENTS));
+      if (typeof window !== "undefined") {
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(INITIAL_LOGISTIK));
+      }
     } catch (e) {}
     toast.success("Data berhasil disinkronkan kembali ke versi asli spreadsheet!");
   };
@@ -66,11 +55,13 @@ export default function PerlengkapanPage() {
   const saveToLocalAndState = (updatedList: EquipmentItem[]) => {
     setEquipments(updatedList);
     try {
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updatedList));
+      if (typeof window !== "undefined") {
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updatedList));
+      }
     } catch (e) {}
   };
 
-  const handleSave = async (e: React.FormEvent) => {
+  const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name?.trim()) {
       toast.error("Nama barang wajib diisi!");
@@ -97,12 +88,10 @@ export default function PerlengkapanPage() {
     if (formData.id) {
       const updated = equipments.map(item => item.id === formData.id ? payload : item);
       saveToLocalAndState(updated);
-      await saveEquipment(payload);
       toast.success("Data barang berhasil diperbarui!");
     } else {
       const updated = [payload, ...equipments];
       saveToLocalAndState(updated);
-      await saveEquipment(payload);
       toast.success("Barang baru berhasil ditambahkan!");
     }
 
@@ -110,12 +99,10 @@ export default function PerlengkapanPage() {
     setIsModalOpen(false);
   };
 
-  const handleDelete = async (id: string, name: string) => {
+  const handleDelete = (id: string, name: string) => {
     if (!confirm(`Apakah Anda yakin ingin menghapus "${name}"?`)) return;
-    
     const updated = equipments.filter(item => item.id !== id);
     saveToLocalAndState(updated);
-    await deleteEquipment(id);
     toast.success("Data barang berhasil dihapus!");
   };
 
@@ -137,7 +124,6 @@ export default function PerlengkapanPage() {
     setIsModalOpen(true);
   };
 
-  // Grouped Categories for clean tabs
   const FILTER_TABS = [
     "Semua",
     "Perlengkapan Umum",
@@ -150,15 +136,18 @@ export default function PerlengkapanPage() {
     "Inventaris Barang"
   ];
 
-  const filteredData = equipments.filter(item => {
-    const matchesSearch = (item.name || "").toLowerCase().includes(search.toLowerCase()) || 
-                          (item.keterangan || "").toLowerCase().includes(search.toLowerCase()) ||
-                          (item.subCategory || "").toLowerCase().includes(search.toLowerCase());
+  const filteredData = (equipments || []).filter(item => {
+    if (!item) return false;
+    const name = String(item.name || "").toLowerCase();
+    const ket = String(item.keterangan || "").toLowerCase();
+    const sub = String(item.subCategory || "").toLowerCase();
+    const searchLower = (search || "").toLowerCase();
+    const matchesSearch = name.includes(searchLower) || ket.includes(searchLower) || sub.includes(searchLower);
     
     let matchesCategory = true;
     if (categoryFilter !== "Semua") {
       if (categoryFilter === "Inventaris Barang") {
-        matchesCategory = item.category.startsWith("Inventaris");
+        matchesCategory = String(item.category || "").startsWith("Inventaris");
       } else {
         matchesCategory = item.category === categoryFilter;
       }
@@ -169,9 +158,9 @@ export default function PerlengkapanPage() {
   const totalBiaya = filteredData.reduce((acc, curr) => acc + (Number(curr.jumlah_harga) || 0), 0);
   const totalItemCount = filteredData.length;
 
-  const formatRupiah = (val: number) => {
-    if (!val || isNaN(val) || val === 0) return "-";
-    return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(val);
+  const formatRupiah = (val: number | undefined | null) => {
+    if (val === undefined || val === null || isNaN(Number(val)) || Number(val) === 0) return "-";
+    return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(Number(val));
   };
 
   const handleExportExcel = () => {
@@ -210,8 +199,6 @@ export default function PerlengkapanPage() {
       toast.error("Gagal mengekspor data ke Excel.");
     }
   };
-
-  if (isLoading) return <FullPageLoader message="Memuat data RAB Logistik..." />;
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-7xl mx-auto">
