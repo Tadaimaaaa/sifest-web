@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Package, Plus, Search, Edit3, Trash2, X, Download, FileText, CheckCircle2, DollarSign, Layers, Tag } from "lucide-react";
+import { Package, Plus, Search, Edit3, Trash2, X, Download, RotateCcw, CheckCircle2, DollarSign, Layers, Tag, Info } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 import FullPageLoader from "@/components/FullPageLoader";
@@ -18,7 +18,8 @@ export default function PerlengkapanPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState<Partial<EquipmentItem>>({
     name: "", 
-    category: "Perlengkapan", 
+    category: "Perlengkapan Umum", 
+    subCategory: "PERLENGKAPAN",
     vol: "1", 
     kuantitas: "Unit", 
     harga_satuan: 0, 
@@ -26,7 +27,7 @@ export default function PerlengkapanPage() {
     keterangan: "-"
   });
 
-  const LOCAL_STORAGE_KEY = "sifest_rab_logistik_data";
+  const LOCAL_STORAGE_KEY = "sifest_rab_logistik_data_v2";
 
   useEffect(() => {
     fetchData();
@@ -35,7 +36,6 @@ export default function PerlengkapanPage() {
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      // Check local storage first for user customized data
       const localData = localStorage.getItem(LOCAL_STORAGE_KEY);
       if (localData) {
         try {
@@ -60,6 +60,15 @@ export default function PerlengkapanPage() {
     }
   };
 
+  const handleResetToSpreadsheet = () => {
+    if (!confirm("Apakah Anda yakin ingin menyinkronkan ulang data ke versi asli spreadsheet? Perubahan manual lokal akan direset.")) return;
+    setEquipments(INITIAL_EQUIPMENTS);
+    try {
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(INITIAL_EQUIPMENTS));
+    } catch (e) {}
+    toast.success("Data berhasil disinkronkan kembali ke versi asli spreadsheet!");
+  };
+
   const saveToLocalAndState = (updatedList: EquipmentItem[]) => {
     setEquipments(updatedList);
     try {
@@ -82,7 +91,8 @@ export default function PerlengkapanPage() {
     const payload: EquipmentItem = {
       id: formData.id || `custom-${Date.now()}`,
       name: formData.name.trim(),
-      category: formData.category || "Perlengkapan",
+      category: formData.category || "Perlengkapan Umum",
+      subCategory: formData.subCategory || "PERLENGKAPAN",
       vol: formData.vol || "-",
       kuantitas: formData.kuantitas || "-",
       harga_satuan: numHargaSatuan,
@@ -91,14 +101,12 @@ export default function PerlengkapanPage() {
     };
 
     if (formData.id) {
-      // Edit
       const updated = equipments.map(item => item.id === formData.id ? payload : item);
       saveToLocalAndState(updated);
       await saveEquipment(payload);
       toast.success("Data barang berhasil diperbarui!");
     } else {
-      // Create new
-      const updated = [...equipments, payload];
+      const updated = [payload, ...equipments];
       saveToLocalAndState(updated);
       await saveEquipment(payload);
       toast.success("Barang baru berhasil ditambahkan!");
@@ -123,7 +131,8 @@ export default function PerlengkapanPage() {
     } else {
       setFormData({ 
         name: "", 
-        category: categoryFilter !== "Semua" ? categoryFilter : "Perlengkapan", 
+        category: categoryFilter !== "Semua" ? categoryFilter : "Perlengkapan Umum", 
+        subCategory: "PERLENGKAPAN",
         vol: "1", 
         kuantitas: "Unit", 
         harga_satuan: 0, 
@@ -134,20 +143,37 @@ export default function PerlengkapanPage() {
     setIsModalOpen(true);
   };
 
-  // Dinamis kategori berdasarkan data yang ada
-  const existingCategories = Array.from(new Set(equipments.map(e => e.category).filter(Boolean)));
-  const defaultCategories = ["Perlengkapan", "Konsumsi", "Event MTQ"];
-  const allCategories = ["Semua", ...Array.from(new Set([...defaultCategories, ...existingCategories]))];
+  // Grouped Categories for clean tabs
+  const FILTER_TABS = [
+    "Semua",
+    "Perlengkapan Umum",
+    "Event MTQ",
+    "Event Bazzar",
+    "Event Turnamen Futsal",
+    "Event Seminar",
+    "Event Mobile Legends",
+    "Event E-Football",
+    "Inventaris Barang"
+  ];
 
   const filteredData = equipments.filter(item => {
     const matchesSearch = (item.name || "").toLowerCase().includes(search.toLowerCase()) || 
-                          (item.keterangan || "").toLowerCase().includes(search.toLowerCase());
-    const matchesCategory = categoryFilter === "Semua" || item.category === categoryFilter;
+                          (item.keterangan || "").toLowerCase().includes(search.toLowerCase()) ||
+                          (item.subCategory || "").toLowerCase().includes(search.toLowerCase());
+    
+    let matchesCategory = true;
+    if (categoryFilter !== "Semua") {
+      if (categoryFilter === "Inventaris Barang") {
+        matchesCategory = item.category.startsWith("Inventaris");
+      } else {
+        matchesCategory = item.category === categoryFilter;
+      }
+    }
     return matchesSearch && matchesCategory;
   });
 
-  const totalBiaya = equipments.reduce((acc, curr) => acc + (Number(curr.jumlah_harga) || 0), 0);
-  const totalItemCount = equipments.length;
+  const totalBiaya = filteredData.reduce((acc, curr) => acc + (Number(curr.jumlah_harga) || 0), 0);
+  const totalItemCount = filteredData.length;
 
   const formatRupiah = (val: number) => {
     if (!val || isNaN(val) || val === 0) return "-";
@@ -160,6 +186,7 @@ export default function PerlengkapanPage() {
         "NO": idx + 1,
         "NAMA BARANG": item.name,
         "KATEGORI": item.category,
+        "SUB KATEGORI": item.subCategory || "-",
         "VOL": item.vol,
         "KUANTITAS": item.kuantitas,
         "HARGA SATUAN": item.harga_satuan,
@@ -173,7 +200,8 @@ export default function PerlengkapanPage() {
 
       worksheet["!cols"] = [
         { wch: 6 },
-        { wch: 30 },
+        { wch: 32 },
+        { wch: 22 },
         { wch: 18 },
         { wch: 10 },
         { wch: 14 },
@@ -201,19 +229,26 @@ export default function PerlengkapanPage() {
             Data Perlengkapan (RAB Logistik)
           </h1>
           <p className="text-sm text-slate-500 mt-1">
-            Manajemen inventaris, logistik, pengadaan barang dan anggaran SI FEST 2026.
+            Data rencana anggaran biaya (RAB) dan logistik SI FEST 2026 sesuai spreadsheet.
           </p>
         </div>
         <div className="flex items-center gap-3">
           <button
+            onClick={handleResetToSpreadsheet}
+            className="flex items-center justify-center gap-1.5 px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl transition-all text-xs"
+            title="Sinkronkan ulang dengan data asli spreadsheet"
+          >
+            <RotateCcw className="w-3.5 h-3.5" /> Reset Spreadsheet
+          </button>
+          <button
             onClick={handleExportExcel}
-            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 font-semibold rounded-xl transition-all shadow-sm"
+            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 font-semibold rounded-xl transition-all shadow-sm text-sm"
           >
             <Download className="w-4 h-4" /> Excel
           </button>
           <button 
             onClick={() => openModal()}
-            className="flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 shadow-sm shadow-blue-500/20 transition-all active:scale-95"
+            className="flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 shadow-sm shadow-blue-500/20 transition-all active:scale-95 text-sm"
           >
             <Plus className="w-4 h-4" /> Tambah Barang
           </button>
@@ -223,32 +258,36 @@ export default function PerlengkapanPage() {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
             <Package className="w-6 h-6 text-blue-600" />
           </div>
           <div>
-            <p className="text-sm font-medium text-slate-500">Total Item Barang</p>
+            <p className="text-sm font-medium text-slate-500">
+              {categoryFilter === "Semua" ? "Total Item Barang" : `Item (${categoryFilter})`}
+            </p>
             <p className="text-2xl font-bold text-slate-800">{totalItemCount} Barang</p>
           </div>
         </div>
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-full bg-emerald-50 flex items-center justify-center shrink-0">
             <DollarSign className="w-6 h-6 text-emerald-600" />
           </div>
           <div>
-            <p className="text-sm font-medium text-slate-500">Total Estimasi Biaya</p>
+            <p className="text-sm font-medium text-slate-500">
+              {categoryFilter === "Semua" ? "Total Anggaran RAB" : `Subtotal Biaya`}
+            </p>
             <p className="text-2xl font-bold text-emerald-700">
               {new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(totalBiaya)}
             </p>
           </div>
         </div>
         <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 rounded-full bg-amber-50 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-full bg-amber-50 flex items-center justify-center shrink-0">
             <Layers className="w-6 h-6 text-amber-600" />
           </div>
           <div>
-            <p className="text-sm font-medium text-slate-500">Kategori Logistik</p>
-            <p className="text-2xl font-bold text-slate-800">{allCategories.length - 1} Kategori</p>
+            <p className="text-sm font-medium text-slate-500">Total Keseluruhan RAB</p>
+            <p className="text-2xl font-bold text-slate-800">Rp 7.916.000</p>
           </div>
         </div>
       </div>
@@ -261,19 +300,19 @@ export default function PerlengkapanPage() {
             <Search className="w-5 h-5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input 
               type="text" 
-              placeholder="Cari nama barang atau keterangan..." 
+              placeholder="Cari nama barang, keterangan..." 
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full pl-10 pr-4 py-2.5 bg-white border border-slate-300 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all shadow-sm"
             />
           </div>
           
-          <div className="flex flex-wrap gap-2 w-full md:w-auto">
-            {allCategories.map(cat => (
+          <div className="flex flex-wrap gap-2 w-full md:w-auto overflow-x-auto pb-1 md:pb-0">
+            {FILTER_TABS.map(cat => (
               <button
                 key={cat}
                 onClick={() => setCategoryFilter(cat)}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors ${
+                className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap ${
                   categoryFilter === cat 
                     ? "bg-slate-800 text-white shadow-sm" 
                     : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-50"
@@ -285,7 +324,7 @@ export default function PerlengkapanPage() {
           </div>
         </div>
 
-        {/* Table - Sesuai dengan kolom di Spreadsheet */}
+        {/* Table - 100% Sesuai Kolom Spreadsheet */}
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-sm">
             <thead>
@@ -308,17 +347,22 @@ export default function PerlengkapanPage() {
                   </td>
                   <td className="py-4 px-6">
                     <div className="font-bold text-slate-800 text-[15px]">{item.name}</div>
-                    <div className="flex items-center gap-2 mt-1">
+                    <div className="flex items-center gap-1.5 mt-1 flex-wrap">
                       <span className="text-[11px] text-emerald-700 font-semibold px-2 py-0.5 bg-emerald-50 border border-emerald-200 rounded-md">
                         {item.category}
                       </span>
+                      {item.subCategory && (
+                        <span className="text-[10px] text-slate-500 font-medium px-2 py-0.5 bg-slate-100 rounded-md">
+                          {item.subCategory}
+                        </span>
+                      )}
                     </div>
                   </td>
                   <td className="py-4 px-4 text-center font-medium text-slate-700">
-                    {item.vol !== undefined && item.vol !== "" ? item.vol : "-"}
+                    {item.vol !== undefined && item.vol !== "" && item.vol !== null ? item.vol : "-"}
                   </td>
                   <td className="py-4 px-4 text-center font-medium text-slate-700">
-                    <span className="px-2 py-1 bg-slate-100 rounded text-xs font-semibold text-slate-600">
+                    <span className="px-2 py-0.5 bg-slate-100 rounded text-xs font-semibold text-slate-600">
                       {item.kuantitas || "-"}
                     </span>
                   </td>
@@ -330,7 +374,9 @@ export default function PerlengkapanPage() {
                   </td>
                   <td className="py-4 px-6 text-slate-600 text-sm">
                     {item.keterangan && item.keterangan !== "-" ? (
-                      <span className="text-slate-700">{item.keterangan}</span>
+                      <span className="text-slate-700 bg-amber-50 text-amber-800 px-2 py-0.5 rounded text-xs border border-amber-200 font-medium">
+                        {item.keterangan}
+                      </span>
                     ) : (
                       <span className="text-slate-400 italic">-</span>
                     )}
@@ -360,7 +406,7 @@ export default function PerlengkapanPage() {
                     <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 mb-4">
                       <Package className="w-8 h-8 text-slate-300" />
                     </div>
-                    <p className="text-slate-500 font-medium">Tidak ada data barang ditemukan.</p>
+                    <p className="text-slate-500 font-medium">Tidak ada data barang ditemukan pada kategori ini.</p>
                   </td>
                 </tr>
               )}
@@ -406,18 +452,22 @@ export default function PerlengkapanPage() {
                     <input
                       type="text"
                       list="category-suggestions"
-                      value={formData.category || "Perlengkapan"}
+                      value={formData.category || "Perlengkapan Umum"}
                       onChange={(e) => setFormData({...formData, category: e.target.value})}
                       className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
                       placeholder="Pilih atau ketik..."
                     />
                     <datalist id="category-suggestions">
-                      <option value="Perlengkapan" />
-                      <option value="Konsumsi" />
+                      <option value="Perlengkapan Umum" />
                       <option value="Event MTQ" />
-                      <option value="Event Futsal" />
-                      <option value="Event E-Sport" />
-                      <option value="Lainnya" />
+                      <option value="Event Bazzar" />
+                      <option value="Event Turnamen Futsal" />
+                      <option value="Event Seminar" />
+                      <option value="Event Mobile Legends" />
+                      <option value="Event E-Football" />
+                      <option value="Inventaris (Turnamen Futsal)" />
+                      <option value="Inventaris (Bazzar)" />
+                      <option value="Inventaris (Mobile Legends)" />
                     </datalist>
                   </div>
                   <div>
@@ -427,7 +477,7 @@ export default function PerlengkapanPage() {
                       value={formData.kuantitas || ""}
                       onChange={(e) => setFormData({...formData, kuantitas: e.target.value})}
                       className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
-                      placeholder="Pcs, Unit, Lembar, Botol..."
+                      placeholder="Pcs, Unit, Lembar, Pack..."
                     />
                   </div>
                 </div>
