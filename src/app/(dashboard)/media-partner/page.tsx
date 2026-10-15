@@ -83,7 +83,9 @@ export default function MediaPartnerPage() {
     setIsLoading(true);
     try {
       const token = Cookies.get("session_token");
-      const res = await fetch(`${SCRIPT_URL}?action=getSponsors&token=${token}`);
+      const res = await fetch(`${SCRIPT_URL}?action=getSponsors&token=${token}&_t=${Date.now()}`, {
+        cache: "no-store"
+      });
       const data = await res.json();
       if (data.success) {
         setSponsors(data.data || []);
@@ -132,7 +134,7 @@ export default function MediaPartnerPage() {
 
       const worksheet = XLSX.utils.json_to_sheet(exportData);
       const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Data Sponsor");
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Data Media Partner");
 
       // Set column widths
       const wscols = [
@@ -142,7 +144,7 @@ export default function MediaPartnerPage() {
       ];
       worksheet['!cols'] = wscols;
 
-      XLSX.writeFile(workbook, `Data_Sponsor_SIFEST_${new Date().toISOString().split('T')[0]}.xlsx`);
+      XLSX.writeFile(workbook, `Data_Media_Partner_SIFEST_${new Date().toISOString().split('T')[0]}.xlsx`);
       toast.success("Berhasil mengunduh file Excel!");
     } catch (error) {
       toast.error("Gagal mengekspor file Excel");
