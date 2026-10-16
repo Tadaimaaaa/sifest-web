@@ -1,15 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowLeft, Camera, Check, AlertTriangle, GraduationCap, Building2, Smartphone, IdCard } from "lucide-react";
-import { checkInSeminarByCode } from "../../actions";
+import { getSeminarRegistrations, toggleSeminarAttendance, checkInSeminarByCode } from "../../actions";
 import QRScanner from "@/components/scanner/QRScanner";
 
 export default function MobileSeminarScannerPage() {
   const [lastScanned, setLastScanned] = useState<any | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  const [localParticipants, setLocalParticipants] = useState<any[]>([]);
+
+  useEffect(() => {
+    // Pre-cache seminar participants in mobile browser memory for instant (0ms) scanning
+    getSeminarRegistrations().then(res => {
+      if (res.success && res.data) {
+        setLocalParticipants(res.data);
+      }
+    });
+  }, []);
 
   const playBeep = () => {
     try {
@@ -28,12 +39,58 @@ export default function MobileSeminarScannerPage() {
   };
 
   const handleScanSuccess = async (decodedText: string) => {
+    let cleanCode = decodedText.trim();
+    let cleanId = "";
+
+    if (cleanCode.startsWith("{") && cleanCode.endsWith("}")) {
+      try {
+        const parsed = JSON.parse(cleanCode);
+        if (parsed.code) cleanCode = String(parsed.code).trim();
+        if (parsed.id) cleanId = String(parsed.id).trim();
+      } catch (e) {}
+    }
+
+    // ⚡ 1. INSTANT LOCAL MATCH (0ms)
+    const match = localParticipants.find((p) =>
+      (cleanCode && p.registration_code?.toLowerCase() === cleanCode.toLowerCase()) ||
+      (cleanCode && p.id_peserta?.toLowerCase() === cleanCode.toLowerCase()) ||
+      (cleanId && (p.id === cleanId || p.participant_id === cleanId)) ||
+      (cleanCode && (p.id === cleanCode || p.participant_id === cleanCode))
+    );
+
+    if (match) {
+      playBeep();
+      const nowIso = new Date().toISOString();
+      const isAlready = Boolean(match.attended);
+      const timeStr = new Date(isAlready ? (match.attended_at || nowIso) : nowIso).toLocaleTimeString("id-ID", {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit"
+      }) + " WIB";
+
+      setLastScanned({
+        ...match,
+        attended: true,
+        isAlreadyCheckedIn: isAlready,
+        timeStr
+      });
+
+      if (!isAlready) {
+        setLocalParticipants(prev =>
+          prev.map(p => p.participant_id === match.participant_id ? { ...p, attended: true, attended_at: nowIso } : p)
+        );
+        toggleSeminarAttendance(match.participant_id, true);
+      }
+      return;
+    }
+
+    // ⚡ 2. Fallback to server if not in local cache
     if (isProcessing) return;
     setIsProcessing(true);
     setErrorMessage(null);
 
     try {
-      const res = await checkInSeminarByCode(decodedText);
+      const res = await checkInSeminarByCode(cleanCode || cleanId);
       if (res.success && res.data) {
         playBeep();
         const timeStr = new Date(res.data.attended_at || new Date()).toLocaleTimeString("id-ID", {
@@ -53,9 +110,7 @@ export default function MobileSeminarScannerPage() {
     } catch (err: any) {
       setErrorMessage("Terjadi kesalahan saat memproses scan.");
     } finally {
-      setTimeout(() => {
-        setIsProcessing(false);
-      }, 1500);
+      setIsProcessing(false);
     }
   };
 

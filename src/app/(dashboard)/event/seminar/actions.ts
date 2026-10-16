@@ -140,6 +140,33 @@ export async function toggleSeminarAttendance(participantId: string, present: bo
   }
 }
 
+async function checkInSingleParticipant(match: any) {
+  if (match.attended) {
+    return { 
+      success: true, 
+      alreadyCheckedIn: true, 
+      data: match, 
+      message: `${match.nama_lengkap} sudah absen sebelumnya pada ${new Date(match.attended_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB.` 
+    };
+  }
+
+  const toggleRes = await toggleSeminarAttendance(match.participant_id, true);
+  if (!toggleRes.success) {
+    return { success: false, message: toggleRes.message };
+  }
+
+  return {
+    success: true,
+    alreadyCheckedIn: false,
+    data: {
+      ...match,
+      attended: true,
+      attended_at: toggleRes.attended_at
+    },
+    message: `Presensi berhasil! ${match.nama_lengkap} tercatat HADIR.`
+  };
+}
+
 export async function checkInSeminarByCode(codeRaw: string) {
   try {
     let searchCode = codeRaw.trim();
@@ -156,51 +183,79 @@ export async function checkInSeminarByCode(codeRaw: string) {
       }
     }
 
-    // Ambil daftar peserta seminar
-    const registrationsRes = await getSeminarRegistrations();
-    if (!registrationsRes.success || !registrationsRes.data) {
-      return { success: false, message: "Gagal memuat data seminar" };
+    // Direct indexed query ke tabel registrations (sangat cepat ~50ms)
+    let query = supabaseServer
+      .from("registrations")
+      .select("id, registration_code, participant_id, created_at, participants(*), transactions(*)");
+
+    if (searchCode && searchId) {
+      query = query.or(`registration_code.ilike.${searchCode},id.eq.${searchId}`);
+    } else if (searchCode) {
+      query = query.or(`registration_code.ilike.${searchCode},id.eq.${searchCode}`);
+    } else if (searchId) {
+      query = query.eq("id", searchId);
     }
 
-    const participants = registrationsRes.data;
-    const match = participants.find((p: any) => 
-      (searchCode && p.registration_code?.toLowerCase() === searchCode.toLowerCase()) ||
-      (searchId && (p.id === searchId || p.participant_id === searchId)) ||
-      (searchCode && (p.id === searchCode || p.participant_id === searchCode))
-    );
+    const { data: regList, error: regErr } = await query.limit(1);
 
-    if (!match) {
-      return { 
-        success: false, 
-        message: `Peserta dengan kode "${searchCode || searchId}" tidak terdaftar di Seminar SI FEST 2026.` 
-      };
+    if (regErr || !regList || regList.length === 0) {
+      // Fallback: cari dari seluruh pendaftar seminar
+      const registrationsRes = await getSeminarRegistrations();
+      const participants = registrationsRes.data || [];
+      const match = participants.find((p: any) => 
+        (searchCode && p.registration_code?.toLowerCase() === searchCode.toLowerCase()) ||
+        (searchId && (p.id === searchId || p.participant_id === searchId)) ||
+        (searchCode && (p.id === searchCode || p.participant_id === searchCode))
+      );
+
+      if (!match) {
+        return { 
+          success: false, 
+          message: `Peserta dengan kode "${searchCode || searchId}" tidak terdaftar di Seminar SI FEST 2026.` 
+        };
+      }
+      return await checkInSingleParticipant(match);
     }
 
-    if (match.attended) {
-      return { 
-        success: true, 
-        alreadyCheckedIn: true, 
-        data: match, 
-        message: `${match.nama_lengkap} sudah absen sebelumnya pada ${new Date(match.attended_at).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB.` 
-      };
-    }
+    const reg = regList[0];
+    const participant = (Array.isArray(reg.participants) ? reg.participants[0] : reg.participants) || {};
+    const transaction = (Array.isArray(reg.transactions) ? reg.transactions[0] : reg.transactions) || {};
 
-    // Lakukan check-in
-    const toggleRes = await toggleSeminarAttendance(match.participant_id, true);
-    if (!toggleRes.success) {
-      return { success: false, message: toggleRes.message };
-    }
+    let paymentStatus = "Belum Bayar";
+    if (transaction?.payment_method === "FREE") paymentStatus = "Lunas";
+    else if (transaction?.status === "PAID" || transaction?.status === "VERIFIED") paymentStatus = "Lunas";
+    else if (transaction?.status === "DOWN_PAYMENT" || transaction?.status === "PENDING") paymentStatus = "DP";
 
-    return {
-      success: true,
-      alreadyCheckedIn: false,
-      data: {
-        ...match,
-        attended: true,
-        attended_at: toggleRes.attended_at
-      },
-      message: `Presensi berhasil! ${match.nama_lengkap} tercatat HADIR.`
+    const metadata = participant.metadata || {};
+    const attendance = metadata.attendance || null;
+    const attended = Boolean(attendance?.present);
+    const attended_at = attendance?.attended_at || null;
+
+    const nobp = metadata.nobp || metadata.nim || metadata.no_bp || metadata.nisn || null;
+    const jurusan = metadata.jurusan || metadata.prodi || metadata.program_studi || metadata.major || null;
+    const kelas = metadata.kelas || metadata.class || null;
+
+    const formattedMatch = {
+      id: reg.id,
+      participant_id: participant.id || reg.participant_id,
+      id_peserta: reg.registration_code,
+      registration_code: reg.registration_code,
+      nama_lengkap: participant.full_name || "Unknown",
+      institusi: participant.institution || participant.institution_name || "-",
+      email: participant.email || "-",
+      kontak: participant.phone_number || participant.whatsapp || "-",
+      status_bayar: paymentStatus,
+      created_at: reg.created_at,
+      attended,
+      attended_at,
+      attendance,
+      metadata,
+      nobp,
+      jurusan,
+      kelas
     };
+
+    return await checkInSingleParticipant(formattedMatch);
   } catch (error: any) {
     console.error("Gagal check-in peserta seminar:", error);
     return { success: false, message: error.message || "Gagal melakukan presensi" };

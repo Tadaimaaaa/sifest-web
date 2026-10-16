@@ -166,14 +166,71 @@ export default function SeminarAbsensiPage() {
 
   // Process check-in for any code (from USB scanner, QR cam, or input bar)
   const processCheckInCode = useCallback(async (codeToProcess: string, source: "usb_scanner" | "input" | "camera") => {
-    const code = codeToProcess.trim();
-    if (!code) return;
+    let cleanCode = codeToProcess.trim();
+    let cleanId = "";
 
+    // Parse JSON payload if from QR E-Ticket (e.g. {"id":"...", "code":"..."})
+    if (cleanCode.startsWith("{") && cleanCode.endsWith("}")) {
+      try {
+        const parsed = JSON.parse(cleanCode);
+        if (parsed.code) cleanCode = String(parsed.code).trim();
+        if (parsed.id) cleanId = String(parsed.id).trim();
+      } catch (e) {}
+    }
+
+    if (!cleanCode && !cleanId) return;
+
+    // ⚡ TAHAP 1: INSTANT LOCAL MATCH (0 Milliseconds!)
+    // Browser sudah memiliki data peserta seminar di memory, langsung cocokkan seketika!
+    const localMatch = participants.find((p) =>
+      (cleanCode && p.registration_code?.toLowerCase() === cleanCode.toLowerCase()) ||
+      (cleanCode && p.id_peserta?.toLowerCase() === cleanCode.toLowerCase()) ||
+      (cleanId && (p.id === cleanId || p.participant_id === cleanId)) ||
+      (cleanCode && (p.id === cleanCode || p.participant_id === cleanCode))
+    );
+
+    if (localMatch) {
+      const nowIso = new Date().toISOString();
+      const isAlready = Boolean(localMatch.attended);
+
+      // 1. LANGSUNG MUNCULKAN POP-UP DI LAPTOP & BUNYIKAN CHIME (0ms)!
+      triggerPopupModal(
+        {
+          ...localMatch,
+          attended: true,
+          attended_at: isAlready ? localMatch.attended_at : nowIso
+        },
+        isAlready
+      );
+
+      // 2. Langsung update tabel di layar
+      if (!isAlready) {
+        setParticipants((prev) =>
+          prev.map((p) =>
+            p.participant_id === localMatch.participant_id
+              ? { ...p, attended: true, attended_at: nowIso }
+              : p
+          )
+        );
+
+        // 3. Simpan ke database Supabase di latar belakang (tanpa membuat panitia menunggu!)
+        toggleSeminarAttendance(localMatch.participant_id, true).catch((err) => {
+          console.error("Gagal sync ke database di background:", err);
+        });
+      }
+
+      if (source === "input") {
+        setManualCode("");
+        quickInputRef.current?.focus();
+      }
+      return;
+    }
+
+    // ⚡ TAHAP 2: Jika peserta belum ada di cache memory lokal (misal baru daftar)
     setIsCheckingIn(true);
     try {
-      const res = await checkInSeminarByCode(code);
+      const res = await checkInSeminarByCode(cleanCode || cleanId);
       if (res.success && res.data) {
-        // Update state in table
         setParticipants((prev) =>
           prev.map((p) =>
             p.participant_id === res.data.participant_id
@@ -182,7 +239,6 @@ export default function SeminarAbsensiPage() {
           )
         );
 
-        // Munculkan POP-UP DETAIL di web laptop!
         triggerPopupModal(res.data, Boolean(res.alreadyCheckedIn));
 
         if (source === "input") {
@@ -197,7 +253,7 @@ export default function SeminarAbsensiPage() {
     } finally {
       setIsCheckingIn(false);
     }
-  }, [triggerPopupModal]);
+  }, [participants, triggerPopupModal]);
 
   // Global listener for USB Barcode Scanner / HP via USB (HID Keyboard Emulation)
   useEffect(() => {

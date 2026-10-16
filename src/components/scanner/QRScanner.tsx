@@ -13,40 +13,57 @@ export default function QRScanner({ onScanSuccess, onScanFailure }: QRScannerPro
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [error, setError] = useState<string | null>(null);
   const scannerRef = useRef<Html5Qrcode | null>(null);
-  const isScanningRef = useRef(false);
+  const onScanSuccessRef = useRef(onScanSuccess);
+  const onScanFailureRef = useRef(onScanFailure);
+  const lastScanTimeRef = useRef(0);
+  const lastScanTextRef = useRef("");
+
+  useEffect(() => {
+    onScanSuccessRef.current = onScanSuccess;
+    onScanFailureRef.current = onScanFailure;
+  }, [onScanSuccess, onScanFailure]);
 
   useEffect(() => {
     let mounted = true;
     
     const startScanner = async () => {
       try {
-        // Request camera permissions first to check if available
         const devices = await Html5Qrcode.getCameras();
         if (devices && devices.length) {
           if (mounted) setHasPermission(true);
           
           if (!scannerRef.current) {
-            scannerRef.current = new Html5Qrcode("qr-reader");
+            // Enable native hardware barcode detector for instant (<30ms) scanning
+            scannerRef.current = new Html5Qrcode("qr-reader", {
+              experimentalFeatures: {
+                useBarCodeDetectorIfSupported: true
+              },
+              verbose: false
+            });
             
             await scannerRef.current.start(
-              { facingMode: "environment" }, // Prefer back camera
+              { facingMode: "environment" },
               {
-                fps: 10,
-                qrbox: { width: 250, height: 250 },
+                fps: 25, // 25 frames per second for ultra-fast detection
+                qrbox: (viewfinderWidth: number, viewfinderHeight: number) => {
+                  const minEdge = Math.min(viewfinderWidth, viewfinderHeight);
+                  const edge = Math.floor(minEdge * 0.78);
+                  return { width: edge, height: edge };
+                },
                 aspectRatio: 1.0,
               },
               (decodedText) => {
-                if (!isScanningRef.current) {
-                  isScanningRef.current = true;
-                  // Stop scanning immediately after success to avoid multiple triggers
-                  if (scannerRef.current && scannerRef.current.isScanning) {
-                    scannerRef.current.pause(true);
-                  }
-                  onScanSuccess(decodedText);
+                const now = Date.now();
+                // Prevent duplicate rapid scans of same ticket within 1.2 seconds
+                if (now - lastScanTimeRef.current < 1200 && lastScanTextRef.current === decodedText) {
+                  return;
                 }
+                lastScanTimeRef.current = now;
+                lastScanTextRef.current = decodedText;
+                onScanSuccessRef.current?.(decodedText);
               },
               (err) => {
-                if (onScanFailure) onScanFailure(err);
+                onScanFailureRef.current?.(err);
               }
             );
           }
@@ -68,15 +85,15 @@ export default function QRScanner({ onScanSuccess, onScanFailure }: QRScannerPro
 
     return () => {
       mounted = false;
-      if (scannerRef.current && scannerRef.current.isScanning) {
-        scannerRef.current.stop().catch(e => console.error("Error stopping scanner", e));
-      }
       if (scannerRef.current) {
+        if (scannerRef.current.isScanning) {
+          scannerRef.current.stop().catch(e => console.error("Error stopping scanner", e));
+        }
         scannerRef.current.clear();
         scannerRef.current = null;
       }
     };
-  }, [onScanSuccess, onScanFailure]);
+  }, []);
 
   if (hasPermission === false) {
     return (
