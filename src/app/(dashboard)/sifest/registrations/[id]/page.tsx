@@ -8,6 +8,7 @@ import PrintButton from './PrintButton';
 
 import { StatusUpdater } from './StatusUpdater';
 import BazaarTentUpdater from './BazaarTentUpdater';
+import { fetchBazaarTenantsFromSheet, findMatchingBazaarTenant, BazaarTenantFromSheet } from '@/lib/bazaarTents';
 
 // RBAC Helper Functions
 function canEditPaymentStatus(roleId: string): boolean {
@@ -78,6 +79,30 @@ export default async function RegistrationDetailPage({
   }
 
   const { participants, events, transactions } = registration;
+
+  let matchedTentFromSheet: string | null = null;
+  let allBazaarTenants: BazaarTenantFromSheet[] = [];
+  if (events?.slug?.startsWith('open-bazaar')) {
+    allBazaarTenants = await fetchBazaarTenantsFromSheet();
+    const matched = findMatchingBazaarTenant(allBazaarTenants, {
+      brandName: participants?.institution || "",
+      picName: participants?.full_name || "",
+      whatsapp: participants?.whatsapp || ""
+    });
+    if (matched?.id_tenda) {
+      matchedTentFromSheet = matched.id_tenda;
+    }
+  }
+
+  // Jika di Supabase belum ada tenda tapi di Event Bazaar sudah ada, set otomatis
+  const effectiveTent = participants?.metadata?.id_tenda || participants?.metadata?.lokasi_tenda || matchedTentFromSheet;
+  if (effectiveTent && participants) {
+    if (!participants.metadata) participants.metadata = {};
+    if (!participants.metadata.id_tenda) {
+      participants.metadata.id_tenda = effectiveTent;
+      participants.metadata.lokasi_tenda = effectiveTent;
+    }
+  }
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
@@ -161,7 +186,9 @@ export default async function RegistrationDetailPage({
                   <div className="pt-2 mt-2 border-t border-slate-100 space-y-1">
                     <InfoRow label="Lokasi Tenda" value={
                       <BazaarTentUpdater
-                        currentTent={participants?.metadata?.id_tenda || participants?.metadata?.lokasi_tenda}
+                        currentTent={effectiveTent}
+                        detectedFromSheet={matchedTentFromSheet}
+                        allTenants={allBazaarTenants}
                         participantId={participants?.id}
                         registrationId={registration.id}
                         brandName={participants?.institution || ""}

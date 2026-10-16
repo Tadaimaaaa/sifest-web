@@ -1,15 +1,25 @@
 "use client";
 
-import { useState } from "react";
-import { Store, Edit2, Check, X, Loader2, MapPin, AlertCircle } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Store, Edit2, Check, X, Loader2, MapPin, AlertCircle, Sparkles } from "lucide-react";
 import { toast } from "sonner";
-import { BAZAAR_TENTS, getTentBlockLabel } from "@/lib/bazaarTents";
+import { 
+  BAZAAR_TENTS, 
+  getTentBlockLabel, 
+  BazaarTenantFromSheet, 
+  cleanPhone, 
+  cleanText, 
+  isTextSimilar,
+  findMatchingBazaarTenant 
+} from "@/lib/bazaarTents";
 import { updateBazaarTent } from "./actions";
 import { SCRIPT_URL } from "@/lib/api";
 import Cookies from "js-cookie";
 
 interface BazaarTentUpdaterProps {
   currentTent?: string | null;
+  detectedFromSheet?: string | null;
+  allTenants?: BazaarTenantFromSheet[];
   participantId?: string;
   registrationId: string;
   brandName?: string;
@@ -22,6 +32,8 @@ interface BazaarTentUpdaterProps {
 
 export default function BazaarTentUpdater({
   currentTent: initialTent,
+  detectedFromSheet,
+  allTenants: initialTenants = [],
   participantId,
   registrationId,
   brandName = "",
@@ -31,10 +43,51 @@ export default function BazaarTentUpdater({
   paymentStatus = "Belum Bayar",
   canEdit
 }: BazaarTentUpdaterProps) {
-  const [tent, setTent] = useState<string | null>(initialTent || null);
+  // Gunakan initialTent atau hasil deteksi dari event bazaar sheet
+  const resolvedInitial = initialTent && initialTent !== "NONE" && initialTent !== "-" 
+    ? initialTent 
+    : (detectedFromSheet || null);
+
+  const [tent, setTent] = useState<string | null>(resolvedInitial);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedTent, setSelectedTent] = useState<string>(initialTent || "");
+  const [selectedTent, setSelectedTent] = useState<string>(resolvedInitial || "");
   const [isSaving, setIsSaving] = useState(false);
+  const [tenantsList, setTenantsList] = useState<BazaarTenantFromSheet[]>(initialTenants);
+  const [matchedTent, setMatchedTent] = useState<string | null>(detectedFromSheet || null);
+
+  // Jika allTenants belum tersedia atau mau refresh data terkini saat modal dibuka
+  useEffect(() => {
+    if (isModalOpen || tenantsList.length === 0) {
+      fetch(`${SCRIPT_URL}?action=getBazaarTenants`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && Array.isArray(data.data)) {
+            setTenantsList(data.data);
+            const found = findMatchingBazaarTenant(data.data, {
+              brandName,
+              picName,
+              whatsapp: picWhatsapp
+            });
+            if (found?.id_tenda) {
+              setMatchedTent(found.id_tenda);
+              if (!tent) {
+                setTent(found.id_tenda);
+                setSelectedTent(found.id_tenda);
+              }
+            }
+          }
+        })
+        .catch(err => console.warn("Gagal fetch data bazaar tenants:", err));
+    }
+  }, [isModalOpen, brandName, picName, picWhatsapp, tent, tenantsList.length]);
+
+  // Map tenant berdasarkan id_tenda
+  const tenantMap: Record<string, BazaarTenantFromSheet> = {};
+  tenantsList.forEach(t => {
+    if (t.id_tenda) {
+      tenantMap[t.id_tenda.trim().toUpperCase()] = t;
+    }
+  });
 
   const handleSaveTent = async () => {
     if (!participantId) {
@@ -120,6 +173,11 @@ export default function BazaarTentUpdater({
               Stand {tent}
               <span className="ml-1.5 text-xs font-normal text-amber-700">({getTentBlockLabel(tent)})</span>
             </div>
+            {matchedTent === tent && !initialTent && (
+              <span className="text-[10px] font-semibold px-1.5 py-0.5 bg-amber-200 text-amber-900 rounded-md">
+                Event Bazaar
+              </span>
+            )}
           </div>
         ) : (
           <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-100 text-slate-500 rounded-xl text-xs font-semibold">
@@ -132,7 +190,7 @@ export default function BazaarTentUpdater({
           <button
             type="button"
             onClick={() => {
-              setSelectedTent(tent || "");
+              setSelectedTent(tent || matchedTent || "");
               setIsModalOpen(true);
             }}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-xl text-xs font-bold transition-colors"
@@ -174,6 +232,32 @@ export default function BazaarTentUpdater({
                 <span>Pilihlah salah satu nomor stand tenda yang tersedia sesuai tata letak denah bazaar SI FEST 2026.</span>
               </div>
 
+              {/* Alert jika terdeteksi di data Event Bazaar */}
+              {matchedTent && (
+                <div className="p-3.5 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-300 rounded-2xl flex items-center justify-between gap-3 text-xs text-amber-950 shadow-xs">
+                  <div className="flex items-start gap-2.5">
+                    <Sparkles className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                    <div>
+                      <div className="font-bold text-slate-800">
+                        Data Event Bazaar: <span className="text-amber-700 font-extrabold">Stand {matchedTent}</span>
+                      </div>
+                      <div className="text-slate-500 text-[11px] mt-0.5">
+                        Tenant ini sudah tercatat di <strong>Stand {matchedTent}</strong> pada denah bazaar.
+                      </div>
+                    </div>
+                  </div>
+                  {selectedTent !== matchedTent && (
+                    <button
+                      type="button"
+                      onClick={() => setSelectedTent(matchedTent)}
+                      className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl text-xs shrink-0 shadow-sm transition-all"
+                    >
+                      Pilih Stand {matchedTent}
+                    </button>
+                  )}
+                </div>
+              )}
+
               {/* Opsi Kosongkan */}
               <label 
                 className={`flex items-center justify-between p-3 rounded-xl border cursor-pointer transition-all ${
@@ -205,21 +289,45 @@ export default function BazaarTentUpdater({
                     </h4>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                       {groupTents.map(t => {
+                        const occupant = tenantMap[t.id];
+                        const isThisTenant = occupant && (
+                          cleanPhone(occupant.kontak) === cleanPhone(picWhatsapp) ||
+                          isTextSimilar(occupant.nama_brand, brandName) ||
+                          isTextSimilar(occupant.pic, picName)
+                        );
                         const isSelected = selectedTent === t.id;
+
+                        let styleClasses = "bg-white border-slate-200 text-slate-700 hover:border-amber-400 hover:bg-amber-50/50";
+                        if (isSelected) {
+                          styleClasses = "bg-amber-500 border-amber-600 text-white shadow-md shadow-amber-500/25 scale-[1.02]";
+                        } else if (isThisTenant) {
+                          styleClasses = "bg-amber-50 border-amber-400 text-amber-900 ring-2 ring-amber-300";
+                        } else if (occupant) {
+                          styleClasses = "bg-slate-50 border-slate-200 text-slate-600 hover:border-slate-300";
+                        }
+
                         return (
                           <button
                             key={t.id}
                             type="button"
                             onClick={() => setSelectedTent(t.id)}
-                            className={`p-2.5 rounded-xl border text-sm font-bold flex flex-col items-center justify-center transition-all ${
-                              isSelected
-                                ? "bg-amber-500 border-amber-600 text-white shadow-md shadow-amber-500/25 scale-[1.02]"
-                                : "bg-white border-slate-200 text-slate-700 hover:border-amber-400 hover:bg-amber-50/50"
-                            }`}
+                            className={`p-2.5 rounded-xl border text-sm font-bold flex flex-col items-center justify-center transition-all text-center min-h-[64px] ${styleClasses}`}
                           >
-                            <span className="text-base">{t.id}</span>
-                            <span className={`text-[10px] font-normal ${isSelected ? 'text-amber-100' : 'text-slate-400'}`}>
-                              Stand {t.id}
+                            <span className="text-base font-extrabold">{t.id}</span>
+                            <span className={`text-[10px] leading-tight truncate max-w-full font-medium mt-0.5 ${
+                              isSelected 
+                                ? 'text-amber-100 font-semibold' 
+                                : isThisTenant
+                                ? 'text-amber-800 font-bold'
+                                : occupant 
+                                ? 'text-slate-500' 
+                                : 'text-emerald-600'
+                            }`}>
+                              {isThisTenant 
+                                ? "Tenant Ini" 
+                                : occupant 
+                                ? occupant.nama_brand 
+                                : "Tersedia"}
                             </span>
                           </button>
                         );

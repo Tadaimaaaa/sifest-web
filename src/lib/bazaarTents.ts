@@ -66,3 +66,99 @@ export function getTentBlockLabel(tentId: string | null | undefined): string {
   if (found) return `${found.block} (${found.position})`;
   return 'Area Bazaar';
 }
+
+export interface BazaarTenantFromSheet {
+  id_tenda: string;
+  nama_brand: string;
+  pic: string;
+  kontak: string | number;
+  kategori?: string;
+  status_bayar?: string;
+}
+
+export function cleanPhone(phone: string | number | null | undefined): string {
+  if (!phone) return "";
+  const digits = String(phone).replace(/\D/g, "");
+  return digits.slice(-9);
+}
+
+export function cleanText(text: string | null | undefined): string {
+  if (!text) return "";
+  return text.toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+export function isTextSimilar(a: string | null | undefined, b: string | null | undefined): boolean {
+  const ca = cleanText(a);
+  const cb = cleanText(b);
+  if (!ca || !cb) return false;
+  if (ca === cb) return true;
+  if (ca.includes(cb) || cb.includes(ca)) return true;
+
+  // Toleransi typo kecil (1-2 huruf, misalnya tatilatu vs tatitatu)
+  const maxLen = Math.max(ca.length, cb.length);
+  const minLen = Math.min(ca.length, cb.length);
+  if (Math.abs(ca.length - cb.length) > 2) return false;
+
+  let dist = 0;
+  for (let i = 0; i < minLen; i++) {
+    if (ca[i] !== cb[i]) dist++;
+  }
+  dist += maxLen - minLen;
+  return dist <= 2;
+}
+
+export function findMatchingBazaarTenant(
+  tenants: BazaarTenantFromSheet[],
+  criteria: {
+    brandName?: string;
+    picName?: string;
+    whatsapp?: string;
+  }
+): BazaarTenantFromSheet | undefined {
+  if (!Array.isArray(tenants) || tenants.length === 0) return undefined;
+
+  const targetPhone = cleanPhone(criteria.whatsapp);
+  const targetBrand = cleanText(criteria.brandName);
+  const targetPic = cleanText(criteria.picName);
+
+  // 1. Prioritas 1: Cocok nomor WhatsApp
+  if (targetPhone) {
+    const matchByPhone = tenants.find(t => {
+      const tp = cleanPhone(t.kontak);
+      return tp && (tp === targetPhone || tp.endsWith(targetPhone) || targetPhone.endsWith(tp));
+    });
+    if (matchByPhone) return matchByPhone;
+  }
+
+  // 2. Prioritas 2: Cocok Nama Brand / Usaha (termasuk toleransi typo)
+  if (targetBrand) {
+    const matchByBrand = tenants.find(t => isTextSimilar(t.nama_brand, criteria.brandName));
+    if (matchByBrand) return matchByBrand;
+  }
+
+  // 3. Prioritas 3: Cocok Nama PIC
+  if (targetPic) {
+    const matchByPic = tenants.find(t => isTextSimilar(t.pic, criteria.picName));
+    if (matchByPic) return matchByPic;
+  }
+
+  return undefined;
+}
+
+export async function fetchBazaarTenantsFromSheet(): Promise<BazaarTenantFromSheet[]> {
+  try {
+    const res = await fetch(
+      "https://script.google.com/macros/s/AKfycbw4UVTeqWldKdfsCyfbfYBpepIjjm08PVSndA19MuCqrV30PktJ1y5-1oFD1lL2KYfgEg/exec?action=getBazaarTenants",
+      { next: { revalidate: 30 } }
+    );
+    if (!res.ok) return [];
+    const data = await res.json();
+    if (data.success && Array.isArray(data.data)) {
+      return data.data;
+    }
+  } catch (err) {
+    console.error("Gagal mengambil daftar tenant dari Google Sheet:", err);
+  }
+  return [];
+}
+

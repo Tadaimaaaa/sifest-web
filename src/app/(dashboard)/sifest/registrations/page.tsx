@@ -6,6 +6,7 @@ import clsx from 'clsx';
 import { Eye } from 'lucide-react';
 import { cookies } from 'next/headers';
 import { DeleteButton } from './DeleteButton';
+import { fetchBazaarTenantsFromSheet, findMatchingBazaarTenant } from '@/lib/bazaarTents';
 
 export const dynamic = 'force-dynamic';
 
@@ -110,6 +111,8 @@ export default async function RegistrationsPage({
     payment_status
   });
 
+  const bazaarTenants = await fetchBazaarTenantsFromSheet();
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -150,7 +153,19 @@ export default async function RegistrationsPage({
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-slate-200">
-              {registrations.data.map((reg, index) => (
+              {registrations.data.map((reg, index) => {
+                const isBazaar = reg.events?.slug?.startsWith('open-bazaar');
+                let tentBadge = isBazaar ? (reg.participants?.metadata?.id_tenda || reg.participants?.metadata?.lokasi_tenda) : null;
+                if (isBazaar && !tentBadge && bazaarTenants.length > 0) {
+                  const matched = findMatchingBazaarTenant(bazaarTenants, {
+                    brandName: reg.participants?.institution || "",
+                    picName: reg.participants?.full_name || "",
+                    whatsapp: reg.participants?.whatsapp || ""
+                  });
+                  if (matched?.id_tenda) tentBadge = matched.id_tenda;
+                }
+
+                return (
                 <tr key={reg.id} className="hover:bg-slate-50 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 text-center">
                     {registrations.count - ((page - 1) * 20 + index)}
@@ -162,9 +177,9 @@ export default async function RegistrationsPage({
                     <div className="font-medium text-slate-900">{reg.participants?.full_name}</div>
                     <div className="text-xs text-slate-500 flex items-center gap-1.5 mt-0.5">
                       <span>{reg.participants?.institution}</span>
-                      {reg.events?.slug?.startsWith('open-bazaar') && (reg.participants?.metadata?.id_tenda || reg.participants?.metadata?.lokasi_tenda) && (
+                      {tentBadge && (
                         <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
-                          Stand {reg.participants.metadata.id_tenda || reg.participants.metadata.lokasi_tenda}
+                          Stand {tentBadge}
                         </span>
                       )}
                     </div>
@@ -193,7 +208,8 @@ export default async function RegistrationsPage({
                     </div>
                   </td>
                 </tr>
-              ))}
+              );
+            })}
               
               {registrations.data.length === 0 && (
                 <tr>
