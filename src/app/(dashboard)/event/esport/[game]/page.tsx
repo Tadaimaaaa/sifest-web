@@ -776,7 +776,7 @@ export default function EsportDashboard() {
               <>
                 <button 
                   onClick={toggleSpin}
-                  disabled={isSpinning || isSavingBracket}
+                  disabled={isSavingBracket}
                   className={`px-4 py-2 text-white text-xs sm:text-sm font-bold rounded-xl shadow-sm transition-all flex items-center gap-2 ${
                     isSpinning 
                       ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-500/20 animate-pulse' 
@@ -837,7 +837,7 @@ export default function EsportDashboard() {
                 <>
                   <button 
                     onClick={toggleSpin}
-                    disabled={isSpinning || isSavingBracket}
+                    disabled={isSavingBracket}
                     className={`px-5 py-2.5 text-white text-sm font-bold rounded-xl shadow-sm transition-all flex items-center gap-2 ${
                       isSpinning 
                         ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-500/20 animate-pulse' 
