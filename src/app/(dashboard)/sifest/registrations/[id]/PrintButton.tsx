@@ -5,6 +5,7 @@ import { useRef, useState, useEffect } from "react";
 import { toPng } from "html-to-image";
 import { jsPDF } from "jspdf";
 import Swal from "sweetalert2";
+import { getTentLocationLabel } from "@/lib/bazaarTents";
 
 export default function PrintButton({ registration }: { registration?: any }) {
   const printRef = useRef<HTMLDivElement>(null);
@@ -212,9 +213,16 @@ export default function PrintButton({ registration }: { registration?: any }) {
           {e.slug?.startsWith('open-bazaar') && (
             <>
               <tr>
-                <td className="w-[35%] font-bold align-top pt-4">Alamat Usaha</td>
+                <td className="w-[35%] font-bold align-top pt-4">Lokasi Tenda</td>
                 <td className="w-[20px] align-top pt-4">:</td>
-                <td className="align-top pt-4">{m.address || '-'}</td>
+                <td className="align-top pt-4 font-bold text-amber-900">
+                  {getTentLocationLabel(m.id_tenda || m.lokasi_tenda)}
+                </td>
+              </tr>
+              <tr>
+                <td className="w-[35%] font-bold align-top">Alamat Usaha</td>
+                <td className="w-[20px] align-top">:</td>
+                <td className="align-top">{m.address || '-'}</td>
               </tr>
               <tr>
                 <td className="w-[35%] font-bold align-top">Kategori & Produk</td>

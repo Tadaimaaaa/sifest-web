@@ -131,3 +131,43 @@ export async function uploadPaymentProof(registrationId: string, formData: FormD
     return { success: false, error: err.message || 'Failed to upload proof' };
   }
 }
+
+export async function updateBazaarTent(participantId: string, tentId: string, registrationId: string) {
+  try {
+    if (!participantId) throw new Error("Participant ID is required");
+
+    // Ambil metadata peserta saat ini
+    const { data: p, error: fetchErr } = await supabaseServer
+      .from('participants')
+      .select('metadata')
+      .eq('id', participantId)
+      .single();
+
+    if (fetchErr) throw fetchErr;
+
+    const currentMeta = p?.metadata || {};
+    const normalizedTent = (!tentId || tentId === 'NONE' || tentId === 'Kosong') ? null : tentId.trim().toUpperCase();
+
+    const updatedMeta = {
+      ...currentMeta,
+      id_tenda: normalizedTent,
+      lokasi_tenda: normalizedTent,
+    };
+
+    const { error: updateErr } = await supabaseServer
+      .from('participants')
+      .update({ metadata: updatedMeta })
+      .eq('id', participantId);
+
+    if (updateErr) throw updateErr;
+
+    revalidatePath(`/sifest/registrations/${registrationId}`);
+    revalidatePath('/sifest/registrations');
+    revalidatePath('/event/bazaar');
+    return { success: true, id_tenda: normalizedTent };
+  } catch (err: any) {
+    console.error('Update bazaar tent error:', err);
+    return { success: false, error: err.message || 'Gagal memperbarui lokasi tenda' };
+  }
+}
+

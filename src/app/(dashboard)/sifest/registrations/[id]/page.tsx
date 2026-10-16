@@ -7,6 +7,7 @@ import clsx from 'clsx';
 import PrintButton from './PrintButton';
 
 import { StatusUpdater } from './StatusUpdater';
+import BazaarTentUpdater from './BazaarTentUpdater';
 
 // RBAC Helper Functions
 function canEditPaymentStatus(roleId: string): boolean {
@@ -156,12 +157,33 @@ export default async function RegistrationDetailPage({
                     <InfoRow label="Kelas" value={participants.metadata.kelas || "-"} />
                   </div>
                 )}
-                {events?.slug?.startsWith('open-bazaar') && participants?.metadata && (
-                  <div className="pt-2 mt-2 border-t border-slate-100">
-                    <InfoRow label="Alamat" value={participants.metadata.address} />
-                    <InfoRow label="Instagram" value={participants.metadata.instagram} />
-                    <InfoRow label="Kategori Usaha" value={participants.metadata.category} />
-                    <InfoRow label="Produk" value={participants.metadata.products} />
+                {events?.slug?.startsWith('open-bazaar') && (
+                  <div className="pt-2 mt-2 border-t border-slate-100 space-y-1">
+                    <InfoRow label="Lokasi Tenda" value={
+                      <BazaarTentUpdater
+                        currentTent={participants?.metadata?.id_tenda || participants?.metadata?.lokasi_tenda}
+                        participantId={participants?.id}
+                        registrationId={registration.id}
+                        brandName={participants?.institution || ""}
+                        picName={participants?.full_name || ""}
+                        picWhatsapp={participants?.whatsapp || ""}
+                        category={participants?.metadata?.category || "Makanan"}
+                        paymentStatus={transactions?.status || "PENDING"}
+                        canEdit={canEditRegistrationStatus(roleId, events?.slug)}
+                      />
+                    } />
+                    {participants?.metadata?.address && (
+                      <InfoRow label="Alamat" value={participants.metadata.address} />
+                    )}
+                    {participants?.metadata?.instagram && (
+                      <InfoRow label="Instagram" value={participants.metadata.instagram} />
+                    )}
+                    {participants?.metadata?.category && (
+                      <InfoRow label="Kategori Usaha" value={participants.metadata.category} />
+                    )}
+                    {participants?.metadata?.products && (
+                      <InfoRow label="Produk" value={participants.metadata.products} />
+                    )}
                   </div>
                 )}
                 {events?.slug === 'lomba-keagamaan' && participants?.metadata && (

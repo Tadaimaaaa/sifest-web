@@ -26,6 +26,7 @@ export async function getBazaarParticipants() {
         pic: p?.full_name || 'Unknown',
         kontak: p?.whatsapp || '-',
         kategori: p?.metadata?.category || 'Makanan',
+        id_tenda: p?.metadata?.id_tenda || p?.metadata?.lokasi_tenda || '-',
         status_bayar: ['PAID', 'VERIFIED'].includes(reg.transactions?.[0]?.status) ? 'Lunas' : 
                       reg.transactions?.[0]?.status === 'DOWN_PAYMENT' ? 'DP' : 'Belum Bayar'
       };

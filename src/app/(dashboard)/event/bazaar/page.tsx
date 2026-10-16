@@ -8,6 +8,7 @@ import Cookies from "js-cookie";
 import { toast } from "sonner";
 import FullPageLoader from "@/components/FullPageLoader";
 import { getBazaarParticipants } from "./actions";
+import { getTentBlockLabel } from "@/lib/bazaarTents";
 
 type Tenant = {
   id_tenda: string;
@@ -247,8 +248,9 @@ export default function BazaarDashboard() {
   
   bazaarParticipants.forEach(p => {
     const assignedTent = Object.values(tenants).find(t => t.nama_brand === p.nama_brand || t.kontak === p.kontak);
+    const resolvedTent = assignedTent?.id_tenda || (p.id_tenda && p.id_tenda !== "NONE" && p.id_tenda !== "-" ? p.id_tenda : "-");
     combinedList.push({
-      id_tenda: assignedTent ? assignedTent.id_tenda : "-",
+      id_tenda: resolvedTent,
       nama_brand: p.nama_brand,
       pic: p.pic,
       kontak: p.kontak,
@@ -495,7 +497,7 @@ export default function BazaarDashboard() {
           <table className="w-full text-left border-collapse text-sm">
             <thead>
               <tr className="border-b-2 border-slate-100 text-slate-500">
-                <th className="pb-3 px-4 font-semibold">Tenda</th>
+                <th className="pb-3 px-4 font-semibold">Lokasi Tenda</th>
                 <th className="pb-3 px-4 font-semibold">Nama Usaha / Brand</th>
                 <th className="pb-3 px-4 font-semibold">Penanggung Jawab</th>
                 <th className="pb-3 px-4 font-semibold">Kategori</th>
@@ -505,11 +507,20 @@ export default function BazaarDashboard() {
             <tbody>
               {combinedList.length > 0 ? combinedList.map((tenant, idx) => (
                 <tr key={`${tenant.id_tenda}-${idx}`} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
-                  <td className="py-4 px-4 font-bold text-amber-600">
-                    {tenant.id_tenda === "-" ? (
-                      <span className="text-xs font-semibold px-2 py-1 bg-slate-100 text-slate-500 rounded">Belum Ditentukan</span>
+                  <td className="py-4 px-4 font-bold">
+                    {tenant.id_tenda === "-" || !tenant.id_tenda || tenant.id_tenda === "NONE" ? (
+                      <span className="text-xs font-semibold px-2.5 py-1 bg-slate-100 text-slate-500 rounded-lg inline-block">Belum Ditentukan</span>
                     ) : (
-                      tenant.id_tenda
+                      <div>
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 border border-amber-200 text-amber-800 rounded-lg text-xs font-bold">
+                          Stand {tenant.id_tenda}
+                        </span>
+                        {getTentBlockLabel(tenant.id_tenda) && (
+                          <div className="text-[11px] font-medium text-slate-400 mt-1">
+                            {getTentBlockLabel(tenant.id_tenda)}
+                          </div>
+                        )}
+                      </div>
                     )}
                   </td>
                   <td className="py-4 px-4 font-medium text-slate-800">{tenant.nama_brand}</td>
