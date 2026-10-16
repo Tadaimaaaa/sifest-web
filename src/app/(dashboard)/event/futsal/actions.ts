@@ -54,8 +54,8 @@ export async function getFutsalData(gameSlug: string) {
 
       return {
         id_tim: reg.registration_code,
-        nama_tim: participant.institution_name || participant.full_name || "Unknown Squad",
-        kapten: participant.full_name,
+        nama_tim: participant.metadata?.schoolData?.schoolName || participant.metadata?.teamData?.teamName || participant.institution || participant.institution_name || participant.full_name || "Unknown Squad",
+        kapten: participant.metadata?.schoolData?.coachName || participant.metadata?.teamData?.captainName || participant.full_name,
         kontak: participant.whatsapp || participant.phone_number || "-",
         status_bayar: paymentStatus
       };

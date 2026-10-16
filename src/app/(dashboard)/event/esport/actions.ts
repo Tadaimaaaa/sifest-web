@@ -41,8 +41,8 @@ export async function getEsportRegistrations(gameSlug: string) {
         id_tim: reg.registration_code,
         nama_tim: gameSlug === "turnamen-esport-efootball" 
           ? participant.full_name
-          : (participant.institution_name || participant.full_name || "Unknown Squad"),
-        kapten: participant.full_name,
+          : (participant.metadata?.teamData?.teamName || participant.institution || participant.institution_name || participant.full_name || "Unknown Squad"),
+        kapten: participant.metadata?.teamData?.captainName || participant.full_name,
         kontak: participant.whatsapp || participant.phone_number || "-",
         status_bayar: paymentStatus,
         slot_count: participant.metadata?.slotCount || '1',
