@@ -74,41 +74,42 @@ export default function MtqDashboard() {
   const canEdit = ["ROLE-001", "SUPER_ADMIN", "ROLE-010"].includes(currentUserRole);
 
   const fetchData = async () => {
-    // 1. Fetch Event Info
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 seconds timeout
-      
-      const resEvent = await fetch(`${SCRIPT_URL}?action=getEvent&id_event=mtq&t=${Date.now()}`, {
-        cache: 'no-store',
-        signal: controller.signal
-      });
-      clearTimeout(timeoutId);
-      
-      const dataEvent = await resEvent.json();
-      if (dataEvent.success && dataEvent.data) {
-        setEventData(dataEvent.data);
-        setFormData(dataEvent.data);
-      }
-    } catch (error) {
-      console.error("Gagal mengambil info event MTQ:", error);
-    }
+    setIsLoading(true);
 
-    // 2. Fetch Participants from Supabase (Official Web Registrations)
+    // 1. Ambil data peserta dari Supabase secara instan (< 200ms)
+    getMtqRegistrations()
+      .then((dataParticipants) => {
+        if (dataParticipants.success && dataParticipants.data) {
+          setParticipants(dataParticipants.data);
+          setErrorMessage(null);
+        } else {
+          setErrorMessage(dataParticipants.message || "Gagal memuat data pendaftar MTQ");
+        }
+      })
+      .catch((error: any) => {
+        setErrorMessage(error.message || "Terjadi kesalahan sistem");
+        console.error("Gagal mengambil data peserta MTQ:", error);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+
+    // 2. Ambil info event dari Google Apps Script di latar belakang
     try {
-      const dataParticipants = await getMtqRegistrations();
-      if (dataParticipants.success && dataParticipants.data) {
-        setParticipants(dataParticipants.data);
-        setErrorMessage(null);
-      } else {
-        setErrorMessage(dataParticipants.message || "Gagal memuat data pendaftar MTQ");
-        toast.error(dataParticipants.message || "Gagal memuat data pendaftar MTQ");
-      }
-    } catch (error: any) {
-      setErrorMessage(error.message || "Terjadi kesalahan sistem");
-      console.error("Gagal mengambil data peserta MTQ:", error);
-    } finally {
-      setIsLoading(false);
+      const token = Cookies.get("session_token");
+      fetch(`${SCRIPT_URL}?action=getEvent&id_event=mtq&token=${token}`)
+        .then((res) => res.json())
+        .then((dataEvent) => {
+          if (dataEvent.success && dataEvent.data) {
+            setEventData(dataEvent.data);
+            setFormData(dataEvent.data);
+          }
+        })
+        .catch((err) => {
+          console.warn("Gagal mengambil info event MTQ di background:", err);
+        });
+    } catch (e) {
+      console.warn("Background MTQ event fetch error:", e);
     }
   };
 

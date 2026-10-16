@@ -6,23 +6,33 @@ import { unstable_noStore as noStore } from 'next/cache';
 export async function getMtqRegistrations() {
   noStore();
   try {
-    // 1. Get the MTQ event ID
-    const { data: eventData } = await supabaseServer
+    // 1. Get the MTQ event IDs flexibly
+    const { data: eventsData, error: eventErr } = await supabaseServer
       .from("events")
-      .select("id")
-      .eq("slug", "lomba-keagamaan")
-      .single();
+      .select("id, slug, name");
 
-    if (!eventData) {
-      return { success: false, data: [], message: "Event lomba-keagamaan tidak ditemukan di Supabase." };
+    if (eventErr) {
+      console.error("Error fetching events:", eventErr);
+    }
+
+    const mtqEvents = (eventsData || []).filter(e => 
+      e.slug?.includes("keagamaan") || 
+      e.slug?.includes("mtq") || 
+      e.name?.toLowerCase().includes("keagamaan") ||
+      e.name?.toLowerCase().includes("mtq")
+    );
+
+    const eventIds = mtqEvents.map(e => e.id);
+    if (eventIds.length === 0) {
+      return { success: true, data: [] };
     }
 
     // 2. Get registrations for this event
     const { data: registrations, error } = await supabaseServer
       .from("registrations")
       .select("*, participants(*), transactions(*)")
-      .eq("event_id", eventData.id)
-      .order("created_at", { ascending: true });
+      .in("event_id", eventIds)
+      .order("created_at", { ascending: false });
 
     if (error) {
       console.error("Supabase Error:", error);

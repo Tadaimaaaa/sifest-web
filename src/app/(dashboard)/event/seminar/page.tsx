@@ -74,41 +74,42 @@ export default function SeminarDashboard() {
   const canEdit = ["ROLE-001", "SUPER_ADMIN", "ROLE-011"].includes(currentUserRole);
 
   const fetchData = async () => {
-    // 1. Fetch Event Info
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 seconds timeout
-      
-      const resEvent = await fetch(`${SCRIPT_URL}?action=getEvent&id_event=seminar&t=${Date.now()}`, {
-        cache: 'no-store',
-        signal: controller.signal
-      });
-      clearTimeout(timeoutId);
-      
-      const dataEvent = await resEvent.json();
-      if (dataEvent.success && dataEvent.data) {
-        setEventData(dataEvent.data);
-        setFormData(dataEvent.data);
-      }
-    } catch (error) {
-      console.error("Gagal mengambil info event seminar:", error);
-    }
+    setIsLoading(true);
 
-    // 2. Fetch Participants from Supabase (Official Web Registrations)
+    // 1. Ambil data peserta dari Supabase secara instan (< 200ms)
+    getSeminarRegistrations()
+      .then((dataParticipants) => {
+        if (dataParticipants.success && dataParticipants.data) {
+          setParticipants(dataParticipants.data);
+          setErrorMessage(null);
+        } else {
+          setErrorMessage(dataParticipants.message || "Gagal memuat data pendaftar seminar");
+        }
+      })
+      .catch((error: any) => {
+        setErrorMessage(error.message || "Terjadi kesalahan sistem");
+        console.error("Gagal mengambil data peserta seminar:", error);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+
+    // 2. Ambil info event dari Google Apps Script secara asinkron di latar belakang (tanpa memblokir UI)
     try {
-      const dataParticipants = await getSeminarRegistrations();
-      if (dataParticipants.success && dataParticipants.data) {
-        setParticipants(dataParticipants.data);
-        setErrorMessage(null);
-      } else {
-        setErrorMessage(dataParticipants.message || "Gagal memuat data pendaftar seminar");
-        toast.error(dataParticipants.message || "Gagal memuat data pendaftar seminar");
-      }
-    } catch (error: any) {
-      setErrorMessage(error.message || "Terjadi kesalahan sistem");
-      console.error("Gagal mengambil data peserta seminar:", error);
-    } finally {
-      setIsLoading(false);
+      const token = Cookies.get("session_token");
+      fetch(`${SCRIPT_URL}?action=getEvent&id_event=seminar&token=${token}`)
+        .then((res) => res.json())
+        .then((dataEvent) => {
+          if (dataEvent.success && dataEvent.data) {
+            setEventData(dataEvent.data);
+            setFormData(dataEvent.data);
+          }
+        })
+        .catch((err) => {
+          console.warn("Gagal mengambil info event seminar di background:", err);
+        });
+    } catch (e) {
+      console.warn("Background event fetch error:", e);
     }
   };
 

@@ -6,23 +6,34 @@ import { unstable_noStore as noStore } from 'next/cache';
 export async function getSeminarRegistrations() {
   noStore();
   try {
-    // 1. Get the Seminar event ID
-    const { data: eventData } = await supabaseServer
+    // 1. Get the Seminar event IDs (flexible matching for slug and name)
+    const { data: eventsData, error: eventErr } = await supabaseServer
       .from("events")
-      .select("id")
-      .eq("slug", "seminar-nasional")
-      .single();
+      .select("id, slug, name");
 
-    if (!eventData) {
-      return { success: false, data: [], message: "Event seminar-nasional tidak ditemukan di Supabase." };
+    if (eventErr) {
+      console.error("Error fetching events:", eventErr);
+    }
+
+    const seminarEvents = (eventsData || []).filter(e => 
+      e.slug?.includes("seminar") || 
+      e.slug?.includes("talk-show") || 
+      e.slug?.includes("talkshow") ||
+      e.name?.toLowerCase().includes("seminar") ||
+      e.name?.toLowerCase().includes("talk show")
+    );
+
+    const eventIds = seminarEvents.map(e => e.id);
+    if (eventIds.length === 0) {
+      return { success: true, data: [] };
     }
 
     // 2. Get registrations for this event
     const { data: registrations, error } = await supabaseServer
       .from("registrations")
       .select("*, participants(*), transactions(*)")
-      .eq("event_id", eventData.id)
-      .order("created_at", { ascending: true });
+      .in("event_id", eventIds)
+      .order("created_at", { ascending: false });
 
     if (error) {
       console.error("Supabase Error:", error);
@@ -36,8 +47,9 @@ export async function getSeminarRegistrations() {
       
       // Convert Supabase transaction status to our UI's payment status
       let paymentStatus = "Belum Bayar";
-      if (transaction?.status === "PAID") paymentStatus = "Lunas";
-      else if (transaction?.status === "PENDING") paymentStatus = "DP"; // Approximation for UI
+      if (transaction?.payment_method === "FREE") paymentStatus = "Lunas";
+      else if (transaction?.status === "PAID" || transaction?.status === "VERIFIED") paymentStatus = "Lunas";
+      else if (transaction?.status === "DOWN_PAYMENT" || transaction?.status === "PENDING") paymentStatus = "DP";
 
       return {
         id_peserta: reg.registration_code,
