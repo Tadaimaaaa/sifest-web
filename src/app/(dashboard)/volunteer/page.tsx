@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { Search, Loader2, CheckCircle2, XCircle, Trash2, ExternalLink, Info, X, Download, RotateCcw } from "lucide-react";
-import { toPng } from "html-to-image";
+import { toJpeg } from "html-to-image";
 import { jsPDF } from "jspdf";
 import Cookies from "js-cookie";
 import Swal from "sweetalert2";
@@ -174,12 +174,11 @@ export default function VolunteerDashboard() {
     
     setIsExporting(true);
     try {
-      // Mengambil elemen printRef (format laporan resmi)
-      const dataUrl = await toPng(printRef.current, { 
-        quality: 1,
-        pixelRatio: 2,
+      // Mengambil elemen printRef (format laporan resmi dengan kompresi optimal)
+      const dataUrl = await toJpeg(printRef.current, { 
+        quality: 0.82,
+        pixelRatio: 1.6,
         backgroundColor: '#ffffff',
-        // Penting untuk memastikan elemen yang disembunyikan (-9999px) dirender dengan benar
         style: {
           position: 'static',
           left: 'auto',
@@ -190,7 +189,8 @@ export default function VolunteerDashboard() {
       const pdf = new jsPDF({
         orientation: "portrait",
         unit: "mm",
-        format: "a4"
+        format: "a4",
+        compress: true
       });
       
       // Buat image object untuk mendapatkan dimensinya
@@ -206,11 +206,11 @@ export default function VolunteerDashboard() {
       
       // Jika tinggi modal melebihi halaman A4
       if (pdfHeight > pdf.internal.pageSize.getHeight()) {
-        pdf.addImage(dataUrl, "PNG", 0, 0, pdfWidth, pdfHeight);
+        pdf.addImage(dataUrl, "JPEG", 0, 0, pdfWidth, pdfHeight, undefined, "FAST");
       } else {
         // Center vertically if smaller
         const marginY = (pdf.internal.pageSize.getHeight() - pdfHeight) / 2;
-        pdf.addImage(dataUrl, "PNG", 0, marginY, pdfWidth, pdfHeight);
+        pdf.addImage(dataUrl, "JPEG", 0, marginY, pdfWidth, pdfHeight, undefined, "FAST");
       }
       
       // Output as blob url for preview

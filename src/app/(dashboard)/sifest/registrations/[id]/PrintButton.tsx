@@ -2,7 +2,7 @@
 
 import { Printer, Download, Eye, X, ZoomIn, ZoomOut, RotateCcw, FileText, Loader2 } from "lucide-react";
 import { useRef, useState, useEffect } from "react";
-import { toPng } from "html-to-image";
+import { toJpeg } from "html-to-image";
 import { jsPDF } from "jspdf";
 import Swal from "sweetalert2";
 import { getTentLocationLabel } from "@/lib/bazaarTents";
@@ -59,16 +59,18 @@ export default function PrintButton({ registration }: { registration?: any }) {
       // Delay sejenak untuk memastikan render DOM stabil
       await new Promise(r => setTimeout(r, 200));
       
-      const dataUrl = await toPng(printRef.current, { 
-        quality: 1,
-        pixelRatio: 2,
+      // Kompresi langsung ke JPEG berukuran optimal tanpa mengurangi ketajaman teks
+      const dataUrl = await toJpeg(printRef.current, { 
+        quality: 0.82,
+        pixelRatio: 1.6,
         backgroundColor: '#ffffff',
       });
       
       const pdf = new jsPDF({
         orientation: "portrait",
         unit: "mm",
-        format: "a4"
+        format: "a4",
+        compress: true
       });
       
       const img = new Image();
@@ -82,10 +84,10 @@ export default function PrintButton({ registration }: { registration?: any }) {
       const pdfHeight = (img.height * pdfWidth) / img.width;
       
       if (pdfHeight > pdf.internal.pageSize.getHeight()) {
-        pdf.addImage(dataUrl, "PNG", 0, 0, pdfWidth, pdfHeight);
+        pdf.addImage(dataUrl, "JPEG", 0, 0, pdfWidth, pdfHeight, undefined, "FAST");
       } else {
         const marginY = (pdf.internal.pageSize.getHeight() - pdfHeight) / 2;
-        pdf.addImage(dataUrl, "PNG", 0, marginY, pdfWidth, pdfHeight);
+        pdf.addImage(dataUrl, "JPEG", 0, marginY, pdfWidth, pdfHeight, undefined, "FAST");
       }
       
       const blob = pdf.output('blob');
