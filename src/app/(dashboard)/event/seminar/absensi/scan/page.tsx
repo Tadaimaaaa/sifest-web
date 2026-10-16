@@ -38,25 +38,80 @@ export default function MobileSeminarScannerPage() {
     } catch (e) {}
   };
 
-  const handleScanSuccess = async (decodedText: string) => {
-    let cleanCode = decodedText.trim();
-    let cleanId = "";
+  const extractTicketCode = (rawText: string) => {
+    const text = (rawText || "").trim();
+    let code = "";
+    let id = "";
 
-    if (cleanCode.startsWith("{") && cleanCode.endsWith("}")) {
+    if (text.startsWith("{") && text.endsWith("}")) {
       try {
-        const parsed = JSON.parse(cleanCode);
-        if (parsed.code) cleanCode = String(parsed.code).trim();
-        if (parsed.id) cleanId = String(parsed.id).trim();
+        const parsed = JSON.parse(text);
+        if (parsed.code) code = String(parsed.code).trim();
+        if (parsed.id) id = String(parsed.id).trim();
+        if (code || id) return { code, id };
       } catch (e) {}
     }
 
+    if (text.includes("http") || text.includes("/") || text.includes("?")) {
+      try {
+        const url = new URL(text.startsWith("http") ? text : `https://${text}`);
+        const c = url.searchParams.get("code") || url.searchParams.get("id_peserta");
+        const i = url.searchParams.get("id") || url.searchParams.get("registration_id");
+        if (c) code = c.trim();
+        if (i) id = i.trim();
+      } catch (e) {}
+
+      const parts = text.split("/").map((s) => s.trim()).filter(Boolean);
+      for (const part of parts) {
+        if (/^SIF-[\w-]+$/i.test(part) || /^REG-[\w-]+$/i.test(part)) {
+          code = part;
+          break;
+        }
+        if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(part)) {
+          id = part;
+          break;
+        }
+      }
+    }
+
+    if (!code) {
+      const sifMatch = text.match(/(SIF-[\w-]+)/i) || text.match(/(REG-[\w-]+)/i);
+      if (sifMatch) code = sifMatch[1].trim();
+    }
+
+    if (!id) {
+      const uuidMatch = text.match(/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i);
+      if (uuidMatch) id = uuidMatch[1].trim();
+    }
+
+    if (!code && !id) {
+      code = text;
+    }
+
+    return { code, id };
+  };
+
+  const handleScanSuccess = async (decodedText: string) => {
+    const raw = decodedText.trim();
+    if (!raw) return;
+
+    const { code, id } = extractTicketCode(raw);
+
     // ⚡ 1. INSTANT LOCAL MATCH (0ms)
-    const match = localParticipants.find((p) =>
-      (cleanCode && p.registration_code?.toLowerCase() === cleanCode.toLowerCase()) ||
-      (cleanCode && p.id_peserta?.toLowerCase() === cleanCode.toLowerCase()) ||
-      (cleanId && (p.id === cleanId || p.participant_id === cleanId)) ||
-      (cleanCode && (p.id === cleanCode || p.participant_id === cleanCode))
-    );
+    const match = localParticipants.find((p) => {
+      const pCode = (p.registration_code || p.id_peserta || "").toLowerCase().trim();
+      const pId = (p.id || "").toLowerCase().trim();
+      const pParticipantId = (p.participant_id || "").toLowerCase().trim();
+
+      const searchCode = (code || "").toLowerCase().trim();
+      const searchId = (id || "").toLowerCase().trim();
+
+      return (
+        (searchCode && (pCode === searchCode || pCode.includes(searchCode) || searchCode.includes(pCode))) ||
+        (searchId && (pId === searchId || pParticipantId === searchId)) ||
+        (searchCode && (pId === searchCode || pParticipantId === searchCode))
+      );
+    });
 
     if (match) {
       playBeep();
@@ -90,7 +145,7 @@ export default function MobileSeminarScannerPage() {
     setErrorMessage(null);
 
     try {
-      const res = await checkInSeminarByCode(cleanCode || cleanId);
+      const res = await checkInSeminarByCode(code || id || raw);
       if (res.success && res.data) {
         playBeep();
         const timeStr = new Date(res.data.attended_at || new Date()).toLocaleTimeString("id-ID", {

@@ -94,6 +94,7 @@ export default function SeminarAbsensiPage() {
   // Quick Code Check-in
   const [manualCode, setManualCode] = useState("");
   const [isCheckingIn, setIsCheckingIn] = useState(false);
+  const [lastScannedRaw, setLastScannedRaw] = useState<string>("");
   const quickInputRef = useRef<HTMLInputElement>(null);
 
   // QR Scanner Modal State (Laptop Web Cam)
@@ -164,30 +165,90 @@ export default function SeminarAbsensiPage() {
     setPopupData(null);
   };
 
-  // Process check-in for any code (from USB scanner, QR cam, or input bar)
-  const processCheckInCode = useCallback(async (codeToProcess: string, source: "usb_scanner" | "input" | "camera") => {
-    let cleanCode = codeToProcess.trim();
-    let cleanId = "";
+  // Helper to extract clean ticket code or ID from any format (JSON, URL, raw string)
+  const extractTicketCode = (rawText: string) => {
+    const text = (rawText || "").trim();
+    let code = "";
+    let id = "";
 
-    // Parse JSON payload if from QR E-Ticket (e.g. {"id":"...", "code":"..."})
-    if (cleanCode.startsWith("{") && cleanCode.endsWith("}")) {
+    // 1. JSON Payload from E-Ticket (e.g. {"id":"...","code":"SIF-2026-..."})
+    if (text.startsWith("{") && text.endsWith("}")) {
       try {
-        const parsed = JSON.parse(cleanCode);
-        if (parsed.code) cleanCode = String(parsed.code).trim();
-        if (parsed.id) cleanId = String(parsed.id).trim();
+        const parsed = JSON.parse(text);
+        if (parsed.code) code = String(parsed.code).trim();
+        if (parsed.id) id = String(parsed.id).trim();
+        if (code || id) return { code, id };
       } catch (e) {}
     }
 
-    if (!cleanCode && !cleanId) return;
+    // 2. URL format (e.g. https://.../SIF-2026-... or ?code=...)
+    if (text.includes("http") || text.includes("/") || text.includes("?")) {
+      try {
+        const url = new URL(text.startsWith("http") ? text : `https://${text}`);
+        const c = url.searchParams.get("code") || url.searchParams.get("id_peserta");
+        const i = url.searchParams.get("id") || url.searchParams.get("registration_id");
+        if (c) code = c.trim();
+        if (i) id = i.trim();
+      } catch (e) {}
+
+      const parts = text.split("/").map((s) => s.trim()).filter(Boolean);
+      for (const part of parts) {
+        if (/^SIF-[\w-]+$/i.test(part) || /^REG-[\w-]+$/i.test(part)) {
+          code = part;
+          break;
+        }
+        if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(part)) {
+          id = part;
+          break;
+        }
+      }
+    }
+
+    // 3. Regex match for SIF-... or REG-... anywhere in string
+    if (!code) {
+      const sifMatch = text.match(/(SIF-[\w-]+)/i) || text.match(/(REG-[\w-]+)/i);
+      if (sifMatch) code = sifMatch[1].trim();
+    }
+
+    // 4. UUID match anywhere in string
+    if (!id) {
+      const uuidMatch = text.match(/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})/i);
+      if (uuidMatch) id = uuidMatch[1].trim();
+    }
+
+    // Fallback: raw text as code
+    if (!code && !id) {
+      code = text;
+    }
+
+    return { code, id };
+  };
+
+  // Process check-in for any code (from USB scanner, QR cam, or input bar)
+  const processCheckInCode = useCallback(async (codeToProcess: string, source: "usb_scanner" | "input" | "camera") => {
+    const raw = codeToProcess.trim();
+    if (!raw) return;
+
+    setLastScannedRaw(raw);
+    const { code, id } = extractTicketCode(raw);
+    console.log("Memproses check-in tiket:", { raw, code, id });
 
     // ⚡ TAHAP 1: INSTANT LOCAL MATCH (0 Milliseconds!)
-    // Browser sudah memiliki data peserta seminar di memory, langsung cocokkan seketika!
-    const localMatch = participants.find((p) =>
-      (cleanCode && p.registration_code?.toLowerCase() === cleanCode.toLowerCase()) ||
-      (cleanCode && p.id_peserta?.toLowerCase() === cleanCode.toLowerCase()) ||
-      (cleanId && (p.id === cleanId || p.participant_id === cleanId)) ||
-      (cleanCode && (p.id === cleanCode || p.participant_id === cleanCode))
-    );
+    // Cocokkan langsung dengan data peserta di memori browser
+    const localMatch = participants.find((p) => {
+      const pCode = (p.registration_code || p.id_peserta || "").toLowerCase().trim();
+      const pId = (p.id || "").toLowerCase().trim();
+      const pParticipantId = (p.participant_id || "").toLowerCase().trim();
+
+      const searchCode = (code || "").toLowerCase().trim();
+      const searchId = (id || "").toLowerCase().trim();
+
+      return (
+        (searchCode && (pCode === searchCode || pCode.includes(searchCode) || searchCode.includes(pCode))) ||
+        (searchId && (pId === searchId || pParticipantId === searchId)) ||
+        (searchCode && (pId === searchCode || pParticipantId === searchCode))
+      );
+    });
 
     if (localMatch) {
       const nowIso = new Date().toISOString();
@@ -213,7 +274,7 @@ export default function SeminarAbsensiPage() {
           )
         );
 
-        // 3. Simpan ke database Supabase di latar belakang (tanpa membuat panitia menunggu!)
+        // 3. Simpan ke database Supabase di latar belakang
         toggleSeminarAttendance(localMatch.participant_id, true).catch((err) => {
           console.error("Gagal sync ke database di background:", err);
         });
@@ -226,10 +287,10 @@ export default function SeminarAbsensiPage() {
       return;
     }
 
-    // ⚡ TAHAP 2: Jika peserta belum ada di cache memory lokal (misal baru daftar)
+    // ⚡ TAHAP 2: Jika peserta belum ada di cache memory lokal
     setIsCheckingIn(true);
     try {
-      const res = await checkInSeminarByCode(cleanCode || cleanId);
+      const res = await checkInSeminarByCode(code || id || raw);
       if (res.success && res.data) {
         setParticipants((prev) =>
           prev.map((p) =>
@@ -246,7 +307,7 @@ export default function SeminarAbsensiPage() {
           quickInputRef.current?.focus();
         }
       } else {
-        toast.error(res.message || "Peserta tidak ditemukan");
+        toast.error(res.message || `Peserta dengan kode "${code || raw}" tidak ditemukan di Seminar SI FEST 2026.`);
       }
     } catch (err: any) {
       toast.error("Gagal melakukan check-in peserta");
@@ -258,7 +319,7 @@ export default function SeminarAbsensiPage() {
   // Global listener for USB Barcode Scanner / HP via USB (HID Keyboard Emulation)
   useEffect(() => {
     let keyBuffer = "";
-    let lastKeyTime = Date.now();
+    let bufferTimer: NodeJS.Timeout;
 
     const handleKeyDown = (e: KeyboardEvent) => {
       // Close popup if Esc is pressed
@@ -267,36 +328,47 @@ export default function SeminarAbsensiPage() {
         return;
       }
 
-      const activeEl = document.activeElement;
+      const activeEl = document.activeElement as HTMLElement | null;
       const isInput = activeEl?.tagName === "INPUT" || activeEl?.tagName === "TEXTAREA";
 
-      const currentTime = Date.now();
-      const timeDiff = currentTime - lastKeyTime;
-      lastKeyTime = currentTime;
+      if (e.key === "Enter") {
+        let codeToProcess = "";
 
-      // Barcode scanners send keystrokes extremely quickly (< 60ms between chars)
-      if (timeDiff > 250 && !isInput) {
+        // Jika user tekan Enter di quick input, ambil value input
+        if (isInput && activeEl === quickInputRef.current) {
+          e.preventDefault();
+          codeToProcess = (activeEl as HTMLInputElement).value || keyBuffer;
+        } else if (keyBuffer.trim().length >= 3) {
+          e.preventDefault();
+          codeToProcess = keyBuffer.trim();
+        }
+
         keyBuffer = "";
+        clearTimeout(bufferTimer);
+
+        if (codeToProcess) {
+          processCheckInCode(codeToProcess, "usb_scanner");
+        }
+        return;
       }
 
-      if (e.key === "Enter") {
-        // If buffer has barcode data
-        if (keyBuffer.trim().length >= 4) {
-          e.preventDefault();
-          const code = keyBuffer.trim();
-          keyBuffer = "";
-          processCheckInCode(code, "usb_scanner");
-        } else if (isInput && activeEl === quickInputRef.current && manualCode.trim()) {
-          // Handled by form onSubmit
-        }
-      } else if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
+      // Collect single printable characters
+      if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
         keyBuffer += e.key;
+        clearTimeout(bufferTimer);
+        // Barcode scanners send characters in rapid bursts. Reset buffer if idle for 400ms.
+        bufferTimer = setTimeout(() => {
+          keyBuffer = "";
+        }, 400);
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [manualCode, processCheckInCode]);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      clearTimeout(bufferTimer);
+    };
+  }, [processCheckInCode]);
 
   useEffect(() => {
     const userDataStr = Cookies.get("user_data");
@@ -706,6 +778,29 @@ export default function SeminarAbsensiPage() {
                 <span>Check-in</span>
               </button>
             </form>
+          </div>
+
+          {/* Live Scan Status Bar */}
+          <div className="mt-3 pt-2.5 border-t border-white/15 flex flex-wrap items-center justify-between gap-2 text-[11px] text-blue-100">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+              <span className="font-medium">Scanner USB / Keyboard Siap Menerima Input</span>
+              {lastScannedRaw && (
+                <span className="bg-white/20 text-white font-mono px-2 py-0.5 rounded text-[10px]">
+                  Terakhir dibaca: {lastScannedRaw.length > 35 ? `${lastScannedRaw.slice(0, 35)}...` : lastScannedRaw}
+                </span>
+              )}
+            </div>
+            {participants.length > 0 && (
+              <button
+                type="button"
+                onClick={() => processCheckInCode(participants[0].registration_code || participants[0].id_peserta, "input")}
+                className="px-2.5 py-1 bg-white/20 hover:bg-white/30 text-white rounded-lg font-semibold transition-colors flex items-center gap-1 text-[11px]"
+              >
+                <Sparkles className="w-3 h-3 text-amber-300" />
+                <span>Test Pop-up ({participants[0].nama_lengkap.split(" ")[0]})</span>
+              </button>
+            )}
           </div>
         </div>
 
