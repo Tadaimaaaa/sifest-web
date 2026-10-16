@@ -125,6 +125,28 @@ export default function PrintButton({ registration }: { registration?: any }) {
   const p = registration.participants || {};
   const e = registration.events || {};
   const m = p.metadata || {};
+  const tx = Array.isArray(registration.transactions) 
+    ? registration.transactions[0] 
+    : (registration.transactions || {});
+
+  const getPaymentStatusText = () => {
+    if (tx.payment_method === 'FREE') return 'GRATIS / FREE';
+    
+    const status = tx.status || '';
+    if (status === 'PAID' || status === 'VERIFIED') return 'SUDAH LUNAS';
+    if (status === 'DOWN_PAYMENT') return 'UANG MUKA (DP)';
+    if (status === 'WAITING_PAYMENT' || status === 'PENDING') return 'MENUNGGU PEMBAYARAN';
+    if (status === 'REJECTED') return 'DITOLAK';
+    if (status === 'CANCELLED') return 'DIBATALKAN';
+
+    if (m.status_bayar) {
+      if (m.status_bayar === 'Lunas') return 'SUDAH LUNAS';
+      if (m.status_bayar === 'DP') return 'UANG MUKA (DP)';
+      return String(m.status_bayar).toUpperCase();
+    }
+
+    return status ? status.toUpperCase() : 'BELUM DIVERIFIKASI';
+  };
 
   // Form Content Component
   const FormDocument = () => (
@@ -142,7 +164,7 @@ export default function PrintButton({ registration }: { registration?: any }) {
           <h3 className="text-[15px] font-bold leading-snug" style={{ fontFamily: '"Times New Roman", Times, serif' }}>FAKULTAS ILMU KOMPUTER</h3>
           <h4 className="text-[15px] font-bold leading-snug" style={{ fontFamily: '"Times New Roman", Times, serif' }}>REPUBLIK MAHASISWA UNIVERSITAS PUTRA INDONESIA "YPTK" PADANG</h4>
           <p className="text-[12px] leading-snug mt-1" style={{ fontFamily: '"Times New Roman", Times, serif' }}>Sekretariat Jl. Raya Lubuk Begalung, Student Center Lt. 1 Padang Sumbar</p>
-          <p className="text-[12px] leading-snug" style={{ fontFamily: '"Times New Roman", Times, serif' }}>Email : <span className="text-blue-700 underline">sinformationfest@gmail.com</span> Instagram : @sifest.hmjsi</p>
+          <p className="text-[12px] leading-snug text-black" style={{ fontFamily: '"Times New Roman", Times, serif' }}>Email : sinformationfest@gmail.com | Instagram : @sifest.hmjsi</p>
         </div>
         <div className="flex items-center gap-2">
           <img src="/logo-rema.png" alt="Logo REMA" className="w-[85px] h-[85px] object-contain" />
@@ -165,7 +187,7 @@ export default function PrintButton({ registration }: { registration?: any }) {
           <tr>
             <td className="w-[35%] font-bold align-top">Kode Pendaftaran</td>
             <td className="w-[20px] align-top">:</td>
-            <td className="align-top font-mono font-bold bg-gray-100 px-2 rounded inline-block">{registration.registration_code}</td>
+            <td className="align-top font-mono font-bold text-black">{registration.registration_code}</td>
           </tr>
           <tr>
             <td className="w-[35%] font-bold align-top">Event</td>
@@ -215,7 +237,7 @@ export default function PrintButton({ registration }: { registration?: any }) {
               <tr>
                 <td className="w-[35%] font-bold align-top pt-4">Lokasi Tenda</td>
                 <td className="w-[20px] align-top pt-4">:</td>
-                <td className="align-top pt-4 font-bold text-amber-900">
+                <td className="align-top pt-4 font-bold text-black">
                   {getTentLocationLabel(m.id_tenda || m.lokasi_tenda)}
                 </td>
               </tr>
@@ -324,13 +346,18 @@ export default function PrintButton({ registration }: { registration?: any }) {
         </div>
       )}
 
-      {/* Status Verifikasi */}
+      {/* Status Pendaftaran & Pembayaran */}
       <table className="w-full text-[15px] mb-8" style={{ fontFamily: '"Times New Roman", Times, serif', lineHeight: '1.8' }}>
         <tbody>
           <tr>
             <td className="w-[35%] font-bold align-top">Status Pendaftaran</td>
             <td className="w-[20px] align-top">:</td>
             <td className="align-top font-bold uppercase">{registration.status === 'VERIFIED' ? 'TERVERIFIKASI' : registration.status === 'PAID' ? 'LUNAS (Menunggu Verifikasi)' : registration.status}</td>
+          </tr>
+          <tr>
+            <td className="w-[35%] font-bold align-top">Status Pembayaran</td>
+            <td className="w-[20px] align-top">:</td>
+            <td className="align-top font-bold uppercase">{getPaymentStatusText()}</td>
           </tr>
         </tbody>
       </table>
@@ -364,13 +391,13 @@ export default function PrintButton({ registration }: { registration?: any }) {
           {/* Top Bar / Navigation Toolbar */}
           <div className="h-16 px-4 md:px-6 bg-slate-900/95 border-b border-slate-800 flex items-center justify-between shrink-0 text-white z-20 shadow-xl">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
+              <div className="w-9 h-9 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-300">
                 <FileText className="w-5 h-5" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
                   <h2 className="text-sm md:text-base font-bold text-white tracking-tight">Pratinjau Formulir Pendaftaran</h2>
-                  <span className="hidden sm:inline-block px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                  <span className="hidden sm:inline-block px-2 py-0.5 rounded text-[11px] font-mono font-bold bg-slate-800 text-slate-300 border border-slate-700">
                     {registration.registration_code}
                   </span>
                 </div>
