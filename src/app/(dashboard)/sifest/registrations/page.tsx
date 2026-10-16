@@ -6,6 +6,7 @@ import clsx from 'clsx';
 import { Eye } from 'lucide-react';
 import { cookies } from 'next/headers';
 import { DeleteButton } from './DeleteButton';
+import ExportExcelButton from './ExportExcelButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -112,11 +113,12 @@ export default async function RegistrationsPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Pendaftar SI FEST</h1>
           <p className="text-sm text-slate-500 mt-1">Kelola data pendaftaran SI FEST secara real-time dari Official Website.</p>
         </div>
+        <ExportExcelButton />
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
