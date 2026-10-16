@@ -254,7 +254,11 @@ export default function EsportDashboard() {
       setIsSpinning(false);
       const fairBracket = generateFairBracket(teams);
       setShuffledTeams(fairBracket);
-      toast.success("Pengundian selesai! Peserta multi-slot otomatis dipisahkan (Bagan Atas & Bagan Bawah).");
+      toast.success(
+        game === 'efootball'
+          ? "Pengundian selesai! Peserta multi-slot otomatis dipisahkan (Bagan Atas & Bagan Bawah)."
+          : "Pengundian selesai! Bagan pertandingan MLBB berhasil diacak."
+      );
     }
   };
 
@@ -677,7 +681,7 @@ export default function EsportDashboard() {
             <tbody className="divide-y divide-slate-100">
               {teams.length === 0 ? (
                 <tr>
-                  <td colSpan={game === 'efootball' ? 5 : 4} className="px-6 py-12 text-center">
+                  <td colSpan={game === 'efootball' ? 6 : 5} className="px-6 py-12 text-center">
                     <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-50 mb-4">
                       <Gamepad2 className="w-8 h-8 text-slate-400" />
                     </div>
@@ -896,9 +900,11 @@ export default function EsportDashboard() {
                 <div key={`r1-${i}`} className="w-full bg-white border border-slate-200 shadow-sm rounded-lg overflow-hidden flex flex-col text-xs relative">
                   <div className="bg-slate-50 border-b border-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-400 flex justify-between items-center">
                     <span>Match {i + 1}</span>
-                    <span className={`px-1 rounded text-[8px] font-bold ${i < 4 ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}`}>
-                      {i < 4 ? 'Bagan Atas' : 'Bagan Bawah'}
-                    </span>
+                    {game === 'efootball' && (
+                      <span className={`px-1 rounded text-[8px] font-bold ${i < 4 ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}`}>
+                        {i < 4 ? 'Bagan Atas' : 'Bagan Bawah'}
+                      </span>
+                    )}
                   </div>
                   {renderTeamSlot(shuffledTeams[i * 2], 1, i * 2, true)}
                   {renderTeamSlot(shuffledTeams[i * 2 + 1], 1, i * 2 + 1, false)}
