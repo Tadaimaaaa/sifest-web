@@ -11,7 +11,7 @@ function doPost(e) {
       case 'logout':
         return Auth.logout(body);
       case 'createUser':
-        return Users.createUser(body);
+        return Users.createUser(body, Auth.validateToken(body.token));
       case 'updateUserAccess':
         const authUser = Auth.validateToken(body.token);
         return Users.updateUserAccess(body, authUser);

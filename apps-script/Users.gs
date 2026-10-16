@@ -121,5 +121,72 @@ const Users = {
     }
     
     return Response.error('NOT_FOUND', 'Panitia tidak ditemukan.');
+  },
+
+  createUser: function(body, user) {
+    if (!user || user.role_id !== 'ROLE-001') {
+      return Response.error('FORBIDDEN', 'Hanya Super Admin yang dapat menambahkan panitia baru.');
+    }
+    
+    if (!body.name || !body.username || !body.password) {
+      return Response.error('BAD_REQUEST', 'Nama, username, dan password wajib diisi.');
+    }
+
+    const cleanUsername = String(body.username).trim().toLowerCase();
+    const existing = this.findByUsername(cleanUsername);
+    if (existing) {
+      return Response.error('BAD_REQUEST', 'Username sudah digunakan oleh panitia lain. Gunakan username lain.');
+    }
+
+    const sheet = Utils.getSheet(this.sheetName);
+    const newId = Utils.generateSequentialId(this.sheetName, 'USER');
+    const salt = 'salt123';
+    const passHash = Utils.hashPassword(body.password, salt);
+
+    // Headers: user_id(0), name(1), nim(2), username(3), password_hash(4), password_salt(5), 
+    // email(6), phone(7), division(8), position(9), role_id(10), status(11), profile_photo(12), created_at(13), updated_at(14)
+    const newRow = [
+      newId,
+      String(body.name).trim(),
+      body.nim ? String(body.nim).trim() : '',
+      cleanUsername,
+      passHash,
+      salt,
+      body.email ? String(body.email).trim() : (cleanUsername + '@sifest.com'),
+      body.phone ? String(body.phone).trim() : '',
+      body.division || 'Semua Divisi',
+      body.position || 'Anggota',
+      body.role_id || 'ROLE-004',
+      body.status || 'ACTIVE',
+      body.profile_photo || '',
+      new Date(),
+      new Date()
+    ];
+
+    sheet.appendRow(newRow);
+
+    ActivityLogs.log(
+      user.user_id,
+      newId,
+      user.role_id,
+      'USERS',
+      'CREATE_USER',
+      `Menambahkan panitia baru: ${body.name} (${cleanUsername})`,
+      null,
+      { user_id: newId, name: body.name, role: body.role_id }
+    );
+
+    return Response.success('Panitia berhasil ditambahkan!', {
+      user_id: newId,
+      name: String(body.name).trim(),
+      nim: body.nim ? String(body.nim).trim() : '',
+      username: cleanUsername,
+      email: body.email ? String(body.email).trim() : (cleanUsername + '@sifest.com'),
+      phone: body.phone ? String(body.phone).trim() : '',
+      division: body.division || 'Semua Divisi',
+      position: body.position || 'Anggota',
+      role_id: body.role_id || 'ROLE-004',
+      status: body.status || 'ACTIVE'
+    });
   }
 };

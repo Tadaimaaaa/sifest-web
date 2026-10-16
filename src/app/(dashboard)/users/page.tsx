@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, Plus, MoreVertical, ShieldAlert, UserCog, X } from "lucide-react";
+import { Search, Plus, MoreVertical, ShieldAlert, UserCog, X, UserPlus, Eye, EyeOff, Loader2 } from "lucide-react";
 import { SCRIPT_URL } from "@/lib/api";
 import Cookies from "js-cookie";
 import { toast } from "sonner";
@@ -23,6 +23,23 @@ export default function UsersPage() {
   const [isUpdating, setIsUpdating] = useState(false);
   const [editRole, setEditRole] = useState("");
   const [editStatus, setEditStatus] = useState("");
+
+  // States for Add Panitia Modal
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [addForm, setAddForm] = useState({
+    name: "",
+    nim: "",
+    username: "",
+    password: "sifest2026",
+    email: "",
+    phone: "",
+    division: "Acara Inti",
+    position: "Anggota",
+    role_id: "ROLE-004",
+    status: "ACTIVE"
+  });
 
   const isSuperAdmin = currentUserRole === "ROLE-001" || currentUserRole === "SUPER_ADMIN";
 
@@ -107,6 +124,77 @@ export default function UsersPage() {
     }
   };
 
+  const handleCreatePanitia = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!addForm.name.trim()) {
+      toast.error("Nama lengkap panitia wajib diisi!");
+      return;
+    }
+    if (!addForm.username.trim()) {
+      toast.error("Username wajib diisi!");
+      return;
+    }
+    if (!addForm.password.trim()) {
+      toast.error("Password wajib diisi!");
+      return;
+    }
+
+    setIsCreating(true);
+    const toastId = toast.loading("Menambahkan panitia baru...");
+    try {
+      const token = Cookies.get("session_token") || "";
+      const payload = {
+        action: "createUser",
+        token: token,
+        name: addForm.name.trim(),
+        nim: addForm.nim.trim(),
+        username: addForm.username.trim().toLowerCase(),
+        password: addForm.password,
+        email: addForm.email.trim(),
+        phone: addForm.phone.trim(),
+        division: addForm.division,
+        position: addForm.position,
+        role_id: addForm.role_id,
+        status: addForm.status
+      };
+
+      const response = await fetch(`${SCRIPT_URL}?action=createUser`, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(payload)
+      });
+
+      const resData = await response.json();
+      if (resData.success) {
+        toast.success(resData.message || "Panitia baru berhasil ditambahkan!", { id: toastId });
+        setIsAddModalOpen(false);
+        setAddForm({
+          name: "",
+          nim: "",
+          username: "",
+          password: "sifest2026",
+          email: "",
+          phone: "",
+          division: "Acara Inti",
+          position: "Anggota",
+          role_id: "ROLE-004",
+          status: "ACTIVE"
+        });
+        if (resData.data) {
+          setUsers(prev => [resData.data, ...prev]);
+        } else {
+          fetchUsers();
+        }
+      } else {
+        toast.error(resData.message || "Gagal menambahkan panitia.", { id: toastId });
+      }
+    } catch (error: any) {
+      toast.error(`Terjadi kesalahan jaringan: ${error.message || error}`, { id: toastId });
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
   // Format Role Badge
   const getRoleBadge = (roleId: string) => {
     switch (roleId) {
@@ -166,7 +254,10 @@ export default function UsersPage() {
           </p>
         </div>
         {isSuperAdmin && (
-          <button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors shadow-sm w-fit">
+          <button 
+            onClick={() => setIsAddModalOpen(true)}
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-sm font-medium transition-colors shadow-sm w-fit cursor-pointer"
+          >
             <Plus className="w-4 h-4" />
             Tambah Panitia
           </button>
@@ -367,6 +458,233 @@ export default function UsersPage() {
                   className="flex-1 px-4 py-2.5 rounded-xl bg-blue-600 text-white font-medium text-sm hover:bg-blue-700 transition-colors disabled:opacity-50"
                 >
                   {isUpdating ? 'Menyimpan...' : 'Simpan Perubahan'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {/* Modal Tambah Panitia */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg overflow-hidden animate-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between p-5 border-b border-slate-100 bg-slate-50/50">
+              <h2 className="font-bold text-slate-800 flex items-center gap-2 text-base">
+                <UserPlus className="w-5 h-5 text-blue-600" />
+                Tambah Panitia Baru
+              </h2>
+              <button 
+                onClick={() => setIsAddModalOpen(false)}
+                className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <form onSubmit={handleCreatePanitia} className="p-6 overflow-y-auto space-y-4 text-sm">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Nama Lengkap */}
+                <div className="sm:col-span-2 space-y-1">
+                  <label className="text-xs font-bold text-slate-600 uppercase">Nama Lengkap <span className="text-red-500">*</span></label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Contoh: Muhammad Farhan"
+                    value={addForm.name}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      const autoSlug = val.toLowerCase().replace(/[^a-z0-9]/g, "").substring(0, 12);
+                      setAddForm(prev => ({
+                        ...prev,
+                        name: val,
+                        username: prev.username === "" || prev.username === autoSlug.substring(0, prev.username.length) ? autoSlug : prev.username,
+                        email: prev.email === "" || prev.email.includes("@sifest.com") ? (autoSlug ? `${autoSlug}@sifest.com` : "") : prev.email
+                      }));
+                    }}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-800"
+                  />
+                </div>
+
+                {/* NIM */}
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-600 uppercase">NIM (Nomor BP)</label>
+                  <input
+                    type="text"
+                    placeholder="Contoh: 23101152610123"
+                    value={addForm.nim}
+                    onChange={(e) => setAddForm({...addForm, nim: e.target.value})}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-800"
+                  />
+                </div>
+
+                {/* Username */}
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-600 uppercase">Username Login <span className="text-red-500">*</span></label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="farhan123"
+                    value={addForm.username}
+                    onChange={(e) => setAddForm({...addForm, username: e.target.value.toLowerCase().replace(/\s+/g, '')})}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-800 font-mono"
+                  />
+                </div>
+
+                {/* Password */}
+                <div className="sm:col-span-2 space-y-1">
+                  <div className="flex justify-between items-center">
+                    <label className="text-xs font-bold text-slate-600 uppercase">Password Akun <span className="text-red-500">*</span></label>
+                    <button
+                      type="button"
+                      onClick={() => setAddForm({...addForm, password: "sifest2026"})}
+                      className="text-[11px] text-blue-600 hover:underline font-medium"
+                    >
+                      Reset Default (sifest2026)
+                    </button>
+                  </div>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      required
+                      placeholder="Masukkan password..."
+                      value={addForm.password}
+                      onChange={(e) => setAddForm({...addForm, password: e.target.value})}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-800"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                {/* Divisi */}
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-600 uppercase">Divisi Kepanitiaan</label>
+                  <select
+                    value={addForm.division}
+                    onChange={(e) => setAddForm({...addForm, division: e.target.value})}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-800 font-medium"
+                  >
+                    <option value="Steering Committee">Steering Committee</option>
+                    <option value="Badan Pengurus Harian (BPH)">Badan Pengurus Harian (BPH)</option>
+                    <option value="Acara Inti">Acara Inti</option>
+                    <option value="Event Seminar Nasional">Event Seminar Nasional</option>
+                    <option value="Event Turnamen Futsal">Event Turnamen Futsal</option>
+                    <option value="Event Esport Competition">Event Esport Competition</option>
+                    <option value="Event Bazar Ekonomi Kreatif">Event Bazar Ekonomi Kreatif</option>
+                    <option value="Event MTQ & Lomba Keagamaan">Event MTQ & Lomba Keagamaan</option>
+                    <option value="Pubdok">Pubdok</option>
+                    <option value="Humas">Humas</option>
+                    <option value="Promosi">Promosi</option>
+                    <option value="Perlengkapan">Perlengkapan</option>
+                    <option value="Konsumsi">Konsumsi</option>
+                    <option value="Kestari">Kestari</option>
+                    <option value="Semua Divisi">Semua Divisi</option>
+                  </select>
+                </div>
+
+                {/* Posisi */}
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-600 uppercase">Posisi / Jabatan</label>
+                  <input
+                    type="text"
+                    placeholder="Koordinator Acara / Anggota"
+                    value={addForm.position}
+                    onChange={(e) => setAddForm({...addForm, position: e.target.value})}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-800"
+                  />
+                </div>
+
+                {/* Role / Hak Akses */}
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-600 uppercase">Role Hak Akses</label>
+                  <select
+                    value={addForm.role_id}
+                    onChange={(e) => setAddForm({...addForm, role_id: e.target.value})}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-800 font-medium"
+                  >
+                    <option value="ROLE-004">Panitia Biasa</option>
+                    <option value="ROLE-001">Super Admin</option>
+                    <option value="ROLE-002">Steering Committee (SC)</option>
+                    <option value="ROLE-003">PJ / Kapel</option>
+                    <option value="ROLE-005">Sekretaris</option>
+                    <option value="ROLE-006">Bendahara</option>
+                    <option value="ROLE-007">Pubdok</option>
+                    <option value="ROLE-008">Humas</option>
+                    <option value="ROLE-009">Promosi</option>
+                    <option value="ROLE-010">Panitia MTQ</option>
+                    <option value="ROLE-011">Panitia Seminar</option>
+                    <option value="ROLE-012">Panitia Futsal</option>
+                    <option value="ROLE-013">Panitia E-Sport</option>
+                    <option value="ROLE-014">Panitia Bazaar</option>
+                    <option value="ROLE-015">Acara Inti</option>
+                  </select>
+                </div>
+
+                {/* Status Akun */}
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-600 uppercase">Status Akun</label>
+                  <select
+                    value={addForm.status}
+                    onChange={(e) => setAddForm({...addForm, status: e.target.value})}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-800 font-medium"
+                  >
+                    <option value="ACTIVE">Aktif (Bisa Login)</option>
+                    <option value="INACTIVE">Nonaktif (Diblokir)</option>
+                  </select>
+                </div>
+
+                {/* Email & Phone */}
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-600 uppercase">Email (Opsional)</label>
+                  <input
+                    type="email"
+                    placeholder="panitia@sifest.com"
+                    value={addForm.email}
+                    onChange={(e) => setAddForm({...addForm, email: e.target.value})}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-800"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-600 uppercase">No. WhatsApp / HP</label>
+                  <input
+                    type="text"
+                    placeholder="08xxxxxxxxxx"
+                    value={addForm.phone}
+                    onChange={(e) => setAddForm({...addForm, phone: e.target.value})}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 text-slate-800"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-4 flex gap-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsAddModalOpen(false)}
+                  className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-medium text-sm hover:bg-slate-50 transition-colors"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={isCreating}
+                  className="flex-1 px-4 py-2.5 rounded-xl bg-blue-600 text-white font-medium text-sm hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2 shadow-sm"
+                >
+                  {isCreating ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Menyimpan...
+                    </>
+                  ) : (
+                    <>
+                      <UserPlus className="w-4 h-4" />
+                      Simpan Panitia
+                    </>
+                  )}
                 </button>
               </div>
             </form>
