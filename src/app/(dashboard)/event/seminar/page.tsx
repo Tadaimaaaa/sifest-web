@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { 
-  Users, Calendar, Clock, MapPin, Search, Plus, Loader2, ArrowLeft, ArrowUpDown, ChevronDown, Edit3, X, Save, Printer
+  Users, Calendar, Clock, MapPin, Search, Plus, Loader2, ArrowLeft, ArrowUpDown, ChevronDown, Edit3, X, Save, Printer, ClipboardCheck
 } from "lucide-react";
 import Link from "next/link";
 import Cookies from "js-cookie";
@@ -214,6 +214,13 @@ export default function SeminarDashboard() {
         
         {canView && (
           <div className="flex items-center gap-3">
+            <Link 
+              href="/event/seminar/absensi" 
+              className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors text-sm font-semibold shadow-sm"
+            >
+              <ClipboardCheck className="w-4 h-4" />
+              <span>Absensi</span>
+            </Link>
             <Link 
               href="/event/seminar/certificate" 
               target="_blank"
