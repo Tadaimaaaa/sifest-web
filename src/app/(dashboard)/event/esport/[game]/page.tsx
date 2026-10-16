@@ -36,6 +36,9 @@ export default function EsportDashboard() {
   const game = params.game as string;
   const gameSlug = game === 'mlbb' ? 'turnamen-esport-mlbb' : 'turnamen-esport-efootball';
   
+  const gameTitle = game === 'mlbb' ? "Mobile Legends: Bang Bang" : "E-Football";
+  const eventId = game === 'mlbb' ? "esport_mlbb" : "esport_efootball";
+  
   const [currentUserRole, setCurrentUserRole] = useState("ROLE-001");
   const [isLoading, setIsLoading] = useState(true);
   
@@ -43,14 +46,21 @@ export default function EsportDashboard() {
   const [isSavingEvent, setIsSavingEvent] = useState(false);
   const [isEditingEvent, setIsEditingEvent] = useState(false);
   const [eventData, setEventData] = useState<EventData>({
-    id_event: "esport",
-    nama_event: game === 'mlbb' ? "Mobile Legends: Bang Bang" : "E-Football",
+    id_event: eventId,
+    nama_event: gameTitle,
     tanggal: "",
     tempat: "",
     deskripsi: "",
     status: "Akan Datang"
   });
-  const [formDataEvent, setFormDataEvent] = useState<EventData>(eventData);
+  const [formDataEvent, setFormDataEvent] = useState<EventData>({
+    id_event: eventId,
+    nama_event: gameTitle,
+    tanggal: "",
+    tempat: "",
+    deskripsi: "",
+    status: "Akan Datang"
+  });
 
   // TEAM STATE (Read Only)
   const [teams, setTeams] = useState<Team[]>([]);
@@ -83,12 +93,22 @@ export default function EsportDashboard() {
 
   const fetchData = async () => {
     try {
-      // 1. Fetch Event Info
-      const resEvent = await fetch(`${SCRIPT_URL}?action=getEvent&id_event=esport`);
-      const dataEvent = await resEvent.json();
+      // 1. Fetch Event Info: Coba ambil spesifik sub-event, fallback ke 'esport' jika belum ada
+      let resEvent = await fetch(`${SCRIPT_URL}?action=getEvent&id_event=${eventId}`);
+      let dataEvent = await resEvent.json();
+      if (!dataEvent.success || !dataEvent.data) {
+        resEvent = await fetch(`${SCRIPT_URL}?action=getEvent&id_event=esport`);
+        dataEvent = await resEvent.json();
+      }
+
       if (dataEvent.success && dataEvent.data) {
-        setEventData(dataEvent.data);
-        setFormDataEvent(dataEvent.data);
+        const mergedEvent = {
+          ...dataEvent.data,
+          id_event: eventId,
+          nama_event: gameTitle, // Pastikan nama event tetap sesuai cabang game
+        };
+        setEventData(mergedEvent);
+        setFormDataEvent(mergedEvent);
       }
 
       // 2. Fetch Teams from Supabase (Official Web Registrations)
@@ -124,7 +144,13 @@ export default function EsportDashboard() {
     setIsSavingEvent(true);
     try {
       const token = Cookies.get("session_token");
-      const payload = { action: "saveEvent", token, ...formDataEvent };
+      const payload = { 
+        action: "saveEvent", 
+        token, 
+        ...formDataEvent,
+        id_event: eventId,
+        nama_event: gameTitle,
+      };
 
       const res = await fetch(`${SCRIPT_URL}?action=saveEvent`, {
         method: "POST",
@@ -134,7 +160,13 @@ export default function EsportDashboard() {
       const data = await res.json();
       if (data.success) {
         toast.success("Informasi event berhasil diperbarui!");
-        setEventData(formDataEvent);
+        const updated = {
+          ...formDataEvent,
+          id_event: eventId,
+          nama_event: gameTitle,
+        };
+        setEventData(updated);
+        setFormDataEvent(updated);
         setIsEditingEvent(false);
       } else {
         toast.error(data.message || "Gagal menyimpan data event.");
@@ -517,7 +549,7 @@ export default function EsportDashboard() {
         </Link>
         <div>
           <h1 className="text-2xl font-bold text-slate-800 tracking-tight flex items-center gap-2">
-            {eventData.nama_event}
+            {gameTitle}
           </h1>
           <p className="text-sm text-slate-500">Informasi Umum Event</p>
         </div>

@@ -53,6 +53,9 @@ export default function FutsalDashboard() {
   const category = params.category as string;
   const gameSlug = category === 'sma' ? 'turnamen-futsal-slta' : 'turnamen-futsal-umum';
 
+  const categoryTitle = category === 'sma' ? "Futsal Tingkat SMA/Sederajat" : "Futsal Mahasiswa/Umum";
+  const eventId = category === 'sma' ? "futsal_sma" : "futsal_umum";
+
   const [currentUserRole, setCurrentUserRole] = useState("ROLE-001");
   const [isLoading, setIsLoading] = useState(true);
   
@@ -60,14 +63,21 @@ export default function FutsalDashboard() {
   const [isSavingEvent, setIsSavingEvent] = useState(false);
   const [isEditingEvent, setIsEditingEvent] = useState(false);
   const [eventData, setEventData] = useState<EventData>({
-    id_event: "futsal",
-    nama_event: category === 'sma' ? "Futsal Tingkat SMA/Sederajat" : "Futsal Mahasiswa/Umum",
+    id_event: eventId,
+    nama_event: categoryTitle,
     tanggal: "",
     tempat: "",
     deskripsi: "",
     status: "Akan Datang"
   });
-  const [formDataEvent, setFormDataEvent] = useState<EventData>(eventData);
+  const [formDataEvent, setFormDataEvent] = useState<EventData>({
+    id_event: eventId,
+    nama_event: categoryTitle,
+    tanggal: "",
+    tempat: "",
+    deskripsi: "",
+    status: "Akan Datang"
+  });
 
   // TEAM STATE (Read Only)
   const [teams, setTeams] = useState<Team[]>([]);
@@ -101,13 +111,22 @@ export default function FutsalDashboard() {
   const hasAccess = ["ROLE-001", "SUPER_ADMIN", "ROLE-013"].includes(currentUserRole);
 
   const fetchData = async () => {
-    // 1. Fetch Event Info
+    // 1. Fetch Event Info: Coba ambil spesifik sub-event, fallback ke 'futsal' jika belum ada
     try {
-      const resEvent = await fetch(`${SCRIPT_URL}?action=getEvent&id_event=futsal`);
-      const dataEvent = await resEvent.json();
+      let resEvent = await fetch(`${SCRIPT_URL}?action=getEvent&id_event=${eventId}`);
+      let dataEvent = await resEvent.json();
+      if (!dataEvent.success || !dataEvent.data) {
+        resEvent = await fetch(`${SCRIPT_URL}?action=getEvent&id_event=futsal`);
+        dataEvent = await resEvent.json();
+      }
       if (dataEvent.success && dataEvent.data) {
-        setEventData(dataEvent.data);
-        setFormDataEvent(dataEvent.data);
+        const mergedEvent = {
+          ...dataEvent.data,
+          id_event: eventId,
+          nama_event: categoryTitle,
+        };
+        setEventData(mergedEvent);
+        setFormDataEvent(mergedEvent);
       }
     } catch (error) {
       console.error("Gagal mengambil info event futsal:", error);
@@ -182,7 +201,13 @@ export default function FutsalDashboard() {
     setIsSavingEvent(true);
     try {
       const token = Cookies.get("session_token");
-      const payload = { action: "saveEvent", token, ...formDataEvent };
+      const payload = { 
+        action: "saveEvent", 
+        token, 
+        ...formDataEvent,
+        id_event: eventId,
+        nama_event: categoryTitle,
+      };
 
       const res = await fetch(`${SCRIPT_URL}?action=saveEvent`, {
         method: "POST",
@@ -192,7 +217,13 @@ export default function FutsalDashboard() {
       const data = await res.json();
       if (data.success) {
         toast.success("Informasi event berhasil diperbarui!");
-        setEventData(formDataEvent);
+        const updated = {
+          ...formDataEvent,
+          id_event: eventId,
+          nama_event: categoryTitle,
+        };
+        setEventData(updated);
+        setFormDataEvent(updated);
         setIsEditingEvent(false);
       } else {
         toast.error(data.message || "Gagal menyimpan data event.");
@@ -807,7 +838,7 @@ export default function FutsalDashboard() {
         </Link>
         <div>
           <h1 className="text-2xl font-bold text-slate-800 tracking-tight flex items-center gap-2">
-            {eventData.nama_event}
+            {categoryTitle}
           </h1>
           <p className="text-sm text-slate-500">Informasi Umum Event</p>
         </div>
