@@ -52,8 +52,6 @@ export function getTentLocationLabel(tentId: string | null | undefined): string 
     return 'Belum Ditentukan';
   }
   const clean = tentId.trim().toUpperCase();
-  const found = BAZAAR_TENTS.find(t => t.id === clean);
-  if (found) return found.label;
   return `Stand ${clean}`;
 }
 

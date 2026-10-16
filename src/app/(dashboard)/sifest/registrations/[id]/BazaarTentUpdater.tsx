@@ -171,13 +171,7 @@ export default function BazaarTentUpdater({
             <Store className="w-4 h-4 text-amber-600 shrink-0" />
             <div className="text-sm font-bold tracking-tight">
               Stand {tent}
-              <span className="ml-1.5 text-xs font-normal text-amber-700">({getTentBlockLabel(tent)})</span>
             </div>
-            {matchedTent === tent && !initialTent && (
-              <span className="text-[10px] font-semibold px-1.5 py-0.5 bg-amber-200 text-amber-900 rounded-md">
-                Event Bazaar
-              </span>
-            )}
           </div>
         ) : (
           <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-100 text-slate-500 rounded-xl text-xs font-semibold">

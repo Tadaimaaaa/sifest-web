@@ -511,16 +511,9 @@ export default function BazaarDashboard() {
                     {tenant.id_tenda === "-" || !tenant.id_tenda || tenant.id_tenda === "NONE" ? (
                       <span className="text-xs font-semibold px-2.5 py-1 bg-slate-100 text-slate-500 rounded-lg inline-block">Belum Ditentukan</span>
                     ) : (
-                      <div>
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 border border-amber-200 text-amber-800 rounded-lg text-xs font-bold">
-                          Stand {tenant.id_tenda}
-                        </span>
-                        {getTentBlockLabel(tenant.id_tenda) && (
-                          <div className="text-[11px] font-medium text-slate-400 mt-1">
-                            {getTentBlockLabel(tenant.id_tenda)}
-                          </div>
-                        )}
-                      </div>
+                      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-amber-50 border border-amber-200 text-amber-800 rounded-lg text-xs font-bold">
+                        Stand {tenant.id_tenda}
+                      </span>
                     )}
                   </td>
                   <td className="py-4 px-4 font-medium text-slate-800">{tenant.nama_brand}</td>
