@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import Cookies from "js-cookie";
 import { toast } from "sonner";
@@ -22,7 +22,15 @@ import {
   X,
   Sparkles,
   Phone,
-  Check
+  Check,
+  Smartphone,
+  Usb,
+  AlertTriangle,
+  GraduationCap,
+  Building2,
+  IdCard,
+  BadgeCheck,
+  ExternalLink
 } from "lucide-react";
 import {
   getSeminarRegistrations,
@@ -46,6 +54,10 @@ interface Participant {
   attended: boolean;
   attended_at: string | null;
   attendance?: any;
+  metadata?: any;
+  nobp?: string | null;
+  jurusan?: string | null;
+  kelas?: string | null;
 }
 
 interface EventData {
@@ -60,6 +72,12 @@ interface EventData {
   status: string;
 }
 
+interface PopupModalData {
+  participant: Participant;
+  isAlreadyCheckedIn: boolean;
+  timeString: string;
+}
+
 export default function SeminarAbsensiPage() {
   const [currentUserRole, setCurrentUserRole] = useState("");
   const [participants, setParticipants] = useState<Participant[]>([]);
@@ -67,26 +85,162 @@ export default function SeminarAbsensiPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterTab, setFilterTab] = useState<"ALL" | "HADIR" | "BELUM" | "LUNAS">("ALL");
-  
+
+  // Popup Modal Detail State (Pop-up yang diminta user di laptop)
+  const [popupData, setPopupData] = useState<PopupModalData | null>(null);
+  const [autoCloseCountdown, setAutoCloseCountdown] = useState<number>(7);
+  const autoCloseTimerRef = useRef<NodeJS.Timeout | null>(null);
+
   // Quick Code Check-in
   const [manualCode, setManualCode] = useState("");
   const [isCheckingIn, setIsCheckingIn] = useState(false);
   const quickInputRef = useRef<HTMLInputElement>(null);
 
-  // QR Scanner Modal State
+  // QR Scanner Modal State (Laptop Web Cam)
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [continuousMode, setContinuousMode] = useState(true);
-  const [lastScannedResult, setLastScannedResult] = useState<{
-    success: boolean;
-    name: string;
-    code: string;
-    institution: string;
-    time: string;
-    alreadyCheckedIn?: boolean;
-  } | null>(null);
 
-  // Updating single participant state
+  // HP Sync / Petunjuk Modal
+  const [isHpGuideOpen, setIsHpGuideOpen] = useState(false);
+
+  // Single participant update loading indicator
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+
+  // Play pleasant musical chord chime on check-in
+  const playSuccessChime = useCallback(() => {
+    try {
+      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const now = audioCtx.currentTime;
+      // Harmony chord: C5 (523Hz), E5 (659Hz), G5 (784Hz)
+      const notes = [523.25, 659.25, 783.99];
+      notes.forEach((freq, idx) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(freq, now + idx * 0.07);
+        gain.gain.setValueAtTime(0.12, now + idx * 0.07);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.07 + 0.35);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now + idx * 0.07);
+        osc.stop(now + idx * 0.07 + 0.35);
+      });
+    } catch (e) {}
+  }, []);
+
+  // Trigger popup modal with auto-close countdown
+  const triggerPopupModal = useCallback((participant: Participant, isAlreadyCheckedIn: boolean) => {
+    playSuccessChime();
+
+    const timeStr = new Date(participant.attended_at || new Date()).toLocaleTimeString("id-ID", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit"
+    }) + " WIB";
+
+    setPopupData({
+      participant,
+      isAlreadyCheckedIn,
+      timeString: timeStr
+    });
+
+    setAutoCloseCountdown(7);
+    if (autoCloseTimerRef.current) clearInterval(autoCloseTimerRef.current);
+    autoCloseTimerRef.current = setInterval(() => {
+      setAutoCloseCountdown((prev) => {
+        if (prev <= 1) {
+          if (autoCloseTimerRef.current) clearInterval(autoCloseTimerRef.current);
+          setPopupData(null);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  }, [playSuccessChime]);
+
+  // Close popup
+  const closePopup = () => {
+    if (autoCloseTimerRef.current) clearInterval(autoCloseTimerRef.current);
+    setPopupData(null);
+  };
+
+  // Process check-in for any code (from USB scanner, QR cam, or input bar)
+  const processCheckInCode = useCallback(async (codeToProcess: string, source: "usb_scanner" | "input" | "camera") => {
+    const code = codeToProcess.trim();
+    if (!code) return;
+
+    setIsCheckingIn(true);
+    try {
+      const res = await checkInSeminarByCode(code);
+      if (res.success && res.data) {
+        // Update state in table
+        setParticipants((prev) =>
+          prev.map((p) =>
+            p.participant_id === res.data.participant_id
+              ? { ...p, ...res.data, attended: true, attended_at: res.data.attended_at }
+              : p
+          )
+        );
+
+        // Munculkan POP-UP DETAIL di web laptop!
+        triggerPopupModal(res.data, Boolean(res.alreadyCheckedIn));
+
+        if (source === "input") {
+          setManualCode("");
+          quickInputRef.current?.focus();
+        }
+      } else {
+        toast.error(res.message || "Peserta tidak ditemukan");
+      }
+    } catch (err: any) {
+      toast.error("Gagal melakukan check-in peserta");
+    } finally {
+      setIsCheckingIn(false);
+    }
+  }, [triggerPopupModal]);
+
+  // Global listener for USB Barcode Scanner / HP via USB (HID Keyboard Emulation)
+  useEffect(() => {
+    let keyBuffer = "";
+    let lastKeyTime = Date.now();
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Close popup if Esc is pressed
+      if (e.key === "Escape") {
+        closePopup();
+        return;
+      }
+
+      const activeEl = document.activeElement;
+      const isInput = activeEl?.tagName === "INPUT" || activeEl?.tagName === "TEXTAREA";
+
+      const currentTime = Date.now();
+      const timeDiff = currentTime - lastKeyTime;
+      lastKeyTime = currentTime;
+
+      // Barcode scanners send keystrokes extremely quickly (< 60ms between chars)
+      if (timeDiff > 250 && !isInput) {
+        keyBuffer = "";
+      }
+
+      if (e.key === "Enter") {
+        // If buffer has barcode data
+        if (keyBuffer.trim().length >= 4) {
+          e.preventDefault();
+          const code = keyBuffer.trim();
+          keyBuffer = "";
+          processCheckInCode(code, "usb_scanner");
+        } else if (isInput && activeEl === quickInputRef.current && manualCode.trim()) {
+          // Handled by form onSubmit
+        }
+      } else if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
+        keyBuffer += e.key;
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [manualCode, processCheckInCode]);
 
   useEffect(() => {
     const userDataStr = Cookies.get("user_data");
@@ -97,33 +251,36 @@ export default function SeminarAbsensiPage() {
       } catch (e) {}
     }
     fetchData();
-  }, []);
+
+    // Auto-refresh data every 4 seconds in background to sync when scanned from HP online
+    const interval = setInterval(() => {
+      getSeminarRegistrations()
+        .then((res) => {
+          if (res.success && res.data) {
+            setParticipants((prev) => {
+              // Check if any participant got checked in externally from HP
+              res.data.forEach((newP: Participant) => {
+                const oldP = prev.find((p) => p.participant_id === newP.participant_id);
+                if (oldP && !oldP.attended && newP.attended) {
+                  // Trigger popup automatically on laptop!
+                  triggerPopupModal(newP, false);
+                }
+              });
+              return res.data;
+            });
+          }
+        })
+        .catch(() => {});
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [triggerPopupModal]);
 
   const canView = ["ROLE-001", "SUPER_ADMIN", "ROLE-002", "ROLE-003", "ROLE-011", "ROLE-005"].includes(currentUserRole);
-
-  // Beep sound generator for successful scan using Web Audio API
-  const playBeep = () => {
-    try {
-      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.type = "sine";
-      osc.frequency.setValueAtTime(880, audioCtx.currentTime); // A5 note
-      gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.start();
-      osc.stop(audioCtx.currentTime + 0.15);
-    } catch (e) {
-      // Audio not permitted or not supported
-    }
-  };
 
   const fetchData = async () => {
     setIsLoading(true);
 
-    // 1. Ambil data peserta dari Supabase
     getSeminarRegistrations()
       .then((res) => {
         if (res.success && res.data) {
@@ -140,7 +297,6 @@ export default function SeminarAbsensiPage() {
         setIsLoading(false);
       });
 
-    // 2. Ambil info event dari Google Apps Script
     try {
       const token = Cookies.get("session_token");
       fetch(`${SCRIPT_URL}?action=getEvent&id_event=seminar&token=${token}`)
@@ -154,12 +310,11 @@ export default function SeminarAbsensiPage() {
     } catch (e) {}
   };
 
-  // Toggle single participant attendance
+  // Toggle single participant attendance from table button
   const handleToggleAttendance = async (participant: Participant) => {
     const nextStatus = !participant.attended;
     setUpdatingId(participant.participant_id);
 
-    // Optimistic UI update
     const previousParticipants = [...participants];
     const nowIso = new Date().toISOString();
     setParticipants((prev) =>
@@ -173,13 +328,12 @@ export default function SeminarAbsensiPage() {
     try {
       const res = await toggleSeminarAttendance(participant.participant_id, nextStatus);
       if (res.success) {
-        toast.success(
-          nextStatus
-            ? `${participant.nama_lengkap} tercatat HADIR.`
-            : `Kehadiran ${participant.nama_lengkap} dibatalkan.`
-        );
+        if (nextStatus) {
+          triggerPopupModal({ ...participant, attended: true, attended_at: nowIso }, false);
+        } else {
+          toast.info(`Kehadiran ${participant.nama_lengkap} dibatalkan.`);
+        }
       } else {
-        // Rollback
         setParticipants(previousParticipants);
         toast.error(res.message || "Gagal memperbarui status presensi");
       }
@@ -188,92 +342,6 @@ export default function SeminarAbsensiPage() {
       toast.error(`Error: ${err.message || "Gagal memperbarui presensi"}`);
     } finally {
       setUpdatingId(null);
-    }
-  };
-
-  // Handle Quick Code Check-in (input field)
-  const handleManualCheckIn = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    const code = manualCode.trim();
-    if (!code) {
-      toast.error("Silakan masukkan ID atau kode tiket peserta!");
-      return;
-    }
-
-    setIsCheckingIn(true);
-    try {
-      const res = await checkInSeminarByCode(code);
-      if (res.success && res.data) {
-        playBeep();
-        // Update local state
-        setParticipants((prev) =>
-          prev.map((p) =>
-            p.participant_id === res.data.participant_id
-              ? { ...p, attended: true, attended_at: res.data.attended_at }
-              : p
-          )
-        );
-        if (res.alreadyCheckedIn) {
-          toast.info(res.message);
-        } else {
-          toast.success(res.message);
-        }
-        setManualCode("");
-        quickInputRef.current?.focus();
-      } else {
-        toast.error(res.message || "Peserta tidak ditemukan");
-      }
-    } catch (err: any) {
-      toast.error("Gagal melakukan check-in peserta");
-    } finally {
-      setIsCheckingIn(false);
-    }
-  };
-
-  // Handle QR Scan Success
-  const handleScanSuccess = async (decodedText: string) => {
-    try {
-      const res = await checkInSeminarByCode(decodedText);
-      if (res.success && res.data) {
-        playBeep();
-        // Update local state
-        setParticipants((prev) =>
-          prev.map((p) =>
-            p.participant_id === res.data.participant_id
-              ? { ...p, attended: true, attended_at: res.data.attended_at }
-              : p
-          )
-        );
-
-        const timeStr = new Date(res.data.attended_at || new Date()).toLocaleTimeString("id-ID", {
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit"
-        }) + " WIB";
-
-        setLastScannedResult({
-          success: true,
-          name: res.data.nama_lengkap,
-          code: res.data.registration_code || res.data.id_peserta,
-          institution: res.data.institusi,
-          time: timeStr,
-          alreadyCheckedIn: res.alreadyCheckedIn
-        });
-
-        if (res.alreadyCheckedIn) {
-          toast.info(res.message);
-        } else {
-          toast.success(res.message);
-        }
-
-        if (!continuousMode) {
-          setIsScannerOpen(false);
-        }
-      } else {
-        toast.error(res.message || "QR Code tidak dikenali sebagai peserta seminar");
-      }
-    } catch (err: any) {
-      toast.error("Gagal memproses QR Code");
     }
   };
 
@@ -289,6 +357,9 @@ export default function SeminarAbsensiPage() {
       "ID Registrasi": p.registration_code || p.id_peserta,
       "Nama Lengkap": p.nama_lengkap,
       "Institusi / Asal": p.institusi,
+      "Jurusan": p.jurusan || "-",
+      "No. BP / NIM": p.nobp || "-",
+      "Kelas": p.kelas || "-",
       "Email": p.email,
       "No WhatsApp": p.kontak,
       "Status Pembayaran": p.status_bayar,
@@ -305,17 +376,19 @@ export default function SeminarAbsensiPage() {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Presensi Seminar");
 
-    // Auto-fit column widths
     const columnWidths = [
       { wch: 6 },
       { wch: 20 },
       { wch: 30 },
-      { wch: 30 },
+      { wch: 28 },
+      { wch: 24 },
+      { wch: 18 },
+      { wch: 12 },
       { wch: 28 },
       { wch: 18 },
       { wch: 20 },
       { wch: 18 },
-      { wch: 25 }
+      { wch: 24 }
     ];
     worksheet["!cols"] = columnWidths;
 
@@ -326,7 +399,6 @@ export default function SeminarAbsensiPage() {
 
   // Filter participants
   const filteredParticipants = participants.filter((p) => {
-    // Search filter
     const q = searchQuery.toLowerCase().trim();
     const matchesSearch =
       !q ||
@@ -334,12 +406,13 @@ export default function SeminarAbsensiPage() {
       p.id_peserta.toLowerCase().includes(q) ||
       (p.registration_code && p.registration_code.toLowerCase().includes(q)) ||
       p.institusi.toLowerCase().includes(q) ||
+      (p.jurusan && p.jurusan.toLowerCase().includes(q)) ||
+      (p.nobp && p.nobp.toLowerCase().includes(q)) ||
       p.email.toLowerCase().includes(q) ||
       p.kontak.toLowerCase().includes(q);
 
     if (!matchesSearch) return false;
 
-    // Tab filter
     if (filterTab === "HADIR") return p.attended;
     if (filterTab === "BELUM") return !p.attended;
     if (filterTab === "LUNAS") return p.status_bayar === "Lunas";
@@ -398,6 +471,10 @@ export default function SeminarAbsensiPage() {
                 <span className="px-2.5 py-0.5 bg-blue-100 text-blue-700 font-semibold text-xs rounded-full">
                   Realtime Check-in
                 </span>
+                <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-emerald-100 text-emerald-800 text-xs font-semibold rounded-full">
+                  <Usb className="w-3.5 h-3.5 text-emerald-600" />
+                  USB Scanner Aktif
+                </span>
               </div>
               <p className="text-sm text-slate-500 mt-1">
                 Presensi kehadiran peserta Seminar Nasional SI FEST 2026
@@ -408,34 +485,64 @@ export default function SeminarAbsensiPage() {
           {/* Action Buttons */}
           <div className="flex flex-wrap items-center gap-2.5">
             <button
+              onClick={() => setIsHpGuideOpen(true)}
+              className="flex items-center gap-2 px-3.5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl font-semibold text-sm shadow-sm transition-all"
+            >
+              <Smartphone className="w-4 h-4 text-emerald-400" />
+              <span>Scan via HP / USB</span>
+            </button>
+
+            <button
               onClick={() => setIsScannerOpen(true)}
-              className="flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold text-sm shadow-sm hover:shadow transition-all"
+              className="flex items-center gap-2 px-3.5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold text-sm shadow-sm transition-all"
             >
               <Camera className="w-4 h-4" />
-              <span>Scan QR Tiket</span>
+              <span>Kamera Laptop</span>
             </button>
 
             <button
               onClick={() => window.print()}
-              className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl font-semibold text-sm shadow-xs transition-colors"
+              className="flex items-center gap-2 px-3.5 py-2.5 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl font-semibold text-sm shadow-xs transition-colors"
             >
               <Printer className="w-4 h-4 text-slate-500" />
-              <span>Cetak Lembar Presensi</span>
+              <span>Cetak Presensi (A4)</span>
             </button>
 
             <button
               onClick={handleExportExcel}
-              className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold text-sm shadow-sm transition-colors"
+              className="flex items-center gap-2 px-3.5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-semibold text-sm shadow-sm transition-colors"
             >
               <Download className="w-4 h-4" />
-              <span>Ekspor Excel</span>
+              <span>Excel</span>
             </button>
           </div>
         </div>
 
+        {/* Live USB / Scanner Status Banner */}
+        <div className="bg-emerald-50/70 border border-emerald-200/80 rounded-2xl p-3 sm:px-4 flex items-center justify-between gap-3 text-xs text-emerald-950">
+          <div className="flex items-center gap-2.5">
+            <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-ping" />
+            <span className="font-semibold text-slate-800">
+              Listener Scanner Aktif:
+            </span>
+            <span className="text-slate-600 hidden sm:inline">
+              Hubungkan HP via kabel USB / alat scanner barcode. Begitu QR discan, laptop akan langsung menampilkan pop-up data peserta secara otomatis!
+            </span>
+            <span className="text-slate-600 sm:hidden">
+              Scanner siap menerima data tiket secara instan.
+            </span>
+          </div>
+          <button
+            onClick={() => setIsHpGuideOpen(true)}
+            className="text-xs font-bold text-emerald-800 hover:underline shrink-0 flex items-center gap-1"
+          >
+            <span>Panduan HP</span>
+            <ExternalLink className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
         {/* KPI Stat Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Total Peserta */}
           <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
             <div className="space-y-1">
               <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Total Peserta</span>
@@ -447,7 +554,6 @@ export default function SeminarAbsensiPage() {
             </div>
           </div>
 
-          {/* Hadir */}
           <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
             <div className="space-y-1">
               <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Peserta Hadir</span>
@@ -469,7 +575,6 @@ export default function SeminarAbsensiPage() {
             </div>
           </div>
 
-          {/* Belum Hadir */}
           <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
             <div className="space-y-1">
               <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Belum Hadir</span>
@@ -481,7 +586,6 @@ export default function SeminarAbsensiPage() {
             </div>
           </div>
 
-          {/* Status Bayar Lunas */}
           <div className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
             <div className="space-y-1">
               <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">Terverifikasi Lunas</span>
@@ -503,11 +607,17 @@ export default function SeminarAbsensiPage() {
                 <h3 className="font-bold text-base sm:text-lg">Check-in Cepat Peserta</h3>
               </div>
               <p className="text-xs sm:text-sm text-blue-100">
-                Ketik atau tempel kode pendaftaran tiket (misal: SIF-2026-F4EFA4) lalu tekan Enter.
+                Ketik / scan kode tiket (misal: SIF-2026-F4EFA4) lalu tekan Enter.
               </p>
             </div>
 
-            <form onSubmit={handleManualCheckIn} className="flex items-center gap-2 w-full lg:max-w-md">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                processCheckInCode(manualCode, "input");
+              }}
+              className="flex items-center gap-2 w-full lg:max-w-md"
+            >
               <div className="relative flex-1">
                 <input
                   ref={quickInputRef}
@@ -545,7 +655,6 @@ export default function SeminarAbsensiPage() {
 
         {/* Search & Filter Controls */}
         <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
-          {/* Tabs */}
           <div className="flex flex-wrap items-center gap-1.5 bg-slate-100/80 p-1 rounded-xl">
             <button
               onClick={() => setFilterTab("ALL")}
@@ -589,14 +698,13 @@ export default function SeminarAbsensiPage() {
             </button>
           </div>
 
-          {/* Search Box */}
           <div className="relative w-full md:w-80">
             <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Cari nama, ID, kampus..."
+              placeholder="Cari nama, ID, BP, kampus..."
               className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors"
             />
           </div>
@@ -612,6 +720,7 @@ export default function SeminarAbsensiPage() {
                   <th className="py-3.5 px-4">ID Peserta</th>
                   <th className="py-3.5 px-4">Nama Lengkap</th>
                   <th className="py-3.5 px-4">Institusi / Asal</th>
+                  <th className="py-3.5 px-4">Jurusan / NoBP</th>
                   <th className="py-3.5 px-4">Kontak WA</th>
                   <th className="py-3.5 px-4">Status Bayar</th>
                   <th className="py-3.5 px-4">Kehadiran</th>
@@ -621,14 +730,14 @@ export default function SeminarAbsensiPage() {
               <tbody className="divide-y divide-slate-100 text-sm">
                 {isLoading ? (
                   <tr>
-                    <td colSpan={8} className="py-12 text-center text-slate-500">
+                    <td colSpan={9} className="py-12 text-center text-slate-500">
                       <Loader2 className="w-6 h-6 animate-spin text-blue-500 mx-auto mb-2" />
                       Memuat data peserta...
                     </td>
                   </tr>
                 ) : filteredParticipants.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="py-12 text-center text-slate-400">
+                    <td colSpan={9} className="py-12 text-center text-slate-400">
                       Tidak ada peserta yang cocok dengan kriteria pencarian / filter.
                     </td>
                   </tr>
@@ -656,7 +765,26 @@ export default function SeminarAbsensiPage() {
                       </td>
 
                       <td className="py-3.5 px-4 text-slate-600 font-medium">
-                        {p.institusi}
+                        <div>{p.institusi}</div>
+                      </td>
+
+                      <td className="py-3.5 px-4">
+                        {p.nobp || p.jurusan ? (
+                          <div className="space-y-0.5">
+                            {p.jurusan && (
+                              <div className="text-xs font-semibold text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded inline-block">
+                                {p.jurusan} {p.kelas ? `(${p.kelas})` : ""}
+                              </div>
+                            )}
+                            {p.nobp && (
+                              <div className="text-xs font-mono font-medium text-slate-600">
+                                BP: {p.nobp}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-xs text-slate-400">-</span>
+                        )}
                       </td>
 
                       <td className="py-3.5 px-4">
@@ -750,37 +878,286 @@ export default function SeminarAbsensiPage() {
       </div>
 
       {/* ============================================================== */}
-      {/* 2. QR SCANNER MODAL                                           */}
+      {/* 2. THE BIG POP-UP MODAL (TAMPILAN POP-UP DI LAPTOP)             */}
+      {/* ============================================================== */}
+      {popupData && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-md animate-in fade-in duration-200 print:hidden">
+          <div className="bg-white rounded-3xl w-full max-w-xl shadow-2xl border border-slate-200 overflow-hidden flex flex-col animate-in zoom-in-95 duration-200">
+            
+            {/* Header Banner */}
+            <div
+              className={`px-6 py-5 text-white flex items-center justify-between ${
+                popupData.isAlreadyCheckedIn
+                  ? "bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600"
+                  : "bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-md flex items-center justify-center shadow-inner">
+                  {popupData.isAlreadyCheckedIn ? (
+                    <AlertTriangle className="w-7 h-7 text-amber-100 animate-bounce" />
+                  ) : (
+                    <BadgeCheck className="w-7 h-7 text-emerald-100" />
+                  )}
+                </div>
+                <div>
+                  <div className="text-xs uppercase tracking-widest font-extrabold text-white/80">
+                    {popupData.isAlreadyCheckedIn ? "Peringatan Presensi" : "Presensi Berhasil"}
+                  </div>
+                  <h3 className="text-xl font-black text-white tracking-tight">
+                    {popupData.isAlreadyCheckedIn ? "Sudah Hadir Sebelumnya" : "Peserta Tercatat HADIR"}
+                  </h3>
+                </div>
+              </div>
+
+              <button
+                onClick={closePopup}
+                className="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors"
+                title="Tutup (Esc)"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Body: Complete Detail of Participant */}
+            <div className="p-6 sm:p-7 space-y-5">
+              
+              {/* ID Peserta & Timestamp */}
+              <div className="flex items-center justify-between bg-slate-50 px-4 py-2.5 rounded-2xl border border-slate-200/80">
+                <div className="flex items-center gap-2">
+                  <IdCard className="w-4 h-4 text-slate-400" />
+                  <span className="text-xs font-semibold text-slate-500">KODE TIKET:</span>
+                  <span className="font-mono text-xs font-bold text-slate-800 bg-white px-2 py-0.5 rounded border border-slate-200">
+                    {popupData.participant.registration_code || popupData.participant.id_peserta}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
+                  <Clock className="w-3.5 h-3.5 text-slate-400" />
+                  <span>{popupData.timeString}</span>
+                </div>
+              </div>
+
+              {/* Nama Lengkap Peserta */}
+              <div className="space-y-1">
+                <span className="text-xs uppercase tracking-wider font-bold text-slate-400">
+                  Nama Lengkap Peserta
+                </span>
+                <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight leading-snug">
+                  {popupData.participant.nama_lengkap}
+                </h2>
+              </div>
+
+              {/* Asal Instansi (Khusus UPI: Tampilkan Jurusan dan NoBP!) */}
+              {popupData.participant.institusi.toLowerCase().includes("upi") ||
+              popupData.participant.institusi.toLowerCase().includes("yptk") ||
+              Boolean(popupData.participant.nobp) ? (
+                /* Card Khusus Mahasiswa UPI YPTK */
+                <div className="bg-gradient-to-br from-indigo-50/90 via-blue-50/70 to-slate-50 border-2 border-indigo-200 rounded-2xl p-4 sm:p-5 shadow-xs space-y-3">
+                  <div className="flex items-center gap-2">
+                    <GraduationCap className="w-5 h-5 text-indigo-600 shrink-0" />
+                    <span className="text-xs font-extrabold uppercase tracking-wide text-indigo-900">
+                      Mahasiswa UPI &quot;YPTK&quot; Padang
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1 border-t border-indigo-100">
+                    {/* Jurusan */}
+                    <div className="space-y-0.5 bg-white p-3 rounded-xl border border-indigo-100 shadow-2xs">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                        Jurusan / Prodi
+                      </span>
+                      <div className="text-base font-extrabold text-indigo-950">
+                        {popupData.participant.jurusan || "Sistem Informasi"}
+                      </div>
+                      {popupData.participant.kelas && (
+                        <div className="text-xs text-indigo-700 font-semibold">
+                          Kelas: {popupData.participant.kelas}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* No. BP / NIM */}
+                    <div className="space-y-0.5 bg-white p-3 rounded-xl border border-indigo-100 shadow-2xs">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                        No. BP / NIM
+                      </span>
+                      <div className="text-base font-extrabold text-indigo-950 font-mono tracking-wide">
+                        {popupData.participant.nobp || "-"}
+                      </div>
+                      <div className="text-[11px] text-slate-500">
+                        Terdaftar di SIAKAD UPI YPTK
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                /* Card Umum / Luar Kampus */
+                <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-1">
+                  <div className="flex items-center gap-2 text-xs font-bold text-slate-500">
+                    <Building2 className="w-4 h-4 text-slate-400" />
+                    <span>ASAL INSTANSI / KAMPUS / SEKOLAH</span>
+                  </div>
+                  <div className="text-lg font-bold text-slate-800">
+                    {popupData.participant.institusi}
+                  </div>
+                </div>
+              )}
+
+              {/* Status Bayar & Kontak */}
+              <div className="grid grid-cols-2 gap-3 pt-1 text-xs">
+                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80">
+                  <span className="text-slate-400 font-semibold block mb-1">Status Pembayaran</span>
+                  <span
+                    className={`inline-block px-2.5 py-0.5 rounded-full font-bold ${
+                      popupData.participant.status_bayar === "Lunas"
+                        ? "bg-emerald-100 text-emerald-800"
+                        : "bg-amber-100 text-amber-800"
+                    }`}
+                  >
+                    {popupData.participant.status_bayar}
+                  </span>
+                </div>
+
+                <div className="p-3 bg-slate-50 rounded-xl border border-slate-200/80">
+                  <span className="text-slate-400 font-semibold block mb-1">Kontak WhatsApp</span>
+                  <span className="font-mono font-bold text-slate-700">
+                    {popupData.participant.kontak || "-"}
+                  </span>
+                </div>
+              </div>
+
+            </div>
+
+            {/* Modal Footer with Countdown */}
+            <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+              <div className="text-xs text-slate-500 flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span>Menutup dalam <strong>{autoCloseCountdown}d</strong> (atau scan peserta berikutnya)</span>
+              </div>
+
+              <button
+                onClick={closePopup}
+                className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl transition-all shadow-xs"
+              >
+                Tutup (Esc)
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================== */}
+      {/* 3. PANDUAN SCAN VIA HP / KABEL USB MODAL                       */}
+      {/* ============================================================== */}
+      {isHpGuideOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in duration-200 print:hidden">
+          <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
+            
+            <div className="px-6 py-4 bg-gradient-to-r from-slate-900 to-indigo-950 text-white flex items-center justify-between shrink-0">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500 text-slate-950 flex items-center justify-center font-bold">
+                  <Smartphone className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-base">Cara Scan Tiket dari HP Panitia</h3>
+                  <p className="text-xs text-slate-300">Hubungkan ke laptop atau gunakan web scanner</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsHpGuideOpen(false)}
+                className="p-1.5 text-slate-400 hover:text-white rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-6 overflow-y-auto space-y-5 text-sm">
+              {/* Metode 1: Kabel USB */}
+              <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2">
+                <div className="flex items-center gap-2 font-bold text-slate-900">
+                  <Usb className="w-4 h-4 text-blue-600" />
+                  <span>Metode 1: Hubungkan HP via Kabel USB (Barcode to PC)</span>
+                </div>
+                <ol className="list-decimal list-inside text-xs text-slate-600 space-y-1.5 pl-1 leading-relaxed">
+                  <li>Colokkan kabel USB dari HP ke laptop.</li>
+                  <li>
+                    Gunakan aplikasi seperti <strong>Barcode to PC</strong> (tersedia gratis di Play Store/App Store) atau gunakan alat scanner barcode USB.
+                  </li>
+                  <li>
+                    Di laptop, panitia <strong>TIDAK PERLU mengklik apa pun</strong>. Layar ini sudah memiliki listener otomatis!
+                  </li>
+                  <li>
+                    Arahkan kamera HP ke QR Code tiket peserta. Data akan otomatis masuk ke laptop dan <strong>pop-up detail langsung muncul</strong>!
+                  </li>
+                </ol>
+              </div>
+
+              {/* Metode 2: HP Membuka Web Langsung (Tanpa Kabel) */}
+              <div className="p-4 bg-indigo-50/70 border border-indigo-200 rounded-2xl space-y-2">
+                <div className="flex items-center gap-2 font-bold text-indigo-900">
+                  <Smartphone className="w-4 h-4 text-indigo-600" />
+                  <span>Metode 2: Buka Web Scanner Langsung di Browser HP</span>
+                </div>
+                <p className="text-xs text-indigo-800 leading-relaxed">
+                  Panitia juga bisa langsung membuka halaman scanner resmi di HP tanpa kabel apapun:
+                </p>
+                <div className="p-2.5 bg-white rounded-xl border border-indigo-200 font-mono text-xs text-indigo-950 font-bold select-all flex items-center justify-between">
+                  <span>/event/seminar/absensi/scan</span>
+                  <Link
+                    href="/event/seminar/absensi/scan"
+                    target="_blank"
+                    className="text-xs font-sans text-blue-600 underline font-semibold"
+                  >
+                    Buka
+                  </Link>
+                </div>
+                <p className="text-[11px] text-slate-500">
+                  Karena sistem memiliki auto-sync realtime, saat panitia scan di HP, layar laptop di meja registrasi akan otomatis mendeteksi dan memunculkan pop-up kehadiran!
+                </p>
+              </div>
+            </div>
+
+            <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end shrink-0">
+              <button
+                type="button"
+                onClick={() => setIsHpGuideOpen(false)}
+                className="px-5 py-2 bg-slate-900 text-white hover:bg-slate-800 rounded-xl text-sm font-semibold transition-colors"
+              >
+                Mengerti
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================== */}
+      {/* 4. LAPTOP WEBCAM SCANNER MODAL                                 */}
       {/* ============================================================== */}
       {isScannerOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in duration-200 print:hidden">
           <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
             
-            {/* Modal Header */}
             <div className="px-6 py-4 bg-gradient-to-r from-indigo-50 to-blue-50 border-b border-indigo-100 flex items-center justify-between shrink-0">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-md shadow-indigo-600/20">
                   <Camera className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-slate-800 text-base">Scanner Tiket Peserta</h3>
-                  <p className="text-xs text-slate-500">Scan QR Code E-Ticket untuk check-in instan</p>
+                  <h3 className="font-bold text-slate-800 text-base">Scanner Kamera Laptop</h3>
+                  <p className="text-xs text-slate-500">Arahkan QR Code tiket ke depan webcam laptop</p>
                 </div>
               </div>
               <button
-                onClick={() => {
-                  setIsScannerOpen(false);
-                  setLastScannedResult(null);
-                }}
+                onClick={() => setIsScannerOpen(false)}
                 className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-white transition-colors"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Modal Body */}
             <div className="p-6 overflow-y-auto space-y-4">
-              {/* Continuous mode toggle */}
               <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-200/80">
                 <span className="text-xs font-semibold text-slate-700">Mode Scan Beruntun (Pintu Masuk)</span>
                 <label className="relative inline-flex items-center cursor-pointer">
@@ -794,47 +1171,20 @@ export default function SeminarAbsensiPage() {
                 </label>
               </div>
 
-              {/* QR Scanner View */}
               <div className="pt-2">
-                <QRScanner onScanSuccess={handleScanSuccess} />
+                <QRScanner
+                  onScanSuccess={(code) => {
+                    processCheckInCode(code, "camera");
+                    if (!continuousMode) setIsScannerOpen(false);
+                  }}
+                />
               </div>
-
-              {/* Last Scanned Feedback Card */}
-              {lastScannedResult && (
-                <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 animate-in zoom-in-95 duration-200 shadow-sm">
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center shrink-0 mt-0.5">
-                      <Check className="w-4 h-4" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-emerald-800 uppercase tracking-wider">
-                          {lastScannedResult.alreadyCheckedIn ? "Sudah Hadir Sebelumnya" : "Presensi Berhasil!"}
-                        </span>
-                        <span className="text-[11px] font-mono text-emerald-700">{lastScannedResult.time}</span>
-                      </div>
-                      <h4 className="font-bold text-slate-900 text-sm mt-0.5 truncate">
-                        {lastScannedResult.name}
-                      </h4>
-                      <div className="text-xs text-slate-600 mt-0.5 flex flex-wrap gap-x-2">
-                        <span>ID: <strong className="font-mono text-slate-800">{lastScannedResult.code}</strong></span>
-                        <span>•</span>
-                        <span>{lastScannedResult.institution}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
 
-            {/* Modal Footer */}
             <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end shrink-0">
               <button
                 type="button"
-                onClick={() => {
-                  setIsScannerOpen(false);
-                  setLastScannedResult(null);
-                }}
+                onClick={() => setIsScannerOpen(false)}
                 className="px-5 py-2 bg-slate-900 text-white hover:bg-slate-800 rounded-xl text-sm font-semibold transition-colors"
               >
                 Selesai
@@ -846,10 +1196,9 @@ export default function SeminarAbsensiPage() {
       )}
 
       {/* ============================================================== */}
-      {/* 3. OFFICIAL PRINT VIEW (A4 Physical Attendance Sheet)         */}
+      {/* 5. OFFICIAL PRINT VIEW (A4 Physical Attendance Sheet)         */}
       {/* ============================================================== */}
       <div className="hidden print:block p-8 bg-white text-black font-sans text-xs">
-        {/* Kop Surat Resmi */}
         <div className="border-b-2 border-black pb-4 mb-5 text-center">
           <div className="text-sm font-bold tracking-wider uppercase">
             HIMPUNAN MAHASISWA JURUSAN SISTEM INFORMASI (HMJ SI)
@@ -865,7 +1214,6 @@ export default function SeminarAbsensiPage() {
           </div>
         </div>
 
-        {/* Judul Dokumen */}
         <div className="text-center my-4 space-y-1">
           <h2 className="text-sm font-extrabold uppercase tracking-wide underline">
             DAFTAR HADIR PESERTA SEMINAR NASIONAL
@@ -875,7 +1223,6 @@ export default function SeminarAbsensiPage() {
           </p>
         </div>
 
-        {/* Informasi Pelaksanaan */}
         <div className="grid grid-cols-2 gap-y-1 gap-x-4 mb-4 text-[11px] border border-gray-300 p-2.5 rounded bg-gray-50/50">
           <div>
             <span className="font-semibold w-24 inline-block">Hari / Tanggal</span>
@@ -895,7 +1242,6 @@ export default function SeminarAbsensiPage() {
           </div>
         </div>
 
-        {/* Tabel Peserta & Kolom Tanda Tangan */}
         <table className="w-full border-collapse border border-black text-[10px]">
           <thead>
             <tr className="bg-gray-100 font-bold text-center border-b border-black">
@@ -903,8 +1249,9 @@ export default function SeminarAbsensiPage() {
               <th className="border border-black py-2 px-2 w-28">ID PESERTA</th>
               <th className="border border-black py-2 px-2 text-left">NAMA LENGKAP</th>
               <th className="border border-black py-2 px-2 text-left">INSTITUSI / ASAL</th>
+              <th className="border border-black py-2 px-2 text-left w-32">JURUSAN / BP</th>
               <th className="border border-black py-2 px-2 w-20">STATUS BAYAR</th>
-              <th className="border border-black py-2 px-2 w-36">TANDA TANGAN</th>
+              <th className="border border-black py-2 px-2 w-32">TANDA TANGAN</th>
             </tr>
           </thead>
           <tbody>
@@ -921,6 +1268,9 @@ export default function SeminarAbsensiPage() {
                   </td>
                   <td className="border border-black py-2 px-2">
                     {p.institusi}
+                  </td>
+                  <td className="border border-black py-2 px-2">
+                    {p.jurusan || p.nobp ? `${p.jurusan || "-"} / ${p.nobp || "-"}` : "-"}
                   </td>
                   <td className="border border-black py-2 px-2 text-center font-semibold">
                     {p.status_bayar}
@@ -950,7 +1300,6 @@ export default function SeminarAbsensiPage() {
           </tbody>
         </table>
 
-        {/* Lembar Tanda Tangan Pengesahan */}
         <div className="mt-8 flex justify-between items-start text-center text-[11px] break-inside-avoid">
           <div className="w-64 space-y-16">
             <div>

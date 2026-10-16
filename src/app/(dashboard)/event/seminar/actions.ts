@@ -51,9 +51,14 @@ export async function getSeminarRegistrations() {
       else if (transaction?.status === "PAID" || transaction?.status === "VERIFIED") paymentStatus = "Lunas";
       else if (transaction?.status === "DOWN_PAYMENT" || transaction?.status === "PENDING") paymentStatus = "DP";
 
-      const attendance = participant.metadata?.attendance || null;
+      const metadata = participant.metadata || {};
+      const attendance = metadata.attendance || null;
       const attended = Boolean(attendance?.present);
       const attended_at = attendance?.attended_at || null;
+
+      const nobp = metadata.nobp || metadata.nim || metadata.no_bp || metadata.nisn || null;
+      const jurusan = metadata.jurusan || metadata.prodi || metadata.program_studi || metadata.major || null;
+      const kelas = metadata.kelas || metadata.class || null;
 
       return {
         id: reg.id,
@@ -68,7 +73,11 @@ export async function getSeminarRegistrations() {
         created_at: reg.created_at,
         attended,
         attended_at,
-        attendance
+        attendance,
+        metadata,
+        nobp,
+        jurusan,
+        kelas
       };
     }) || [];
 
