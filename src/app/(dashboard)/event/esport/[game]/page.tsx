@@ -8,7 +8,7 @@ import Cookies from "js-cookie";
 import { toast } from "sonner";
 import FullPageLoader from "@/components/FullPageLoader";
 import { getEsportRegistrations } from "../actions";
-import { Loader2, Shuffle, Maximize, Minimize } from "lucide-react";
+import { Loader2, Shuffle, Maximize, Minimize, RotateCcw } from "lucide-react";
 import { useParams } from "next/navigation";
 import Swal from "sweetalert2";
 
@@ -160,9 +160,60 @@ export default function EsportDashboard() {
     return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
   }, []);
 
+  // Smart Fair Draw Seeding Algorithm: Memisahkan multi-slot ke Bagan Atas (0..7) dan Bagan Bawah (8..15)
+  const generateFairBracket = (teamList: Team[]): (Team | null)[] => {
+    const multiSlotPairs: { slot1: Team; slot2: Team }[] = [];
+    const singleSlotTeams: Team[] = [];
+
+    teamList.forEach(team => {
+      if (game === 'efootball' && team.slot_count === '2') {
+        const slot1: Team = { ...team };
+        const slot2: Team = {
+          ...team,
+          id_tim: team.id_tim + '-2',
+          nama_tim: team.in_game_slot2 || `${team.nama_tim} (Tim 2)`,
+        };
+        multiSlotPairs.push({ slot1, slot2 });
+      } else {
+        singleSlotTeams.push({ ...team });
+      }
+    });
+
+    // Pool A (Bagan Atas: Slot 0..7, Pertandingan 1-4)
+    // Pool B (Bagan Bawah: Slot 8..15, Pertandingan 5-8)
+    let poolAPositions = [0, 1, 2, 3, 4, 5, 6, 7].sort(() => Math.random() - 0.5);
+    let poolBPositions = [8, 9, 10, 11, 12, 13, 14, 15].sort(() => Math.random() - 0.5);
+
+    const bracket: (Team | null)[] = Array(16).fill(null);
+
+    // Multi-slot: Slot 1 di Bagan Atas, Slot 2 di Bagan Bawah (atau sebaliknya secara random)
+    multiSlotPairs.forEach(pair => {
+      const coinFlip = Math.random() > 0.5;
+      const teamA = coinFlip ? pair.slot1 : pair.slot2;
+      const teamB = coinFlip ? pair.slot2 : pair.slot1;
+
+      if (poolAPositions.length > 0 && poolBPositions.length > 0) {
+        bracket[poolAPositions.pop()!] = teamA;
+        bracket[poolBPositions.pop()!] = teamB;
+      }
+    });
+
+    // Sisa slot diisi tim single-slot secara acak di kedua bagan
+    const remainingPositions = [...poolAPositions, ...poolBPositions].sort(() => Math.random() - 0.5);
+    singleSlotTeams.sort(() => Math.random() - 0.5);
+
+    singleSlotTeams.forEach(team => {
+      if (remainingPositions.length > 0) {
+        bracket[remainingPositions.pop()!] = team;
+      }
+    });
+
+    return bracket;
+  };
+
   const toggleSpin = () => {
     if (!isSpinning) {
-      // Start spin: reset bracket progression and sync with current teams
+      // Start spin: reset progress babak dan jalankan animasi acak
       const expandedBracket: Team[] = [];
       teams.forEach((team: Team) => {
         expandedBracket.push(team);
@@ -185,8 +236,37 @@ export default function EsportDashboard() {
       setFinals(Array(2).fill(null));
       setChampion(null);
       setEliminatedTeams(new Set());
+      setIsSpinning(true);
+    } else {
+      // Stop spin: Terapkan hasil Smart Seeding agar multi-slot 100% terpisah di Bagan Atas & Bawah
+      setIsSpinning(false);
+      const fairBracket = generateFairBracket(teams);
+      setShuffledTeams(fairBracket);
+      toast.success("Pengundian selesai! Peserta multi-slot otomatis dipisahkan (Bagan Atas & Bagan Bawah).");
     }
-    setIsSpinning(!isSpinning);
+  };
+
+  const handleResetBracket = () => {
+    if (!hasAccess || isSpinning) return;
+    Swal.fire({
+      title: "Reset Bagan Pertandingan?",
+      text: "Seluruh tim dan riwayat babak di bagan akan dikosongkan.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Ya, Reset Bagan",
+      cancelButtonText: "Batal",
+      confirmButtonColor: "#ef4444",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        setShuffledTeams(Array(16).fill(null));
+        setQuarterFinals(Array(8).fill(null));
+        setSemiFinals(Array(4).fill(null));
+        setFinals(Array(2).fill(null));
+        setChampion(null);
+        setEliminatedTeams(new Set());
+        toast.success("Bagan pertandingan berhasil direset!");
+      }
+    });
   };
 
   const toggleFullscreen = () => {
@@ -199,28 +279,55 @@ export default function EsportDashboard() {
     }
   };
 
-  const handleInsertToBracket = (team: Team) => {
+  const handleInsertToBracket = (teamToInsert: Team) => {
     if (!hasAccess || isSpinning) return;
     
-    const isExist = shuffledTeams.some(t => t?.id_tim === team.id_tim);
+    const isExist = shuffledTeams.some(t => t?.id_tim === teamToInsert.id_tim);
     if (isExist) {
       toast.warning("Tim ini sudah ada di dalam bagan!");
       return;
     }
     
-    const emptySlotIndex = shuffledTeams.findIndex(t => t === null);
+    // Cek apakah slot pasangannya dari peserta yang sama sudah ada di bagan
+    const baseId = teamToInsert.id_tim.replace('-2', '');
+    const isSlot2 = teamToInsert.id_tim.endsWith('-2');
+    const partnerId = isSlot2 ? baseId : `${baseId}-2`;
+    const partnerIndex = shuffledTeams.findIndex(t => t?.id_tim === partnerId);
+
+    let emptySlotIndex = -1;
+
+    if (partnerIndex !== -1) {
+      // Pasangannya sudah ada di bagan!
+      // Jika pasangannya di Bagan Atas (0..7), prioritaskan slot di Bagan Bawah (8..15)
+      const partnerInPoolA = partnerIndex <= 7;
+      const preferredPool = partnerInPoolA 
+        ? [8, 9, 10, 11, 12, 13, 14, 15] 
+        : [0, 1, 2, 3, 4, 5, 6, 7];
+      
+      const foundInPreferred = preferredPool.find(idx => shuffledTeams[idx] === null);
+      if (foundInPreferred !== undefined) {
+        emptySlotIndex = foundInPreferred;
+      } else {
+        // Jika pool preferensi penuh, cari slot mana pun ASALKAN bukan lawan langsung di Round 16
+        const partnerMatch = Math.floor(partnerIndex / 2);
+        emptySlotIndex = shuffledTeams.findIndex((t, idx) => t === null && Math.floor(idx / 2) !== partnerMatch);
+      }
+    } else {
+      emptySlotIndex = shuffledTeams.findIndex(t => t === null);
+    }
+    
     if (emptySlotIndex === -1) {
-      toast.error("Bagan sudah penuh! (Maksimal 16 Tim)");
+      toast.error("Tidak ada slot bagan yang tersedia atau aman!");
       return;
     }
     
     setShuffledTeams(prev => {
       const newBracket = [...prev];
-      newBracket[emptySlotIndex] = team;
+      newBracket[emptySlotIndex] = teamToInsert;
       return newBracket;
     });
     
-    toast.success(`Berhasil memasukkan ${team.nama_tim} ke bagan!`);
+    toast.success(`Berhasil memasukkan ${teamToInsert.nama_tim} ke bagan!`);
   };
 
   const handleTeamClick = async (team: Team | null, round: number, slotIndex: number) => {
@@ -561,13 +668,30 @@ export default function EsportDashboard() {
                     </td>
                     <td className="px-6 py-4 text-right">
                       {hasAccess && (
-                        <button
-                          onClick={() => handleInsertToBracket(team)}
-                          disabled={isSpinning || shuffledTeams.some(t => t?.id_tim === team.id_tim)}
-                          className="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 text-xs font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          {shuffledTeams.some(t => t?.id_tim === team.id_tim) ? 'Di Bagan' : 'Masukkan ke Bagan'}
-                        </button>
+                        <div className="flex items-center justify-end gap-1.5 flex-wrap">
+                          <button
+                            onClick={() => handleInsertToBracket(team)}
+                            disabled={isSpinning || shuffledTeams.some(t => t?.id_tim === team.id_tim)}
+                            className="px-2.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 border border-blue-200 text-xs font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                          >
+                            {shuffledTeams.some(t => t?.id_tim === team.id_tim) 
+                              ? (game === 'efootball' && team.slot_count === '2' ? 'Slot 1 Di Bagan' : 'Di Bagan') 
+                              : (game === 'efootball' && team.slot_count === '2' ? 'Masukkan Slot 1' : 'Masukkan ke Bagan')}
+                          </button>
+                          {game === 'efootball' && team.slot_count === '2' && (
+                            <button
+                              onClick={() => handleInsertToBracket({
+                                ...team,
+                                id_tim: team.id_tim + '-2',
+                                nama_tim: team.in_game_slot2 || `${team.nama_tim} (Tim 2)`
+                              })}
+                              disabled={isSpinning || shuffledTeams.some(t => t?.id_tim === team.id_tim + '-2')}
+                              className="px-2.5 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-600 border border-purple-200 text-xs font-semibold rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap"
+                            >
+                              {shuffledTeams.some(t => t?.id_tim === team.id_tim + '-2') ? 'Slot 2 Di Bagan' : 'Masukkan Slot 2'}
+                            </button>
+                          )}
+                        </div>
                       )}
                     </td>
                   </tr>
@@ -590,32 +714,43 @@ export default function EsportDashboard() {
               <p className="text-xs text-slate-500">Preview Bracket Turnamen & Pengundian</p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
             {hasAccess && (
-              <button 
-                onClick={toggleSpin}
-                className={`px-5 py-2.5 text-white text-sm font-bold rounded-xl shadow-sm transition-all flex items-center gap-2 ${
-                  isSpinning 
-                    ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-500/20 animate-pulse' 
-                    : 'bg-blue-600 hover:bg-blue-700 shadow-blue-500/20'
-                }`}
-              >
-                {isSpinning ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Stop Pengundian!
-                  </>
-                ) : (
-                  <>
-                    <Shuffle className="w-4 h-4" />
-                    Acak Tim (Spin)
-                  </>
-                )}
-              </button>
+              <>
+                <button 
+                  onClick={toggleSpin}
+                  className={`px-4 py-2 text-white text-xs sm:text-sm font-bold rounded-xl shadow-sm transition-all flex items-center gap-2 ${
+                    isSpinning 
+                      ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-500/20 animate-pulse' 
+                      : 'bg-blue-600 hover:bg-blue-700 shadow-blue-500/20'
+                  }`}
+                >
+                  {isSpinning ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Stop Pengundian!
+                    </>
+                  ) : (
+                    <>
+                      <Shuffle className="w-4 h-4" />
+                      Acak Tim (Spin)
+                    </>
+                  )}
+                </button>
+                <button 
+                  onClick={handleResetBracket}
+                  disabled={isSpinning}
+                  className="px-3 py-2 bg-white hover:bg-slate-100 text-slate-700 text-xs sm:text-sm font-semibold rounded-xl border border-slate-200 shadow-sm transition-all flex items-center gap-1.5 disabled:opacity-50"
+                  title="Kosongkan bagan pertandingan"
+                >
+                  <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
+                  <span className="hidden sm:inline">Reset</span>
+                </button>
+              </>
             )}
             <button 
               onClick={toggleFullscreen}
-              className="p-2.5 text-slate-600 hover:bg-slate-200 bg-slate-100 rounded-xl transition-colors"
+              className="p-2 text-slate-600 hover:bg-slate-200 bg-slate-100 rounded-xl transition-colors"
               title="Layar Penuh"
             >
               <Maximize className="w-4 h-4" />
@@ -667,6 +802,12 @@ export default function EsportDashboard() {
               <div className="absolute -top-6 text-xs font-bold text-slate-400 uppercase tracking-widest text-center w-full">Round of 16</div>
               {Array(8).fill(0).map((_, i) => (
                 <div key={`r1-${i}`} className="w-full bg-white border border-slate-200 shadow-sm rounded-lg overflow-hidden flex flex-col text-xs relative">
+                  <div className="bg-slate-50 border-b border-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-400 flex justify-between items-center">
+                    <span>Match {i + 1}</span>
+                    <span className={`px-1 rounded text-[8px] font-bold ${i < 4 ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}`}>
+                      {i < 4 ? 'Bagan Atas' : 'Bagan Bawah'}
+                    </span>
+                  </div>
                   {renderTeamSlot(shuffledTeams[i * 2], 1, i * 2, true)}
                   {renderTeamSlot(shuffledTeams[i * 2 + 1], 1, i * 2 + 1, false)}
                 </div>
