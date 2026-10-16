@@ -15,20 +15,34 @@ export async function getEsportRegistrations(gameSlug: string) {
       return { success: false, data: [] };
     }
 
-    // 2. Get registrations for this event
-    const { data: registrations, error } = await supabaseServer
-      .from("registrations")
-      .select("*, participants(*), transactions(*)")
-      .eq("event_id", eventData.id)
-      .order("created_at", { ascending: true });
+    // 2. Get registrations and bracket for this event concurrently
+    const [regsResult, bracketResult] = await Promise.all([
+      supabaseServer
+        .from("registrations")
+        .select("*, participants(*), transactions(*)")
+        .eq("event_id", eventData.id)
+        .order("created_at", { ascending: true }),
+      supabaseServer
+        .from('event_brackets')
+        .select('bracket_data')
+        .eq('event_slug', gameSlug)
+        .single()
+    ]);
 
-    if (error) {
-      console.error("Supabase Error:", error);
-      return { success: false, data: [] };
+    if (regsResult.error) {
+      console.error("Supabase Error:", regsResult.error);
+      return { success: false, data: [], bracket: null };
+    }
+
+    let bracketData = null;
+    if (bracketResult.error && bracketResult.error.code !== 'PGRST116') {
+      console.error("Supabase Error (Bracket):", bracketResult.error);
+    } else if (bracketResult.data) {
+      bracketData = bracketResult.data.bracket_data;
     }
 
     // 3. Format the data to match the Dashboard's Team table
-    const formattedTeams = registrations?.map((reg: any) => {
+    const formattedTeams = regsResult.data?.map((reg: any) => {
       const participant = (Array.isArray(reg.participants) ? reg.participants[0] : reg.participants) || {};
       const transaction = (Array.isArray(reg.transactions) ? reg.transactions[0] : reg.transactions) || {};
       
@@ -50,9 +64,28 @@ export async function getEsportRegistrations(gameSlug: string) {
       };
     }) || [];
 
-    return { success: true, data: formattedTeams };
+    return { success: true, data: formattedTeams, bracket: bracketData };
   } catch (error) {
     console.error("Failed to fetch esport registrations:", error);
-    return { success: false, data: [] };
+    return { success: false, data: [], bracket: null };
+  }
+}
+
+export async function saveBracket(eventSlug: string, bracketData: any) {
+  try {
+    const { data, error } = await supabaseServer
+      .from('event_brackets')
+      .upsert(
+        { event_slug: eventSlug, bracket_data: bracketData, updated_at: new Date().toISOString() },
+        { onConflict: 'event_slug' }
+      )
+      .select()
+      .single();
+
+    if (error) throw error;
+    return { success: true, data };
+  } catch (error: any) {
+    console.error("Failed to save esport bracket:", error);
+    return { success: false, message: error.message };
   }
 }

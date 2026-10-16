@@ -7,7 +7,7 @@ import { SCRIPT_URL } from "@/lib/api";
 import Cookies from "js-cookie";
 import { toast } from "sonner";
 import FullPageLoader from "@/components/FullPageLoader";
-import { getEsportRegistrations } from "../actions";
+import { getEsportRegistrations, saveBracket } from "../actions";
 import { Loader2, Shuffle, Maximize, Minimize, RotateCcw } from "lucide-react";
 import { useParams } from "next/navigation";
 import Swal from "sweetalert2";
@@ -64,6 +64,7 @@ export default function EsportDashboard() {
   const [eliminatedTeams, setEliminatedTeams] = useState<Set<string>>(new Set());
 
   const [isSpinning, setIsSpinning] = useState(false);
+  const [isSavingBracket, setIsSavingBracket] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const bracketRef = useRef<HTMLDivElement>(null);
 
@@ -95,8 +96,19 @@ export default function EsportDashboard() {
       if (dataTeams.success && dataTeams.data) {
         setTeams(dataTeams.data);
         
-        // Initialize empty bracket
-        setShuffledTeams(Array(16).fill(null));
+        if (dataTeams.bracket) {
+          // Restore bracket state dari database Supabase
+          const b = dataTeams.bracket;
+          setShuffledTeams(b.shuffledTeams || Array(16).fill(null));
+          setQuarterFinals(b.quarterFinals || Array(8).fill(null));
+          setSemiFinals(b.semiFinals || Array(4).fill(null));
+          setFinals(b.finals || Array(2).fill(null));
+          setChampion(b.champion || null);
+          setEliminatedTeams(new Set(b.eliminatedTeams || []));
+        } else {
+          // Initialize empty bracket
+          setShuffledTeams(Array(16).fill(null));
+        }
       }
     } catch (error) {
       console.error("Gagal mengambil data esport:", error);
@@ -246,25 +258,70 @@ export default function EsportDashboard() {
     }
   };
 
+  const handleSaveBracket = async () => {
+    if (!hasAccess || isSpinning) return;
+    setIsSavingBracket(true);
+    const toastId = toast.loading("Menyimpan susunan bagan pertandingan...");
+    try {
+      const bracketData = {
+        shuffledTeams,
+        quarterFinals,
+        semiFinals,
+        finals,
+        champion,
+        eliminatedTeams: Array.from(eliminatedTeams),
+      };
+      const res = await saveBracket(gameSlug, bracketData);
+      if (res.success) {
+        toast.success("Bagan pertandingan berhasil disimpan!", { id: toastId });
+      } else {
+        toast.error(res.message || "Gagal menyimpan bagan", { id: toastId });
+      }
+    } catch (error: any) {
+      toast.error(`Terjadi kesalahan: ${error.message || error}`, { id: toastId });
+    } finally {
+      setIsSavingBracket(false);
+    }
+  };
+
   const handleResetBracket = () => {
     if (!hasAccess || isSpinning) return;
     Swal.fire({
       title: "Reset Bagan Pertandingan?",
-      text: "Seluruh tim dan riwayat babak di bagan akan dikosongkan.",
+      text: "Seluruh susunan tim dan riwayat babak akan dikosongkan dan disimpan ke server.",
       icon: "warning",
       showCancelButton: true,
       confirmButtonText: "Ya, Reset Bagan",
       cancelButtonText: "Batal",
       confirmButtonColor: "#ef4444",
-    }).then((result) => {
+    }).then(async (result) => {
       if (result.isConfirmed) {
-        setShuffledTeams(Array(16).fill(null));
-        setQuarterFinals(Array(8).fill(null));
-        setSemiFinals(Array(4).fill(null));
-        setFinals(Array(2).fill(null));
-        setChampion(null);
+        const emptyBracket = {
+          shuffledTeams: Array(16).fill(null),
+          quarterFinals: Array(8).fill(null),
+          semiFinals: Array(4).fill(null),
+          finals: Array(2).fill(null),
+          champion: null,
+          eliminatedTeams: [],
+        };
+        setShuffledTeams(emptyBracket.shuffledTeams);
+        setQuarterFinals(emptyBracket.quarterFinals);
+        setSemiFinals(emptyBracket.semiFinals);
+        setFinals(emptyBracket.finals);
+        setChampion(emptyBracket.champion);
         setEliminatedTeams(new Set());
-        toast.success("Bagan pertandingan berhasil direset!");
+
+        // Simpan state reset ke database Supabase agar saat refresh tetap dalam keadaan ter-reset
+        try {
+          const res = await saveBracket(gameSlug, emptyBracket);
+          if (res.success) {
+            toast.success("Bagan pertandingan berhasil direset dan disimpan!");
+          } else {
+            toast.warning("Bagan lokal direset, namun gagal sinkronisasi ke server.");
+          }
+        } catch (e) {
+          toast.warning("Bagan lokal direset, namun gagal sinkronisasi ke server.");
+        }
       }
     });
   };
@@ -719,6 +776,7 @@ export default function EsportDashboard() {
               <>
                 <button 
                   onClick={toggleSpin}
+                  disabled={isSpinning || isSavingBracket}
                   className={`px-4 py-2 text-white text-xs sm:text-sm font-bold rounded-xl shadow-sm transition-all flex items-center gap-2 ${
                     isSpinning 
                       ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-500/20 animate-pulse' 
@@ -738,13 +796,26 @@ export default function EsportDashboard() {
                   )}
                 </button>
                 <button 
+                  onClick={handleSaveBracket}
+                  disabled={isSpinning || isSavingBracket}
+                  className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-sm shadow-emerald-500/20 transition-all flex items-center gap-1.5 disabled:opacity-50"
+                  title="Simpan susunan bagan pertandingan ke server agar tidak hilang saat di-refresh"
+                >
+                  {isSavingBracket ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <Save className="w-3.5 h-3.5" />
+                  )}
+                  <span>Simpan Bagan</span>
+                </button>
+                <button 
                   onClick={handleResetBracket}
-                  disabled={isSpinning}
-                  className="px-3 py-2 bg-white hover:bg-slate-100 text-slate-700 text-xs sm:text-sm font-semibold rounded-xl border border-slate-200 shadow-sm transition-all flex items-center gap-1.5 disabled:opacity-50"
-                  title="Kosongkan bagan pertandingan"
+                  disabled={isSpinning || isSavingBracket}
+                  className="px-3 py-2 bg-white hover:bg-rose-50 text-slate-700 hover:text-rose-600 text-xs sm:text-sm font-semibold rounded-xl border border-slate-200 hover:border-rose-200 shadow-sm transition-all flex items-center gap-1.5 disabled:opacity-50"
+                  title="Kosongkan bagan pertandingan dan reset di database"
                 >
                   <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
-                  <span className="hidden sm:inline">Reset</span>
+                  <span className="hidden sm:inline">Reset Bagan</span>
                 </button>
               </>
             )}
@@ -763,26 +834,47 @@ export default function EsportDashboard() {
           {isFullscreen && (
             <div className="absolute top-6 right-6 z-50 flex items-center gap-3">
               {hasAccess && (
-                <button 
-                  onClick={toggleSpin}
-                  className={`px-5 py-2.5 text-white text-sm font-bold rounded-xl shadow-sm transition-all flex items-center gap-2 ${
-                    isSpinning 
-                      ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-500/20 animate-pulse' 
-                      : 'bg-blue-600 hover:bg-blue-700 shadow-blue-500/20'
-                  }`}
-                >
-                  {isSpinning ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Stop Pengundian!
-                    </>
-                  ) : (
-                    <>
-                      <Shuffle className="w-4 h-4" />
-                      Acak Tim (Spin)
-                    </>
-                  )}
-                </button>
+                <>
+                  <button 
+                    onClick={toggleSpin}
+                    disabled={isSpinning || isSavingBracket}
+                    className={`px-5 py-2.5 text-white text-sm font-bold rounded-xl shadow-sm transition-all flex items-center gap-2 ${
+                      isSpinning 
+                        ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-500/20 animate-pulse' 
+                        : 'bg-blue-600 hover:bg-blue-700 shadow-blue-500/20'
+                    }`}
+                  >
+                    {isSpinning ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Stop Pengundian!
+                      </>
+                    ) : (
+                      <>
+                        <Shuffle className="w-4 h-4" />
+                        Acak Tim (Spin)
+                      </>
+                    )}
+                  </button>
+                  <button 
+                    onClick={handleSaveBracket}
+                    disabled={isSpinning || isSavingBracket}
+                    className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-xl shadow-sm shadow-emerald-500/20 transition-all flex items-center gap-2 disabled:opacity-50"
+                    title="Simpan susunan bagan pertandingan"
+                  >
+                    {isSavingBracket ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                    Simpan Bagan
+                  </button>
+                  <button 
+                    onClick={handleResetBracket}
+                    disabled={isSpinning || isSavingBracket}
+                    className="px-4 py-2.5 bg-white/90 hover:bg-white text-slate-700 hover:text-rose-600 text-sm font-semibold rounded-xl border border-slate-200 shadow-sm transition-all flex items-center gap-2 disabled:opacity-50"
+                    title="Reset bagan pertandingan"
+                  >
+                    <RotateCcw className="w-4 h-4 text-slate-500" />
+                    Reset
+                  </button>
+                </>
               )}
               <button 
                 onClick={toggleFullscreen}
