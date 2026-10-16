@@ -11,17 +11,18 @@ export default function LogsPage() {
   const router = useRouter();
   const [logs, setLogs] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [canViewLogs, setCanViewLogs] = useState(false);
 
   useEffect(() => {
     try {
       const userData = Cookies.get("user_data");
       if (userData) {
         const user = JSON.parse(userData);
-        if (user.role === "ROLE-001" || user.role_id === "ROLE-001") {
-          setIsSuperAdmin(true);
+        const role = user.role_id || user.role;
+        if (["ROLE-001", "SUPER_ADMIN", "ROLE-002", "ROLE-003"].includes(role)) {
+          setCanViewLogs(true);
         } else {
-          // If not superadmin, redirect them back
+          // If not authorized, redirect them back
           toast.error("Anda tidak memiliki akses ke halaman ini.");
           router.push("/dashboard");
         }
@@ -30,7 +31,7 @@ export default function LogsPage() {
   }, [router]);
 
   useEffect(() => {
-    if (!isSuperAdmin) return;
+    if (!canViewLogs) return;
 
     const fetchLogs = async () => {
       try {
@@ -58,7 +59,7 @@ export default function LogsPage() {
     };
 
     fetchLogs();
-  }, [isSuperAdmin]);
+  }, [canViewLogs]);
 
   if (isLoading) {
     return (

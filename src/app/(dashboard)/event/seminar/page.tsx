@@ -70,7 +70,8 @@ export default function SeminarDashboard() {
     fetchData();
   }, []);
 
-  const hasAccess = ["ROLE-001", "SUPER_ADMIN", "ROLE-011"].includes(currentUserRole);
+  const canView = ["ROLE-001", "SUPER_ADMIN", "ROLE-002", "ROLE-003", "ROLE-011"].includes(currentUserRole);
+  const canEdit = ["ROLE-001", "SUPER_ADMIN", "ROLE-011"].includes(currentUserRole);
 
   const fetchData = async () => {
     // 1. Fetch Event Info
@@ -127,6 +128,10 @@ export default function SeminarDashboard() {
 
   const handleSaveEvent = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!canEdit) {
+      toast.error("Anda tidak memiliki izin untuk mengubah data.");
+      return;
+    }
     if (!formData) return;
     setIsSaving(true);
     try {
@@ -167,7 +172,7 @@ export default function SeminarDashboard() {
     }
   };
 
-  if (!hasAccess && currentUserRole) {
+  if (!canView && currentUserRole) {
     return (
       <div className="min-h-[80vh] flex items-center justify-center">
         <div className="text-center space-y-4">
@@ -206,7 +211,7 @@ export default function SeminarDashboard() {
           </div>
         </div>
         
-        {hasAccess && (
+        {canView && (
           <div className="flex items-center gap-3">
             <Link 
               href="/event/seminar/certificate" 
@@ -224,7 +229,7 @@ export default function SeminarDashboard() {
       <div className="relative">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-bold text-slate-800">Informasi Event</h2>
-          {hasAccess && (
+          {canEdit && (
             <button 
               onClick={() => setIsEditing(true)}
               className="flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 rounded-lg text-sm font-semibold transition-colors"

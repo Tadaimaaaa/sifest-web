@@ -57,6 +57,7 @@ export default function DashboardPage() {
   }, []);
 
   const isSuperAdmin = currentUserRole === "ROLE-001" || currentUserRole === "SUPER_ADMIN";
+  const canViewLogs = ["ROLE-001", "SUPER_ADMIN", "ROLE-002", "ROLE-003"].includes(currentUserRole);
 
   const { data: resData, error, isLoading } = useSWR("?action=getDashboard", fetcher);
 
@@ -209,7 +210,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Recent Activity */}
-      {isSuperAdmin && (
+      {canViewLogs && (
         <div className="bg-white border border-slate-100 rounded-2xl shadow-sm overflow-hidden">
           <div className="p-5 border-b border-slate-100 flex justify-between items-center">
             <h2 className="font-semibold text-slate-800">Aktivitas Terakhir</h2>
@@ -245,8 +246,8 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Info Card for Non-SuperAdmin */}
-      {!isSuperAdmin && (
+      {/* Info Card for Regular Division Panitia */}
+      {!canViewLogs && (
         <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl shadow-lg p-8 text-white relative overflow-hidden">
           <div className="relative z-10 max-w-2xl">
             <h2 className="text-2xl font-bold mb-3">Selamat Bekerja, Tim SI FEST! 🚀</h2>

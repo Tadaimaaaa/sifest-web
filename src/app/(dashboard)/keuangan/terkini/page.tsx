@@ -35,7 +35,7 @@ export default function InsertPendaftaranPage() {
     penanggung_jawab: ""
   });
 
-  const hasAccess = ["ROLE-001", "ROLE-002", "ROLE-006"].includes(currentUserRole);
+  const hasAccess = ["ROLE-001", "SUPER_ADMIN", "ROLE-006"].includes(currentUserRole);
 
   const KATEGORI_OPTIONS = [
     "Futsal",

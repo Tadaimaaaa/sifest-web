@@ -33,9 +33,9 @@ const ActivityLogs = {
   },
 
   getLogs: function(authUser) {
-    // Only ROLE-001 (SuperAdmin) can view logs
-    if (!authUser || authUser.role_id !== 'ROLE-001') {
-      return Response.error('UNAUTHORIZED', 'Hanya SuperAdmin yang dapat melihat log aktivitas.');
+    // SuperAdmin (ROLE-001), SC (ROLE-002), and PJ/Kapel (ROLE-003) can view logs
+    if (!authUser || !['ROLE-001', 'SUPER_ADMIN', 'ROLE-002', 'ROLE-003'].includes(authUser.role_id)) {
+      return Response.error('UNAUTHORIZED', 'Anda tidak memiliki hak akses untuk melihat log aktivitas.');
     }
 
     const sheet = this._ensureSheetExists();

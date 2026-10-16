@@ -559,43 +559,46 @@ export default function BazaarDashboard() {
             </div>
             
             <form onSubmit={handleSaveTenant} className="p-6 space-y-5">
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5"><Store className="w-4 h-4 text-slate-400" /> Pilih dari Pendaftar SI FEST</label>
-                <select
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
-                  onChange={(e) => {
-                    const selected = bazaarParticipants.find(p => p.id === e.target.value);
-                    if (selected) {
-                      setFormDataTenant({
-                        ...formDataTenant,
-                        nama_brand: selected.nama_brand,
-                        pic: selected.pic,
-                        kontak: selected.kontak,
-                        kategori: selected.kategori || 'Makanan',
-                        status_bayar: selected.status_bayar || 'Belum Bayar'
-                      });
-                    }
-                  }}
-                >
-                  <option value="">-- Pilih Pendaftar (Opsional) --</option>
-                  {bazaarParticipants.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.nama_brand} - {p.pic}
-                    </option>
-                  ))}
-                </select>
-                <p className="text-[11px] text-slate-500 mt-1 ml-1">Memilih pendaftar akan otomatis mengisi kolom di bawah.</p>
-              </div>
+              {hasAccess && (
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5"><Store className="w-4 h-4 text-slate-400" /> Pilih dari Pendaftar SI FEST</label>
+                  <select
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                    onChange={(e) => {
+                      const selected = bazaarParticipants.find(p => p.id === e.target.value);
+                      if (selected) {
+                        setFormDataTenant({
+                          ...formDataTenant,
+                          nama_brand: selected.nama_brand,
+                          pic: selected.pic,
+                          kontak: selected.kontak,
+                          kategori: selected.kategori || 'Makanan',
+                          status_bayar: selected.status_bayar || 'Belum Bayar'
+                        });
+                      }
+                    }}
+                  >
+                    <option value="">-- Pilih Pendaftar (Opsional) --</option>
+                    {bazaarParticipants.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.nama_brand} - {p.pic}
+                      </option>
+                    ))}
+                  </select>
+                  <p className="text-[11px] text-slate-500 mt-1 ml-1">Memilih pendaftar akan otomatis mengisi kolom di bawah.</p>
+                </div>
+              )}
 
               <div>
                 <label className="block text-sm font-semibold text-slate-700 mb-1.5 flex items-center gap-1.5"><Tag className="w-4 h-4 text-slate-400" /> Nama Brand / Toko</label>
                 <input 
                   type="text" 
                   required
+                  disabled={!hasAccess}
                   value={formDataTenant.nama_brand}
                   onChange={(e) => setFormDataTenant({...formDataTenant, nama_brand: e.target.value})}
-                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
-                  placeholder="Contoh: Es Teh Solo"
+                  className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed"
+                  placeholder={hasAccess ? "Contoh: Es Teh Solo" : "-"}
                 />
               </div>
               
@@ -605,10 +608,11 @@ export default function BazaarDashboard() {
                   <input 
                     type="text" 
                     required
+                    disabled={!hasAccess}
                     value={formDataTenant.pic}
                     onChange={(e) => setFormDataTenant({...formDataTenant, pic: e.target.value})}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
-                    placeholder="Nama pemilik"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed"
+                    placeholder={hasAccess ? "Nama pemilik" : "-"}
                   />
                 </div>
                 <div>
@@ -616,10 +620,11 @@ export default function BazaarDashboard() {
                   <input 
                     type="text" 
                     required
+                    disabled={!hasAccess}
                     value={formDataTenant.kontak}
                     onChange={(e) => setFormDataTenant({...formDataTenant, kontak: e.target.value})}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
-                    placeholder="0812xxx"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed"
+                    placeholder={hasAccess ? "0812xxx" : "-"}
                   />
                 </div>
               </div>
@@ -629,6 +634,7 @@ export default function BazaarDashboard() {
                   <label className="block text-sm font-semibold text-slate-700 mb-1.5">Kategori Jualan</label>
                   <select 
                     value={formDataTenant.kategori}
+                    disabled={!hasAccess}
                     onChange={(e) => {
                       const val = e.target.value;
                       if (val === "Panitia/Internal") {
@@ -644,7 +650,7 @@ export default function BazaarDashboard() {
                         setFormDataTenant({...formDataTenant, kategori: val});
                       }
                     }}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed"
                   >
                     <option value="Makanan">Makanan</option>
                     <option value="Minuman">Minuman</option>
@@ -658,8 +664,9 @@ export default function BazaarDashboard() {
                   <label className="block text-sm font-semibold text-slate-700 mb-1.5">Status Pembayaran</label>
                   <select 
                     value={formDataTenant.status_bayar}
+                    disabled={!hasAccess}
                     onChange={(e) => setFormDataTenant({...formDataTenant, status_bayar: e.target.value})}
-                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 font-medium"
+                    className="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 font-medium disabled:bg-slate-100 disabled:text-slate-700 disabled:cursor-not-allowed"
                   >
                     <option value="Belum Bayar">Belum Bayar (Merah)</option>
                     <option value="DP">DP (Biru)</option>
@@ -668,7 +675,7 @@ export default function BazaarDashboard() {
                 </div>
               </div>
 
-              {hasAccess && (
+              {hasAccess ? (
                 <div className="flex justify-end gap-3 pt-6 mt-2 border-t border-slate-100">
                   {tenants[formDataTenant.id_tenda] && (
                     <button 
@@ -718,6 +725,16 @@ export default function BazaarDashboard() {
                     className="px-6 py-2.5 bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold rounded-xl shadow-sm shadow-amber-500/20 transition-all flex items-center gap-2 disabled:opacity-50"
                   >
                     {isSavingTenant ? "Menyimpan..." : <><Save className="w-4 h-4" /> Simpan Data</>}
+                  </button>
+                </div>
+              ) : (
+                <div className="flex justify-end pt-4 mt-2 border-t border-slate-100">
+                  <button 
+                    type="button"
+                    onClick={() => setIsModalOpen(false)}
+                    className="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-semibold rounded-xl transition-colors"
+                  >
+                    Tutup
                   </button>
                 </div>
               )}

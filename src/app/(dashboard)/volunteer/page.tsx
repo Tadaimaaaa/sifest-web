@@ -34,8 +34,11 @@ export default function VolunteerDashboard() {
   const [filterEvent, setFilterEvent] = useState("");
   const [selectedVolunteer, setSelectedVolunteer] = useState<Volunteer | null>(null);
   const [isExporting, setIsExporting] = useState(false);
+  const [currentUserRole, setCurrentUserRole] = useState("");
   const modalRef = useRef<HTMLDivElement>(null);
   const printRef = useRef<HTMLDivElement>(null);
+
+  const canEdit = ["ROLE-001", "SUPER_ADMIN", "ROLE-005"].includes(currentUserRole);
 
   const fetchVolunteers = async () => {
     setIsLoading(true);
@@ -54,10 +57,21 @@ export default function VolunteerDashboard() {
   };
 
   useEffect(() => {
+    try {
+      const ud = Cookies.get("user_data");
+      if (ud) {
+        const user = JSON.parse(ud);
+        setCurrentUserRole(user.role_id || user.role || "");
+      }
+    } catch (e) {}
     fetchVolunteers();
   }, []);
 
   const updateStatus = async (id_volunteer: string, status: string) => {
+    if (!canEdit) {
+      Swal.fire('Akses Ditolak', 'Hanya SuperAdmin dan Kestari yang dapat mengubah status.', 'error');
+      return;
+    }
     const confirmation = await Swal.fire({
       title: 'Konfirmasi',
       text: `Yakin ingin mengubah status menjadi ${status}?`,
@@ -105,6 +119,10 @@ export default function VolunteerDashboard() {
   };
 
   const deleteVolunteer = async (id_volunteer: string) => {
+    if (!canEdit) {
+      Swal.fire('Akses Ditolak', 'Hanya SuperAdmin dan Kestari yang dapat menghapus data.', 'error');
+      return;
+    }
     const confirmation = await Swal.fire({
       title: 'Hapus Data?',
       text: "Data yang dihapus tidak dapat dikembalikan!",
@@ -305,23 +323,27 @@ export default function VolunteerDashboard() {
                         <button onClick={() => setSelectedVolunteer(v)} className="px-3 py-1.5 rounded-lg bg-blue-50 text-blue-600 font-medium text-xs flex items-center gap-1.5 hover:bg-blue-600 hover:text-white transition-all shadow-sm" title="Lihat Detail">
                           <Info className="w-4 h-4" /> Detail
                         </button>
-                        {v.status === 'Menunggu Seleksi' ? (
+                        {canEdit && (
                           <>
-                            <button onClick={() => updateStatus(v.id_volunteer, 'Diterima')} className="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-600 font-medium text-xs flex items-center gap-1.5 hover:bg-emerald-600 hover:text-white transition-all shadow-sm" title="Terima">
-                              <CheckCircle2 className="w-4 h-4" /> Terima
-                            </button>
-                            <button onClick={() => updateStatus(v.id_volunteer, 'Ditolak')} className="px-3 py-1.5 rounded-lg bg-rose-50 text-rose-600 font-medium text-xs flex items-center gap-1.5 hover:bg-rose-600 hover:text-white transition-all shadow-sm" title="Tolak">
-                              <XCircle className="w-4 h-4" /> Tolak
+                            {v.status === 'Menunggu Seleksi' ? (
+                              <>
+                                <button onClick={() => updateStatus(v.id_volunteer, 'Diterima')} className="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-600 font-medium text-xs flex items-center gap-1.5 hover:bg-emerald-600 hover:text-white transition-all shadow-sm" title="Terima">
+                                  <CheckCircle2 className="w-4 h-4" /> Terima
+                                </button>
+                                <button onClick={() => updateStatus(v.id_volunteer, 'Ditolak')} className="px-3 py-1.5 rounded-lg bg-rose-50 text-rose-600 font-medium text-xs flex items-center gap-1.5 hover:bg-rose-600 hover:text-white transition-all shadow-sm" title="Tolak">
+                                  <XCircle className="w-4 h-4" /> Tolak
+                                </button>
+                              </>
+                            ) : (
+                              <button onClick={() => updateStatus(v.id_volunteer, 'Menunggu Seleksi')} className="px-3 py-1.5 rounded-lg bg-amber-50 text-amber-600 font-medium text-xs flex items-center gap-1.5 hover:bg-amber-600 hover:text-white transition-all shadow-sm" title="Batalkan Keputusan">
+                                <RotateCcw className="w-4 h-4" /> Batal
+                              </button>
+                            )}
+                            <button onClick={() => deleteVolunteer(v.id_volunteer)} className="p-1.5 rounded-lg bg-slate-50 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-all shadow-sm" title="Hapus">
+                              <Trash2 className="w-4 h-4" />
                             </button>
                           </>
-                        ) : (
-                          <button onClick={() => updateStatus(v.id_volunteer, 'Menunggu Seleksi')} className="px-3 py-1.5 rounded-lg bg-amber-50 text-amber-600 font-medium text-xs flex items-center gap-1.5 hover:bg-amber-600 hover:text-white transition-all shadow-sm" title="Batalkan Keputusan">
-                            <RotateCcw className="w-4 h-4" /> Batal
-                          </button>
                         )}
-                        <button onClick={() => deleteVolunteer(v.id_volunteer)} className="p-1.5 rounded-lg bg-slate-50 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-all shadow-sm" title="Hapus">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
                       </div>
                     </td>
                   </tr>

@@ -99,7 +99,7 @@ export function Sidebar() {
           );
         })}
         
-        {userData.role_id === 'ROLE-001' && (
+        {['ROLE-001', 'SUPER_ADMIN', 'ROLE-002', 'ROLE-003'].includes(userData.role_id) && (
           <Link
             href="/logs"
             className={clsx(

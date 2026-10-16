@@ -15,8 +15,8 @@ function canEditPaymentStatus(roleId: string): boolean {
 }
 
 function canEditRegistrationStatus(roleId: string, eventSlug: string | undefined): boolean {
-  // Super Admin (001), Kestari (005), Kapel (003), Acara Inti (015)
-  if (['ROLE-001', 'SUPER_ADMIN', 'ROLE-005', 'ROLE-003', 'ROLE-015'].includes(roleId)) return true;
+  // Super Admin (001), Kestari (005), Acara Inti (015) - SC (002) dan PJ/Kapel (003) HANYA MELIHAT
+  if (['ROLE-001', 'SUPER_ADMIN', 'ROLE-005', 'ROLE-015'].includes(roleId)) return true;
   if (!eventSlug) return false;
   
   if (eventSlug.includes('futsal') && roleId === 'ROLE-012') return true;

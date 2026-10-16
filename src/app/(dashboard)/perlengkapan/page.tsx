@@ -4,9 +4,11 @@ import { useState, useEffect } from "react";
 import { Package, Plus, Search, Edit3, Trash2, X, Download, RotateCcw, CheckCircle2, DollarSign, Layers } from "lucide-react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
+import Cookies from "js-cookie";
 import { INITIAL_LOGISTIK, LogistikItem as EquipmentItem } from "@/data/logistik";
 
 export default function PerlengkapanPage() {
+  const [currentUserRole, setCurrentUserRole] = useState("");
   const [equipments, setEquipments] = useState<EquipmentItem[]>(INITIAL_LOGISTIK);
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("Semua");
@@ -26,8 +28,17 @@ export default function PerlengkapanPage() {
   });
 
   const LOCAL_STORAGE_KEY = "sifest_rab_logistik_v4";
+  const canEdit = ["ROLE-001", "SUPER_ADMIN", "ROLE-004"].includes(currentUserRole);
 
   useEffect(() => {
+    try {
+      const ud = Cookies.get("user_data");
+      if (ud) {
+        const user = JSON.parse(ud);
+        setCurrentUserRole(user.role_id || user.role || "");
+      }
+    } catch (e) {}
+
     try {
       if (typeof window !== "undefined") {
         const localData = localStorage.getItem(LOCAL_STORAGE_KEY);
@@ -42,6 +53,10 @@ export default function PerlengkapanPage() {
   }, []);
 
   const handleResetToSpreadsheet = () => {
+    if (!canEdit) {
+      toast.error("Anda tidak memiliki izin untuk mereset spreadsheet.");
+      return;
+    }
     if (!confirm("Apakah Anda yakin ingin menyinkronkan ulang data ke versi asli spreadsheet?")) return;
     setEquipments(INITIAL_LOGISTIK);
     try {
@@ -63,6 +78,10 @@ export default function PerlengkapanPage() {
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!canEdit) {
+      toast.error("Anda tidak memiliki izin untuk mengubah data.");
+      return;
+    }
     if (!formData.name?.trim()) {
       toast.error("Nama barang wajib diisi!");
       return;
@@ -100,6 +119,10 @@ export default function PerlengkapanPage() {
   };
 
   const handleDelete = (id: string, name: string) => {
+    if (!canEdit) {
+      toast.error("Anda tidak memiliki izin untuk menghapus data.");
+      return;
+    }
     if (!confirm(`Apakah Anda yakin ingin menghapus "${name}"?`)) return;
     const updated = equipments.filter(item => item.id !== id);
     saveToLocalAndState(updated);
@@ -107,6 +130,10 @@ export default function PerlengkapanPage() {
   };
 
   const openModal = (item?: EquipmentItem) => {
+    if (!canEdit) {
+      toast.error("Anda tidak memiliki izin untuk mengubah data.");
+      return;
+    }
     if (item) {
       setFormData(item);
     } else {
@@ -214,25 +241,29 @@ export default function PerlengkapanPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <button
-            onClick={handleResetToSpreadsheet}
-            className="flex items-center justify-center gap-1.5 px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl transition-all text-xs"
-            title="Sinkronkan ulang dengan data asli spreadsheet"
-          >
-            <RotateCcw className="w-3.5 h-3.5" /> Reset Spreadsheet
-          </button>
+          {canEdit && (
+            <button
+              onClick={handleResetToSpreadsheet}
+              className="flex items-center justify-center gap-1.5 px-3.5 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold rounded-xl transition-all text-xs"
+              title="Sinkronkan ulang dengan data asli spreadsheet"
+            >
+              <RotateCcw className="w-3.5 h-3.5" /> Reset Spreadsheet
+            </button>
+          )}
           <button
             onClick={handleExportExcel}
             className="flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200 font-semibold rounded-xl transition-all shadow-sm text-sm"
           >
             <Download className="w-4 h-4" /> Excel
           </button>
-          <button 
-            onClick={() => openModal()}
-            className="flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 shadow-sm shadow-blue-500/20 transition-all active:scale-95 text-sm"
-          >
-            <Plus className="w-4 h-4" /> Tambah Barang
-          </button>
+          {canEdit && (
+            <button 
+              onClick={() => openModal()}
+              className="flex items-center justify-center gap-2 px-5 py-2.5 bg-blue-600 text-white font-semibold rounded-xl hover:bg-blue-700 shadow-sm shadow-blue-500/20 transition-all active:scale-95 text-sm"
+            >
+              <Plus className="w-4 h-4" /> Tambah Barang
+            </button>
+          )}
         </div>
       </div>
 
@@ -317,7 +348,7 @@ export default function PerlengkapanPage() {
                 <th className="py-4 px-6 font-bold text-right">HARGA SATUAN</th>
                 <th className="py-4 px-6 font-bold text-right">JUMLAH HARGA</th>
                 <th className="py-4 px-6 font-bold">KETERANGAN</th>
-                <th className="py-4 px-6 font-bold text-right">AKSI</th>
+                {canEdit && <th className="py-4 px-6 font-bold text-right">AKSI</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -362,28 +393,30 @@ export default function PerlengkapanPage() {
                       <span className="text-slate-400 italic">-</span>
                     )}
                   </td>
-                  <td className="py-4 px-6 text-right whitespace-nowrap">
-                    <div className="flex items-center justify-end gap-1.5 opacity-90 group-hover:opacity-100 transition-opacity">
-                      <button 
-                        onClick={() => openModal(item)} 
-                        className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" 
-                        title="Edit Barang"
-                      >
-                        <Edit3 className="w-4 h-4" />
-                      </button>
-                      <button 
-                        onClick={() => handleDelete(item.id, item.name)} 
-                        className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" 
-                        title="Hapus Barang"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </td>
+                  {canEdit && (
+                    <td className="py-4 px-6 text-right whitespace-nowrap">
+                      <div className="flex items-center justify-end gap-1.5 opacity-90 group-hover:opacity-100 transition-opacity">
+                        <button 
+                          onClick={() => openModal(item)} 
+                          className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" 
+                          title="Edit Barang"
+                        >
+                          <Edit3 className="w-4 h-4" />
+                        </button>
+                        <button 
+                          onClick={() => handleDelete(item.id, item.name)} 
+                          className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors" 
+                          title="Hapus Barang"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  )}
                 </tr>
               )) : (
                 <tr>
-                  <td colSpan={8} className="py-16 text-center">
+                  <td colSpan={canEdit ? 8 : 7} className="py-16 text-center">
                     <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-slate-100 mb-4">
                       <Package className="w-8 h-8 text-slate-300" />
                     </div>

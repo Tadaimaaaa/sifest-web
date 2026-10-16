@@ -70,7 +70,8 @@ export default function MtqDashboard() {
     fetchData();
   }, []);
 
-  const hasAccess = ["ROLE-001", "SUPER_ADMIN", "ROLE-010"].includes(currentUserRole);
+  const canView = ["ROLE-001", "SUPER_ADMIN", "ROLE-002", "ROLE-003", "ROLE-010"].includes(currentUserRole);
+  const canEdit = ["ROLE-001", "SUPER_ADMIN", "ROLE-010"].includes(currentUserRole);
 
   const fetchData = async () => {
     // 1. Fetch Event Info
@@ -128,6 +129,10 @@ export default function MtqDashboard() {
 
   const handleSaveEvent = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!canEdit) {
+      toast.error("Anda tidak memiliki izin untuk mengubah data.");
+      return;
+    }
     if (!formData) return;
     setIsSaving(true);
     try {
@@ -168,7 +173,7 @@ export default function MtqDashboard() {
     }
   };
 
-  if (!hasAccess && currentUserRole) {
+  if (!canView && currentUserRole) {
     return (
       <div className="min-h-[80vh] flex items-center justify-center">
         <div className="text-center space-y-4">
@@ -207,7 +212,7 @@ export default function MtqDashboard() {
           </div>
         </div>
         
-        {hasAccess && (
+        {canEdit && (
           <div className="flex items-center gap-3">
             <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 transition-colors text-sm font-medium shadow-sm">
               <Plus className="w-4 h-4" />
@@ -221,7 +226,7 @@ export default function MtqDashboard() {
       <div className="relative">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-bold text-slate-800">Informasi Event</h2>
-          {hasAccess && (
+          {canEdit && (
             <button 
               onClick={() => setIsEditing(true)}
               className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg text-sm font-semibold transition-colors"

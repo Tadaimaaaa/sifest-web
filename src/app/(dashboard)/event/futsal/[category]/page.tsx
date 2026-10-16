@@ -108,7 +108,7 @@ export default function FutsalDashboard() {
     fetchData();
   }, []);
 
-  const hasAccess = ["ROLE-001", "SUPER_ADMIN", "ROLE-013"].includes(currentUserRole);
+  const hasAccess = ["ROLE-001", "SUPER_ADMIN", "ROLE-012"].includes(currentUserRole);
 
   const fetchData = async () => {
     // 1. Fetch Event Info: Coba ambil spesifik sub-event, fallback ke 'futsal' jika belum ada
