@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { 
-  Users, Calendar, Clock, MapPin, Search, Plus, Loader2, ArrowLeft, ArrowUpDown, Edit3, X, Save
+  Users, Calendar, Clock, MapPin, Search, Plus, Loader2, ArrowLeft, ArrowUpDown, Edit3, X, Save, Award, Printer
 } from "lucide-react";
 import Link from "next/link";
 import Cookies from "js-cookie";
@@ -213,14 +213,23 @@ export default function MtqDashboard() {
           </div>
         </div>
         
-        {canEdit && (
-          <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3">
+          <Link 
+            href="/event/mtq/certificate" 
+            target="_blank"
+            className="flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl transition-colors text-sm font-semibold shadow-sm"
+          >
+            <Award className="w-4 h-4" />
+            <span>Cetak Sertifikat</span>
+          </Link>
+
+          {canEdit && (
             <button className="flex items-center gap-2 px-4 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 transition-colors text-sm font-medium shadow-sm">
               <Plus className="w-4 h-4" />
               <span>Tambah Manual</span>
             </button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Info Cards */}
