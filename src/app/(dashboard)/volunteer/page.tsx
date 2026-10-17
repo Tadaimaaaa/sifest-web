@@ -280,6 +280,7 @@ export default function VolunteerDashboard() {
           <table className="w-full text-sm text-left">
             <thead className="bg-slate-50 border-b border-slate-100 text-slate-600 font-semibold">
               <tr>
+                <th className="px-6 py-4 w-16 text-center">No</th>
                 <th className="px-6 py-4">Nama</th>
                 <th className="px-6 py-4">No. BP</th>
                 <th className="px-6 py-4">No. WhatsApp</th>
@@ -290,7 +291,7 @@ export default function VolunteerDashboard() {
             <tbody className="divide-y divide-slate-100">
               {isLoading ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-16 text-center">
+                  <td colSpan={6} className="px-6 py-16 text-center">
                     <div className="flex flex-col items-center justify-center">
                       <img src="/logo-sifest.png" alt="Logo SIFEST" className="w-16 h-16 object-contain animate-pulse mb-4 drop-shadow-lg" />
                       <p className="text-slate-500 font-semibold tracking-wide animate-pulse">Memuat data volunteer...</p>
@@ -299,13 +300,16 @@ export default function VolunteerDashboard() {
                 </tr>
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-slate-500">
+                  <td colSpan={6} className="px-6 py-12 text-center text-slate-500">
                     Tidak ada pendaftar yang cocok.
                   </td>
                 </tr>
               ) : (
-                filtered.map((v) => (
+                filtered.map((v, index) => (
                   <tr key={v.id_volunteer} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="px-6 py-4 text-center font-bold text-slate-400">
+                      {index + 1}
+                    </td>
                     <td className="px-6 py-4 font-bold text-slate-800">
                       {v.nama}
                     </td>
