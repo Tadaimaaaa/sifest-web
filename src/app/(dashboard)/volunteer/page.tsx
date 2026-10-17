@@ -308,7 +308,7 @@ export default function VolunteerDashboard() {
                 filtered.map((v, index) => (
                   <tr key={v.id_volunteer} className="hover:bg-slate-50/50 transition-colors">
                     <td className="px-6 py-4 text-center font-bold text-slate-400">
-                      {index + 1}
+                      {filtered.length - index}
                     </td>
                     <td className="px-6 py-4 font-bold text-slate-800">
                       {v.nama}
