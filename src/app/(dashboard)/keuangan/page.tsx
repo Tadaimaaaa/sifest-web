@@ -297,7 +297,7 @@ export default function KeuanganPage() {
               <button 
                 type="button"
                 onClick={() => setIsInvoiceModalOpen(true)}
-                className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors border border-indigo-200 shadow-sm"
+                className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors border border-slate-200 shadow-sm cursor-pointer"
               >
                 <Receipt className="w-4 h-4" />
                 Cetak Invoice
