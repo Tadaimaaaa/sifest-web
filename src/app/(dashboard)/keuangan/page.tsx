@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Wallet, TrendingUp, TrendingDown, Search, X, Trash2, Calendar, Tag, FileText, Printer, Download } from "lucide-react";
+import { Plus, Wallet, TrendingUp, TrendingDown, Search, X, Trash2, Calendar, Tag, FileText, Printer, Download, Receipt } from "lucide-react";
 import * as XLSX from 'xlsx';
 import Link from "next/link";
 import { SCRIPT_URL } from "@/lib/api";
@@ -9,6 +9,7 @@ import Cookies from "js-cookie";
 import { toast } from "sonner";
 import Swal from "sweetalert2";
 import FullPageLoader from "@/components/FullPageLoader";
+import InvoiceModal from "./InvoiceModal";
 
 const getDriveThumbnail = (url: string) => {
   if (!url || url === '-') return null;
@@ -33,6 +34,7 @@ export default function KeuanganPage() {
 
   // Modal States
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editTrxId, setEditTrxId] = useState<string | null>(null);
   const [newTrx, setNewTrx] = useState({
@@ -291,6 +293,15 @@ export default function KeuanganPage() {
                 <FileText className="w-4 h-4" />
                 RAB
               </a>
+
+              <button 
+                type="button"
+                onClick={() => setIsInvoiceModalOpen(true)}
+                className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors border border-indigo-200 shadow-sm"
+              >
+                <Receipt className="w-4 h-4" />
+                Cetak Invoice
+              </button>
           {canPrint && (
             <>
               <button 
@@ -765,6 +776,12 @@ export default function KeuanganPage() {
           </div>
         </div>
       )}
+
+      {/* Pop Up Form & Generator Invoice */}
+      <InvoiceModal 
+        isOpen={isInvoiceModalOpen} 
+        onClose={() => setIsInvoiceModalOpen(false)} 
+      />
     </div>
   );
 }
