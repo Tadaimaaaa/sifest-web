@@ -8,7 +8,7 @@ import Cookies from "js-cookie";
 import { toast } from "sonner";
 import FullPageLoader from "@/components/FullPageLoader";
 import { getFutsalData, saveBracket } from "../actions";
-import { Loader2, Shuffle, Maximize, Minimize, Share2 } from "lucide-react";
+import { Loader2, Shuffle, Maximize, Minimize, Share2, RotateCcw, CalendarX } from "lucide-react";
 import { useParams } from "next/navigation";
 import Swal from "sweetalert2";
 
@@ -191,6 +191,118 @@ export default function FutsalDashboard() {
       toast.error(`Terjadi kesalahan: ${error.message || error}`, { id: toastId });
     } finally {
       setIsSavingEvent(false);
+    }
+  };
+
+  const handleResetBracket = async () => {
+    if (!hasAccess || isSpinning) return;
+
+    const result = await Swal.fire({
+      title: 'Reset Bagan Pertandingan?',
+      text: 'Semua posisi tim di bagan serta perkembangan babak gugur akan dikosongkan kembali.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#ef4444',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: 'Ya, Reset Bagan',
+      cancelButtonText: 'Batal'
+    });
+
+    if (!result.isConfirmed) return;
+
+    const emptyShuffled = Array(16).fill(null);
+    const emptyQF = Array(8).fill(null);
+    const emptySF = Array(4).fill(null);
+    const emptyFinals = Array(2).fill(null);
+
+    setShuffledTeams(emptyShuffled);
+    setQuarterFinals(emptyQF);
+    setSemiFinals(emptySF);
+    setFinals(emptyFinals);
+    setChampion(null);
+    setEliminatedTeams(new Set());
+    setKnockoutMatches([]);
+
+    const toastId = toast.loading("Mereset dan menyimpan bagan...");
+    try {
+      const bracketData = {
+        shuffledTeams: emptyShuffled,
+        quarterFinals: emptyQF,
+        semiFinals: emptySF,
+        finals: emptyFinals,
+        champion: null,
+        eliminatedTeams: [],
+        groupMatches,
+        knockoutMatches: []
+      };
+      const res = await saveBracket(gameSlug, bracketData);
+      if (res.success) {
+        toast.success("Bagan pertandingan berhasil direset!", { id: toastId });
+      } else {
+        toast.error(res.message || "Gagal menyimpan reset bagan", { id: toastId });
+      }
+    } catch (error: any) {
+      toast.error(`Terjadi kesalahan: ${error.message || error}`, { id: toastId });
+    }
+  };
+
+  const handleResetSchedule = async () => {
+    if (!hasAccess || isSpinning) return;
+
+    const result = await Swal.fire({
+      title: 'Reset Jadwal Pertandingan?',
+      text: 'Semua skor dan hasil pertandingan fase grup serta babak gugur akan direset kembali ke kosong / 0.',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: '#f59e0b',
+      cancelButtonColor: '#64748b',
+      confirmButtonText: 'Ya, Reset Jadwal',
+      cancelButtonText: 'Batal'
+    });
+
+    if (!result.isConfirmed) return;
+
+    // Reset semua skor pertandingan grup
+    let resetMatches: GroupMatch[] = [];
+    if (category === 'sma') {
+      for (let g = 0; g < 4; g++) {
+        const offset = g * 4;
+        const pairings = [[0,1], [2,3], [0,2], [1,3], [0,3], [1,2]];
+        pairings.forEach((pair, idx) => {
+          resetMatches.push({
+            id: `g${g}-m${idx}`,
+            groupId: g,
+            team1Index: offset + pair[0],
+            team2Index: offset + pair[1],
+            score1: null,
+            score2: null,
+          });
+        });
+      }
+    }
+    setGroupMatches(resetMatches);
+    setKnockoutMatches([]);
+
+    const toastId = toast.loading("Mereset dan menyimpan jadwal...");
+    try {
+      const bracketData = {
+        shuffledTeams,
+        quarterFinals,
+        semiFinals,
+        finals,
+        champion,
+        eliminatedTeams: Array.from(eliminatedTeams),
+        groupMatches: resetMatches,
+        knockoutMatches: []
+      };
+      const res = await saveBracket(gameSlug, bracketData);
+      if (res.success) {
+        toast.success("Jadwal dan skor pertandingan berhasil direset!", { id: toastId });
+      } else {
+        toast.error(res.message || "Gagal menyimpan reset jadwal", { id: toastId });
+      }
+    } catch (error: any) {
+      toast.error(`Terjadi kesalahan: ${error.message || error}`, { id: toastId });
     }
   };
 
@@ -1103,6 +1215,24 @@ export default function FutsalDashboard() {
                     </>
                   )}
                 </button>
+                <button 
+                  onClick={handleResetBracket}
+                  disabled={isSavingEvent || isSpinning}
+                  className="px-4 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-sm font-bold rounded-xl shadow-xs transition-all flex items-center gap-2 disabled:opacity-50 cursor-pointer"
+                  title="Kosongkan seluruh posisi tim di bagan turnamen"
+                >
+                  <RotateCcw className="w-4 h-4" />
+                  Reset Bagan
+                </button>
+                <button 
+                  onClick={handleResetSchedule}
+                  disabled={isSavingEvent || isSpinning}
+                  className="px-4 py-2.5 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 text-sm font-bold rounded-xl shadow-xs transition-all flex items-center gap-2 disabled:opacity-50 cursor-pointer"
+                  title="Kosongkan semua skor dan hasil pertandingan"
+                >
+                  <CalendarX className="w-4 h-4" />
+                  Reset Jadwal
+                </button>
               </>
             )}
             <button 
@@ -1148,6 +1278,24 @@ export default function FutsalDashboard() {
                         Acak Tim (Spin)
                       </>
                     )}
+                  </button>
+                  <button 
+                    onClick={handleResetBracket}
+                    disabled={isSavingEvent || isSpinning}
+                    className="px-4 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-sm font-bold rounded-xl shadow-xs transition-all flex items-center gap-2 disabled:opacity-50 cursor-pointer"
+                    title="Kosongkan seluruh posisi tim di bagan turnamen"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    Reset Bagan
+                  </button>
+                  <button 
+                    onClick={handleResetSchedule}
+                    disabled={isSavingEvent || isSpinning}
+                    className="px-4 py-2.5 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 text-sm font-bold rounded-xl shadow-xs transition-all flex items-center gap-2 disabled:opacity-50 cursor-pointer"
+                    title="Kosongkan semua skor dan hasil pertandingan"
+                  >
+                    <CalendarX className="w-4 h-4" />
+                    Reset Jadwal
                   </button>
                 </>
               )}
@@ -1214,8 +1362,19 @@ export default function FutsalDashboard() {
                  
                  {/* BOTTOM: Match List */}
                  <div className="w-full bg-white border border-slate-200 rounded-xl shadow-sm flex flex-col overflow-hidden">
-                    <div className="bg-slate-100 border-b border-slate-200 p-4 shrink-0">
+                    <div className="bg-slate-100 border-b border-slate-200 p-4 shrink-0 flex items-center justify-between">
                       <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2"><CalendarDays className="w-4 h-4 text-blue-500" /> Hasil & Jadwal Pertandingan Fase Grup</h3>
+                      {hasAccess && (
+                        <button
+                          onClick={handleResetSchedule}
+                          disabled={isSavingEvent || isSpinning}
+                          className="px-3 py-1.5 bg-white hover:bg-amber-50 text-amber-700 border border-amber-200 text-xs font-bold rounded-lg shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                          title="Reset semua skor pertandingan fase grup ke 0"
+                        >
+                          <CalendarX className="w-3.5 h-3.5 text-amber-600" />
+                          Reset Jadwal
+                        </button>
+                      )}
                     </div>
                     <div className="p-6 bg-slate-50 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                        {groupMatches.map(match => {
