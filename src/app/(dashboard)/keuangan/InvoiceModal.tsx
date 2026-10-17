@@ -36,7 +36,7 @@ export interface InvoiceItem {
 export interface InvoiceData {
   invoiceNumber: string;
   invoiceDate: string;
-  status: "UNPAID (Belum Lunas)" | "PAID (Lunas)";
+  wave: string; // Gelombang Pendaftaran
   
   // Ditagihkan Kepada
   teamOrParticipantName: string;
@@ -76,13 +76,30 @@ const getTodayDateFormatted = () => {
   return `${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
 };
 
-// Data invoice dalam keadaan kosong / siap input baru
+// Pengelolaan nomor urut invoice otomatis
+const getStoredInvoiceSeq = (): number => {
+  if (typeof window === "undefined") return 101;
+  const stored = localStorage.getItem("sifest_invoice_seq");
+  if (!stored) {
+    localStorage.setItem("sifest_invoice_seq", "101");
+    return 101;
+  }
+  const parsed = parseInt(stored, 10);
+  return isNaN(parsed) || parsed < 1 ? 101 : parsed;
+};
+
+const formatInvoiceNumber = (seq: number): string => {
+  return `INV/SIFEST/2026/${String(seq).padStart(3, "0")}`;
+};
+
+// Data invoice baru
 const getInitialInvoiceData = (): InvoiceData => {
   const today = getTodayDateFormatted();
+  const seq = getStoredInvoiceSeq();
   return {
-    invoiceNumber: "",
+    invoiceNumber: formatInvoiceNumber(seq),
     invoiceDate: today,
-    status: "UNPAID (Belum Lunas)",
+    wave: "Gelombang 1",
     
     // Dimulai kosong sesuai permintaan panitia
     teamOrParticipantName: "",
@@ -100,7 +117,7 @@ const getInitialInvoiceData = (): InvoiceData => {
       }
     ],
     
-    // Pengaturan standar panitia (tetap ada agar tidak perlu ketik ulang setiap kali)
+    // Pengaturan standar panitia
     bankBri: "Bank BRI: 817301013354530 a.n. ZHARA DELVIA PUTRI",
     bankBsi: "Bank BSI: 7369755115 a.n. Fachratun Rahima",
     notes1: "Unggah bukti transfer melalui dasbor pendaftaran di website official.sifest.my.id",
@@ -132,10 +149,17 @@ export default function InvoiceModal({
   const [zoomScale, setZoomScale] = useState(1);
   const printRef = useRef<HTMLDivElement>(null);
 
-  // Reset data setiap kali modal dibuka pertama kali
+  // Perbarui nomor urut dan tanggal saat modal dibuka
   useEffect(() => {
     if (isOpen) {
       setActiveTab("form");
+      const currentSeq = getStoredInvoiceSeq();
+      setData(prev => ({
+        ...prev,
+        invoiceNumber: prev.invoiceNumber ? prev.invoiceNumber : formatInvoiceNumber(currentSeq),
+        invoiceDate: getTodayDateFormatted(),
+        signaturePlaceDate: `Padang, ${getTodayDateFormatted()}`
+      }));
     }
   }, [isOpen]);
 
@@ -166,7 +190,6 @@ export default function InvoiceModal({
 
   const handleRemoveItem = (id: string) => {
     if (data.items.length <= 1) {
-      // Jika tinggal 1 baris, kosongkan saja nilainya
       setData(prev => ({
         ...prev,
         items: [{ id: "1", description: "", qty: 1, unitPrice: 0 }]
@@ -195,7 +218,11 @@ export default function InvoiceModal({
       cancelButtonText: "Batal"
     }).then((res) => {
       if (res.isConfirmed) {
-        setData(getInitialInvoiceData());
+        const currentSeq = getStoredInvoiceSeq();
+        setData({
+          ...getInitialInvoiceData(),
+          invoiceNumber: formatInvoiceNumber(currentSeq)
+        });
         toastResetSuccess();
       }
     });
@@ -227,7 +254,6 @@ export default function InvoiceModal({
     });
 
     try {
-      // Tunggu render DOM selesai
       await new Promise(r => setTimeout(r, 250));
 
       const dataUrl = await toJpeg(printRef.current, {
@@ -279,6 +305,16 @@ export default function InvoiceModal({
         link.click();
         document.body.removeChild(link);
       }
+
+      // Perbarui nomor urut invoice otomatis ke sequence berikutnya setelah berhasil dicetak/diunduh
+      const match = data.invoiceNumber.match(/(\d+)$/);
+      let nextSeq = 102;
+      if (match && match[1]) {
+        nextSeq = parseInt(match[1], 10) + 1;
+      } else {
+        nextSeq = getStoredInvoiceSeq() + 1;
+      }
+      localStorage.setItem("sifest_invoice_seq", String(nextSeq));
 
       Swal.close();
     } catch (err: any) {
@@ -359,13 +395,26 @@ export default function InvoiceModal({
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-700">No. Invoice</label>
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-semibold text-slate-700">No. Invoice (Otomatis)</label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const currentSeq = getStoredInvoiceSeq();
+                          setData(prev => ({ ...prev, invoiceNumber: formatInvoiceNumber(currentSeq) }));
+                        }}
+                        className="text-[11px] text-blue-600 hover:text-blue-700 hover:underline font-medium"
+                        title="Muat ulang nomor urut invoice"
+                      >
+                        Urutkan
+                      </button>
+                    </div>
                     <input 
                       type="text"
                       value={data.invoiceNumber}
                       onChange={(e) => setData({ ...data, invoiceNumber: e.target.value })}
-                      placeholder="Contoh: INV/SIFEST/2026/102"
-                      className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 focus:ring-2 focus:ring-blue-500/50 focus:outline-none placeholder:text-slate-400"
+                      placeholder="INV/SIFEST/2026/101"
+                      className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-semibold text-slate-800 focus:ring-2 focus:ring-blue-500/50 focus:outline-none placeholder:text-slate-400"
                     />
                   </div>
 
@@ -384,14 +433,18 @@ export default function InvoiceModal({
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-700">Status Pembayaran</label>
+                    <label className="text-xs font-semibold text-slate-700">Gelombang Pendaftaran</label>
                     <select
-                      value={data.status}
-                      onChange={(e) => setData({ ...data, status: e.target.value as any })}
+                      value={data.wave}
+                      onChange={(e) => setData({ ...data, wave: e.target.value })}
                       className="w-full px-3.5 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 focus:ring-2 focus:ring-blue-500/50 focus:outline-none font-medium"
                     >
-                      <option value="UNPAID (Belum Lunas)">UNPAID (Belum Lunas)</option>
-                      <option value="PAID (Lunas)">PAID (Lunas)</option>
+                      <option value="Gelombang 1">Gelombang 1</option>
+                      <option value="Gelombang 2">Gelombang 2</option>
+                      <option value="Gelombang 3">Gelombang 3</option>
+                      <option value="Early Bird">Early Bird</option>
+                      <option value="Presale">Presale</option>
+                      <option value="Reguler">Reguler</option>
                     </select>
                   </div>
                 </div>
@@ -483,7 +536,7 @@ export default function InvoiceModal({
                   <button
                     type="button"
                     onClick={handleAddItem}
-                    className="flex items-center gap-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors"
+                    className="flex items-center gap-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
                   >
                     <Plus className="w-3.5 h-3.5" />
                     Tambah Baris
@@ -535,7 +588,7 @@ export default function InvoiceModal({
                         <button
                           type="button"
                           onClick={() => handleRemoveItem(item.id)}
-                          className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                          className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
                           title="Hapus baris"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -561,7 +614,7 @@ export default function InvoiceModal({
                 <button
                   type="button"
                   onClick={() => setShowAdvanced(!showAdvanced)}
-                  className="w-full px-4 py-3 bg-slate-50 hover:bg-slate-100 flex items-center justify-between text-left transition-colors"
+                  className="w-full px-4 py-3 bg-slate-50 hover:bg-slate-100 flex items-center justify-between text-left transition-colors cursor-pointer"
                 >
                   <div>
                     <span className="text-xs font-bold text-slate-700">Pengaturan Rekening & Tanda Tangan Pengesahan</span>
@@ -660,7 +713,7 @@ export default function InvoiceModal({
                   <button
                     type="button"
                     onClick={() => setZoomScale(prev => Math.max(0.6, prev - 0.1))}
-                    className="p-1 hover:bg-slate-100 rounded text-slate-600"
+                    className="p-1 hover:bg-slate-100 rounded text-slate-600 cursor-pointer"
                     title="Perkecil"
                   >
                     <ZoomOut size={13} />
@@ -671,7 +724,7 @@ export default function InvoiceModal({
                   <button
                     type="button"
                     onClick={() => setZoomScale(prev => Math.min(1.3, prev + 0.1))}
-                    className="p-1 hover:bg-slate-100 rounded text-slate-600"
+                    className="p-1 hover:bg-slate-100 rounded text-slate-600 cursor-pointer"
                     title="Perbesar"
                   >
                     <ZoomIn size={13} />
@@ -777,7 +830,7 @@ export default function InvoiceModal({
                         <table className="w-full border-collapse">
                           <tbody>
                             <tr>
-                              <td className="py-1 font-semibold text-slate-800 w-28 align-top">No. Invoice</td>
+                              <td className="py-1 font-semibold text-slate-800 w-36 align-top">No. Invoice</td>
                               <td className="py-1 px-1.5 align-top">:</td>
                               <td className="py-1 font-extrabold text-slate-900 align-top">
                                 {data.invoiceNumber || "-"}
@@ -791,12 +844,10 @@ export default function InvoiceModal({
                               </td>
                             </tr>
                             <tr>
-                              <td className="py-1 font-semibold text-slate-800 align-top">Status</td>
+                              <td className="py-1 font-semibold text-slate-800 align-top whitespace-nowrap pr-2">Gelombang Pendaftaran</td>
                               <td className="py-1 px-1.5 align-top">:</td>
-                              <td className="py-1 align-top">
-                                <span className={`font-bold ${data.status.includes("PAID (Lunas)") && !data.status.includes("UNPAID") ? "text-emerald-600" : "text-red-600"}`}>
-                                  {data.status}
-                                </span>
+                              <td className="py-1 font-semibold text-slate-900 align-top">
+                                {data.wave || "-"}
                               </td>
                             </tr>
                           </tbody>
@@ -1006,7 +1057,7 @@ export default function InvoiceModal({
                   <table className="w-full border-collapse">
                     <tbody>
                       <tr>
-                        <td className="py-1 font-semibold text-slate-800 w-28 align-top">No. Invoice</td>
+                        <td className="py-1 font-semibold text-slate-800 w-36 align-top">No. Invoice</td>
                         <td className="py-1 px-1.5 align-top">:</td>
                         <td className="py-1 font-extrabold text-slate-900 align-top">
                           {data.invoiceNumber || "-"}
@@ -1020,12 +1071,10 @@ export default function InvoiceModal({
                         </td>
                       </tr>
                       <tr>
-                        <td className="py-1 font-semibold text-slate-800 align-top">Status</td>
+                        <td className="py-1 font-semibold text-slate-800 align-top whitespace-nowrap pr-2">Gelombang Pendaftaran</td>
                         <td className="py-1 px-1.5 align-top">:</td>
-                        <td className="py-1 align-top">
-                          <span className={`font-bold ${data.status.includes("PAID (Lunas)") && !data.status.includes("UNPAID") ? "text-emerald-600" : "text-red-600"}`}>
-                            {data.status}
-                          </span>
+                        <td className="py-1 font-semibold text-slate-900 align-top">
+                          {data.wave || "-"}
                         </td>
                       </tr>
                     </tbody>
@@ -1138,7 +1187,7 @@ export default function InvoiceModal({
             <button
               type="button"
               onClick={handleResetForm}
-              className="text-xs text-slate-500 hover:text-slate-800 flex items-center gap-1.5 transition-colors font-medium py-1 px-2 rounded-lg hover:bg-slate-200/60"
+              className="text-xs text-slate-500 hover:text-slate-800 flex items-center gap-1.5 transition-colors font-medium py-1 px-2 rounded-lg hover:bg-slate-200/60 cursor-pointer"
             >
               <RotateCcw className="w-3.5 h-3.5" />
               Kosongkan Form
