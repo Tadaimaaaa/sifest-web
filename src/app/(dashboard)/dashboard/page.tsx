@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Users, Activity, Target, Sparkles, AlertCircle, Clock } from "lucide-react";
+import { Users, Activity, Sparkles, AlertCircle, Clock, UserCheck } from "lucide-react";
 import { SCRIPT_URL } from "@/lib/api";
+import { supabaseClient } from "@/lib/sifest/supabase-client";
 import Cookies from "js-cookie";
 import Link from "next/link";
 import { toast } from "sonner";
@@ -17,6 +18,50 @@ export default function DashboardPage() {
   const [currentUserRole, setCurrentUserRole] = useState("ROLE-004");
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   const [financeFilter, setFinanceFilter] = useState("semua");
+  const [totalPendaftar, setTotalPendaftar] = useState<number | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function fetchPendaftarCount() {
+      try {
+        const { count, error } = await supabaseClient
+          .from("registrations")
+          .select("*", { count: "exact", head: true });
+
+        if (!error && typeof count === "number" && isMounted) {
+          setTotalPendaftar(count);
+        }
+      } catch (err) {
+        console.error("Gagal mengambil total pendaftar:", err);
+      }
+    }
+
+    // Initial fetch
+    fetchPendaftarCount();
+
+    // Subscribe to real-time changes on registrations table
+    const channel = supabaseClient
+      .channel("realtime-dashboard-registrations")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "registrations" },
+        () => {
+          fetchPendaftarCount();
+        }
+      )
+      .subscribe();
+
+    // Polling fallback every 15s to guarantee fresh count
+    const interval = setInterval(fetchPendaftarCount, 15000);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+      supabaseClient.removeChannel(channel);
+    };
+  }, []);
+
 
   useEffect(() => {
     const targetDate = new Date('2026-11-02T08:00:00+07:00').getTime();
@@ -114,7 +159,15 @@ export default function DashboardPage() {
   const statCards = [
     { name: "Total Panitia", value: stats.totalPanitia, icon: Users, color: "text-blue-600", bg: "bg-blue-100" },
     { name: "Panitia Aktif", value: stats.panitiaAktif, icon: Activity, color: "text-green-600", bg: "bg-green-100" },
-    { name: "Role Tersedia", value: stats.roleTersedia, icon: Target, color: "text-purple-600", bg: "bg-purple-100" },
+    { 
+      name: "Total Pendaftar", 
+      value: totalPendaftar !== null ? totalPendaftar : "...", 
+      icon: UserCheck, 
+      color: "text-purple-600", 
+      bg: "bg-purple-100",
+      href: "/sifest/registrations",
+      isRealtime: true,
+    },
     { name: "Aktivitas Hari Ini", value: stats.aktivitasHariIni, icon: Sparkles, color: "text-yellow-600", bg: "bg-yellow-100" },
   ];
 
@@ -170,15 +223,33 @@ export default function DashboardPage() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {statCards.map((stat) => {
+        {statCards.map((stat: any) => {
           const Icon = stat.icon;
-          return (
-            <div key={stat.name} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
-              <div className={`w-10 h-10 ${stat.bg} rounded-xl flex items-center justify-center mb-4`}>
-                <Icon className={`w-5 h-5 ${stat.color}`} />
+          const cardContent = (
+            <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-all h-full relative group">
+              <div className="flex items-center justify-between mb-4">
+                <div className={`w-10 h-10 ${stat.bg} rounded-xl flex items-center justify-center`}>
+                  <Icon className={`w-5 h-5 ${stat.color}`} />
+                </div>
+                {stat.isRealtime && (
+                  <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-600 border border-emerald-200">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                    Realtime
+                  </span>
+                )}
               </div>
               <p className="text-2xl font-bold text-slate-800">{stat.value}</p>
               <p className="text-sm text-slate-500 font-medium">{stat.name}</p>
+            </div>
+          );
+
+          return stat.href ? (
+            <Link key={stat.name} href={stat.href} className="block transition-transform hover:-translate-y-0.5">
+              {cardContent}
+            </Link>
+          ) : (
+            <div key={stat.name}>
+              {cardContent}
             </div>
           );
         })}
