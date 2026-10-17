@@ -174,16 +174,12 @@ export default function VolunteerDashboard() {
     
     setIsExporting(true);
     try {
-      // Mengambil elemen printRef (format laporan resmi dengan kompresi optimal)
+      // Mengambil elemen printRef dengan resolusi A4 presisi
       const dataUrl = await toJpeg(printRef.current, { 
-        quality: 0.82,
-        pixelRatio: 1.6,
+        quality: 0.98,
+        pixelRatio: 2.5,
         backgroundColor: '#ffffff',
-        style: {
-          position: 'static',
-          left: 'auto',
-          top: 'auto'
-        }
+        cacheBust: true
       });
       
       const pdf = new jsPDF({
@@ -193,7 +189,6 @@ export default function VolunteerDashboard() {
         compress: true
       });
       
-      // Buat image object untuk mendapatkan dimensinya
       const img = new Image();
       img.src = dataUrl;
       
@@ -201,17 +196,12 @@ export default function VolunteerDashboard() {
         img.onload = resolve;
       });
       
+      // Standar ukuran A4: 210 x 297 mm
       const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (img.height * pdfWidth) / img.width;
+      const pdfHeight = pdf.internal.pageSize.getHeight();
       
-      // Jika tinggi modal melebihi halaman A4
-      if (pdfHeight > pdf.internal.pageSize.getHeight()) {
-        pdf.addImage(dataUrl, "JPEG", 0, 0, pdfWidth, pdfHeight, undefined, "FAST");
-      } else {
-        // Center vertically if smaller
-        const marginY = (pdf.internal.pageSize.getHeight() - pdfHeight) / 2;
-        pdf.addImage(dataUrl, "JPEG", 0, marginY, pdfWidth, pdfHeight, undefined, "FAST");
-      }
+      // Render tepat 1 halaman penuh A4 standar tanpa terpotong
+      pdf.addImage(dataUrl, "JPEG", 0, 0, pdfWidth, pdfHeight, undefined, "FAST");
       
       // Output as blob url for preview
       const blob = pdf.output('blob');
@@ -483,99 +473,101 @@ export default function VolunteerDashboard() {
       )}
 
       {/* Hidden Report Template for PDF */}
-      <div style={{ position: "absolute", left: "-9999px", top: "-9999px", pointerEvents: "none" }}>
-        <div ref={printRef} className="w-[794px] h-[1123px] bg-white text-black p-12 flex flex-col relative" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
+      <div style={{ position: "fixed", left: "-9999px", top: 0, opacity: 0, pointerEvents: "none" }}>
+        <div ref={printRef} className="w-[794px] h-[1123px] bg-white text-black p-14 flex flex-col justify-between" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
           
-          {/* KOP SURAT */}
-          <div className="flex items-center justify-between pb-3">
-            <img src="/logo-hmjsi.jpg" alt="Logo HMJ SI" className="w-[90px] h-[90px] object-contain" />
-            <div className="text-center flex-1 px-4 text-black">
-              <h1 className="text-[15px] font-bold leading-snug" style={{ fontFamily: '"Times New Roman", Times, serif' }}>PANITIA PELAKSANA SISTEM INFORMASI FESTIVAL</h1>
-              <h2 className="text-[15px] font-bold leading-snug" style={{ fontFamily: '"Times New Roman", Times, serif' }}>HIMPUNAN MAHASISWA JURUSAN SISTEM INFORMASI</h2>
-              <h3 className="text-[15px] font-bold leading-snug" style={{ fontFamily: '"Times New Roman", Times, serif' }}>FAKULTAS ILMU KOMPUTER</h3>
-              <h4 className="text-[15px] font-bold leading-snug" style={{ fontFamily: '"Times New Roman", Times, serif' }}>REPUBLIK MAHASISWA UNIVERSITAS PUTRA INDONESIA "YPTK" PADANG</h4>
-              <p className="text-[12px] leading-snug mt-1" style={{ fontFamily: '"Times New Roman", Times, serif' }}>Sekretariat Jl. Raya Lubuk Begalung, Student Center Lt. 1 Padang Sumbar</p>
-              <p className="text-[12px] leading-snug" style={{ fontFamily: '"Times New Roman", Times, serif' }}>Email : <span className="text-blue-700 underline">sinformationfest@gmail.com</span> Instagram : @sifest.hmjsi</p>
+          <div>
+            {/* KOP SURAT */}
+            <div className="flex items-center justify-between pb-3">
+              <img src="/logo-hmjsi.jpg" alt="Logo HMJ SI" className="w-[85px] h-[85px] object-contain" />
+              <div className="text-center flex-1 px-4 text-black">
+                <h1 className="text-[14px] font-bold leading-snug" style={{ fontFamily: '"Times New Roman", Times, serif' }}>PANITIA PELAKSANA SISTEM INFORMASI FESTIVAL</h1>
+                <h2 className="text-[14px] font-bold leading-snug" style={{ fontFamily: '"Times New Roman", Times, serif' }}>HIMPUNAN MAHASISWA JURUSAN SISTEM INFORMASI</h2>
+                <h3 className="text-[14px] font-bold leading-snug" style={{ fontFamily: '"Times New Roman", Times, serif' }}>FAKULTAS ILMU KOMPUTER</h3>
+                <h4 className="text-[14px] font-bold leading-snug" style={{ fontFamily: '"Times New Roman", Times, serif' }}>REPUBLIK MAHASISWA UNIVERSITAS PUTRA INDONESIA "YPTK" PADANG</h4>
+                <p className="text-[11px] leading-snug mt-1" style={{ fontFamily: '"Times New Roman", Times, serif' }}>Sekretariat Jl. Raya Lubuk Begalung, Student Center Lt. 1 Padang Sumbar</p>
+                <p className="text-[11px] leading-snug" style={{ fontFamily: '"Times New Roman", Times, serif' }}>Email : <span className="text-blue-700 underline">sinformationfest@gmail.com</span> Instagram : @sifest.hmjsi</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <img src="/logo-rema.png" alt="Logo REMA" className="w-[80px] h-[80px] object-contain" />
+                <img src="/logo-sifest.png" alt="Logo SIFEST" className="w-[85px] h-[85px] object-contain" />
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <img src="/logo-rema.png" alt="Logo REMA" className="w-[85px] h-[85px] object-contain" />
-              <img src="/logo-sifest.png" alt="Logo SIFEST" className="w-[90px] h-[90px] object-contain" />
-            </div>
+            
+            {/* Garis Kop Surat Ganda */}
+            <div className="w-full border-b-[1.5px] border-black mb-[2px]"></div>
+            <div className="w-full border-b-[3.5px] border-black mb-6"></div>
+            
+            {/* JUDUL */}
+            <h4 className="text-center text-lg font-bold uppercase mb-6 underline decoration-2 underline-offset-4">
+              Formulir Pendaftaran Volunteer
+            </h4>
+            
+            {/* KONTEN */}
+            {selectedVolunteer && (
+              <div className="text-sm leading-relaxed">
+                <table className="w-full mb-5 border-collapse">
+                  <tbody>
+                    <tr>
+                      <td className="py-2 w-44 font-semibold">Nama Lengkap</td>
+                      <td className="py-2 w-4">:</td>
+                      <td className="py-2 font-bold">{selectedVolunteer.nama}</td>
+                    </tr>
+                    <tr>
+                      <td className="py-2 font-semibold">NIM / No. BP</td>
+                      <td className="py-2">:</td>
+                      <td className="py-2 font-semibold">{selectedVolunteer.no_bp}</td>
+                    </tr>
+                    <tr>
+                      <td className="py-2 font-semibold">Jurusan</td>
+                      <td className="py-2">:</td>
+                      <td className="py-2">{selectedVolunteer.jurusan}</td>
+                    </tr>
+                    <tr>
+                      <td className="py-2 font-semibold">No. WhatsApp</td>
+                      <td className="py-2">:</td>
+                      <td className="py-2">{selectedVolunteer.no_hp}</td>
+                    </tr>
+                    <tr>
+                      <td className="py-2 font-semibold">Instagram</td>
+                      <td className="py-2">:</td>
+                      <td className="py-2">{selectedVolunteer.link_ig}</td>
+                    </tr>
+                    <tr>
+                      <td className="py-2 font-semibold align-top">Alamat Lengkap</td>
+                      <td className="py-2 align-top">:</td>
+                      <td className="py-2 text-justify">{selectedVolunteer.alamat}</td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                <h5 className="font-bold text-sm mb-2 border-b border-gray-300 pb-1">Pilihan Event</h5>
+                <table className="w-full mb-5 border-collapse">
+                  <tbody>
+                    <tr>
+                      <td className="py-2 w-44 font-semibold">Pilihan Utama</td>
+                      <td className="py-2 w-4">:</td>
+                      <td className="py-2">{selectedVolunteer.event_1}</td>
+                    </tr>
+                    <tr>
+                      <td className="py-2 font-semibold">Pilihan Kedua</td>
+                      <td className="py-2">:</td>
+                      <td className="py-2">{selectedVolunteer.event_2}</td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                <h5 className="font-bold text-sm mb-2 border-b border-gray-300 pb-1">Motivasi Bergabung</h5>
+                <p className="text-justify italic border border-gray-300 p-4 rounded-lg bg-gray-50/50 text-xs leading-relaxed min-h-[70px]">
+                  "{selectedVolunteer.motivasi}"
+                </p>
+              </div>
+            )}
           </div>
           
-          {/* Garis Kop Surat Ganda */}
-          <div className="w-full border-b-[1.5px] border-black mb-[2px]"></div>
-          <div className="w-full border-b-[3.5px] border-black mb-8"></div>
-          
-          {/* JUDUL */}
-          <h4 className="text-center text-lg font-bold uppercase mb-8 underline decoration-2 underline-offset-4">
-            Formulir Pendaftaran Volunteer
-          </h4>
-          
-          {/* KONTEN */}
-          {selectedVolunteer && (
-            <div className="flex-1 text-base leading-relaxed">
-              <table className="w-full mb-8 border-collapse">
-                <tbody>
-                  <tr>
-                    <td className="py-2.5 w-1/3 font-semibold">Nama Lengkap</td>
-                    <td className="py-2.5 w-4">:</td>
-                    <td className="py-2.5">{selectedVolunteer.nama}</td>
-                  </tr>
-                  <tr>
-                    <td className="py-2.5 font-semibold">NIM / No. BP</td>
-                    <td className="py-2.5">:</td>
-                    <td className="py-2.5">{selectedVolunteer.no_bp}</td>
-                  </tr>
-                  <tr>
-                    <td className="py-2.5 font-semibold">Jurusan</td>
-                    <td className="py-2.5">:</td>
-                    <td className="py-2.5">{selectedVolunteer.jurusan}</td>
-                  </tr>
-                  <tr>
-                    <td className="py-2.5 font-semibold">No. WhatsApp</td>
-                    <td className="py-2.5">:</td>
-                    <td className="py-2.5">{selectedVolunteer.no_hp}</td>
-                  </tr>
-                  <tr>
-                    <td className="py-2.5 font-semibold">Instagram</td>
-                    <td className="py-2.5">:</td>
-                    <td className="py-2.5">{selectedVolunteer.link_ig}</td>
-                  </tr>
-                  <tr>
-                    <td className="py-2.5 font-semibold align-top">Alamat Lengkap</td>
-                    <td className="py-2.5 align-top">:</td>
-                    <td className="py-2.5 text-justify">{selectedVolunteer.alamat}</td>
-                  </tr>
-                </tbody>
-              </table>
-
-              <h5 className="font-bold text-lg mb-3 border-b border-gray-300 pb-1">Pilihan Event</h5>
-              <table className="w-full mb-8 border-collapse">
-                <tbody>
-                  <tr>
-                    <td className="py-2.5 w-1/3 font-semibold">Pilihan Utama</td>
-                    <td className="py-2.5 w-4">:</td>
-                    <td className="py-2.5">{selectedVolunteer.event_1}</td>
-                  </tr>
-                  <tr>
-                    <td className="py-2.5 font-semibold">Pilihan Kedua</td>
-                    <td className="py-2.5">:</td>
-                    <td className="py-2.5">{selectedVolunteer.event_2}</td>
-                  </tr>
-                </tbody>
-              </table>
-
-              <h5 className="font-bold text-lg mb-3 border-b border-gray-300 pb-1">Motivasi Bergabung</h5>
-              <p className="text-justify italic mb-8 border border-gray-300 p-5 rounded-lg bg-gray-50/50 min-h-[100px]">
-                "{selectedVolunteer.motivasi}"
-              </p>
-            </div>
-          )}
-          
           {/* TTD */}
-          <div className="absolute bottom-16 right-16 flex justify-end">
-            <div className="text-center w-64">
+          <div className="flex justify-end pt-4 pb-2">
+            <div className="text-center w-64 text-sm">
               <p className="mb-20">Padang, {selectedVolunteer ? new Date(selectedVolunteer.waktu_daftar).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
               <p className="font-bold border-b border-black inline-block px-4 pb-1">
                 {selectedVolunteer?.nama || 'Pendaftar'}
