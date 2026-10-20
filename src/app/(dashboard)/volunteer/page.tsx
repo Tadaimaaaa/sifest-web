@@ -67,14 +67,14 @@ export default function VolunteerDashboard() {
     fetchVolunteers();
   }, []);
 
-  const updateStatus = async (id_volunteer: string, status: string) => {
+  const updateStatus = async (volunteer: Volunteer, status: string) => {
     if (!canEdit) {
       Swal.fire('Akses Ditolak', 'Hanya SuperAdmin dan Kestari yang dapat mengubah status.', 'error');
       return;
     }
     const confirmation = await Swal.fire({
       title: 'Konfirmasi',
-      text: `Yakin ingin mengubah status menjadi ${status}?`,
+      text: `Yakin ingin mengubah status ${volunteer.nama} menjadi ${status}?`,
       icon: 'question',
       showCancelButton: true,
       confirmButtonText: 'Ya, ubah!',
@@ -104,7 +104,14 @@ export default function VolunteerDashboard() {
       const res = await fetch(`${SCRIPT_URL}?action=updateStatusVolunteer`, {
         method: "POST",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify({ action: "updateStatusVolunteer", id_volunteer, status, token })
+        body: JSON.stringify({ 
+          action: "updateStatusVolunteer", 
+          id_volunteer: volunteer.id_volunteer, 
+          no_bp: volunteer.no_bp,
+          nama: volunteer.nama,
+          status, 
+          token 
+        })
       });
       const result = await res.json();
       if (result.success === true) {
@@ -118,14 +125,14 @@ export default function VolunteerDashboard() {
     }
   };
 
-  const deleteVolunteer = async (id_volunteer: string) => {
+  const deleteVolunteer = async (volunteer: Volunteer) => {
     if (!canEdit) {
       Swal.fire('Akses Ditolak', 'Hanya SuperAdmin dan Kestari yang dapat menghapus data.', 'error');
       return;
     }
     const confirmation = await Swal.fire({
       title: 'Hapus Data?',
-      text: "Data yang dihapus tidak dapat dikembalikan!",
+      text: `Data ${volunteer.nama} yang dihapus tidak dapat dikembalikan!`,
       icon: 'warning',
       showCancelButton: true,
       confirmButtonColor: '#d33',
@@ -155,7 +162,13 @@ export default function VolunteerDashboard() {
       const res = await fetch(`${SCRIPT_URL}?action=deleteVolunteer`, {
         method: "POST",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify({ action: "deleteVolunteer", id_volunteer, token })
+        body: JSON.stringify({ 
+          action: "deleteVolunteer", 
+          id_volunteer: volunteer.id_volunteer, 
+          no_bp: volunteer.no_bp,
+          nama: volunteer.nama,
+          token 
+        })
       });
       const result = await res.json();
       if (result.success === true) {
@@ -168,6 +181,7 @@ export default function VolunteerDashboard() {
       Swal.fire('Error!', 'Terjadi kesalahan jaringan.', 'error');
     }
   };
+
 
   const exportPDF = async () => {
     if (!selectedVolunteer || !printRef.current) return;
@@ -321,21 +335,22 @@ export default function VolunteerDashboard() {
                           <>
                             {v.status === 'Menunggu Seleksi' ? (
                               <>
-                                <button onClick={() => updateStatus(v.id_volunteer, 'Diterima')} className="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-600 font-medium text-xs flex items-center gap-1.5 hover:bg-emerald-600 hover:text-white transition-all shadow-sm" title="Terima">
+                                <button onClick={() => updateStatus(v, 'Diterima')} className="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-600 font-medium text-xs flex items-center gap-1.5 hover:bg-emerald-600 hover:text-white transition-all shadow-sm" title="Terima">
                                   <CheckCircle2 className="w-4 h-4" /> Terima
                                 </button>
-                                <button onClick={() => updateStatus(v.id_volunteer, 'Ditolak')} className="px-3 py-1.5 rounded-lg bg-rose-50 text-rose-600 font-medium text-xs flex items-center gap-1.5 hover:bg-rose-600 hover:text-white transition-all shadow-sm" title="Tolak">
+                                <button onClick={() => updateStatus(v, 'Ditolak')} className="px-3 py-1.5 rounded-lg bg-rose-50 text-rose-600 font-medium text-xs flex items-center gap-1.5 hover:bg-rose-600 hover:text-white transition-all shadow-sm" title="Tolak">
                                   <XCircle className="w-4 h-4" /> Tolak
                                 </button>
                               </>
                             ) : (
-                              <button onClick={() => updateStatus(v.id_volunteer, 'Menunggu Seleksi')} className="px-3 py-1.5 rounded-lg bg-amber-50 text-amber-600 font-medium text-xs flex items-center gap-1.5 hover:bg-amber-600 hover:text-white transition-all shadow-sm" title="Batalkan Keputusan">
+                              <button onClick={() => updateStatus(v, 'Menunggu Seleksi')} className="px-3 py-1.5 rounded-lg bg-amber-50 text-amber-600 font-medium text-xs flex items-center gap-1.5 hover:bg-amber-600 hover:text-white transition-all shadow-sm" title="Batalkan Keputusan">
                                 <RotateCcw className="w-4 h-4" /> Batal
                               </button>
                             )}
-                            <button onClick={() => deleteVolunteer(v.id_volunteer)} className="p-1.5 rounded-lg bg-slate-50 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-all shadow-sm" title="Hapus">
+                            <button onClick={() => deleteVolunteer(v)} className="p-1.5 rounded-lg bg-slate-50 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-all shadow-sm" title="Hapus">
                               <Trash2 className="w-4 h-4" />
                             </button>
+
                           </>
                         )}
                       </div>

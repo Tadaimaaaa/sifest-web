@@ -127,16 +127,42 @@ const Volunteer = {
   
   updateStatusVolunteer: function(body, user) {
     if (!user) return Response.error('UNAUTHORIZED', 'Sesi tidak valid.');
-    if (!body.id_volunteer || !body.status) return Response.error('BAD_REQUEST', 'ID dan Status wajib ada.');
+    if ((!body.id_volunteer && !body.no_bp) || !body.status) return Response.error('BAD_REQUEST', 'ID/No BP dan Status wajib ada.');
     
     const sheet = Utils.getSheet(this.sheetName);
     const data = sheet.getDataRange().getValues();
     let rowIndex = -1;
     
-    for (let i = 1; i < data.length; i++) {
-      if (data[i][0] === body.id_volunteer) {
-        rowIndex = i + 1;
-        break;
+    // 1. Prioritaskan cocokkan via No BP (No BP pasti unik per pendaftar)
+    if (body.no_bp) {
+      const targetBp = String(body.no_bp).trim();
+      for (let i = 1; i < data.length; i++) {
+        if (String(data[i][2]).trim() === targetBp) {
+          rowIndex = i + 1;
+          break;
+        }
+      }
+    }
+    
+    // 2. Jika tidak ada No BP atau belum ketemu, cocokkan via ID Volunteer
+    if (rowIndex === -1 && body.id_volunteer) {
+      const targetId = String(body.id_volunteer).trim();
+      for (let i = 1; i < data.length; i++) {
+        if (String(data[i][0]).trim() === targetId) {
+          rowIndex = i + 1;
+          break;
+        }
+      }
+    }
+
+    // 3. Fallback: cocokkan via Nama Lengkap
+    if (rowIndex === -1 && body.nama) {
+      const targetNama = String(body.nama).trim().toLowerCase();
+      for (let i = 1; i < data.length; i++) {
+        if (String(data[i][1]).trim().toLowerCase() === targetNama) {
+          rowIndex = i + 1;
+          break;
+        }
       }
     }
     
@@ -146,7 +172,7 @@ const Volunteer = {
     
     ActivityLogs.log(
       user.user_id, null, user.role_name || user.role_id, 'Volunteer', 'UPDATE_STATUS',
-      `Ubah status volunteer ${body.id_volunteer} jadi ${body.status}`
+      `Ubah status volunteer ${body.id_volunteer || body.nama} jadi ${body.status}`
     );
     
     return Response.success('Status berhasil diperbarui.', null);
@@ -154,16 +180,39 @@ const Volunteer = {
   
   deleteVolunteer: function(body, user) {
     if (!user) return Response.error('UNAUTHORIZED', 'Sesi tidak valid.');
-    if (!body.id_volunteer) return Response.error('BAD_REQUEST', 'ID wajib ada.');
+    if (!body.id_volunteer && !body.no_bp) return Response.error('BAD_REQUEST', 'ID atau No BP wajib ada.');
     
     const sheet = Utils.getSheet(this.sheetName);
     const data = sheet.getDataRange().getValues();
     let rowIndex = -1;
     
-    for (let i = 1; i < data.length; i++) {
-      if (data[i][0] === body.id_volunteer) {
-        rowIndex = i + 1;
-        break;
+    if (body.no_bp) {
+      const targetBp = String(body.no_bp).trim();
+      for (let i = 1; i < data.length; i++) {
+        if (String(data[i][2]).trim() === targetBp) {
+          rowIndex = i + 1;
+          break;
+        }
+      }
+    }
+
+    if (rowIndex === -1 && body.id_volunteer) {
+      const targetId = String(body.id_volunteer).trim();
+      for (let i = 1; i < data.length; i++) {
+        if (String(data[i][0]).trim() === targetId) {
+          rowIndex = i + 1;
+          break;
+        }
+      }
+    }
+
+    if (rowIndex === -1 && body.nama) {
+      const targetNama = String(body.nama).trim().toLowerCase();
+      for (let i = 1; i < data.length; i++) {
+        if (String(data[i][1]).trim().toLowerCase() === targetNama) {
+          rowIndex = i + 1;
+          break;
+        }
       }
     }
     
@@ -173,9 +222,10 @@ const Volunteer = {
     
     ActivityLogs.log(
       user.user_id, null, user.role_name || user.role_id, 'Volunteer', 'DELETE',
-      `Hapus data volunteer ${body.id_volunteer}`
+      `Hapus data volunteer ${body.id_volunteer || body.nama}`
     );
     
     return Response.success('Data volunteer berhasil dihapus.', null);
   }
 };
+
