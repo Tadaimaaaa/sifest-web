@@ -6,7 +6,7 @@ export interface BazaarTentInfo {
 }
 
 export const BAZAAR_TENTS: BazaarTentInfo[] = [
-  // Blok A - Atas / Depan (8 Tenda)
+  // Blok A - Atas / Depan (9 Tenda)
   { id: "A1", block: "Blok A", position: "Atas / Depan", label: "Stand A1 - Blok A (Atas / Depan)" },
   { id: "A2", block: "Blok A", position: "Atas / Depan", label: "Stand A2 - Blok A (Atas / Depan)" },
   { id: "A3", block: "Blok A", position: "Atas / Depan", label: "Stand A3 - Blok A (Atas / Depan)" },
@@ -15,8 +15,9 @@ export const BAZAAR_TENTS: BazaarTentInfo[] = [
   { id: "A6", block: "Blok A", position: "Atas / Depan", label: "Stand A6 - Blok A (Atas / Depan)" },
   { id: "A7", block: "Blok A", position: "Atas / Depan", label: "Stand A7 - Blok A (Atas / Depan)" },
   { id: "A8", block: "Blok A", position: "Atas / Depan", label: "Stand A8 - Blok A (Atas / Depan)" },
+  { id: "A9", block: "Blok A", position: "Atas / Depan", label: "Stand A9 - Blok A (Atas / Depan)" },
 
-  // Blok B - Bawah / Belakang (8 Tenda)
+  // Blok B - Bawah / Belakang (9 Tenda)
   { id: "B1", block: "Blok B", position: "Bawah / Belakang", label: "Stand B1 - Blok B (Bawah / Belakang)" },
   { id: "B2", block: "Blok B", position: "Bawah / Belakang", label: "Stand B2 - Blok B (Bawah / Belakang)" },
   { id: "B3", block: "Blok B", position: "Bawah / Belakang", label: "Stand B3 - Blok B (Bawah / Belakang)" },
@@ -25,10 +26,12 @@ export const BAZAAR_TENTS: BazaarTentInfo[] = [
   { id: "B6", block: "Blok B", position: "Bawah / Belakang", label: "Stand B6 - Blok B (Bawah / Belakang)" },
   { id: "B7", block: "Blok B", position: "Bawah / Belakang", label: "Stand B7 - Blok B (Bawah / Belakang)" },
   { id: "B8", block: "Blok B", position: "Bawah / Belakang", label: "Stand B8 - Blok B (Bawah / Belakang)" },
+  { id: "B9", block: "Blok B", position: "Bawah / Belakang", label: "Stand B9 - Blok B (Bawah / Belakang)" },
 
-  // Blok C - Samping Kiri (2 Tenda)
+  // Blok C - Samping Kiri (3 Tenda)
   { id: "C1", block: "Blok C", position: "Samping Kiri", label: "Stand C1 - Blok C (Samping Kiri)" },
   { id: "C2", block: "Blok C", position: "Samping Kiri", label: "Stand C2 - Blok C (Samping Kiri)" },
+  { id: "C3", block: "Blok C", position: "Samping Kiri", label: "Stand C3 - Blok C (Samping Kiri)" },
 
   // Blok D - Tengah Atas (6 Tenda)
   { id: "D1", block: "Blok D", position: "Tengah Atas", label: "Stand D1 - Blok D (Tengah Atas)" },

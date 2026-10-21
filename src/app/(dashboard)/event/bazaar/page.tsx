@@ -28,13 +28,13 @@ type EventData = {
   status: string;
 };
 
-// Layout Konfigurasi berdasarkan sketsa (Total 30 Tenda)
+// Layout Konfigurasi berdasarkan sketsa (Total 33 Tenda)
 const layoutConfig = {
-  blokA: Array.from({ length: 8 }, (_, i) => `A${i + 1}`), // Atas (8)
-  blokC: ["C1", "C2"], // Kiri (2)
+  blokA: Array.from({ length: 9 }, (_, i) => `A${i + 1}`), // Atas (9)
+  blokC: ["C1", "C2", "C3"], // Kiri (3)
   blokD: Array.from({ length: 6 }, (_, i) => `D${i + 1}`), // Tengah Atas (6)
   blokE: Array.from({ length: 6 }, (_, i) => `E${i + 1}`), // Tengah Bawah (6)
-  blokB: Array.from({ length: 8 }, (_, i) => `B${i + 1}`), // Bawah (8)
+  blokB: Array.from({ length: 9 }, (_, i) => `B${i + 1}`), // Bawah (9)
 };
 
 export default function BazaarDashboard() {
@@ -441,22 +441,22 @@ export default function BazaarDashboard() {
 
         {/* Interactive Map Area */}
         <div className="bg-slate-50 p-4 md:p-8 rounded-3xl border-2 border-red-500/30 shadow-inner relative overflow-x-auto">
-          <div className="min-w-[800px]">
+          <div className="min-w-[860px]">
             <div className="flex flex-col gap-4 max-w-5xl mx-auto">
               {/* Top Row (Blok A) */}
-              <div className="grid grid-cols-8 gap-2 md:gap-3">
+              <div className="grid grid-cols-9 gap-2 md:gap-3">
                 {layoutConfig.blokA.map(id => <TendaBox key={id} id={id} />)}
               </div>
 
               {/* Middle Section */}
-              <div className="flex justify-between items-stretch h-36 md:h-44">
-                {/* Left Column (Blok C) */}
-                <div className="flex flex-col justify-between w-[calc(12.5%-8px)]">
+              <div className="flex justify-between items-stretch min-h-[220px] md:min-h-[240px]">
+                {/* Left Column (Blok C - 3 Tenda) */}
+                <div className="flex flex-col justify-between gap-2 md:gap-3 w-[calc((100%-64px)/9)] md:w-[calc((100%-96px)/9)]">
                   {layoutConfig.blokC.map(id => <TendaBox key={id} id={id} />)}
                 </div>
 
                 {/* Center Island (Blok D & E) */}
-                <div className="flex-1 mx-8 md:mx-12 flex flex-col justify-center gap-0 bg-slate-200/50 p-3 rounded-2xl border border-slate-200 border-dashed">
+                <div className="flex-1 mx-6 md:mx-10 flex flex-col justify-center gap-0 bg-slate-200/50 p-3 rounded-2xl border border-slate-200 border-dashed my-auto">
                   <div className="grid grid-cols-6 gap-2 md:gap-3 mb-1">
                     {layoutConfig.blokD.map(id => <TendaBox key={id} id={id} />)}
                   </div>
@@ -466,7 +466,7 @@ export default function BazaarDashboard() {
                 </div>
                 
                 {/* Right spacer for alignment - Gapura Pintu Masuk */}
-                <div className="w-[calc(12.5%-8px)] flex items-center justify-center relative">
+                <div className="w-[calc((100%-64px)/9)] md:w-[calc((100%-96px)/9)] flex items-center justify-center relative">
                   <div className="absolute inset-y-4 -right-12 md:-right-20 w-24 flex flex-col items-center justify-center z-10">
                     {/* Desain Gapura */}
                     <div className="w-full h-full border-t-8 border-r-8 border-b-8 border-amber-600 rounded-r-3xl flex flex-col items-center justify-center bg-amber-50 shadow-inner shadow-amber-900/20 relative">
@@ -479,7 +479,7 @@ export default function BazaarDashboard() {
               </div>
 
               {/* Bottom Row (Blok B) */}
-              <div className="grid grid-cols-8 gap-2 md:gap-3">
+              <div className="grid grid-cols-9 gap-2 md:gap-3">
                 {layoutConfig.blokB.map(id => <TendaBox key={id} id={id} />)}
               </div>
             </div>

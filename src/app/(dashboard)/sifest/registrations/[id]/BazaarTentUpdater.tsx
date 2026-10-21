@@ -156,9 +156,9 @@ export default function BazaarTentUpdater({
   };
 
   const blockGroups = [
-    { title: "Blok A (Atas / Depan - 8 Tenda)", prefix: "A" },
-    { title: "Blok B (Bawah / Belakang - 8 Tenda)", prefix: "B" },
-    { title: "Blok C (Samping Kiri - 2 Tenda)", prefix: "C" },
+    { title: "Blok A (Atas / Depan - 9 Tenda)", prefix: "A" },
+    { title: "Blok B (Bawah / Belakang - 9 Tenda)", prefix: "B" },
+    { title: "Blok C (Samping Kiri - 3 Tenda)", prefix: "C" },
     { title: "Blok D (Tengah Atas - 6 Tenda)", prefix: "D" },
     { title: "Blok E (Tengah Bawah - 6 Tenda)", prefix: "E" },
   ];
