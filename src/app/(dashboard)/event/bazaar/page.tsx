@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, Store, Save, Edit3, X, User, Phone, Tag, CheckCircle2, MapPin, CalendarDays, Info, Activity } from "lucide-react";
+import { ArrowLeft, ArrowRight, Store, Save, Edit3, X, User, Phone, Tag, CheckCircle2, MapPin, CalendarDays, Info, Activity, Maximize2, Minimize2 } from "lucide-react";
 import { SCRIPT_URL } from "@/lib/api";
 import Cookies from "js-cookie";
 import { toast } from "sonner";
@@ -69,6 +69,43 @@ export default function BazaarDashboard() {
   });
 
   const [bazaarParticipants, setBazaarParticipants] = useState<any[]>([]);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const toggleFullscreen = () => {
+    if (!isFullscreen) {
+      setIsFullscreen(true);
+      if (typeof document !== "undefined" && document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      }
+    } else {
+      setIsFullscreen(false);
+      if (typeof document !== "undefined" && document.fullscreenElement && document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {});
+      }
+    }
+  };
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      if (typeof document !== "undefined" && !document.fullscreenElement && isFullscreen) {
+        setIsFullscreen(false);
+      }
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && isFullscreen) {
+        setIsFullscreen(false);
+        if (typeof document !== "undefined" && document.fullscreenElement && document.exitFullscreen) {
+          document.exitFullscreen().catch(() => {});
+        }
+      }
+    };
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isFullscreen]);
 
   useEffect(() => {
     const userDataStr = Cookies.get("user_data");
@@ -240,6 +277,54 @@ export default function BazaarDashboard() {
       </button>
     );
   };
+
+  const FloorPlanMap = ({ isExpanded = false }: { isExpanded?: boolean }) => (
+    <div className={`bg-slate-50 p-4 md:p-8 rounded-3xl border-2 border-red-500/30 shadow-inner relative overflow-x-auto ${isExpanded ? 'w-full max-w-6xl mx-auto' : ''}`}>
+      <div className="min-w-[860px]">
+        <div className="flex flex-col gap-4 max-w-5xl mx-auto">
+          {/* Top Row (Blok A) */}
+          <div className="grid grid-cols-9 gap-2 md:gap-3">
+            {layoutConfig.blokA.map(id => <TendaBox key={id} id={id} />)}
+          </div>
+
+          {/* Middle Section */}
+          <div className="flex justify-between items-stretch min-h-[220px] md:min-h-[240px]">
+            {/* Left Column (Blok C - 3 Tenda) */}
+            <div className="flex flex-col justify-between gap-2 md:gap-3 w-[calc((100%-64px)/9)] md:w-[calc((100%-96px)/9)]">
+              {layoutConfig.blokC.map(id => <TendaBox key={id} id={id} />)}
+            </div>
+
+            {/* Center Island (Blok D & E) */}
+            <div className="flex-1 mx-6 md:mx-10 flex flex-col justify-center gap-0 bg-slate-200/50 p-3 rounded-2xl border border-slate-200 border-dashed my-auto">
+              <div className="grid grid-cols-6 gap-2 md:gap-3 mb-1">
+                {layoutConfig.blokD.map(id => <TendaBox key={id} id={id} />)}
+              </div>
+              <div className="grid grid-cols-6 gap-2 md:gap-3 mt-1">
+                {layoutConfig.blokE.map(id => <TendaBox key={id} id={id} />)}
+              </div>
+            </div>
+            
+            {/* Right spacer for alignment - Gapura Pintu Masuk */}
+            <div className="w-[calc((100%-64px)/9)] md:w-[calc((100%-96px)/9)] flex items-center justify-center relative">
+              <div className="absolute inset-y-4 -right-12 md:-right-20 w-24 flex flex-col items-center justify-center z-10">
+                {/* Desain Gapura */}
+                <div className="w-full h-full border-t-8 border-r-8 border-b-8 border-amber-600 rounded-r-3xl flex flex-col items-center justify-center bg-amber-50 shadow-inner shadow-amber-900/20 relative">
+                  <div className="absolute -top-3 right-4 bg-amber-600 text-white text-[10px] font-black px-2 py-0.5 rounded shadow">PINTU</div>
+                  <div className="absolute -bottom-3 right-4 bg-amber-600 text-white text-[10px] font-black px-2 py-0.5 rounded shadow">MASUK</div>
+                  <ArrowLeft className="w-8 h-8 text-amber-500 animate-pulse" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom Row (Blok B) */}
+          <div className="grid grid-cols-9 gap-2 md:gap-3">
+            {layoutConfig.blokB.map(id => <TendaBox key={id} id={id} />)}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 
   if (isLoading) return <FullPageLoader message="Memuat informasi bazaar..." fullScreen={false} />;
 
@@ -427,64 +512,33 @@ export default function BazaarDashboard() {
             <p className="text-sm text-slate-500 mt-1">Klik pada kotak tenda untuk melihat atau mengatur penyewa.</p>
           </div>
 
-          {/* Legend */}
-          <div className="flex items-center gap-3 bg-white p-3 rounded-xl border border-slate-200 shadow-sm text-xs font-semibold text-slate-600 flex-wrap">
-            <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-white border-2 border-slate-300" /> Kosong</div>
-            <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-rose-50 border-2 border-rose-400" /> Booked</div>
-            <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-blue-50 border-2 border-blue-400" /> DP</div>
-            <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-emerald-50 border-2 border-emerald-500" /> Lunas</div>
-            <div className="w-px h-4 bg-slate-200 mx-1"></div>
-            <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-amber-50 border-2 border-amber-400" /> Sponsor</div>
-            <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-purple-50 border-2 border-purple-400" /> Panitia</div>
+          <div className="flex items-center gap-2.5 flex-wrap">
+            {/* Legend */}
+            <div className="flex items-center gap-3 bg-white p-3 rounded-xl border border-slate-200 shadow-sm text-xs font-semibold text-slate-600 flex-wrap">
+              <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-white border-2 border-slate-300" /> Kosong</div>
+              <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-rose-50 border-2 border-rose-400" /> Booked</div>
+              <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-blue-50 border-2 border-blue-400" /> DP</div>
+              <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-emerald-50 border-2 border-emerald-500" /> Lunas</div>
+              <div className="w-px h-4 bg-slate-200 mx-1"></div>
+              <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-amber-50 border-2 border-amber-400" /> Sponsor</div>
+              <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-purple-50 border-2 border-purple-400" /> Panitia</div>
+            </div>
+
+            {/* Button Layar Penuh */}
+            <button
+              type="button"
+              onClick={toggleFullscreen}
+              className="flex items-center gap-2 px-4 py-3 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-xl text-xs font-bold shadow-md shadow-amber-500/20 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+              title="Buka Denah dalam Tampilan Layar Penuh"
+            >
+              <Maximize2 className="w-4 h-4" />
+              <span>Layar Penuh</span>
+            </button>
           </div>
         </div>
 
         {/* Interactive Map Area */}
-        <div className="bg-slate-50 p-4 md:p-8 rounded-3xl border-2 border-red-500/30 shadow-inner relative overflow-x-auto">
-          <div className="min-w-[860px]">
-            <div className="flex flex-col gap-4 max-w-5xl mx-auto">
-              {/* Top Row (Blok A) */}
-              <div className="grid grid-cols-9 gap-2 md:gap-3">
-                {layoutConfig.blokA.map(id => <TendaBox key={id} id={id} />)}
-              </div>
-
-              {/* Middle Section */}
-              <div className="flex justify-between items-stretch min-h-[220px] md:min-h-[240px]">
-                {/* Left Column (Blok C - 3 Tenda) */}
-                <div className="flex flex-col justify-between gap-2 md:gap-3 w-[calc((100%-64px)/9)] md:w-[calc((100%-96px)/9)]">
-                  {layoutConfig.blokC.map(id => <TendaBox key={id} id={id} />)}
-                </div>
-
-                {/* Center Island (Blok D & E) */}
-                <div className="flex-1 mx-6 md:mx-10 flex flex-col justify-center gap-0 bg-slate-200/50 p-3 rounded-2xl border border-slate-200 border-dashed my-auto">
-                  <div className="grid grid-cols-6 gap-2 md:gap-3 mb-1">
-                    {layoutConfig.blokD.map(id => <TendaBox key={id} id={id} />)}
-                  </div>
-                  <div className="grid grid-cols-6 gap-2 md:gap-3 mt-1">
-                    {layoutConfig.blokE.map(id => <TendaBox key={id} id={id} />)}
-                  </div>
-                </div>
-                
-                {/* Right spacer for alignment - Gapura Pintu Masuk */}
-                <div className="w-[calc((100%-64px)/9)] md:w-[calc((100%-96px)/9)] flex items-center justify-center relative">
-                  <div className="absolute inset-y-4 -right-12 md:-right-20 w-24 flex flex-col items-center justify-center z-10">
-                    {/* Desain Gapura */}
-                    <div className="w-full h-full border-t-8 border-r-8 border-b-8 border-amber-600 rounded-r-3xl flex flex-col items-center justify-center bg-amber-50 shadow-inner shadow-amber-900/20 relative">
-                      <div className="absolute -top-3 right-4 bg-amber-600 text-white text-[10px] font-black px-2 py-0.5 rounded shadow">PINTU</div>
-                      <div className="absolute -bottom-3 right-4 bg-amber-600 text-white text-[10px] font-black px-2 py-0.5 rounded shadow">MASUK</div>
-                      <ArrowLeft className="w-8 h-8 text-amber-500 animate-pulse" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Bottom Row (Blok B) */}
-              <div className="grid grid-cols-9 gap-2 md:gap-3">
-                {layoutConfig.blokB.map(id => <TendaBox key={id} id={id} />)}
-              </div>
-            </div>
-          </div>
-        </div>
+        <FloorPlanMap />
       </div>
 
       {/* SECTION 3: Tabel Data Penyewa */}
@@ -543,9 +597,57 @@ export default function BazaarDashboard() {
         </div>
       </div>
 
+      {/* Fullscreen Overlay Mode */}
+      {isFullscreen && (
+        <div className="fixed inset-0 z-[60] bg-slate-950/95 backdrop-blur-md p-4 sm:p-6 md:p-8 flex flex-col justify-between overflow-y-auto animate-in fade-in zoom-in-95 duration-200">
+          {/* Header Controls in Fullscreen */}
+          <div className="flex items-center justify-between gap-4 flex-wrap mb-4 max-w-6xl mx-auto w-full">
+            <div className="text-white">
+              <h2 className="text-xl md:text-2xl font-black flex items-center gap-2.5 tracking-tight">
+                <Store className="w-6 h-6 text-amber-400" />
+                Denah Tenda Bazaar (Layar Penuh)
+              </h2>
+              <p className="text-xs md:text-sm text-slate-300 mt-0.5">
+                Klik pada kotak tenda untuk detail penyewa. Tekan <kbd className="px-1.5 py-0.5 bg-slate-800 border border-slate-600 rounded text-[11px] font-mono text-amber-300">Esc</kbd> untuk keluar.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3 flex-wrap">
+              {/* Legend in Fullscreen */}
+              <div className="flex items-center gap-3 bg-slate-900/90 p-2.5 rounded-xl border border-slate-700 text-xs font-semibold text-slate-200 shadow-sm flex-wrap">
+                <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-white border-2 border-slate-300" /> Kosong</div>
+                <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-rose-50 border-2 border-rose-400" /> Booked</div>
+                <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-blue-50 border-2 border-blue-400" /> DP</div>
+                <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-emerald-50 border-2 border-emerald-500" /> Lunas</div>
+                <div className="w-px h-4 bg-slate-600 mx-1"></div>
+                <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-amber-50 border-2 border-amber-400" /> Sponsor</div>
+                <div className="flex items-center gap-1.5"><div className="w-3 h-3 rounded bg-purple-50 border-2 border-purple-400" /> Panitia</div>
+              </div>
+
+              {/* Exit Fullscreen Button */}
+              <button
+                type="button"
+                onClick={toggleFullscreen}
+                className="flex items-center gap-2 px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs md:text-sm font-bold shadow-lg shadow-rose-600/30 transition-all hover:scale-105 active:scale-95 cursor-pointer"
+              >
+                <Minimize2 className="w-4 h-4" />
+                <span>Keluar Layar Penuh</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Centered Map in Fullscreen */}
+          <div className="flex-1 flex items-center justify-center my-auto w-full py-4">
+            <div className="w-full max-w-6xl mx-auto shadow-2xl rounded-3xl overflow-hidden border border-slate-800">
+              <FloorPlanMap isExpanded={true} />
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Modal Tenant */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl animate-in zoom-in-95 duration-200 overflow-hidden">
             <div className={`p-6 border-b ${tenants[formDataTenant.id_tenda] ? 'bg-amber-50 border-amber-100' : 'bg-slate-50 border-slate-100'} flex items-center justify-between`}>
               <div>
