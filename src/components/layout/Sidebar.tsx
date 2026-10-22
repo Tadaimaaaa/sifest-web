@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Users, Handshake, Mail, Package, Box, LogOut, Wallet, Camera, Calendar, ScanLine, Image as ImageIcon, UserPlus } from "lucide-react";
+import { LayoutDashboard, Users, Handshake, Mail, Package, Box, LogOut, Wallet, Camera, Calendar, ScanLine, Image as ImageIcon, UserPlus, UserCheck } from "lucide-react";
 import clsx from "clsx";
 import { useState, useEffect } from "react";
 import Cookies from "js-cookie";
@@ -12,6 +12,7 @@ const navItems = [
   { name: "Pendaftar", href: "/sifest/registrations", icon: Users },
   { name: "Data Volunteer", href: "/volunteer", icon: UserPlus },
   { name: "Data Panitia", href: "/users", icon: Users },
+  { name: "Absensi Panitia", href: "/absensi-panitia", icon: UserCheck },
   { name: "Data Keuangan", href: "/keuangan", icon: Wallet },
   { name: "Data Sponsor", href: "/sponsor", icon: Handshake },
   { name: "Media Partner", href: "/media-partner", icon: Handshake },
