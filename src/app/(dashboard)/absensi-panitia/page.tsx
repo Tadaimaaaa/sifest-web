@@ -29,7 +29,10 @@ import {
   ArrowRight,
   ShieldCheck,
   Send,
-  Scan
+  Scan,
+  RotateCcw,
+  Trash2,
+  AlertTriangle
 } from "lucide-react";
 import FullPageLoader from "@/components/FullPageLoader";
 import FaceIDScannerModal from "@/components/scanner/FaceIDScannerModal";
@@ -149,6 +152,11 @@ export default function AbsensiPanitiaPage() {
   const [noteModalUser, setNoteModalUser] = useState<PanitiaUser | null>(null);
   const [noteInput, setNoteInput] = useState("");
   const [currentAdminName, setCurrentAdminName] = useState("Admin");
+
+  // Reset Modal State
+  const [isResetModalOpen, setIsResetModalOpen] = useState(false);
+  const [resetScope, setResetScope] = useState<"SESSION_ONLY" | "ALL_DATA">("ALL_DATA");
+  const [includeFaceProfiles, setIncludeFaceProfiles] = useState(true);
 
   // Audio Beep Synthesizer for Fast Scanning Feedback
   const playBeep = (freq = 880, duration = 120) => {
@@ -361,6 +369,92 @@ export default function AbsensiPanitiaPage() {
         })
       });
     } catch (e) {} finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Reset Data Presensi & Biometrik
+  const handleExecuteReset = async () => {
+    setIsSaving(true);
+    try {
+      const token = Cookies.get("session_token") || "";
+
+      // 1. Optimistic Local State Reset
+      setAttendanceMap({});
+
+      // 2. Clear LocalStorage
+      if (typeof window !== "undefined") {
+        try {
+          const keysToRemove: string[] = [];
+          for (let i = 0; i < localStorage.length; i++) {
+            const k = localStorage.key(i);
+            if (k) {
+              if (resetScope === "ALL_DATA") {
+                if (k.startsWith("sifest_absensi_panitia_") || k.startsWith("sifest_face_snapshot_")) {
+                  keysToRemove.push(k);
+                }
+              } else {
+                if (k === storageKey) {
+                  keysToRemove.push(k);
+                }
+              }
+            }
+          }
+          keysToRemove.forEach(k => localStorage.removeItem(k));
+
+          if (resetScope === "ALL_DATA" && includeFaceProfiles) {
+            localStorage.removeItem("sifest_enrolled_face_profiles");
+            setEnrolledMap({});
+          }
+        } catch (e) {}
+      }
+
+      // 3. Backend Sync
+      const resetRecords = panitiaList.map(p => ({
+        user_id: p.user_id,
+        status: "BELUM",
+        waktu_absen: "",
+        keterangan: ""
+      }));
+
+      await fetch(`${SCRIPT_URL}?action=bulkRecordAbsensiPanitia`, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({
+          action: "bulkRecordAbsensiPanitia",
+          token,
+          tanggal,
+          sesi: activeSesi,
+          recorded_by: currentAdminName,
+          records: resetRecords
+        })
+      }).catch(() => {});
+
+      // Call backend resetAbsensiPanitia if available
+      fetch(`${SCRIPT_URL}?action=resetAbsensiPanitia`, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({
+          token,
+          tanggal: resetScope === "SESSION_ONLY" ? tanggal : undefined,
+          sesi: resetScope === "SESSION_ONLY" ? activeSesi : undefined
+        })
+      }).catch(() => {});
+
+      setIsResetModalOpen(false);
+      toast.success(
+        resetScope === "ALL_DATA"
+          ? (includeFaceProfiles
+              ? "Seluruh data presensi dan biometrik berhasil direset bersih! (Daftar 69 panitia tetap aman)."
+              : "Seluruh data presensi berhasil direset bersih ke 0 Hadir!")
+          : `Data presensi untuk sesi "${activeSesi}" berhasil direset.`
+      );
+
+      await fetchData();
+    } catch (err) {
+      console.error(err);
+      toast.error("Gagal melakukan reset data presensi.");
+    } finally {
       setIsSaving(false);
     }
   };
@@ -708,6 +802,16 @@ export default function AbsensiPanitiaPage() {
             >
               <Check className="w-4 h-4 text-blue-600" />
               <span>Tandai Semua Hadir</span>
+            </button>
+            <button
+              type="button"
+              disabled={isSaving}
+              onClick={() => setIsResetModalOpen(true)}
+              className="px-3.5 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold rounded-xl text-xs md:text-sm border border-rose-200/80 transition-all active:scale-95 cursor-pointer flex items-center gap-1.5"
+              title="Reset seluruh data kehadiran & foto (sisakan list 69 panitia)"
+            >
+              <RotateCcw className="w-4 h-4 text-rose-600" />
+              <span>Reset Presensi</span>
             </button>
             <button
               type="button"
@@ -1386,6 +1490,137 @@ export default function AbsensiPanitiaPage() {
           setEnrolledMap((prev) => ({ ...prev, [user.user_id]: photoBase64 }));
         }}
       />
+
+      {/* ==================== MODAL KONFIRMASI RESET PRESENSI ==================== */}
+      {isResetModalOpen && (
+        <div className="fixed inset-0 z-[90] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl border border-slate-200 overflow-hidden flex flex-col max-h-[90vh]">
+            {/* Header */}
+            <div className="p-5 md:p-6 bg-gradient-to-r from-rose-50 to-amber-50 border-b border-rose-100 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-2xl bg-rose-500/10 text-rose-600 flex items-center justify-center flex-shrink-0">
+                  <RotateCcw className="w-5 h-5 text-rose-600" />
+                </div>
+                <div>
+                  <h3 className="text-base font-extrabold text-slate-900">
+                    Reset Data Presensi Panitia
+                  </h3>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Kembalikan kehadiran ke 0 Hadir (69 Belum Hadir)
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsResetModalOpen(false)}
+                className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-5 md:p-6 space-y-4 overflow-y-auto">
+              <div className="bg-amber-50 border border-amber-200/80 rounded-2xl p-4 flex items-start gap-3">
+                <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                <div className="text-xs text-amber-900 space-y-1">
+                  <p className="font-bold">Daftar Panitia Tetap Tersimpan Aman:</p>
+                  <p className="text-amber-800">
+                    Sebanyak <strong>{panitiaList.length} orang panitia</strong> tidak akan dihapus. Yang direset hanyalah catatan status kehadiran (HADIR/IZIN/SAKIT) kembali menjadi <strong>BELUM HADIR</strong>.
+                  </p>
+                </div>
+              </div>
+
+              {/* Scope Selection */}
+              <div className="space-y-2.5">
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                  Pilih Lingkup Reset:
+                </label>
+                <div
+                  onClick={() => setResetScope("ALL_DATA")}
+                  className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
+                    resetScope === "ALL_DATA"
+                      ? "border-rose-500 bg-rose-50/50 shadow-sm ring-1 ring-rose-400/30"
+                      : "border-slate-200 hover:border-slate-300"
+                  }`}
+                >
+                  <div className="pr-3">
+                    <p className="text-sm font-bold text-slate-900">Reset SEMUA Sesi & Riwayat Kehadiran (Bersih Total)</p>
+                    <p className="text-xs text-slate-500">Mereset semua tanggal & sesi ke 0 Hadir ({panitiaList.length} Belum).</p>
+                  </div>
+                  <input
+                    type="radio"
+                    name="reset_scope"
+                    checked={resetScope === "ALL_DATA"}
+                    onChange={() => setResetScope("ALL_DATA")}
+                    className="w-4 h-4 text-rose-600 focus:ring-rose-500 cursor-pointer"
+                  />
+                </div>
+
+                <div
+                  onClick={() => setResetScope("SESSION_ONLY")}
+                  className={`p-3.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
+                    resetScope === "SESSION_ONLY"
+                      ? "border-rose-500 bg-rose-50/50 shadow-sm ring-1 ring-rose-400/30"
+                      : "border-slate-200 hover:border-slate-300"
+                  }`}
+                >
+                  <div className="pr-3">
+                    <p className="text-sm font-bold text-slate-900">Reset Sesi Ini Saja</p>
+                    <p className="text-xs text-slate-500">
+                      Hanya tanggal <strong>{tanggal}</strong> & sesi <strong>{activeSesi}</strong>.
+                    </p>
+                  </div>
+                  <input
+                    type="radio"
+                    name="reset_scope"
+                    checked={resetScope === "SESSION_ONLY"}
+                    onChange={() => setResetScope("SESSION_ONLY")}
+                    className="w-4 h-4 text-rose-600 focus:ring-rose-500 cursor-pointer"
+                  />
+                </div>
+              </div>
+
+              {/* Option to clear Face profiles */}
+              {resetScope === "ALL_DATA" && (
+                <label className="flex items-start gap-3 p-3.5 bg-slate-50 border border-slate-200 rounded-2xl cursor-pointer hover:bg-slate-100 transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={includeFaceProfiles}
+                    onChange={(e) => setIncludeFaceProfiles(e.target.checked)}
+                    className="w-4 h-4 mt-0.5 rounded text-rose-600 focus:ring-rose-500 cursor-pointer"
+                  />
+                  <div className="text-xs text-slate-700">
+                    <span className="font-bold block text-slate-900">Hapus juga Master Wajah & Foto Snapshot Face ID</span>
+                    <span className="text-slate-500">Bersihkan seluruh foto selfie uji coba Face ID agar mulai dari awal.</span>
+                  </div>
+                </label>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2.5">
+              <button
+                type="button"
+                disabled={isSaving}
+                onClick={() => setIsResetModalOpen(false)}
+                className="px-4 py-2.5 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 rounded-xl text-xs font-semibold cursor-pointer"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                disabled={isSaving}
+                onClick={handleExecuteReset}
+                className="px-5 py-2.5 bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white rounded-xl text-xs font-bold shadow-md shadow-rose-600/20 flex items-center gap-2 cursor-pointer transition-all"
+              >
+                {isSaving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />}
+                <span>Ya, Reset Data Sekarang</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

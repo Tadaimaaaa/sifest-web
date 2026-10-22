@@ -183,5 +183,35 @@ const AbsensiPanitia = {
     }
 
     return Response.success(`Berhasil mencatat absensi untuk ${body.records.length} panitia`);
+  },
+
+  resetAttendance: function(params, authUser) {
+    const sheet = this._ensureSheet();
+    const data = sheet.getDataRange().getValues();
+    const targetTanggal = params && params.tanggal ? String(params.tanggal).trim() : null;
+    const targetSesi = params && params.sesi ? String(params.sesi).trim() : null;
+
+    if (!targetTanggal && !targetSesi) {
+      if (data.length > 1) {
+        sheet.deleteRows(2, data.length - 1);
+      }
+      return Response.success('Seluruh riwayat absensi panitia berhasil dibersihkan');
+    }
+
+    let deletedCount = 0;
+    for (let i = data.length - 1; i >= 1; i--) {
+      const rowTanggal = data[i][6] ? Utilities.formatDate(new Date(data[i][6]), "Asia/Jakarta", "yyyy-MM-dd") : "";
+      const rowSesi = String(data[i][7] || "").trim();
+
+      const matchTanggal = !targetTanggal || rowTanggal === targetTanggal;
+      const matchSesi = !targetSesi || targetSesi === "ALL" || rowSesi === targetSesi;
+
+      if (matchTanggal && matchSesi) {
+        sheet.deleteRow(i + 1);
+        deletedCount++;
+      }
+    }
+
+    return Response.success(`Riwayat absensi (${deletedCount} baris) berhasil direset`);
   }
 };

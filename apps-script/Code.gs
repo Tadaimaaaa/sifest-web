@@ -114,6 +114,8 @@ function doPost(e) {
         return AbsensiPanitia.recordAttendance(body, Auth.validateToken(body.token));
       case 'bulkRecordAbsensiPanitia':
         return AbsensiPanitia.bulkRecordAttendance(body, Auth.validateToken(body.token));
+      case 'resetAbsensiPanitia':
+        return AbsensiPanitia.resetAttendance(body, Auth.validateToken(body.token));
         
       default:
         return Response.error('NOT_FOUND', 'Action not found.');
@@ -134,6 +136,8 @@ function doGet(e) {
         return Users.getUsers();
       case 'getAbsensiPanitia':
         return AbsensiPanitia.getAttendance(e.parameter);
+      case 'resetAbsensiPanitia':
+        return AbsensiPanitia.resetAttendance(e.parameter, Auth.validateToken(e.parameter.token));
       case 'getKeuangan':
         return Keuangan.getTransactions();
       case 'getInsertPendaftaran':
