@@ -16,7 +16,8 @@ import {
   Scan,
   Users,
   Search,
-  CheckCheck
+  CheckCheck,
+  UserX
 } from "lucide-react";
 import Cookies from "js-cookie";
 import { PanitiaUser } from "@/app/(dashboard)/absensi-panitia/page";
@@ -28,14 +29,99 @@ interface FaceIDScannerModalProps {
   panitiaList: PanitiaUser[];
   initialSelectedUser?: PanitiaUser | null;
   onAttendanceSuccess: (user: PanitiaUser, snapshotBase64?: string) => Promise<any>;
+  onOpenEnrollment?: (user?: PanitiaUser | null) => void;
 }
+
+// ==================== BIOMETRIC FEATURE EXTRACTION & SIMILARITY ====================
+
+// Extract a 32x32 normalized biometric feature vector (Z-score luminance)
+function extractFaceFeatures(
+  source: HTMLVideoElement | HTMLImageElement,
+  cropCenter = true
+): number[] | null {
+  try {
+    const size = 32;
+    const canvas = document.createElement("canvas");
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    if (!ctx) return null;
+
+    if (source instanceof HTMLVideoElement && cropCenter) {
+      const vw = source.videoWidth || 640;
+      const vh = source.videoHeight || 480;
+      const minDim = Math.min(vw, vh);
+      const sx = (vw - minDim) / 2;
+      const sy = (vh - minDim) / 2;
+      // Mirror live video horizontally to match mirrored user preview & enrolled selfies
+      ctx.translate(size, 0);
+      ctx.scale(-1, 1);
+      ctx.drawImage(source, sx, sy, minDim, minDim, 0, 0, size, size);
+    } else {
+      ctx.drawImage(source, 0, 0, size, size);
+    }
+
+    const imgData = ctx.getImageData(0, 0, size, size).data;
+    const features: number[] = [];
+
+    // Grayscale luminance with Z-score normalization
+    let sum = 0;
+    let sumSq = 0;
+    const lums: number[] = [];
+    const n = size * size;
+
+    for (let i = 0; i < imgData.length; i += 4) {
+      // Perceptual luminance formula
+      const lum = 0.299 * imgData[i] + 0.587 * imgData[i + 1] + 0.114 * imgData[i + 2];
+      lums.push(lum);
+      sum += lum;
+      sumSq += lum * lum;
+    }
+
+    const mean = sum / n;
+    const variance = Math.max(1, sumSq / n - mean * mean);
+    const std = Math.sqrt(variance);
+
+    for (let i = 0; i < n; i++) {
+      features.push((lums[i] - mean) / std);
+    }
+
+    return features;
+  } catch {
+    return null;
+  }
+}
+
+// Compute normalized Cosine similarity between two feature vectors
+function computeBiometricSimilarity(vecA: number[], vecB: number[]): number {
+  if (!vecA || !vecB || vecA.length !== vecB.length) return 0;
+  let dot = 0;
+  let normA = 0;
+  let normB = 0;
+  const len = vecA.length;
+
+  for (let i = 0; i < len; i++) {
+    dot += vecA[i] * vecB[i];
+    normA += vecA[i] * vecA[i];
+    normB += vecB[i] * vecB[i];
+  }
+
+  if (normA === 0 || normB === 0) return 0;
+  const cos = dot / (Math.sqrt(normA) * Math.sqrt(normB));
+  // Map normalized cosine [-0.2 .. 1.0] to [0% .. 100%]
+  const similarity = Math.max(0, Math.min(100, Math.round(((cos + 0.15) / 1.15) * 100)));
+  return similarity;
+}
+
+// ==================== MAIN COMPONENT ====================
 
 export default function FaceIDScannerModal({
   isOpen,
   onClose,
   panitiaList,
   initialSelectedUser,
-  onAttendanceSuccess
+  onAttendanceSuccess,
+  onOpenEnrollment
 }: FaceIDScannerModalProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -48,18 +134,20 @@ export default function FaceIDScannerModal({
   const [voiceEnabled, setVoiceEnabled] = useState(true);
 
   // Face Detection & Recognition States
-  const [scanState, setScanState] = useState<"IDLE" | "DETECTING" | "ANALYZING" | "VERIFIED" | "FAILED">("IDLE");
+  const [scanState, setScanState] = useState<"IDLE" | "DETECTING" | "ANALYZING" | "VERIFIED" | "UNMATCHED">("IDLE");
   const [confidence, setConfidence] = useState(0);
+  const [detectedUser, setDetectedUser] = useState<PanitiaUser | null>(null);
   const [verifiedUser, setVerifiedUser] = useState<PanitiaUser | null>(null);
   const [capturedSnapshot, setCapturedSnapshot] = useState<string | null>(null);
 
-  // Target selection & search
-  const [selectedUserForScan, setSelectedUserForScan] = useState<PanitiaUser | null>(null);
+  // Manual target override (if operator clicks a panitia on right panel)
+  const [manualTargetUser, setManualTargetUser] = useState<PanitiaUser | null>(null);
   const [searchTarget, setSearchTarget] = useState("");
   const [quickNimInput, setQuickNimInput] = useState("");
 
-  // Face profile cache in localStorage
+  // Enrolled faces & pre-computed biometric vectors
   const [enrolledFaces, setEnrolledFaces] = useState<Record<string, string>>({});
+  const [enrolledVectors, setEnrolledVectors] = useState<Record<string, number[]>>({});
 
   // Audio Synthesizers
   const playAudioChime = useCallback((type: "scan" | "success" | "error") => {
@@ -129,79 +217,45 @@ export default function FaceIDScannerModal({
     } catch (e) {}
   }, [voiceEnabled]);
 
-  // Load enrolled faces from localStorage
+  // Load enrolled faces & pre-compute biometric vectors
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const cached = localStorage.getItem("sifest_enrolled_face_profiles");
-        if (cached) setEnrolledFaces(JSON.parse(cached));
-      } catch (e) {}
-    }
+    if (!isOpen || typeof window === "undefined") return;
+
+    try {
+      const cached = localStorage.getItem("sifest_enrolled_face_profiles");
+      if (cached) {
+        const faceMap: Record<string, string> = JSON.parse(cached);
+        setEnrolledFaces(faceMap);
+
+        // Pre-compute vectors for each enrolled face
+        const nextVectors: Record<string, number[]> = {};
+        const entries = Object.entries(faceMap);
+
+        entries.forEach(([userId, base64Photo]) => {
+          const img = new Image();
+          img.onload = () => {
+            const vec = extractFaceFeatures(img, false);
+            if (vec) {
+              nextVectors[userId] = vec;
+              setEnrolledVectors((prev) => ({ ...prev, [userId]: vec }));
+            }
+          };
+          img.src = base64Photo;
+        });
+      }
+    } catch (e) {}
   }, [isOpen]);
 
-  // Automatically determine the target panitia when modal opens
+  // Sync initial user prop if provided
   useEffect(() => {
-    if (!isOpen) return;
-
-    // 1. If explicitly opened for a specific user:
     if (initialSelectedUser) {
-      setSelectedUserForScan(initialSelectedUser);
+      setManualTargetUser(initialSelectedUser);
       setQuickNimInput(String(initialSelectedUser.nim || ""));
-      return;
+    } else {
+      setManualTargetUser(null);
+      setQuickNimInput("");
     }
-
-    // 2. Check if currently logged in user matches a panitia (e.g. Ahlazzikri):
-    if (typeof window !== "undefined") {
-      try {
-        const ud = Cookies.get("user_data");
-        if (ud) {
-          const parsed = JSON.parse(ud);
-          const match = panitiaList.find((p) => {
-            const pUser = String(p.user_id || "").toLowerCase();
-            const pNim = String(p.nim || "").toLowerCase();
-            const pName = p.name.toLowerCase();
-            const pUsername = p.username.toLowerCase();
-
-            return (
-              (parsed.user_id && pUser === String(parsed.user_id).toLowerCase()) ||
-              (parsed.nim && pNim === String(parsed.nim).toLowerCase()) ||
-              (parsed.username && pUsername === String(parsed.username).toLowerCase()) ||
-              (parsed.name && pName === String(parsed.name).toLowerCase())
-            );
-          });
-
-          if (match) {
-            setSelectedUserForScan(match);
-            setQuickNimInput(String(match.nim || ""));
-            return;
-          }
-        }
-      } catch (e) {}
-
-      // 3. Or check if there is an enrolled face in localStorage:
-      try {
-        const cached = localStorage.getItem("sifest_enrolled_face_profiles");
-        if (cached) {
-          const enrolledObj = JSON.parse(cached);
-          const enrolledIds = Object.keys(enrolledObj);
-          if (enrolledIds.length > 0) {
-            const matchEnrolled = panitiaList.find((p) => p.user_id === enrolledIds[0]);
-            if (matchEnrolled) {
-              setSelectedUserForScan(matchEnrolled);
-              setQuickNimInput(String(matchEnrolled.nim || ""));
-              return;
-            }
-          }
-        }
-      } catch (e) {}
-    }
-
-    // 4. Fallback default to first panitia in list:
-    if (panitiaList.length > 0 && !selectedUserForScan) {
-      setSelectedUserForScan(panitiaList[0]);
-      setQuickNimInput(String(panitiaList[0].nim || ""));
-    }
-  }, [initialSelectedUser, panitiaList, isOpen]);
+  }, [initialSelectedUser, isOpen]);
 
   // Start Camera
   const startCamera = useCallback(async () => {
@@ -252,12 +306,12 @@ export default function FaceIDScannerModal({
   useEffect(() => {
     if (isOpen) {
       startCamera();
-    } else {
-      stopCamera();
       setScanState("IDLE");
       setVerifiedUser(null);
-      setCapturedSnapshot(null);
+      setDetectedUser(null);
       setConfidence(0);
+    } else {
+      stopCamera();
     }
     return () => {
       stopCamera();
@@ -269,8 +323,8 @@ export default function FaceIDScannerModal({
     if (!videoRef.current || !canvasRef.current) return null;
     const video = videoRef.current;
     const canvas = canvasRef.current;
-    canvas.width = 360;
-    canvas.height = 360;
+    canvas.width = 400;
+    canvas.height = 400;
     const ctx = canvas.getContext("2d");
     if (!ctx) return null;
 
@@ -282,20 +336,21 @@ export default function FaceIDScannerModal({
     ctx.translate(canvas.width, 0);
     ctx.scale(-1, 1);
     ctx.drawImage(video, startX, startY, minDim, minDim, 0, 0, canvas.width, canvas.height);
-    return canvas.toDataURL("image/jpeg", 0.75);
+    return canvas.toDataURL("image/jpeg", 0.85);
   };
 
   // Execute verification and check-in for targeted user
-  const triggerVerification = async (target: PanitiaUser) => {
+  const triggerVerification = async (target: PanitiaUser, score: number) => {
     if (!target) return;
 
     const snapshot = captureFrame() || undefined;
     setCapturedSnapshot(snapshot || null);
     setVerifiedUser(target);
     setScanState("VERIFIED");
+    setConfidence(score);
     playAudioChime("success");
     speakGreeting(target.name);
-    toast.success(`Face ID Match: ${target.name} terverifikasi HADIR!`);
+    toast.success(`Face ID Match (${score}%): ${target.name} terverifikasi HADIR!`);
 
     // Save attendance
     try {
@@ -306,65 +361,115 @@ export default function FaceIDScannerModal({
     setTimeout(() => {
       setScanState("IDLE");
       setVerifiedUser(null);
+      setDetectedUser(null);
       setCapturedSnapshot(null);
       setConfidence(0);
     }, 3200);
   };
 
-  // Main Detection Loop: Immediately starts analyzing as soon as camera is ready!
+  // ==================== REAL-TIME BIOMETRIC MATCHING ENGINE ====================
+  // Scans webcam frame every 400ms and compares against all registered panitia faces
   useEffect(() => {
     if (!isOpen || !isCameraReady || scanState === "VERIFIED") return;
 
     let isCancelled = false;
-    let detectionTimer: NodeJS.Timeout;
+    let matchInterval: NodeJS.Timeout;
 
-    const runDetection = () => {
-      if (isCancelled) return;
+    const runBiometricComparison = () => {
+      if (isCancelled || !videoRef.current) return;
 
-      // Determine target panitia
-      let target = selectedUserForScan;
-      if (!target) {
-        target = panitiaList.find((p) => enrolledFaces[p.user_id]) || panitiaList[0] || null;
-      }
-      if (!target) return;
+      // Extract live feature vector from center of webcam feed
+      const liveVector = extractFaceFeatures(videoRef.current, true);
+      if (!liveVector) return;
 
-      if (!selectedUserForScan) {
-        setSelectedUserForScan(target);
-      }
-
-      setScanState("ANALYZING");
-      playAudioChime("scan");
-
-      // Progressive biometric feature extraction
-      let currentConf = 42;
-      const interval = setInterval(() => {
-        if (isCancelled) {
-          clearInterval(interval);
-          return;
+      // If manual target was selected by operator:
+      if (manualTargetUser) {
+        const enrolledVec = enrolledVectors[manualTargetUser.user_id];
+        if (enrolledVec) {
+          const score = computeBiometricSimilarity(liveVector, enrolledVec);
+          setConfidence(score);
+          if (score >= 68) {
+            setScanState("ANALYZING");
+            setDetectedUser(manualTargetUser);
+            triggerVerification(manualTargetUser, score);
+          } else {
+            setScanState("UNMATCHED");
+            setDetectedUser(null);
+          }
+        } else {
+          // Manual target without enrolled photo: do NOT verify
+          setScanState("UNMATCHED");
+          setConfidence(0);
+          setDetectedUser(null);
         }
-        currentConf += Math.floor(Math.random() * 15) + 12;
-        if (currentConf >= 98) {
-          currentConf = 99.4;
-          clearInterval(interval);
-          triggerVerification(target);
+        return;
+      }
+
+      // AUTO-MATCHING: Compare live vector against all registered faces in enrolledVectors
+      const vectorEntries = Object.entries(enrolledVectors);
+
+      if (vectorEntries.length === 0) {
+        // No enrolled faces in the system
+        setScanState("UNMATCHED");
+        setDetectedUser(null);
+        setConfidence(0);
+        return;
+      }
+
+      let bestScore = 0;
+      let bestUserId: string | null = null;
+
+      for (const [userId, vec] of vectorEntries) {
+        const score = computeBiometricSimilarity(liveVector, vec);
+        if (score > bestScore) {
+          bestScore = score;
+          bestUserId = userId;
         }
-        setConfidence(Math.min(currentConf, 99.4));
-      }, 110);
+      }
+
+      const matchedPanitia = bestUserId ? panitiaList.find((p) => p.user_id === bestUserId) : null;
+
+      // THRESHOLD: 68% similarity required for positive biometric face match
+      if (matchedPanitia && bestScore >= 68) {
+        setScanState("ANALYZING");
+        setDetectedUser(matchedPanitia);
+        setConfidence(bestScore);
+        playAudioChime("scan");
+
+        // Verified!
+        triggerVerification(matchedPanitia, bestScore);
+      } else {
+        // Face is in front of camera, but doesn't match any enrolled user sufficiently
+        setScanState("UNMATCHED");
+        setDetectedUser(null);
+        setConfidence(bestScore);
+      }
     };
 
-    detectionTimer = setTimeout(runDetection, 300);
+    matchInterval = setInterval(runBiometricComparison, 450);
 
     return () => {
       isCancelled = true;
-      clearTimeout(detectionTimer);
+      clearInterval(matchInterval);
     };
-  }, [isOpen, isCameraReady, selectedUserForScan, panitiaList, enrolledFaces, playAudioChime]);
+  }, [
+    isOpen,
+    isCameraReady,
+    scanState,
+    manualTargetUser,
+    enrolledVectors,
+    panitiaList,
+    playAudioChime
+  ]);
 
   // Handle Quick NIM input matching
   const handleQuickNimMatch = (value: string) => {
     setQuickNimInput(value);
     const clean = value.trim().toLowerCase();
-    if (!clean) return;
+    if (!clean) {
+      setManualTargetUser(null);
+      return;
+    }
 
     const match = panitiaList.find((p) => {
       const pNim = String(p.nim).toLowerCase();
@@ -373,10 +478,10 @@ export default function FaceIDScannerModal({
     });
 
     if (match) {
-      setSelectedUserForScan(match);
+      setManualTargetUser(match);
       setScanState("IDLE");
       setConfidence(0);
-      toast.info(`Target Face ID: ${match.name}`);
+      toast.info(`Target Manual: ${match.name}`);
     }
   };
 
@@ -393,10 +498,10 @@ export default function FaceIDScannerModal({
     });
 
     if (match) {
-      setSelectedUserForScan(match);
+      setManualTargetUser(match);
       setScanState("IDLE");
       setConfidence(0);
-      toast.info(`Target Face ID: ${match.name}`);
+      toast.info(`Target Manual: ${match.name}`);
     } else {
       toast.error("Panitia tidak ditemukan dengan NIM / Nama tersebut.");
     }
@@ -404,7 +509,8 @@ export default function FaceIDScannerModal({
 
   if (!isOpen) return null;
 
-  const currentActiveTarget = selectedUserForScan || panitiaList[0];
+  const currentDisplayUser = verifiedUser || detectedUser || manualTargetUser;
+  const enrolledCount = Object.keys(enrolledFaces).length;
 
   const filteredPanitiaSearch = panitiaList.filter((p) => {
     const q = searchTarget.toLowerCase().trim();
@@ -428,13 +534,15 @@ export default function FaceIDScannerModal({
             <div>
               <div className="flex items-center gap-2">
                 <h3 className="text-white font-extrabold text-base md:text-lg tracking-tight">
-                  SI FEST Face ID Attendance
+                  SI FEST Face ID Biometric Recognition
                 </h3>
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 uppercase tracking-widest">
-                  Biometric AI
+                  AI Real-Time Match
                 </span>
               </div>
-              <p className="text-xs text-slate-400">Posisikan wajah Anda tepat di dalam bingkai biometrik.</p>
+              <p className="text-xs text-slate-400">
+                Kamera membandingkan wajah Anda langsung dengan foto master yang telah terdaftar.
+              </p>
             </div>
           </div>
 
@@ -510,18 +618,25 @@ export default function FaceIDScannerModal({
                         className={`w-2 h-2 rounded-full flex-shrink-0 ${
                           scanState === "VERIFIED"
                             ? "bg-emerald-400 animate-ping"
-                            : "bg-cyan-400 animate-pulse"
+                            : scanState === "ANALYZING"
+                            ? "bg-cyan-400 animate-pulse"
+                            : scanState === "UNMATCHED"
+                            ? "bg-amber-400 animate-pulse"
+                            : "bg-slate-400"
                         }`}
                       />
                       <span className="truncate">
                         {scanState === "VERIFIED" && "WAJAH TERVERIFIKASI HADIR!"}
                         {scanState === "ANALYZING" &&
-                          `ANALISIS BIOMETRIK: ${(currentActiveTarget?.name || "WAJAH").toUpperCase()} (${confidence.toFixed(1)}%)`}
-                        {scanState === "IDLE" &&
-                          `MEMINDAI WAJAH: ${(currentActiveTarget?.name || "").toUpperCase()}`}
+                          `WAJAH COCOK: ${(currentDisplayUser?.name || "").toUpperCase()} (${confidence}%)`}
+                        {scanState === "UNMATCHED" &&
+                          (enrolledCount === 0
+                            ? "BELUM ADA WAJAH TERDAFTAR DI SISTEM"
+                            : `MEMINDAI... (Kecocokan Tertinggi: ${confidence}%)`)}
+                        {scanState === "IDLE" && "SIAP MEMINDAI WAJAH..."}
                       </span>
                     </div>
-                    <span className="text-slate-400 text-[10px] flex-shrink-0 ml-2">FPS: 30 • 1080p</span>
+                    <span className="text-slate-400 text-[10px] flex-shrink-0 ml-2">FPS: 30 • AI</span>
                   </div>
 
                   {/* Central Face Target Frame */}
@@ -529,28 +644,32 @@ export default function FaceIDScannerModal({
                     className={`relative w-56 h-64 md:w-64 md:h-72 rounded-[48px] border-2 transition-all duration-300 flex items-center justify-center ${
                       scanState === "VERIFIED"
                         ? "border-emerald-400 bg-emerald-500/10 shadow-[0_0_50px_rgba(52,211,153,0.35)]"
-                        : "border-cyan-400 bg-cyan-500/5 shadow-[0_0_40px_rgba(34,211,238,0.25)]"
+                        : scanState === "ANALYZING"
+                        ? "border-cyan-400 bg-cyan-500/5 shadow-[0_0_40px_rgba(34,211,238,0.25)]"
+                        : scanState === "UNMATCHED"
+                        ? "border-amber-500/60 shadow-[0_0_20px_rgba(245,158,11,0.2)]"
+                        : "border-slate-500/50"
                     }`}
                   >
                     {/* 4 Glowing Corner Brackets */}
                     <div
                       className={`absolute -top-1 -left-1 w-6 h-6 border-t-4 border-l-4 rounded-tl-2xl ${
-                        scanState === "VERIFIED" ? "border-emerald-400" : "border-cyan-400"
+                        scanState === "VERIFIED" ? "border-emerald-400" : scanState === "ANALYZING" ? "border-cyan-400" : "border-slate-400"
                       }`}
                     />
                     <div
                       className={`absolute -top-1 -right-1 w-6 h-6 border-t-4 border-r-4 rounded-tr-2xl ${
-                        scanState === "VERIFIED" ? "border-emerald-400" : "border-cyan-400"
+                        scanState === "VERIFIED" ? "border-emerald-400" : scanState === "ANALYZING" ? "border-cyan-400" : "border-slate-400"
                       }`}
                     />
                     <div
                       className={`absolute -bottom-1 -left-1 w-6 h-6 border-b-4 border-l-4 rounded-bl-2xl ${
-                        scanState === "VERIFIED" ? "border-emerald-400" : "border-cyan-400"
+                        scanState === "VERIFIED" ? "border-emerald-400" : scanState === "ANALYZING" ? "border-cyan-400" : "border-slate-400"
                       }`}
                     />
                     <div
                       className={`absolute -bottom-1 -right-1 w-6 h-6 border-b-4 border-r-4 rounded-br-2xl ${
-                        scanState === "VERIFIED" ? "border-emerald-400" : "border-cyan-400"
+                        scanState === "VERIFIED" ? "border-emerald-400" : scanState === "ANALYZING" ? "border-cyan-400" : "border-slate-400"
                       }`}
                     />
 
@@ -586,35 +705,40 @@ export default function FaceIDScannerModal({
               <div className="relative flex-1">
                 <input
                   type="text"
-                  placeholder="Ketik NIM untuk ganti panitia..."
+                  placeholder="Ketik NIM untuk override / ganti target manual..."
                   value={quickNimInput}
                   onChange={(e) => handleQuickNimMatch(e.target.value)}
                   className="w-full pl-9 pr-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-cyan-500 font-mono"
                 />
                 <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
               </div>
+              {manualTargetUser && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setManualTargetUser(null);
+                    setQuickNimInput("");
+                    setScanState("IDLE");
+                    toast.info("Kembali ke mode pencocokan wajah otomatis.");
+                  }}
+                  className="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs rounded-xl font-bold cursor-pointer transition-colors"
+                >
+                  Reset Auto
+                </button>
+              )}
             </form>
 
             {/* Bottom Target Card (Who is being verified) */}
             <div className="w-full max-w-lg mt-3 bg-slate-900 border border-slate-800 rounded-2xl p-3.5 flex items-center justify-between">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="w-11 h-11 rounded-full bg-slate-800 border-2 border-cyan-500/40 overflow-hidden flex items-center justify-center flex-shrink-0">
-                  {verifiedUser ? (
+                  {currentDisplayUser ? (
                     <img
                       src={
-                        enrolledFaces[verifiedUser.user_id] ||
-                        `https://api.dicebear.com/7.x/avataaars/svg?seed=${verifiedUser.name}`
+                        enrolledFaces[currentDisplayUser.user_id] ||
+                        `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentDisplayUser.name}`
                       }
-                      alt={verifiedUser.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : currentActiveTarget ? (
-                    <img
-                      src={
-                        enrolledFaces[currentActiveTarget.user_id] ||
-                        `https://api.dicebear.com/7.x/avataaars/svg?seed=${currentActiveTarget.name}`
-                      }
-                      alt={currentActiveTarget.name}
+                      alt={currentDisplayUser.name}
                       className="w-full h-full object-cover"
                     />
                   ) : (
@@ -626,31 +750,58 @@ export default function FaceIDScannerModal({
                   <p className="text-[11px] text-slate-400 font-semibold truncate">
                     {verifiedUser
                       ? "Presensi Berhasil (Hadir):"
-                      : "Target Presensi Face ID:"}
+                      : detectedUser
+                      ? `Wajah Cocok (${confidence}%):`
+                      : manualTargetUser
+                      ? "Target Terpilih:"
+                      : "Pencocokan Wajah Otomatis:"}
                   </p>
                   <h4 className="text-white font-extrabold text-sm truncate max-w-[240px]">
-                    {verifiedUser
-                      ? verifiedUser.name
-                      : currentActiveTarget
-                      ? currentActiveTarget.name
-                      : "Memindai..."}
+                    {currentDisplayUser
+                      ? currentDisplayUser.name
+                      : enrolledCount === 0
+                      ? "Belum ada wajah terdaftar"
+                      : "Arahkan wajah ke kamera..."}
                   </h4>
                   <p className="text-[11px] text-cyan-400 font-mono truncate">
-                    {verifiedUser
-                      ? `${verifiedUser.division} • ${verifiedUser.nim}`
-                      : currentActiveTarget
-                      ? `${currentActiveTarget.division} • ${currentActiveTarget.nim}`
-                      : "Auto Face Recognition"}
+                    {currentDisplayUser
+                      ? `${currentDisplayUser.division} • ${currentDisplayUser.nim}`
+                      : enrolledCount === 0
+                      ? "Daftarkan wajah panitia terlebih dahulu"
+                      : "Sistem mencocokkan otomatis"}
                   </p>
                 </div>
               </div>
 
-              {scanState === "VERIFIED" && (
+              {scanState === "VERIFIED" ? (
                 <div className="flex items-center gap-1 text-emerald-400 bg-emerald-950/80 border border-emerald-500/30 px-3 py-1.5 rounded-xl text-xs font-bold">
                   <Check className="w-4 h-4" />
                   <span>Hadir</span>
                 </div>
-              )}
+              ) : enrolledCount === 0 && onOpenEnrollment ? (
+                <button
+                  type="button"
+                  onClick={() => onOpenEnrollment(null)}
+                  className="px-3 py-1.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-xl text-xs font-bold shadow-md flex items-center gap-1.5 cursor-pointer transition-all"
+                >
+                  <Camera className="w-3.5 h-3.5" />
+                  <span>Daftar Wajah</span>
+                </button>
+              ) : manualTargetUser && !enrolledFaces[manualTargetUser.user_id] && onOpenEnrollment ? (
+                <button
+                  type="button"
+                  onClick={() => onOpenEnrollment(manualTargetUser)}
+                  className="px-3 py-1.5 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-bold shadow-md flex items-center gap-1.5 cursor-pointer transition-all"
+                >
+                  <Camera className="w-3.5 h-3.5" />
+                  <span>Daftar Wajah</span>
+                </button>
+              ) : scanState === "UNMATCHED" && enrolledCount > 0 ? (
+                <div className="text-[10px] text-amber-400 bg-amber-950/60 border border-amber-500/30 px-2 py-1 rounded-xl text-right">
+                  <span>Wajah belum cocok</span>
+                  <span className="block font-mono text-slate-400">Min. 68%</span>
+                </div>
+              ) : null}
             </div>
           </div>
 
@@ -660,9 +811,11 @@ export default function FaceIDScannerModal({
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
                   <Users className="w-4 h-4 text-cyan-400" />
-                  Pilih Panitia ({panitiaList.length})
+                  Master Wajah ({enrolledCount}/{panitiaList.length})
                 </span>
-                <span className="text-[10px] text-cyan-400 font-mono">Klik untuk ganti</span>
+                <span className="text-[10px] text-emerald-400 font-mono">
+                  {enrolledCount} Terdaftar
+                </span>
               </div>
               <input
                 type="text"
@@ -675,17 +828,18 @@ export default function FaceIDScannerModal({
 
             <div className="flex-1 overflow-y-auto space-y-1.5 pr-1 max-h-[360px] lg:max-h-[460px]">
               {filteredPanitiaSearch.map((p) => {
-                const isSelected = (selectedUserForScan || currentActiveTarget)?.user_id === p.user_id;
+                const isSelected = (manualTargetUser || detectedUser || verifiedUser)?.user_id === p.user_id;
                 const isEnrolled = !!enrolledFaces[p.user_id];
 
                 return (
                   <div
                     key={p.user_id}
                     onClick={() => {
-                      setSelectedUserForScan(p);
+                      setManualTargetUser(p);
                       setQuickNimInput(String(p.nim));
                       setScanState("IDLE");
                       setConfidence(0);
+                      toast.info(`Target Face ID: ${p.name}`);
                     }}
                     className={`p-2.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${
                       isSelected
@@ -718,14 +872,26 @@ export default function FaceIDScannerModal({
                     </div>
 
                     <div className="flex items-center gap-1.5">
-                      {isEnrolled && (
+                      {isEnrolled ? (
                         <span
                           className="text-[9px] font-bold text-emerald-300 bg-emerald-950/80 border border-emerald-500/40 px-1.5 py-0.5 rounded flex items-center gap-1"
-                          title="Wajah sudah terdaftar"
+                          title="Wajah sudah terdaftar di sistem Face ID"
                         >
                           <CheckCheck className="w-3 h-3 text-emerald-400" />
-                          <span>Face ID</span>
+                          <span>Terdaftar</span>
                         </span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (onOpenEnrollment) onOpenEnrollment(p);
+                          }}
+                          className="text-[9px] text-purple-300 bg-purple-950/70 border border-purple-500/30 hover:bg-purple-900/80 px-1.5 py-0.5 rounded cursor-pointer transition-colors"
+                          title="Daftarkan foto wajah panitia ini"
+                        >
+                          + Daftar
+                        </button>
                       )}
                     </div>
                   </div>
@@ -734,9 +900,21 @@ export default function FaceIDScannerModal({
             </div>
 
             <div className="mt-3 pt-3 border-t border-slate-800 text-[11px] text-slate-400 space-y-1">
-              <p className="font-semibold text-slate-300">⚡ Deteksi Otomatis:</p>
-              <p>• Tatap kamera tepat di dalam bingkai biometrik.</p>
-              <p>• Kamera otomatis memindai dan mencatat kehadiran dalam hitungan detik.</p>
+              <p className="font-semibold text-slate-300">💡 Cara Kerja Biometrik:</p>
+              <p>1. Kamera membandingkan kontur wajah live dengan foto yang ada di <strong>Master Wajah</strong>.</p>
+              <p>2. Jika cocok (kemiripan ≥ 68%), nama pemilik wajah langsung terverifikasi <strong>HADIR</strong>.</p>
+              <p>3. Jika wajah belum terdaftar, daftarkan terlebih dahulu via menu <strong>Daftar Wajah Panitia</strong>.</p>
+
+              {onOpenEnrollment && (
+                <button
+                  type="button"
+                  onClick={() => onOpenEnrollment(manualTargetUser || null)}
+                  className="w-full mt-2 py-2 px-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white rounded-xl text-xs font-bold shadow-md shadow-purple-900/30 flex items-center justify-center gap-2 cursor-pointer transition-all"
+                >
+                  <Camera className="w-3.5 h-3.5" />
+                  <span>Buka Pendaftaran Wajah Panitia</span>
+                </button>
+              )}
             </div>
           </div>
         </div>

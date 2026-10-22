@@ -1358,6 +1358,11 @@ export default function AbsensiPanitiaPage() {
         }}
         panitiaList={panitiaList}
         initialSelectedUser={faceIDTargetUser}
+        onOpenEnrollment={(user) => {
+          setIsFaceIDOpen(false);
+          setEnrollModalUser(user || null);
+          setIsEnrollModalOpen(true);
+        }}
         onAttendanceSuccess={async (user, snapshotBase64) => {
           if (snapshotBase64) {
             try {
@@ -1365,6 +1370,20 @@ export default function AbsensiPanitiaPage() {
             } catch (e) {}
           }
           await updateAttendance(user, "HADIR", "Presensi via Face ID Biometrik");
+        }}
+      />
+
+      {/* ==================== MODAL DAFTAR WAJAH PANITIA (MASTER FACE ENROLLMENT) ==================== */}
+      <FaceEnrollmentModal
+        isOpen={isEnrollModalOpen}
+        onClose={() => {
+          setIsEnrollModalOpen(false);
+          setEnrollModalUser(null);
+        }}
+        panitiaList={panitiaList}
+        initialSelectedUser={enrollModalUser}
+        onEnrollSuccess={(user, photoBase64) => {
+          setEnrolledMap((prev) => ({ ...prev, [user.user_id]: photoBase64 }));
         }}
       />
     </div>
