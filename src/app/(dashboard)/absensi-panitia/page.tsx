@@ -19,7 +19,6 @@ import {
   HelpCircle,
   Plus,
   RefreshCw,
-  QrCode,
   Check,
   X,
   Sparkles,
@@ -33,8 +32,8 @@ import {
   Scan
 } from "lucide-react";
 import FullPageLoader from "@/components/FullPageLoader";
-import QRScanner from "@/components/scanner/QRScanner";
 import FaceIDScannerModal from "@/components/scanner/FaceIDScannerModal";
+import FaceEnrollmentModal from "@/components/scanner/FaceEnrollmentModal";
 import { SCRIPT_URL } from "@/lib/api";
 
 export interface PanitiaUser {
@@ -112,12 +111,13 @@ export default function AbsensiPanitiaPage() {
   const [divisionFilter, setDivisionFilter] = useState("ALL");
   const [statusFilter, setStatusFilter] = useState<"ALL" | AttendanceStatus>("ALL");
 
-  // Scanner & Modals
-  const [isScannerOpen, setIsScannerOpen] = useState(false);
+  // Face ID & Enrollment Modals
   const [isFaceIDOpen, setIsFaceIDOpen] = useState(false);
   const [faceIDTargetUser, setFaceIDTargetUser] = useState<PanitiaUser | null>(null);
+  const [isEnrollModalOpen, setIsEnrollModalOpen] = useState(false);
+  const [enrollModalUser, setEnrollModalUser] = useState<PanitiaUser | null>(null);
+  const [enrolledMap, setEnrolledMap] = useState<Record<string, string>>({});
   const [quickCodeInput, setQuickCodeInput] = useState("");
-  const [qrModalUser, setQrModalUser] = useState<PanitiaUser | null>(null);
   const [noteModalUser, setNoteModalUser] = useState<PanitiaUser | null>(null);
   const [noteInput, setNoteInput] = useState("");
   const [currentAdminName, setCurrentAdminName] = useState("Admin");
@@ -155,6 +155,10 @@ export default function AbsensiPanitiaPage() {
         if (u.name) setCurrentAdminName(u.name);
       } catch (e) {}
     }
+    try {
+      const cachedFaces = localStorage.getItem("sifest_enrolled_face_profiles");
+      if (cachedFaces) setEnrolledMap(JSON.parse(cachedFaces));
+    } catch (e) {}
     fetchData();
   }, [tanggal, activeSesi]);
 
@@ -543,12 +547,13 @@ export default function AbsensiPanitiaPage() {
                 Absensi Panitia
               </h1>
               <p className="text-sm text-blue-100 max-w-xl">
-                Catat presensi harian, rapat pleno, dan agenda kepanitiaan dengan scan barcode kartu panitia atau toggle cepat.
+                Catat presensi harian, rapat pleno, dan agenda kepanitiaan dengan Presensi Face ID Biometrik AI dan Pendaftaran Wajah.
               </p>
             </div>
 
             {/* Quick Action Buttons */}
             <div className="flex items-center gap-2.5 flex-wrap">
+              {/* Fitur 1: Presensi Face ID */}
               <button
                 type="button"
                 onClick={() => {
@@ -561,13 +566,17 @@ export default function AbsensiPanitiaPage() {
                 <span>Presensi Face ID</span>
               </button>
 
+              {/* Fitur 2: Daftar Wajah Panitia */}
               <button
                 type="button"
-                onClick={() => setIsScannerOpen(true)}
-                className="flex items-center gap-2 px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl text-xs md:text-sm font-bold shadow-lg shadow-emerald-600/30 transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                onClick={() => {
+                  setEnrollModalUser(null);
+                  setIsEnrollModalOpen(true);
+                }}
+                className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-400 hover:to-indigo-500 text-white rounded-xl text-xs md:text-sm font-extrabold shadow-lg shadow-purple-600/30 transition-all hover:scale-105 active:scale-95 cursor-pointer ring-2 ring-purple-300/40"
               >
-                <Camera className="w-4 h-4" />
-                <span>Scan Barcode Panitia</span>
+                <Camera className="w-4 h-4 text-purple-100" />
+                <span>Daftar Wajah Panitia</span>
               </button>
 
               <button
@@ -754,13 +763,13 @@ export default function AbsensiPanitiaPage() {
           </div>
         </div>
 
-        {/* Quick Search & Barcode USB Reader */}
+        {/* Quick Search & NIM Input */}
         <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
           <div className="flex-1 relative">
             <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              placeholder="Scan Barcode atau ketik NIM / ID Panitia lalu tekan Enter..."
+              placeholder="Ketik NIM / Nama Panitia lalu tekan Enter untuk presensi..."
               value={quickCodeInput}
               onChange={(e) => setQuickCodeInput(e.target.value)}
               onKeyDown={(e) => {
@@ -904,16 +913,31 @@ export default function AbsensiPanitiaPage() {
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-3">
                             <div className="w-9 h-9 rounded-full bg-slate-200 overflow-hidden flex-shrink-0 border border-slate-200">
-                              <img
-                                src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${p.name}`}
-                                alt={p.name}
-                                className="w-full h-full object-cover"
-                              />
+                              {enrolledMap[p.user_id] ? (
+                                <img
+                                  src={enrolledMap[p.user_id]}
+                                  alt={p.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <img
+                                  src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${p.name}`}
+                                  alt={p.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              )}
                             </div>
                             <div className="min-w-0">
-                              <p className="font-bold text-slate-800 text-sm truncate" title={p.name}>
-                                {p.name}
-                              </p>
+                              <div className="flex items-center gap-1.5">
+                                <p className="font-bold text-slate-800 text-sm truncate" title={p.name}>
+                                  {p.name}
+                                </p>
+                                {enrolledMap[p.user_id] && (
+                                  <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200/80 px-1.5 py-0.2 rounded-full whitespace-nowrap">
+                                    Face ID
+                                  </span>
+                                )}
+                              </div>
                               <div className="flex items-center gap-2 text-xs text-slate-500 mt-0.5">
                                 <span className="font-mono text-slate-600 bg-slate-100 px-1.5 py-0.2 rounded text-[11px] font-semibold">
                                   {p.nim}
@@ -1005,32 +1029,40 @@ export default function AbsensiPanitiaPage() {
                         {/* Actions */}
                         <td className="py-3 px-4 text-center">
                           <div className="flex items-center justify-center gap-1.5">
+                            {/* Fitur 1: Presensi Face ID */}
                             <button
                               type="button"
                               onClick={() => {
                                 setFaceIDTargetUser(p);
                                 setIsFaceIDOpen(true);
                               }}
-                              className="p-1.5 text-slate-400 hover:text-cyan-600 hover:bg-cyan-50 rounded-lg transition-colors"
-                              title="Scan Face ID / Daftarkan Wajah"
+                              className="p-1.5 text-slate-400 hover:text-cyan-600 hover:bg-cyan-50 rounded-lg transition-colors cursor-pointer"
+                              title="Presensi Face ID Panitia Ini"
                             >
                               <Scan className="w-4 h-4" />
                             </button>
+
+                            {/* Fitur 2: Daftar Wajah Panitia */}
                             <button
                               type="button"
-                              onClick={() => setQrModalUser(p)}
-                              className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                              title="Lihat Barcode / QR Kartu Panitia"
+                              onClick={() => {
+                                setEnrollModalUser(p);
+                                setIsEnrollModalOpen(true);
+                              }}
+                              className="p-1.5 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors cursor-pointer"
+                              title="Daftarkan / Perbarui Foto Wajah Panitia"
                             >
-                              <QrCode className="w-4 h-4" />
+                              <Camera className="w-4 h-4" />
                             </button>
+
+                            {/* Keterangan */}
                             <button
                               type="button"
                               onClick={() => {
                                 setNoteModalUser(p);
                                 setNoteInput(att?.keterangan || "");
                               }}
-                              className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+                              className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors cursor-pointer"
                               title="Tambah / Ubah Keterangan"
                             >
                               <FileText className="w-4 h-4" />
@@ -1047,122 +1079,26 @@ export default function AbsensiPanitiaPage() {
         </div>
       </div>
 
-      {/* ==================== MODAL SCANNER KAMERA ==================== */}
-      {isScannerOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl border border-slate-100 animate-in zoom-in-95 duration-200">
-            <div className="p-5 bg-gradient-to-r from-emerald-600 to-teal-700 text-white flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-white/20 flex items-center justify-center">
-                  <Camera className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-base leading-tight">Pemindai Barcode Panitia</h3>
-                  <p className="text-xs text-emerald-100">Arahkan kamera ke QR/Barcode Kartu Panitia</p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsScannerOpen(false)}
-                className="p-1.5 text-white/70 hover:text-white hover:bg-white/10 rounded-full transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="p-6 space-y-4">
-              <div className="overflow-hidden rounded-2xl bg-black aspect-video flex items-center justify-center relative">
-                <QRScanner
-                  onScanSuccess={(code) => {
-                    handleQuickCheckIn(code);
-                  }}
-                />
-              </div>
-
-              <div className="bg-slate-50 p-3 rounded-xl border border-slate-200 text-xs text-slate-600 space-y-1">
-                <p className="font-semibold text-slate-800">💡 Tips Pemindaian Cepat:</p>
-                <p>• Scanner membaca NIM atau ID Panitia secara instan dan otomatis membunyikan notifikasi.</p>
-                <p>• Kamera akan tetap aktif untuk memindai panitia berikutnya secara terus-menerus.</p>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setIsScannerOpen(false)}
-                className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-sm font-bold rounded-xl transition-colors cursor-pointer"
-              >
-                Tutup Scanner
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ==================== MODAL QR / ID CARD PANITIA ==================== */}
-      {qrModalUser && (
-        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl w-full max-w-sm overflow-hidden shadow-2xl border border-slate-100 animate-in zoom-in-95 duration-200">
-            <div className="p-4 bg-gradient-to-r from-blue-600 to-indigo-700 text-white flex items-center justify-between">
-              <span className="text-xs font-bold uppercase tracking-wider">ID Barcode Panitia</span>
-              <button
-                type="button"
-                onClick={() => setQrModalUser(null)}
-                className="p-1 text-white/70 hover:text-white rounded-full"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="p-6 text-center space-y-4">
-              <div className="w-16 h-16 rounded-full bg-slate-100 border-2 border-blue-500 mx-auto overflow-hidden shadow-md">
-                <img
-                  src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${qrModalUser.name}`}
-                  alt={qrModalUser.name}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-
-              <div>
-                <h4 className="font-black text-slate-900 text-base">{qrModalUser.name}</h4>
-                <p className="text-xs text-slate-500 font-mono font-bold mt-0.5">NIM: {qrModalUser.nim}</p>
-                <div className="mt-2 inline-block px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-bold border border-blue-200">
-                  {qrModalUser.division} — {qrModalUser.position}
-                </div>
-              </div>
-
-              {/* QR Image */}
-              <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl flex flex-col items-center justify-center">
-                <img
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(String(qrModalUser.nim))}&bgcolor=f8fafc`}
-                  alt="QR Code"
-                  className="w-44 h-44 rounded-lg shadow-sm"
-                />
-                <span className="text-[10px] text-slate-400 mt-2 font-mono">Kode: {qrModalUser.nim}</span>
-              </div>
-
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    updateAttendance(qrModalUser, "HADIR");
-                    setQrModalUser(null);
-                    toast.success(`Hadir: ${qrModalUser.name}`);
-                  }}
-                  className="flex-1 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-bold transition-all shadow-sm shadow-emerald-600/20"
-                >
-                  Absen Hadir Sekarang
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setQrModalUser(null)}
-                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold"
-                >
-                  Tutup
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* ==================== MODAL PENDAFTARAN WAJAH PANITIA (FACE ENROLLMENT) ==================== */}
+      <FaceEnrollmentModal
+        isOpen={isEnrollModalOpen}
+        onClose={() => {
+          setIsEnrollModalOpen(false);
+          setEnrollModalUser(null);
+          try {
+            const cached = localStorage.getItem("sifest_enrolled_face_profiles");
+            if (cached) setEnrolledMap(JSON.parse(cached));
+          } catch (e) {}
+        }}
+        panitiaList={panitiaList}
+        initialSelectedUser={enrollModalUser}
+        onEnrollSuccess={() => {
+          try {
+            const cached = localStorage.getItem("sifest_enrolled_face_profiles");
+            if (cached) setEnrolledMap(JSON.parse(cached));
+          } catch (e) {}
+        }}
+      />
 
       {/* ==================== MODAL CATATAN / IZIN ==================== */}
       {noteModalUser && (
