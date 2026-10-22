@@ -65,6 +65,34 @@ export interface AttendanceRecord {
   keterangan: string;
   recorded_by: string;
   updated_at: string;
+  face_snapshot?: string;
+}
+
+export function formatFullIndonesianDate(dateStr: string, timeStr?: string) {
+  try {
+    if (!dateStr) return { fullDate: "-", fullDateTime: "-" };
+    const parts = dateStr.split("-");
+    if (parts.length < 3) return { fullDate: dateStr, fullDateTime: `${dateStr} ${timeStr || ""}` };
+    const year = parseInt(parts[0], 10);
+    const month = parseInt(parts[1], 10) - 1;
+    const day = parseInt(parts[2], 10);
+    const d = new Date(year, month, day);
+
+    const DAYS = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
+    const MONTHS = [
+      "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+      "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+    ];
+
+    const dayName = DAYS[d.getDay()] || "";
+    const monthName = MONTHS[month] || "";
+    const fullDate = `${dayName}, ${day} ${monthName} ${year}`;
+    const fullDateTime = timeStr ? `${fullDate} • ${timeStr}` : fullDate;
+
+    return { fullDate, fullDateTime };
+  } catch (e) {
+    return { fullDate: dateStr, fullDateTime: `${dateStr} ${timeStr || ""}` };
+  }
 }
 
 const PRESET_SESI = [
@@ -222,11 +250,17 @@ export default function AbsensiPanitiaPage() {
   const updateAttendance = async (
     user: PanitiaUser,
     newStatus: AttendanceStatus,
-    keteranganCustom?: string
+    keteranganCustom?: string,
+    snapshotBase64?: string
   ) => {
     const now = new Date();
     const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")} WIB`;
     const prev = attendanceMap[user.user_id];
+
+    let facePhoto = snapshotBase64;
+    if (!facePhoto && typeof window !== "undefined") {
+      facePhoto = localStorage.getItem(`sifest_face_snapshot_${user.user_id}_${tanggal}`) || prev?.face_snapshot;
+    }
 
     const record: AttendanceRecord = {
       id_absensi: prev?.id_absensi || `ABS-${Date.now()}`,
@@ -241,7 +275,8 @@ export default function AbsensiPanitiaPage() {
       waktu_absen: newStatus === "HADIR" ? (prev?.waktu_absen || timeStr) : (newStatus === "BELUM" ? "" : timeStr),
       keterangan: keteranganCustom !== undefined ? keteranganCustom : (prev?.keterangan || ""),
       recorded_by: currentAdminName,
-      updated_at: now.toISOString()
+      updated_at: now.toISOString(),
+      face_snapshot: facePhoto || undefined
     };
 
     // Update state optimis di UI
@@ -1009,17 +1044,40 @@ export default function AbsensiPanitiaPage() {
 
                         {/* Waktu & Catatan */}
                         <td className="py-3 px-4">
-                          <div className="space-y-0.5 text-xs">
+                          <div className="space-y-1 text-xs">
                             {att?.waktu_absen ? (
-                              <div className="flex items-center gap-1 font-semibold text-emerald-700">
-                                <Clock className="w-3.5 h-3.5 text-emerald-600" />
-                                <span>{att.waktu_absen}</span>
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <div className="flex items-center gap-1 font-semibold text-emerald-700">
+                                  <Clock className="w-3.5 h-3.5 text-emerald-600" />
+                                  <span>{att.waktu_absen}</span>
+                                </div>
+                                {(att?.face_snapshot || (typeof window !== "undefined" && localStorage.getItem(`sifest_face_snapshot_${p.user_id}_${tanggal}`)) || enrolledMap[p.user_id]) && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setNoteModalUser(p);
+                                      setNoteInput(att?.keterangan || "");
+                                    }}
+                                    className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-cyan-50 hover:bg-cyan-100 text-cyan-700 border border-cyan-200 text-[10px] font-bold cursor-pointer transition-colors"
+                                    title="Lihat Foto Bukti Presensi Face ID & Waktu Lengkap"
+                                  >
+                                    <Camera className="w-3 h-3 text-cyan-600" />
+                                    <span>Bukti Foto</span>
+                                  </button>
+                                )}
                               </div>
                             ) : (
                               <span className="text-slate-400 italic">Belum absen</span>
                             )}
                             {att?.keterangan && (
-                              <p className="text-[11px] text-slate-500 bg-amber-50 border border-amber-200/60 rounded px-1.5 py-0.5 inline-block">
+                              <p
+                                onClick={() => {
+                                  setNoteModalUser(p);
+                                  setNoteInput(att.keterangan);
+                                }}
+                                className="text-[11px] text-slate-600 bg-amber-50 hover:bg-amber-100 border border-amber-200/60 rounded px-1.5 py-0.5 inline-block cursor-pointer transition-colors"
+                                title="Klik untuk lihat detail presensi & ubah keterangan"
+                              >
                                 Ket: {att.keterangan}
                               </p>
                             )}
@@ -1100,67 +1158,196 @@ export default function AbsensiPanitiaPage() {
         }}
       />
 
-      {/* ==================== MODAL CATATAN / IZIN ==================== */}
-      {noteModalUser && (
-        <div className="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl w-full max-w-md overflow-hidden shadow-2xl border border-slate-100 animate-in zoom-in-95 duration-200">
-            <div className="p-5 bg-gradient-to-r from-amber-500 to-orange-600 text-white flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <FileText className="w-5 h-5" />
-                <h3 className="font-bold text-base">Keterangan / Alasan Izin</h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setNoteModalUser(null)}
-                className="p-1 text-white/70 hover:text-white rounded-full"
+      {/* ==================== MODAL DETAIL PRESENSI & BUKTI FACE ID ==================== */}
+      {noteModalUser && (() => {
+        const att = attendanceMap[noteModalUser.user_id];
+        const status = att?.status || "BELUM";
+        const snapshotPhoto =
+          att?.face_snapshot ||
+          (typeof window !== "undefined"
+            ? localStorage.getItem(`sifest_face_snapshot_${noteModalUser.user_id}_${tanggal}`)
+            : null) ||
+          enrolledMap[noteModalUser.user_id];
+
+        const { fullDate, fullDateTime } = formatFullIndonesianDate(att?.tanggal || tanggal, att?.waktu_absen);
+        const isFaceID = att?.keterangan?.toLowerCase().includes("face id") || !!snapshotPhoto;
+
+        return (
+          <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-3 md:p-4 animate-in fade-in duration-200">
+            <div className="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl border border-slate-100 animate-in zoom-in-95 duration-200 flex flex-col max-h-[92vh]">
+              {/* Header */}
+              <div
+                className={`p-4 md:p-5 text-white flex items-center justify-between ${
+                  isFaceID
+                    ? "bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-700"
+                    : "bg-gradient-to-r from-amber-500 to-orange-600"
+                }`}
               >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="p-6 space-y-4">
-              <div>
-                <p className="text-xs text-slate-500">Panitia:</p>
-                <p className="font-bold text-slate-800 text-sm">{noteModalUser.name} ({noteModalUser.division})</p>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                  Alasan / Keterangan:
-                </label>
-                <textarea
-                  rows={3}
-                  placeholder="Contoh: Sakit demam, Izin ada kuliah jam 10.00, atau tugas luar..."
-                  value={noteInput}
-                  onChange={(e) => setNoteInput(e.target.value)}
-                  className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-2">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center shadow-inner">
+                    {isFaceID ? (
+                      <Scan className="w-5 h-5 text-white animate-pulse" />
+                    ) : (
+                      <FileText className="w-5 h-5 text-white" />
+                    )}
+                  </div>
+                  <div>
+                    <h3 className="font-extrabold text-base leading-tight">
+                      {isFaceID ? "Detail Presensi Face ID" : "Detail & Keterangan Presensi"}
+                    </h3>
+                    <p className="text-xs text-white/80">
+                      Bukti kehadiran dan waktu presensi lengkap
+                    </p>
+                  </div>
+                </div>
                 <button
                   type="button"
                   onClick={() => setNoteModalUser(null)}
-                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold"
+                  className="p-1.5 text-white/80 hover:text-white hover:bg-white/10 rounded-xl transition-colors cursor-pointer"
                 >
-                  Batal
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Body */}
+              <div className="p-5 md:p-6 space-y-4 overflow-y-auto flex-1">
+                {/* Panitia Info Card */}
+                <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-3.5 flex items-center justify-between">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-11 h-11 rounded-full bg-slate-200 overflow-hidden border-2 border-white shadow-sm flex-shrink-0">
+                      {snapshotPhoto ? (
+                        <img src={snapshotPhoto} alt={noteModalUser.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <img
+                          src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${noteModalUser.name}`}
+                          alt={noteModalUser.name}
+                          className="w-full h-full object-cover"
+                        />
+                      )}
+                    </div>
+                    <div className="min-w-0">
+                      <h4 className="font-extrabold text-slate-900 text-sm truncate">{noteModalUser.name}</h4>
+                      <p className="text-xs text-slate-500 font-mono truncate">
+                        {noteModalUser.division} • {noteModalUser.nim}
+                      </p>
+                    </div>
+                  </div>
+                  <span
+                    className={`px-2.5 py-1 rounded-full text-xs font-bold border flex-shrink-0 ${
+                      status === "HADIR"
+                        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                        : status === "IZIN"
+                        ? "bg-amber-50 text-amber-700 border-amber-200"
+                        : status === "SAKIT"
+                        ? "bg-blue-50 text-blue-700 border-blue-200"
+                        : "bg-rose-50 text-rose-700 border-rose-200"
+                    }`}
+                  >
+                    {status}
+                  </span>
+                </div>
+
+                {/* Foto Bukti Presensi Face ID */}
+                {snapshotPhoto && (
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+                        <Camera className="w-4 h-4 text-cyan-600" />
+                        Foto Saat Face ID:
+                      </span>
+                      <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full flex items-center gap-1">
+                        <Check className="w-3 h-3 text-emerald-600" /> Wajah Terverifikasi
+                      </span>
+                    </div>
+
+                    <div className="relative rounded-2xl overflow-hidden bg-slate-950 border-2 border-cyan-500/40 shadow-lg aspect-[4/3] max-w-xs mx-auto flex items-center justify-center group">
+                      <img
+                        src={snapshotPhoto}
+                        alt="Foto Bukti Face ID"
+                        className="w-full h-full object-cover"
+                      />
+
+                      {/* Watermark Overlay Tanggal & Jam Lengkap */}
+                      <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/90 via-black/60 to-transparent text-white font-mono text-left">
+                        <p className="font-bold text-cyan-300 text-xs flex items-center gap-1">
+                          <Scan className="w-3.5 h-3.5 text-cyan-400" />
+                          <span>SI FEST 2026 • FACE ID</span>
+                        </p>
+                        <p className="text-[11px] text-slate-200 mt-0.5 font-medium">{fullDateTime}</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Detail Waktu & Format Tanggal Lengkap */}
+                <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 space-y-2.5 text-xs text-slate-700">
+                  <div className="flex items-start gap-2.5">
+                    <Calendar className="w-4 h-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <span className="font-semibold text-slate-500 block text-[11px]">Hari, Tanggal, Bulan, Tahun:</span>
+                      <span className="font-bold text-slate-900 text-sm">{fullDate}</span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-2.5">
+                    <Clock className="w-4 h-4 text-emerald-600 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <span className="font-semibold text-slate-500 block text-[11px]">Waktu / Jam Presensi:</span>
+                      <span className="font-mono font-bold text-emerald-700 text-sm">
+                        {att?.waktu_absen || "Belum ada jam absen"}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-2.5">
+                    <Layers className="w-4 h-4 text-purple-600 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <span className="font-semibold text-slate-500 block text-[11px]">Sesi Agenda:</span>
+                      <span className="font-bold text-slate-800">{att?.sesi || activeSesi}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Catatan / Keterangan */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+                    Keterangan Presensi:
+                  </label>
+                  <textarea
+                    rows={2}
+                    placeholder="Contoh: Presensi via Face ID Biometrik, Sakit demam, Izin kuliah, dll..."
+                    value={noteInput}
+                    onChange={(e) => setNoteInput(e.target.value)}
+                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                  />
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setNoteModalUser(null)}
+                  className="px-4 py-2 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 rounded-xl text-xs font-semibold cursor-pointer"
+                >
+                  Tutup
                 </button>
                 <button
                   type="button"
                   onClick={() => {
-                    updateAttendance(noteModalUser, "IZIN", noteInput);
+                    updateAttendance(noteModalUser, att?.status || "HADIR", noteInput);
                     setNoteModalUser(null);
-                    toast.success(`Keterangan izin disimpan untuk ${noteModalUser.name}`);
+                    toast.success(`Keterangan disimpan untuk ${noteModalUser.name}`);
                   }}
-                  className="px-5 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold shadow-md shadow-amber-500/20"
+                  className="px-5 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-xs font-bold shadow-md shadow-blue-500/20 cursor-pointer"
                 >
-                  Simpan Status Izin
+                  Simpan Perubahan
                 </button>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* ==================== MODAL FACE ID BIOMETRIC SCANNER ==================== */}
       <FaceIDScannerModal
