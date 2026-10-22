@@ -289,15 +289,18 @@ export default function BazaarDashboard() {
             <div className="invisible pointer-events-none" />
           </div>
 
-          {/* Middle Section (Sayap Kiri: Blok C di Kolom 1 | Tengah: Blok D & E di Kolom 2-10 | Sayap Kanan: Pintu Masuk di Kolom 11) */}
+          {/* Middle Section (Sayap Kiri: Blok C di Kolom 1 | Lorong Kiri: Kolom 2-3 | Tengah: Blok D & E di Kolom 4-9 | Lorong Kanan: Kolom 10 | Sayap Kanan: Pintu Masuk di Kolom 11) */}
           <div className="grid grid-cols-11 gap-2 md:gap-3 items-stretch min-h-[220px] md:min-h-[240px]">
-            {/* Sayap Kiri - Blok C (3 Tenda menjorok ke kiri di luar deretan A1 & B1) */}
+            {/* Sayap Kiri - Blok C (3 Tenda di Kolom 1) */}
             <div className="flex flex-col justify-between gap-2 md:gap-3">
               {layoutConfig.blokC.map(id => <TendaBox key={id} id={id} />)}
             </div>
 
-            {/* Center Island (Blok D & E - Menempati 9 Kolom Tengah) */}
-            <div className="col-span-9 flex flex-col justify-center gap-0 bg-slate-200/50 p-3 rounded-2xl border border-slate-200 border-dashed my-auto mx-4 md:mx-8">
+            {/* Lorong Kiri (Kolom 2 & 3: di depan A1-A2 & B1-B2) */}
+            <div className="col-span-2 invisible pointer-events-none" />
+
+            {/* Center Island (Blok D & E - Menempati 6 Kolom Tengah: Kolom 4 s.d. 9, ukuran persis sama dengan A & B) */}
+            <div className="col-span-6 flex flex-col justify-center gap-0 bg-slate-200/50 -mx-1 md:-mx-2 px-1 md:px-2 py-2 md:py-2.5 rounded-2xl border border-slate-200 border-dashed my-auto">
               <div className="grid grid-cols-6 gap-2 md:gap-3 mb-1">
                 {layoutConfig.blokD.map(id => <TendaBox key={id} id={id} />)}
               </div>
@@ -305,6 +308,9 @@ export default function BazaarDashboard() {
                 {layoutConfig.blokE.map(id => <TendaBox key={id} id={id} />)}
               </div>
             </div>
+
+            {/* Lorong Kanan (Kolom 10: di depan A9 & B9) */}
+            <div className="invisible pointer-events-none" />
             
             {/* Sayap Kanan - Gapura Pintu Masuk di Kolom 11 */}
             <div className="flex items-center justify-center relative py-2">
