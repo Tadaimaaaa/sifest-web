@@ -280,22 +280,24 @@ export default function BazaarDashboard() {
 
   const FloorPlanMap = ({ isExpanded = false }: { isExpanded?: boolean }) => (
     <div className={`bg-slate-50 p-4 md:p-8 rounded-3xl border-2 border-red-500/30 shadow-inner relative overflow-x-auto ${isExpanded ? 'w-full max-w-6xl mx-auto' : ''}`}>
-      <div className="min-w-[860px]">
+      <div className="min-w-[940px]">
         <div className="flex flex-col gap-4 max-w-5xl mx-auto">
-          {/* Top Row (Blok A) */}
-          <div className="grid grid-cols-9 gap-2 md:gap-3">
+          {/* Top Row (Blok A: Kolom 2 - 10) */}
+          <div className="grid grid-cols-11 gap-2 md:gap-3">
+            <div className="invisible pointer-events-none" />
             {layoutConfig.blokA.map(id => <TendaBox key={id} id={id} />)}
+            <div className="invisible pointer-events-none" />
           </div>
 
-          {/* Middle Section */}
-          <div className="flex justify-between items-stretch min-h-[220px] md:min-h-[240px]">
-            {/* Left Column (Blok C - 3 Tenda) */}
-            <div className="flex flex-col justify-between gap-2 md:gap-3 w-[calc((100%-64px)/9)] md:w-[calc((100%-96px)/9)]">
+          {/* Middle Section (Sayap Kiri: Blok C di Kolom 1 | Tengah: Blok D & E di Kolom 2-10 | Sayap Kanan: Pintu Masuk di Kolom 11) */}
+          <div className="grid grid-cols-11 gap-2 md:gap-3 items-stretch min-h-[220px] md:min-h-[240px]">
+            {/* Sayap Kiri - Blok C (3 Tenda menjorok ke kiri di luar deretan A1 & B1) */}
+            <div className="flex flex-col justify-between gap-2 md:gap-3">
               {layoutConfig.blokC.map(id => <TendaBox key={id} id={id} />)}
             </div>
 
-            {/* Center Island (Blok D & E) */}
-            <div className="flex-1 mx-6 md:mx-10 flex flex-col justify-center gap-0 bg-slate-200/50 p-3 rounded-2xl border border-slate-200 border-dashed my-auto">
+            {/* Center Island (Blok D & E - Menempati 9 Kolom Tengah) */}
+            <div className="col-span-9 flex flex-col justify-center gap-0 bg-slate-200/50 p-3 rounded-2xl border border-slate-200 border-dashed my-auto mx-4 md:mx-8">
               <div className="grid grid-cols-6 gap-2 md:gap-3 mb-1">
                 {layoutConfig.blokD.map(id => <TendaBox key={id} id={id} />)}
               </div>
@@ -304,22 +306,21 @@ export default function BazaarDashboard() {
               </div>
             </div>
             
-            {/* Right spacer for alignment - Gapura Pintu Masuk */}
-            <div className="w-[calc((100%-64px)/9)] md:w-[calc((100%-96px)/9)] flex items-center justify-center relative">
-              <div className="absolute inset-y-4 -right-12 md:-right-20 w-24 flex flex-col items-center justify-center z-10">
-                {/* Desain Gapura */}
-                <div className="w-full h-full border-t-8 border-r-8 border-b-8 border-amber-600 rounded-r-3xl flex flex-col items-center justify-center bg-amber-50 shadow-inner shadow-amber-900/20 relative">
-                  <div className="absolute -top-3 right-4 bg-amber-600 text-white text-[10px] font-black px-2 py-0.5 rounded shadow">PINTU</div>
-                  <div className="absolute -bottom-3 right-4 bg-amber-600 text-white text-[10px] font-black px-2 py-0.5 rounded shadow">MASUK</div>
-                  <ArrowLeft className="w-8 h-8 text-amber-500 animate-pulse" />
-                </div>
+            {/* Sayap Kanan - Gapura Pintu Masuk di Kolom 11 */}
+            <div className="flex items-center justify-center relative py-2">
+              <div className="w-full h-full min-h-[160px] border-t-8 border-r-8 border-b-8 border-amber-600 rounded-r-3xl flex flex-col items-center justify-center bg-amber-50 shadow-inner shadow-amber-900/20 relative">
+                <div className="absolute -top-3 right-2 bg-amber-600 text-white text-[10px] font-black px-2 py-0.5 rounded shadow">PINTU</div>
+                <div className="absolute -bottom-3 right-2 bg-amber-600 text-white text-[10px] font-black px-2 py-0.5 rounded shadow">MASUK</div>
+                <ArrowLeft className="w-6 h-6 md:w-8 md:h-8 text-amber-500 animate-pulse" />
               </div>
             </div>
           </div>
 
-          {/* Bottom Row (Blok B) */}
-          <div className="grid grid-cols-9 gap-2 md:gap-3">
+          {/* Bottom Row (Blok B: Kolom 2 - 10) */}
+          <div className="grid grid-cols-11 gap-2 md:gap-3">
+            <div className="invisible pointer-events-none" />
             {layoutConfig.blokB.map(id => <TendaBox key={id} id={id} />)}
+            <div className="invisible pointer-events-none" />
           </div>
         </div>
       </div>
