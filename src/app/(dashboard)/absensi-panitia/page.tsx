@@ -29,10 +29,12 @@ import {
   Layers,
   ArrowRight,
   ShieldCheck,
-  Send
+  Send,
+  Scan
 } from "lucide-react";
 import FullPageLoader from "@/components/FullPageLoader";
 import QRScanner from "@/components/scanner/QRScanner";
+import FaceIDScannerModal from "@/components/scanner/FaceIDScannerModal";
 import { SCRIPT_URL } from "@/lib/api";
 
 export interface PanitiaUser {
@@ -112,6 +114,8 @@ export default function AbsensiPanitiaPage() {
 
   // Scanner & Modals
   const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [isFaceIDOpen, setIsFaceIDOpen] = useState(false);
+  const [faceIDTargetUser, setFaceIDTargetUser] = useState<PanitiaUser | null>(null);
   const [quickCodeInput, setQuickCodeInput] = useState("");
   const [qrModalUser, setQrModalUser] = useState<PanitiaUser | null>(null);
   const [noteModalUser, setNoteModalUser] = useState<PanitiaUser | null>(null);
@@ -545,6 +549,18 @@ export default function AbsensiPanitiaPage() {
 
             {/* Quick Action Buttons */}
             <div className="flex items-center gap-2.5 flex-wrap">
+              <button
+                type="button"
+                onClick={() => {
+                  setFaceIDTargetUser(null);
+                  setIsFaceIDOpen(true);
+                }}
+                className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white rounded-xl text-xs md:text-sm font-extrabold shadow-lg shadow-cyan-600/30 transition-all hover:scale-105 active:scale-95 cursor-pointer ring-2 ring-cyan-300/40"
+              >
+                <Scan className="w-4 h-4 animate-pulse text-cyan-100" />
+                <span>Presensi Face ID</span>
+              </button>
+
               <button
                 type="button"
                 onClick={() => setIsScannerOpen(true)}
@@ -991,6 +1007,17 @@ export default function AbsensiPanitiaPage() {
                           <div className="flex items-center justify-center gap-1.5">
                             <button
                               type="button"
+                              onClick={() => {
+                                setFaceIDTargetUser(p);
+                                setIsFaceIDOpen(true);
+                              }}
+                              className="p-1.5 text-slate-400 hover:text-cyan-600 hover:bg-cyan-50 rounded-lg transition-colors"
+                              title="Scan Face ID / Daftarkan Wajah"
+                            >
+                              <Scan className="w-4 h-4" />
+                            </button>
+                            <button
+                              type="button"
                               onClick={() => setQrModalUser(p)}
                               className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                               title="Lihat Barcode / QR Kartu Panitia"
@@ -1198,6 +1225,25 @@ export default function AbsensiPanitiaPage() {
           </div>
         </div>
       )}
+
+      {/* ==================== MODAL FACE ID BIOMETRIC SCANNER ==================== */}
+      <FaceIDScannerModal
+        isOpen={isFaceIDOpen}
+        onClose={() => {
+          setIsFaceIDOpen(false);
+          setFaceIDTargetUser(null);
+        }}
+        panitiaList={panitiaList}
+        initialSelectedUser={faceIDTargetUser}
+        onAttendanceSuccess={async (user, snapshotBase64) => {
+          if (snapshotBase64) {
+            try {
+              localStorage.setItem(`sifest_face_snapshot_${user.user_id}_${tanggal}`, snapshotBase64);
+            } catch (e) {}
+          }
+          await updateAttendance(user, "HADIR", "Presensi via Face ID Biometrik");
+        }}
+      />
     </div>
   );
 }
