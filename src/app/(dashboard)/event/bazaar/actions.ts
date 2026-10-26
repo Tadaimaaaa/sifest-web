@@ -27,8 +27,20 @@ export async function getBazaarParticipants() {
         kontak: p?.whatsapp || '-',
         kategori: p?.metadata?.category || 'Makanan',
         id_tenda: p?.metadata?.id_tenda || p?.metadata?.lokasi_tenda || '-',
-        status_bayar: ['PAID', 'VERIFIED'].includes(reg.transactions?.[0]?.status) ? 'Lunas' : 
-                      reg.transactions?.[0]?.status === 'DOWN_PAYMENT' ? 'DP' : 'Belum Bayar'
+        status_bayar: (() => {
+          const txList = Array.isArray(reg.transactions) ? reg.transactions : (reg.transactions ? [reg.transactions] : []);
+          const hasPaidTx = txList.some((t: any) => 
+            ['PAID', 'VERIFIED', 'SETTLED', 'SUCCESS'].includes((t?.status || '').toUpperCase()) || 
+            (t?.payment_method || '').toUpperCase() === 'FREE'
+          );
+          const hasDpTx = txList.some((t: any) => 
+            ['DOWN_PAYMENT', 'DP'].includes((t?.status || '').toUpperCase())
+          );
+          const regStatus = (reg.status || '').toUpperCase();
+          if (hasPaidTx || ['PAID', 'VERIFIED', 'CONFIRMED'].includes(regStatus)) return 'Lunas';
+          if (hasDpTx || ['DOWN_PAYMENT', 'DP'].includes(regStatus)) return 'DP';
+          return 'Belum Bayar';
+        })()
       };
     });
 

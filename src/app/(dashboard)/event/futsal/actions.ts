@@ -1,7 +1,7 @@
 "use server";
 
 import { supabaseServer } from "@/lib/sifest/supabase";
-import { unstable_noStore as noStore } from 'next/cache';
+import { unstable_noStore as noStore, revalidatePath } from 'next/cache';
 
 export async function getFutsalData(gameSlug: string) {
   noStore();
@@ -46,14 +46,35 @@ export async function getFutsalData(gameSlug: string) {
     // 3. Format the data to match the Dashboard's Team table
     const formattedTeams = regsResult.data?.map((reg: any) => {
       const participant = (Array.isArray(reg.participants) ? reg.participants[0] : reg.participants) || {};
-      const transaction = (Array.isArray(reg.transactions) ? reg.transactions[0] : reg.transactions) || {};
+      const txList = Array.isArray(reg.transactions) ? reg.transactions : (reg.transactions ? [reg.transactions] : []);
       
+      // Cek apakah ada transaksi berstatus PAID / VERIFIED / FREE
+      const hasPaidTx = txList.some((t: any) => 
+        ['PAID', 'VERIFIED', 'SETTLED', 'SUCCESS'].includes((t?.status || '').toUpperCase()) || 
+        (t?.payment_method || '').toUpperCase() === 'FREE'
+      );
+      // Cek apakah ada transaksi berstatus DOWN_PAYMENT / DP
+      const hasDpTx = txList.some((t: any) => 
+        ['DOWN_PAYMENT', 'DP'].includes((t?.status || '').toUpperCase())
+      );
+
+      // Cek status dari tabel registrations (jika sudah diverifikasi oleh panitia / bendahara)
+      const regStatus = (reg.status || '').toUpperCase();
+      const isRegPaid = ['PAID', 'VERIFIED', 'CONFIRMED'].includes(regStatus);
+      const isRegDp = ['DOWN_PAYMENT', 'DP'].includes(regStatus);
+
       let paymentStatus = "Belum Bayar";
-      if (transaction?.status === "PAID") paymentStatus = "Lunas";
-      else if (transaction?.status === "PENDING") paymentStatus = "DP";
+      if (hasPaidTx || isRegPaid) {
+        paymentStatus = "Lunas";
+      } else if (hasDpTx || isRegDp) {
+        paymentStatus = "DP";
+      } else {
+        paymentStatus = "Belum Bayar";
+      }
 
       return {
         id_tim: reg.registration_code,
+        reg_id: reg.id,
         nama_tim: participant.metadata?.schoolData?.schoolName || participant.metadata?.teamData?.teamName || participant.institution || participant.institution_name || participant.full_name || "Unknown Squad",
         kapten: participant.metadata?.schoolData?.coachName || participant.metadata?.teamData?.captainName || participant.full_name,
         kontak: participant.whatsapp || participant.phone_number || "-",
@@ -86,3 +107,54 @@ export async function saveBracket(eventSlug: string, bracketData: any) {
     return { success: false, message: error.message };
   }
 }
+
+export async function updateFutsalPaymentStatus(registrationId: string, newStatus: string) {
+  try {
+    const txStatus = newStatus === 'Lunas' ? 'PAID' : newStatus === 'DP' ? 'DOWN_PAYMENT' : 'PENDING';
+    const regStatus = newStatus === 'Lunas' ? 'VERIFIED' : newStatus === 'DP' ? 'DOWN_PAYMENT' : 'PENDING';
+
+    // 1. Update status di tabel registrations
+    await supabaseServer
+      .from('registrations')
+      .update({ status: regStatus })
+      .eq('id', registrationId);
+
+    // 2. Update atau buat record di tabel transactions
+    const { data: existingTx } = await supabaseServer
+      .from('transactions')
+      .select('id')
+      .eq('registration_id', registrationId)
+      .maybeSingle();
+
+    if (existingTx?.id) {
+      await supabaseServer
+        .from('transactions')
+        .update({
+          status: txStatus,
+          ...(txStatus === 'PAID' ? { paid_at: new Date().toISOString() } : {}),
+        })
+        .eq('id', existingTx.id);
+    } else {
+      await supabaseServer
+        .from('transactions')
+        .insert({
+          registration_id: registrationId,
+          amount: 0,
+          status: txStatus,
+          payment_method: 'MANUAL',
+          ...(txStatus === 'PAID' ? { paid_at: new Date().toISOString() } : {}),
+        });
+    }
+
+    revalidatePath('/event/futsal/sma');
+    revalidatePath('/event/futsal/mahasiswa');
+    revalidatePath('/sifest/registrations');
+    revalidatePath(`/sifest/registrations/${registrationId}`);
+
+    return { success: true };
+  } catch (error: any) {
+    console.error("Failed to update futsal payment status:", error);
+    return { success: false, message: error.message };
+  }
+}
+

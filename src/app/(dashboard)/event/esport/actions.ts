@@ -44,15 +44,32 @@ export async function getEsportRegistrations(gameSlug: string) {
     // 3. Format the data to match the Dashboard's Team table
     const formattedTeams = regsResult.data?.map((reg: any) => {
       const participant = (Array.isArray(reg.participants) ? reg.participants[0] : reg.participants) || {};
-      const transaction = (Array.isArray(reg.transactions) ? reg.transactions[0] : reg.transactions) || {};
+      const txList = Array.isArray(reg.transactions) ? reg.transactions : (reg.transactions ? [reg.transactions] : []);
       
-      // Convert Supabase transaction status to our UI's payment status
+      const hasPaidTx = txList.some((t: any) => 
+        ['PAID', 'VERIFIED', 'SETTLED', 'SUCCESS'].includes((t?.status || '').toUpperCase()) || 
+        (t?.payment_method || '').toUpperCase() === 'FREE'
+      );
+      const hasDpTx = txList.some((t: any) => 
+        ['DOWN_PAYMENT', 'DP'].includes((t?.status || '').toUpperCase())
+      );
+
+      const regStatus = (reg.status || '').toUpperCase();
+      const isRegPaid = ['PAID', 'VERIFIED', 'CONFIRMED'].includes(regStatus);
+      const isRegDp = ['DOWN_PAYMENT', 'DP'].includes(regStatus);
+
       let paymentStatus = "Belum Bayar";
-      if (transaction?.status === "PAID") paymentStatus = "Lunas";
-      else if (transaction?.status === "PENDING") paymentStatus = "DP"; // Approximation for UI
+      if (hasPaidTx || isRegPaid) {
+        paymentStatus = "Lunas";
+      } else if (hasDpTx || isRegDp) {
+        paymentStatus = "DP";
+      } else {
+        paymentStatus = "Belum Bayar";
+      }
 
       return {
         id_tim: reg.registration_code,
+        reg_id: reg.id,
         nama_tim: gameSlug === "turnamen-esport-efootball" 
           ? participant.full_name
           : (participant.metadata?.teamData?.teamName || participant.institution || participant.institution_name || participant.full_name || "Unknown Squad"),

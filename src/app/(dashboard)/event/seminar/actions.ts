@@ -43,13 +43,28 @@ export async function getSeminarRegistrations() {
     // 3. Format the data to match the Dashboard's Participant table & Attendance
     const formattedParticipants = registrations?.map((reg: any) => {
       const participant = (Array.isArray(reg.participants) ? reg.participants[0] : reg.participants) || {};
-      const transaction = (Array.isArray(reg.transactions) ? reg.transactions[0] : reg.transactions) || {};
+      const txList = Array.isArray(reg.transactions) ? reg.transactions : (reg.transactions ? [reg.transactions] : []);
       
-      // Convert Supabase transaction status to our UI's payment status
+      const hasPaidTx = txList.some((t: any) => 
+        ['PAID', 'VERIFIED', 'SETTLED', 'SUCCESS'].includes((t?.status || '').toUpperCase()) || 
+        (t?.payment_method || '').toUpperCase() === 'FREE'
+      );
+      const hasDpTx = txList.some((t: any) => 
+        ['DOWN_PAYMENT', 'DP'].includes((t?.status || '').toUpperCase())
+      );
+
+      const regStatus = (reg.status || '').toUpperCase();
+      const isRegPaid = ['PAID', 'VERIFIED', 'CONFIRMED'].includes(regStatus);
+      const isRegDp = ['DOWN_PAYMENT', 'DP'].includes(regStatus);
+
       let paymentStatus = "Belum Bayar";
-      if (transaction?.payment_method === "FREE") paymentStatus = "Lunas";
-      else if (transaction?.status === "PAID" || transaction?.status === "VERIFIED") paymentStatus = "Lunas";
-      else if (transaction?.status === "DOWN_PAYMENT" || transaction?.status === "PENDING") paymentStatus = "DP";
+      if (hasPaidTx || isRegPaid) {
+        paymentStatus = "Lunas";
+      } else if (hasDpTx || isRegDp) {
+        paymentStatus = "DP";
+      } else {
+        paymentStatus = "Belum Bayar";
+      }
 
       const metadata = participant.metadata || {};
       const attendance = metadata.attendance || null;

@@ -7,13 +7,14 @@ import { SCRIPT_URL } from "@/lib/api";
 import Cookies from "js-cookie";
 import { toast } from "sonner";
 import FullPageLoader from "@/components/FullPageLoader";
-import { getFutsalData, saveBracket } from "../actions";
-import { Loader2, Shuffle, Maximize, Minimize, Share2, RotateCcw, CalendarX } from "lucide-react";
+import { getFutsalData, saveBracket, updateFutsalPaymentStatus } from "../actions";
+import { Loader2, Shuffle, Maximize, Minimize, Share2, RotateCcw, CalendarX, ExternalLink } from "lucide-react";
 import { useParams } from "next/navigation";
 import Swal from "sweetalert2";
 
 type Team = {
   id_tim: string;
+  reg_id?: string;
   nama_tim: string;
   kapten: string;
   kontak: string;
@@ -164,6 +165,23 @@ export default function FutsalDashboard() {
       console.error("Gagal mengambil data tim futsal:", error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleQuickStatusChange = async (team: Team, newStatus: string) => {
+    if (!team.reg_id) return;
+    try {
+      setTeams(prev => prev.map(t => t.id_tim === team.id_tim ? { ...t, status_bayar: newStatus } : t));
+      const res = await updateFutsalPaymentStatus(team.reg_id, newStatus);
+      if (res.success) {
+        toast.success(`Status pembayaran ${team.nama_tim} diubah ke ${newStatus}`);
+      } else {
+        toast.error(res.message || "Gagal mengubah status pembayaran");
+        fetchData();
+      }
+    } catch (e: any) {
+      toast.error("Terjadi kesalahan jaringan");
+      fetchData();
     }
   };
 
@@ -1130,7 +1148,19 @@ export default function FutsalDashboard() {
                   <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
                     <td className="px-6 py-4">
                       <div className="font-bold text-slate-800">{team.nama_tim}</div>
-                      <div className="text-[10px] text-slate-400 font-mono mt-0.5">{team.id_tim}</div>
+                      {team.reg_id ? (
+                        <Link
+                          href={`/sifest/registrations/${team.reg_id}`}
+                          target="_blank"
+                          className="text-[10px] text-blue-600 hover:text-blue-800 font-mono mt-0.5 inline-flex items-center gap-1 hover:underline"
+                          title="Buka detail pendaftar di tab baru"
+                        >
+                          {team.id_tim}
+                          <ExternalLink className="w-2.5 h-2.5" />
+                        </Link>
+                      ) : (
+                        <div className="text-[10px] text-slate-400 font-mono mt-0.5">{team.id_tim}</div>
+                      )}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2 text-sm text-slate-600">
@@ -1145,13 +1175,30 @@ export default function FutsalDashboard() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <span className={`inline-flex px-2.5 py-1 rounded-md text-xs font-bold ${
-                        team.status_bayar === 'Lunas' ? 'bg-emerald-100 text-emerald-700' :
-                        team.status_bayar === 'DP' ? 'bg-blue-100 text-blue-700' :
-                        'bg-rose-100 text-rose-700'
-                      }`}>
-                        {team.status_bayar}
-                      </span>
+                      {hasAccess && team.reg_id ? (
+                        <select
+                          value={team.status_bayar}
+                          onChange={(e) => handleQuickStatusChange(team, e.target.value)}
+                          className={`cursor-pointer px-2.5 py-1 rounded-md text-xs font-bold border transition-colors outline-none ${
+                            team.status_bayar === 'Lunas' ? 'bg-emerald-50 border-emerald-300 text-emerald-700 focus:ring-1 focus:ring-emerald-400' :
+                            team.status_bayar === 'DP' ? 'bg-blue-50 border-blue-300 text-blue-700 focus:ring-1 focus:ring-blue-400' :
+                            'bg-rose-50 border-rose-300 text-rose-700 focus:ring-1 focus:ring-rose-400'
+                          }`}
+                          title="Klik untuk mengubah status pembayaran langsung"
+                        >
+                          <option value="Lunas">Lunas</option>
+                          <option value="DP">DP</option>
+                          <option value="Belum Bayar">Belum Bayar</option>
+                        </select>
+                      ) : (
+                        <span className={`inline-flex px-2.5 py-1 rounded-md text-xs font-bold ${
+                          team.status_bayar === 'Lunas' ? 'bg-emerald-100 text-emerald-700' :
+                          team.status_bayar === 'DP' ? 'bg-blue-100 text-blue-700' :
+                          'bg-rose-100 text-rose-700'
+                        }`}>
+                          {team.status_bayar}
+                        </span>
+                      )}
                     </td>
                     <td className="px-6 py-4 text-right">
                       {hasAccess && (

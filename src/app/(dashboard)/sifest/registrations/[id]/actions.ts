@@ -16,6 +16,12 @@ export async function updateRegistrationStatus(registrationId: string, newStatus
 
     revalidatePath(`/sifest/registrations/${registrationId}`);
     revalidatePath('/sifest/registrations');
+    revalidatePath('/event/futsal/sma');
+    revalidatePath('/event/futsal/mahasiswa');
+    revalidatePath('/event/esport/mlbb');
+    revalidatePath('/event/esport/efootball');
+    revalidatePath('/event/seminar');
+    revalidatePath('/event/bazaar');
     return { success: true };
   } catch (err: any) {
     return { success: false, error: err.message || "Failed to update registration status" };
@@ -69,6 +75,12 @@ export async function updatePaymentStatus(transactionId: string, newStatus: stri
 
     revalidatePath(`/sifest/registrations/${registrationId}`);
     revalidatePath('/sifest/registrations');
+    revalidatePath('/event/futsal/sma');
+    revalidatePath('/event/futsal/mahasiswa');
+    revalidatePath('/event/esport/mlbb');
+    revalidatePath('/event/esport/efootball');
+    revalidatePath('/event/seminar');
+    revalidatePath('/event/bazaar');
     return { success: true };
   } catch (err: any) {
     return { success: false, error: err.message || "Failed to update payment status" };
