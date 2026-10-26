@@ -98,16 +98,7 @@ export function formatFullIndonesianDate(dateStr: string, timeStr?: string) {
   }
 }
 
-const PRESET_SESI = [
-  "Hari H - Day 1 (Pembukaan & Seminar)",
-  "Hari H - Day 2 (Turnamen & Bazaar)",
-  "Hari H - Day 3 (Closing & Awarding)",
-  "Rapat Pleno 1",
-  "Rapat Pleno 2",
-  "Briefing H-1",
-  "Evaluasi Sore",
-  "Technical Meeting"
-];
+// Sesi agenda presensi dikelola secara dinamis oleh pengguna / admin
 
 const DIVISION_COLORS: Record<string, { bg: string; text: string; border: string }> = {
   "Steering Committee": { bg: "bg-purple-50", text: "text-purple-700", border: "border-purple-200" },
@@ -134,7 +125,8 @@ export default function AbsensiPanitiaPage() {
     const today = new Date();
     return today.toISOString().split("T")[0];
   });
-  const [sesi, setSesi] = useState<string>("Hari H - Day 1 (Pembukaan & Seminar)");
+  const [sessions, setSessions] = useState<string[]>([]);
+  const [sesi, setSesi] = useState<string>("");
   const [customSesi, setCustomSesi] = useState<string>("");
   const [isCustomSesi, setIsCustomSesi] = useState(false);
 
@@ -179,10 +171,52 @@ export default function AbsensiPanitiaPage() {
 
   // Key untuk penyimpanan lokal cadangan per tanggal & sesi
   const storageKey = useMemo(() => {
-    return `sifest_absensi_panitia_${tanggal}_${activeSesi.replace(/[^a-zA-Z0-9]/g, "_")}`;
+    return `sifest_absensi_panitia_${tanggal}_${(activeSesi || "default").replace(/[^a-zA-Z0-9]/g, "_")}`;
   }, [tanggal, activeSesi]);
 
-  // Load User Data & Initial Attendance
+  // Tambah sesi baru dan simpan ke localStorage
+  const handleAddSession = (name?: string) => {
+    const newSesi = (name || customSesi).trim();
+    if (!newSesi) {
+      toast.error("Nama sesi / agenda tidak boleh kosong");
+      return;
+    }
+    setSessions(prev => {
+      const exists = prev.find(s => s.toLowerCase() === newSesi.toLowerCase());
+      if (exists) {
+        setSesi(exists);
+        return prev;
+      }
+      const next = [...prev, newSesi];
+      try {
+        localStorage.setItem("sifest_panitia_sessions", JSON.stringify(next));
+      } catch (e) {}
+      return next;
+    });
+    setSesi(newSesi);
+    setIsCustomSesi(false);
+    setCustomSesi("");
+    toast.success(`Sesi "${newSesi}" berhasil ditambahkan!`);
+  };
+
+  // Hapus sesi dari daftar
+  const handleDeleteSession = (target: string) => {
+    if (!target) return;
+    if (!confirm(`Hapus sesi "${target}" dari daftar pilihan?`)) return;
+    setSessions(prev => {
+      const next = prev.filter(s => s !== target);
+      try {
+        localStorage.setItem("sifest_panitia_sessions", JSON.stringify(next));
+      } catch (e) {}
+      if (sesi === target) {
+        setSesi(next[0] || "");
+      }
+      return next;
+    });
+    toast.success(`Sesi "${target}" telah dihapus.`);
+  };
+
+  // Load User Data, Sesi Tersimpan & Initial Attendance
   useEffect(() => {
     const userDataStr = Cookies.get("user_data");
     if (userDataStr) {
@@ -195,6 +229,21 @@ export default function AbsensiPanitiaPage() {
       const cachedFaces = localStorage.getItem("sifest_enrolled_face_profiles");
       if (cachedFaces) setEnrolledMap(JSON.parse(cachedFaces));
     } catch (e) {}
+
+    // Load saved custom sessions
+    try {
+      const saved = localStorage.getItem("sifest_panitia_sessions");
+      if (saved) {
+        const list = JSON.parse(saved);
+        if (Array.isArray(list) && list.length > 0) {
+          setSessions(list);
+          setSesi(prev => prev || list[0]);
+        }
+      }
+    } catch (e) {}
+  }, []);
+
+  useEffect(() => {
     fetchData();
   }, [tanggal, activeSesi]);
 
@@ -218,7 +267,7 @@ export default function AbsensiPanitiaPage() {
       const params = new URLSearchParams({
         action: "getAbsensiPanitia",
         tanggal,
-        sesi: activeSesi,
+        sesi: activeSesi || "ALL",
         token
       });
       const attRes = await fetch(`${SCRIPT_URL}?${params.toString()}`).catch(() => null);
@@ -227,9 +276,28 @@ export default function AbsensiPanitiaPage() {
       if (attRes && attRes.ok) {
         const json = await attRes.json();
         if (json.success && Array.isArray(json.data) && json.data.length > 0) {
+          const remoteSessions: string[] = [];
           json.data.forEach((r: AttendanceRecord) => {
-            if (r.user_id) remoteMap[r.user_id] = r;
+            if (r.sesi && !remoteSessions.includes(r.sesi)) {
+              remoteSessions.push(r.sesi);
+            }
+            if (!activeSesi || r.sesi === activeSesi) {
+              if (r.user_id) remoteMap[r.user_id] = r;
+            }
           });
+
+          if (remoteSessions.length > 0) {
+            setSessions(prev => {
+              const merged = Array.from(new Set([...prev, ...remoteSessions]));
+              try {
+                localStorage.setItem("sifest_panitia_sessions", JSON.stringify(merged));
+              } catch (e) {}
+              return merged;
+            });
+            if (!activeSesi) {
+              setSesi(remoteSessions[0]);
+            }
+          }
         }
       }
 
@@ -261,6 +329,10 @@ export default function AbsensiPanitiaPage() {
     keteranganCustom?: string,
     snapshotBase64?: string
   ) => {
+    if (!activeSesi) {
+      toast.error("Silakan buat atau pilih sesi / agenda terlebih dahulu!");
+      return;
+    }
     const now = new Date();
     const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")} WIB`;
     const prev = attendanceMap[user.user_id];
@@ -317,6 +389,10 @@ export default function AbsensiPanitiaPage() {
 
   // Tandai Semua Hadir
   const handleMarkAllHadir = async () => {
+    if (!activeSesi) {
+      toast.error("Silakan buat atau pilih sesi / agenda terlebih dahulu!");
+      return;
+    }
     if (!confirm(`Tandai seluruh ${filteredPanitia.length} panitia yang tampil sebagai HADIR?`)) return;
 
     setIsSaving(true);
@@ -486,6 +562,10 @@ export default function AbsensiPanitiaPage() {
 
   // Export Excel
   const handleExportExcel = () => {
+    if (!activeSesi) {
+      toast.error("Silakan buat atau pilih sesi / agenda terlebih dahulu sebelum export!");
+      return;
+    }
     if (panitiaList.length === 0) {
       toast.error("Tidak ada data panitia untuk diexport.");
       return;
@@ -686,6 +766,10 @@ export default function AbsensiPanitiaPage() {
               <button
                 type="button"
                 onClick={() => {
+                  if (!activeSesi) {
+                    toast.error("Silakan buat atau pilih sesi / agenda terlebih dahulu sebelum scan Face ID!");
+                    return;
+                  }
                   setFaceIDTargetUser(null);
                   setIsFaceIDOpen(true);
                 }}
@@ -720,7 +804,13 @@ export default function AbsensiPanitiaPage() {
 
               <button
                 type="button"
-                onClick={() => window.print()}
+                onClick={() => {
+                  if (!activeSesi) {
+                    toast.error("Silakan buat atau pilih sesi / agenda terlebih dahulu sebelum cetak!");
+                    return;
+                  }
+                  window.print();
+                }}
                 className="flex items-center gap-2 px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs md:text-sm font-semibold border border-white/20 backdrop-blur-md transition-all hover:scale-105 active:scale-95 cursor-pointer"
                 title="Cetak Rekap Absensi"
               >
@@ -747,46 +837,74 @@ export default function AbsensiPanitiaPage() {
 
             {/* Sesi / Agenda Selector */}
             <div className="flex-1 flex items-center gap-2">
-              {!isCustomSesi ? (
-                <div className="relative w-full">
-                  <select
-                    value={sesi}
-                    onChange={(e) => {
-                      if (e.target.value === "__CUSTOM__") {
-                        setIsCustomSesi(true);
-                      } else {
-                        setSesi(e.target.value);
-                      }
-                    }}
-                    className="w-full bg-slate-50 border border-slate-200 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer appearance-none pr-9"
-                  >
-                    {PRESET_SESI.map(s => (
-                      <option key={s} value={s}>{s}</option>
-                    ))}
-                    <option value="__CUSTOM__">+ Buat Sesi / Agenda Baru...</option>
-                  </select>
-                  <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                </div>
-              ) : (
+              {sessions.length === 0 || isCustomSesi ? (
                 <div className="flex items-center gap-2 w-full">
                   <input
                     type="text"
                     autoFocus
-                    placeholder="Ketik nama rapat / agenda..."
+                    placeholder="Ketik nama sesi / agenda (contoh: Rapat Pleno 1)..."
                     value={customSesi}
                     onChange={(e) => setCustomSesi(e.target.value)}
-                    className="w-full px-3.5 py-2 bg-slate-50 border border-blue-400 rounded-xl text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleAddSession();
+                      }
+                    }}
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-blue-400 rounded-xl text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                   />
                   <button
                     type="button"
-                    onClick={() => {
-                      setIsCustomSesi(false);
-                      setCustomSesi("");
-                    }}
-                    className="p-2 text-slate-400 hover:text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-lg text-xs"
-                    title="Batal custom sesi"
+                    onClick={() => handleAddSession()}
+                    disabled={!customSesi.trim()}
+                    className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-xl text-xs font-bold whitespace-nowrap transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
                   >
-                    <X className="w-4 h-4" />
+                    <Plus className="w-4 h-4" />
+                    <span>Tambah</span>
+                  </button>
+                  {sessions.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsCustomSesi(false);
+                        setCustomSesi("");
+                      }}
+                      className="p-2.5 text-slate-400 hover:text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl text-xs cursor-pointer"
+                      title="Batal"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 w-full">
+                  <div className="relative flex-1">
+                    <select
+                      value={sesi}
+                      onChange={(e) => {
+                        if (e.target.value === "__CUSTOM__") {
+                          setIsCustomSesi(true);
+                          setCustomSesi("");
+                        } else {
+                          setSesi(e.target.value);
+                        }
+                      }}
+                      className="w-full bg-slate-50 border border-slate-200 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer appearance-none pr-9"
+                    >
+                      {sessions.map(s => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                      <option value="__CUSTOM__">+ Buat Sesi / Agenda Baru...</option>
+                    </select>
+                    <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteSession(sesi)}
+                    className="p-2.5 text-slate-400 hover:text-rose-600 bg-slate-100 hover:bg-rose-50 border border-transparent hover:border-rose-200 rounded-xl transition-colors cursor-pointer"
+                    title={`Hapus sesi "${sesi}" dari daftar`}
+                  >
+                    <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
               )}
@@ -823,6 +941,16 @@ export default function AbsensiPanitiaPage() {
             </button>
           </div>
         </div>
+
+        {/* Warning Alert jika belum ada sesi */}
+        {!activeSesi && (
+          <div className="bg-amber-50/90 border border-amber-200/80 rounded-2xl p-4 flex items-center gap-3 text-amber-900 text-sm shadow-sm animate-in fade-in">
+            <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0" />
+            <div className="text-xs md:text-sm">
+              <span className="font-bold">Belum ada sesi / agenda yang aktif:</span> Silakan ketik nama sesi baru pada kolom di atas (misalnya: <em>Rapat Pleno 1</em>, <em>Briefing Panitia</em>, dll) lalu klik <strong>Tambah</strong> untuk memulai absensi.
+            </div>
+          </div>
+        )}
 
         {/* 4 Stat Cards */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3.5">
