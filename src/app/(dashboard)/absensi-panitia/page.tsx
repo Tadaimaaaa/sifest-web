@@ -118,6 +118,7 @@ export default function AbsensiPanitiaPage() {
   const [panitiaList, setPanitiaList] = useState<PanitiaUser[]>([]);
   const [attendanceMap, setAttendanceMap] = useState<Record<string, AttendanceRecord>>({});
   const [isLoading, setIsLoading] = useState(true);
+  const [isFetching, setIsFetching] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
   // Filter & Config
@@ -167,7 +168,7 @@ export default function AbsensiPanitiaPage() {
     } catch (e) {}
   };
 
-  const activeSesi = isCustomSesi && customSesi.trim() ? customSesi.trim() : sesi;
+  const activeSesi = sesi;
 
   // Key untuk penyimpanan lokal cadangan per tanggal & sesi
   const storageKey = useMemo(() => {
@@ -248,7 +249,10 @@ export default function AbsensiPanitiaPage() {
   }, [tanggal, activeSesi]);
 
   const fetchData = async () => {
-    setIsLoading(true);
+    if (panitiaList.length === 0) {
+      setIsLoading(true);
+    }
+    setIsFetching(true);
     try {
       // 1. Fetch Daftar Panitia dari Sheet Users
       const token = Cookies.get("session_token") || "";
@@ -319,6 +323,7 @@ export default function AbsensiPanitiaPage() {
       toast.error("Gagal memuat data presensi panitia.");
     } finally {
       setIsLoading(false);
+      setIsFetching(false);
     }
   };
 
@@ -934,10 +939,11 @@ export default function AbsensiPanitiaPage() {
             <button
               type="button"
               onClick={fetchData}
-              className="p-2.5 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors"
+              disabled={isFetching}
+              className="p-2.5 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
               title="Refresh Data"
             >
-              <RefreshCw className="w-4 h-4" />
+              <RefreshCw className={`w-4 h-4 ${isFetching ? "animate-spin text-blue-600" : ""}`} />
             </button>
           </div>
         </div>
