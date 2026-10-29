@@ -217,25 +217,33 @@ export default function EsportDashboard() {
     const vh = typeof window !== 'undefined' ? window.innerHeight : 1080;
     
     // Ruang yang disisakan untuk toolbar atas dan margin aman
-    const availableWidth = Math.max(320, vw - 32);
-    const availableHeight = Math.max(300, vh - 76);
+    const availableWidth = Math.max(300, vw - 48);
+    const availableHeight = Math.max(300, vh - 80);
     
     const scaleW = availableWidth / baseWidth;
     const scaleH = availableHeight / baseHeight;
     
-    const fit = Math.min(scaleW, scaleH);
-    return Math.min(1.2, Math.max(0.2, Math.round(fit * 100) / 100));
+    // Gunakan Math.floor agar ukuran hasil scaling tidak pernah melebihi batas piksel (mencegah scrollbar muncul)
+    const fit = Math.floor(Math.min(scaleW, scaleH) * 100) / 100;
+    return Math.min(1.0, Math.max(0.2, fit));
   };
 
   useEffect(() => {
+    const updateScale = () => {
+      if (document.fullscreenElement) {
+        setIsAutoFit(true);
+        setZoomScale(calculateFitScale());
+      }
+    };
+
     const handleFullscreenChange = () => {
       const active = !!document.fullscreenElement;
       setIsFullscreen(active);
       if (active) {
         setIsAutoFit(true);
-        setTimeout(() => {
-          setZoomScale(calculateFitScale());
-        }, 60);
+        setZoomScale(calculateFitScale());
+        setTimeout(updateScale, 50);
+        setTimeout(updateScale, 150);
       } else {
         setZoomScale(1);
         setIsAutoFit(false);
@@ -455,11 +463,10 @@ export default function EsportDashboard() {
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
+      setIsAutoFit(true);
+      setZoomScale(calculateFitScale());
       bracketRef.current?.requestFullscreen().then(() => {
-        setIsAutoFit(true);
-        setTimeout(() => {
-          setZoomScale(calculateFitScale());
-        }, 60);
+        setZoomScale(calculateFitScale());
       }).catch(() => {
         toast.error("Gagal masuk ke mode fullscreen");
       });
@@ -1158,6 +1165,17 @@ export default function EsportDashboard() {
               ? "bg-slate-50 h-screen w-screen flex flex-col overflow-hidden relative select-none" 
               : "w-full overflow-x-auto relative bg-slate-50/50 p-8"
           }
+          style={
+            isFullscreen
+              ? {
+                  overflow: 'hidden',
+                  width: '100vw',
+                  height: '100vh',
+                  maxWidth: '100vw',
+                  maxHeight: '100vh',
+                }
+              : undefined
+          }
         >
           <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.02)_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none"></div>
           
@@ -1268,7 +1286,18 @@ export default function EsportDashboard() {
           )}
 
           {/* Area Konten Bagan (Auto-fit scaled di mode Fullscreen) */}
-          <div className={isFullscreen ? "flex-1 w-full h-full overflow-auto flex items-center justify-center p-2 relative z-10" : "relative z-10"}>
+          <div 
+            className={
+              isFullscreen 
+                ? `flex-1 w-full h-full flex items-center justify-center p-2 relative z-10 ${isAutoFit ? 'overflow-hidden' : 'overflow-auto'}` 
+                : "relative z-10"
+            }
+            style={
+              isFullscreen && isAutoFit
+                ? { overflow: 'hidden' }
+                : undefined
+            }
+          >
             <div
               style={
                 isFullscreen
@@ -1278,6 +1307,7 @@ export default function EsportDashboard() {
                       position: 'relative',
                       flexShrink: 0,
                       margin: 'auto',
+                      overflow: isAutoFit ? 'hidden' : 'visible',
                     }
                   : undefined
               }
