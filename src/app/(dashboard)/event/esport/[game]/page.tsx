@@ -8,7 +8,7 @@ import Cookies from "js-cookie";
 import { toast } from "sonner";
 import FullPageLoader from "@/components/FullPageLoader";
 import { getEsportRegistrations, saveBracket } from "../actions";
-import { Loader2, Shuffle, Maximize, Minimize, RotateCcw } from "lucide-react";
+import { Loader2, Shuffle, Maximize, Minimize, RotateCcw, ZoomIn, ZoomOut } from "lucide-react";
 import { useParams } from "next/navigation";
 import Swal from "sweetalert2";
 
@@ -78,6 +78,8 @@ export default function EsportDashboard() {
   const [isSpinning, setIsSpinning] = useState(false);
   const [isSavingBracket, setIsSavingBracket] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [zoomScale, setZoomScale] = useState(1);
+  const [isAutoFit, setIsAutoFit] = useState(true);
   const bracketRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -207,13 +209,76 @@ export default function EsportDashboard() {
     return () => clearInterval(interval);
   }, [isSpinning]);
 
+  const calculateFitScale = () => {
+    const baseWidth = isMLBB ? 1900 : 1400;
+    const baseHeight = isMLBB ? 860 : 800;
+    
+    const vw = typeof window !== 'undefined' ? window.innerWidth : 1920;
+    const vh = typeof window !== 'undefined' ? window.innerHeight : 1080;
+    
+    // Ruang yang disisakan untuk toolbar atas dan margin aman
+    const availableWidth = Math.max(320, vw - 32);
+    const availableHeight = Math.max(300, vh - 76);
+    
+    const scaleW = availableWidth / baseWidth;
+    const scaleH = availableHeight / baseHeight;
+    
+    const fit = Math.min(scaleW, scaleH);
+    return Math.min(1.2, Math.max(0.2, Math.round(fit * 100) / 100));
+  };
+
   useEffect(() => {
     const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
+      const active = !!document.fullscreenElement;
+      setIsFullscreen(active);
+      if (active) {
+        setIsAutoFit(true);
+        setTimeout(() => {
+          setZoomScale(calculateFitScale());
+        }, 60);
+      } else {
+        setZoomScale(1);
+        setIsAutoFit(false);
+      }
     };
+
+    const handleResize = () => {
+      if (document.fullscreenElement && isAutoFit) {
+        setZoomScale(calculateFitScale());
+      }
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!document.fullscreenElement) return;
+      if (e.key === '+' || e.key === '=') {
+        e.preventDefault();
+        setIsAutoFit(false);
+        setZoomScale(prev => Math.min(2.0, Math.round((prev + 0.1) * 100) / 100));
+      } else if (e.key === '-' || e.key === '_') {
+        e.preventDefault();
+        setIsAutoFit(false);
+        setZoomScale(prev => Math.max(0.25, Math.round((prev - 0.1) * 100) / 100));
+      } else if (e.key === '0') {
+        e.preventDefault();
+        setIsAutoFit(true);
+        setZoomScale(calculateFitScale());
+      } else if (e.key === '1') {
+        e.preventDefault();
+        setIsAutoFit(false);
+        setZoomScale(1);
+      }
+    };
+
     document.addEventListener("fullscreenchange", handleFullscreenChange);
-    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
-  }, []);
+    window.addEventListener("resize", handleResize);
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isMLBB, isAutoFit]);
 
   // Smart Fair Draw Seeding Algorithm: Memisahkan multi-slot ke Bagan Atas (0..7) dan Bagan Bawah (8..15)
   const generateFairBracket = (teamList: Team[]): (Team | null)[] => {
@@ -390,12 +455,37 @@ export default function EsportDashboard() {
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
-      bracketRef.current?.requestFullscreen().catch(err => {
+      bracketRef.current?.requestFullscreen().then(() => {
+        setIsAutoFit(true);
+        setTimeout(() => {
+          setZoomScale(calculateFitScale());
+        }, 60);
+      }).catch(() => {
         toast.error("Gagal masuk ke mode fullscreen");
       });
     } else {
-      document.exitFullscreen();
+      document.exitFullscreen().catch(() => {});
     }
+  };
+
+  const handleZoomIn = () => {
+    setIsAutoFit(false);
+    setZoomScale(prev => Math.min(2.0, Math.round((prev + 0.1) * 100) / 100));
+  };
+
+  const handleZoomOut = () => {
+    setIsAutoFit(false);
+    setZoomScale(prev => Math.max(0.25, Math.round((prev - 0.1) * 100) / 100));
+  };
+
+  const handleFitScreen = () => {
+    setIsAutoFit(true);
+    setZoomScale(calculateFitScale());
+  };
+
+  const handleZoomReset = () => {
+    setIsAutoFit(false);
+    setZoomScale(1);
   };
 
   const handleInsertToBracket = (teamToInsert: Team) => {
@@ -1061,62 +1151,152 @@ export default function EsportDashboard() {
           </div>
         </div>
 
-        <div ref={bracketRef} className={`w-full overflow-x-auto relative ${isFullscreen ? 'bg-slate-50 p-12 h-screen' : 'bg-slate-50/50 p-8'}`}>
+        <div 
+          ref={bracketRef} 
+          className={
+            isFullscreen 
+              ? "bg-slate-50 h-screen w-screen flex flex-col overflow-hidden relative select-none" 
+              : "w-full overflow-x-auto relative bg-slate-50/50 p-8"
+          }
+        >
           <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.02)_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none"></div>
           
           {isFullscreen && (
-            <div className="absolute top-6 right-6 z-50 flex items-center gap-3">
-              {hasAccess && (
-                <>
-                  <button 
-                    onClick={toggleSpin}
-                    disabled={isSavingBracket}
-                    className={`px-5 py-2.5 text-white text-sm font-bold rounded-xl shadow-sm transition-all flex items-center gap-2 ${
-                      isSpinning 
-                        ? 'bg-rose-600 hover:bg-rose-700 shadow-rose-500/20 animate-pulse' 
-                        : 'bg-blue-600 hover:bg-blue-700 shadow-blue-500/20'
+            <div className="shrink-0 h-14 px-4 sm:px-6 flex items-center justify-between border-b border-slate-200 bg-white/95 backdrop-blur-sm z-50 shadow-xs relative">
+              {/* Left: Info game & status */}
+              <div className="flex items-center gap-3">
+                <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                <span className="font-bold text-slate-800 text-xs sm:text-sm tracking-tight">{gameTitle}</span>
+                <span className="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md border border-slate-200 hidden md:inline">
+                  Layar Penuh
+                </span>
+              </div>
+
+              {/* Right: Zoom controls, Actions, Exit */}
+              <div className="flex items-center gap-2">
+                {/* Zoom Controls */}
+                <div className="flex items-center bg-slate-100 rounded-lg p-0.5 border border-slate-200 text-xs font-semibold text-slate-700">
+                  <button
+                    onClick={handleZoomOut}
+                    className="p-1.5 hover:bg-white text-slate-600 hover:text-slate-900 rounded-md transition-colors"
+                    title="Perkecil (Keyboard: -)"
+                  >
+                    <ZoomOut className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={handleFitScreen}
+                    className={`px-2.5 py-1 rounded-md transition-all text-[11px] font-bold ${
+                      isAutoFit 
+                        ? 'bg-white text-blue-600 shadow-xs border border-blue-100' 
+                        : 'text-slate-600 hover:bg-white/80'
                     }`}
+                    title="Sesuaikan Bagan ke Layar Otomatis (Keyboard: 0)"
                   >
-                    {isSpinning ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        Stop Pengundian!
-                      </>
-                    ) : (
-                      <>
-                        <Shuffle className="w-4 h-4" />
-                        Acak Tim (Spin)
-                      </>
-                    )}
+                    Pas Layar ({Math.round(zoomScale * 100)}%)
                   </button>
-                  <button 
-                    onClick={handleSaveBracket}
-                    disabled={isSpinning || isSavingBracket}
-                    className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold rounded-xl shadow-sm shadow-emerald-500/20 transition-all flex items-center gap-2 disabled:opacity-50"
+                  <button
+                    onClick={handleZoomIn}
+                    className="p-1.5 hover:bg-white text-slate-600 hover:text-slate-900 rounded-md transition-colors"
+                    title="Perbesar (Keyboard: +)"
                   >
-                    {isSavingBracket ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                    Simpan Bagan
+                    <ZoomIn className="w-3.5 h-3.5" />
                   </button>
-                  <button 
-                    onClick={handleResetBracket}
-                    disabled={isSpinning || isSavingBracket}
-                    className="px-4 py-2.5 bg-white/90 hover:bg-white text-slate-700 hover:text-rose-600 text-sm font-semibold rounded-xl border border-slate-200 shadow-sm transition-all flex items-center gap-2 disabled:opacity-50"
+                  <button
+                    onClick={handleZoomReset}
+                    className={`px-2 py-1 rounded-md transition-colors text-[11px] hidden sm:inline ${
+                      zoomScale === 1 && !isAutoFit ? 'bg-white text-slate-900 font-bold shadow-xs' : 'text-slate-500 hover:bg-white'
+                    }`}
+                    title="Ukuran Asli 100% (Keyboard: 1)"
                   >
-                    <RotateCcw className="w-4 h-4 text-slate-500" />
-                    Reset
+                    100%
                   </button>
-                </>
-              )}
-              <button 
-                onClick={toggleFullscreen}
-                className="p-2.5 bg-white/80 backdrop-blur text-slate-700 hover:bg-white rounded-xl shadow-sm border border-slate-200 transition-all"
-                title="Keluar Layar Penuh"
-              >
-                <Minimize className="w-5 h-5" />
-              </button>
+                </div>
+
+                {hasAccess && (
+                  <>
+                    <button 
+                      onClick={toggleSpin}
+                      disabled={isSavingBracket}
+                      className={`px-3 py-1.5 text-white text-xs font-bold rounded-lg shadow-xs transition-all flex items-center gap-1.5 cursor-pointer ${
+                        isSpinning 
+                          ? 'bg-rose-600 hover:bg-rose-700 animate-pulse' 
+                          : 'bg-blue-600 hover:bg-blue-700'
+                      }`}
+                    >
+                      {isSpinning ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          <span className="hidden sm:inline">Stop</span>
+                        </>
+                      ) : (
+                        <>
+                          <Shuffle className="w-3.5 h-3.5" />
+                          <span className="hidden sm:inline">Acak Tim</span>
+                        </>
+                      )}
+                    </button>
+                    <button 
+                      onClick={handleSaveBracket}
+                      disabled={isSpinning || isSavingBracket}
+                      className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg shadow-xs transition-all flex items-center gap-1.5 disabled:opacity-50 cursor-pointer"
+                      title="Simpan Bagan"
+                    >
+                      {isSavingBracket ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                      <span className="hidden sm:inline">Simpan</span>
+                    </button>
+                    <button 
+                      onClick={handleResetBracket}
+                      disabled={isSpinning || isSavingBracket}
+                      className="px-2.5 py-1.5 bg-white hover:bg-rose-50 text-slate-700 hover:text-rose-600 text-xs font-semibold rounded-lg border border-slate-200 transition-all flex items-center gap-1 disabled:opacity-50 cursor-pointer"
+                      title="Reset Bagan"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
+                      <span className="hidden md:inline">Reset</span>
+                    </button>
+                  </>
+                )}
+
+                <button 
+                  onClick={toggleFullscreen}
+                  className="p-1.5 bg-slate-100 hover:bg-rose-50 text-slate-600 hover:text-rose-600 rounded-lg border border-slate-200 transition-all ml-1 cursor-pointer"
+                  title="Keluar Layar Penuh (Esc)"
+                >
+                  <Minimize className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           )}
 
+          {/* Area Konten Bagan (Auto-fit scaled di mode Fullscreen) */}
+          <div className={isFullscreen ? "flex-1 w-full h-full overflow-auto flex items-center justify-center p-2 relative z-10" : "relative z-10"}>
+            <div
+              style={
+                isFullscreen
+                  ? {
+                      width: `${(isMLBB ? 1900 : 1400) * zoomScale}px`,
+                      height: `${(isMLBB ? 860 : 800) * zoomScale}px`,
+                      position: 'relative',
+                      flexShrink: 0,
+                      margin: 'auto',
+                    }
+                  : undefined
+              }
+            >
+              <div
+                style={
+                  isFullscreen
+                    ? {
+                        width: `${isMLBB ? 1900 : 1400}px`,
+                        height: `${isMLBB ? 860 : 800}px`,
+                        transform: `scale(${zoomScale})`,
+                        transformOrigin: 'top left',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                      }
+                    : undefined
+                }
+              >
           {/* ======================================================== */}
           {/* CASE A: MOBILE LEGENDS 18-TEAM TWO-SIDED BRACKET         */}
           {/* DESAIN ASLI DASHBOARD: ABU-ABU PUTIH, KOTAK MINIMALIS   */}
@@ -1420,6 +1600,10 @@ export default function EsportDashboard() {
               </div>
             </div>
           )}
+
+              </div>
+            </div>
+          </div>
 
         </div>
       </div>
