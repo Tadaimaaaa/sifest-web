@@ -67,7 +67,6 @@ export default function EsportDashboard() {
   
   // BRACKET STATE
   const isMLBB = game === 'mlbb';
-  const [mlbbTheme, setMlbbTheme] = useState<'arena' | 'clean'>('arena');
   const [shuffledTeams, setShuffledTeams] = useState<(Team | null)[]>(() => Array(isMLBB ? 18 : 16).fill(null));
   const [playInWinners, setPlayInWinners] = useState<(Team | null)[]>(() => Array(2).fill(null));
   const [quarterFinals, setQuarterFinals] = useState<(Team | null)[]>(() => Array(8).fill(null));
@@ -499,23 +498,34 @@ export default function EsportDashboard() {
     }
   };
 
-  // Helper for rendering team slot
-  const renderTeamSlot = (team: Team | null, round: number, slotIndex: number, isTop: boolean) => {
+  // Helper for rendering clean dashboard team slot (abu-abu putih)
+  const renderTeamSlot = (
+    team: Team | null, 
+    roundOrStage: number | 'r18' | 'playin_winner' | 'qf' | 'sf' | 'final', 
+    slotIndex: number, 
+    isTop: boolean
+  ) => {
     const isEliminated = team && eliminatedTeams.has(team.id_tim);
     const bgClass = isTop ? 'bg-slate-50 border-b border-slate-100' : 'bg-white';
-    const cursorClass = team && hasAccess ? 'cursor-pointer hover:bg-slate-100 transition-colors' : '';
+    const cursorClass = team && hasAccess && !isSpinning ? 'cursor-pointer hover:bg-slate-100 transition-colors' : '';
     const textClass = team ? (isEliminated ? 'text-slate-400 line-through' : 'text-slate-800') : 'text-slate-400';
     
     return (
       <div 
         className={`px-3 py-2 flex justify-between items-center ${bgClass} ${cursorClass} ${isEliminated ? 'opacity-50 grayscale' : ''}`}
-        onClick={() => handleTeamClick(team, round, slotIndex)}
+        onClick={() => {
+          if (isMLBB) {
+            handleMLBBTeamClick(team, roundOrStage as any, slotIndex);
+          } else {
+            handleTeamClick(team, roundOrStage as number, slotIndex);
+          }
+        }}
         title={team && hasAccess ? "Klik untuk ubah status lolos/gagal" : ""}
       >
         <span className={`font-semibold ${textClass} truncate max-w-[160px]`}>
           {team ? team.nama_tim : 'TBD (BYE)'}
         </span>
-        <span className="text-slate-300">-</span>
+        <span className="text-slate-300 font-mono">-</span>
       </div>
     );
   };
@@ -620,66 +630,62 @@ export default function EsportDashboard() {
     }
   };
 
-  // Helper for rendering MLBB Pill Slot
-  const renderMLBBTeamSlot = (
-    team: Team | null,
-    stage: 'r18' | 'playin_winner' | 'qf' | 'sf' | 'final',
-    slotIndex: number,
-    isGrandFinal = false,
-    label?: string
-  ) => {
-    const isEliminated = team && eliminatedTeams.has(team.id_tim);
-    const isChampionTeam = team && champion?.id_tim === team.id_tim;
-    const isDarkArena = mlbbTheme === 'arena';
+  // SVG Lines generator for 18-Team Two-Sided Bracket (Abu-abu putih bersih)
+  const MLBB18Lines = () => {
+    const paths: string[] = [];
 
-    let pillClasses = "relative flex items-center justify-between px-3 py-2 rounded-full border transition-all duration-200 select-none text-xs ";
+    // Left Wing (Flow Left -> Right):
+    // Match 1 (y=100) -> QF 1 (y=180)
+    paths.push("M 240 100 L 264 100 L 264 180 L 288 180");
+    // Match 2 (y=260) -> QF 1 (y=180)
+    paths.push("M 240 260 L 264 260 L 264 180 L 288 180");
 
-    if (isGrandFinal) {
-      pillClasses += isChampionTeam
-        ? "bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 border-amber-500 text-slate-950 font-black shadow-lg shadow-amber-400/40 scale-[1.03] "
-        : "bg-gradient-to-r from-amber-200 via-amber-100 to-amber-200 border-amber-400 text-amber-950 font-bold shadow-md hover:border-amber-500 ";
-    } else if (isDarkArena) {
-      pillClasses += isEliminated
-        ? "bg-slate-800/60 border-slate-700/60 text-slate-500 grayscale opacity-60 "
-        : team
-        ? "bg-white/95 text-slate-900 border-blue-200 shadow-md hover:bg-white hover:border-cyan-400 hover:shadow-cyan-500/20 "
-        : "bg-slate-900/60 border-dashed border-blue-900/60 text-slate-400 ";
-    } else {
-      pillClasses += isEliminated
-        ? "bg-slate-100/90 border-slate-200 text-slate-400 grayscale opacity-60 "
-        : team
-        ? "bg-white border-slate-200 hover:border-blue-400 hover:shadow-md text-slate-800 shadow-sm "
-        : "bg-slate-50/80 border-dashed border-slate-200 text-slate-400 ";
-    }
+    // Match 3 (y=460) -> QF 2 (y=620)
+    paths.push("M 240 460 L 264 460 L 264 620 L 288 620");
+    // Match 5 Decider (y=780) -> QF 2 (y=620)
+    paths.push("M 240 780 L 264 780 L 264 620 L 288 620");
 
-    if (team && hasAccess && !isSpinning) {
-      pillClasses += "cursor-pointer active:scale-95 ";
-    }
+    // Match 4 Play-in (y=620) -> Match 5 Decider (y=780)
+    paths.push("M 240 620 L 254 620 L 254 750 L 240 750");
+
+    // QF 1 (y=180) -> Left SF (y=400)
+    paths.push("M 512 180 L 536 180 L 536 400 L 560 400");
+    // QF 2 (y=620) -> Left SF (y=400)
+    paths.push("M 512 620 L 536 620 L 536 400 L 560 400");
+
+    // Left SF (y=400) -> Grand Final (y=400)
+    paths.push("M 784 400 L 832 400");
+
+    // Grand Final to Champion
+    paths.push("M 944 445 L 944 500");
+
+    // Right SF (y=400) -> Grand Final (y=400)
+    paths.push("M 1104 400 L 1056 400");
+
+    // QF 3 (y=180) -> Right SF (y=400)
+    paths.push("M 1376 180 L 1352 180 L 1352 400 L 1328 400");
+    // QF 4 (y=620) -> Right SF (y=400)
+    paths.push("M 1376 620 L 1352 620 L 1352 400 L 1328 400");
+
+    // Match 6 (y=100) -> QF 3 (y=180)
+    paths.push("M 1648 100 L 1624 100 L 1624 180 L 1600 180");
+    // Match 7 (y=260) -> QF 3 (y=180)
+    paths.push("M 1648 260 L 1624 260 L 1624 180 L 1600 180");
+
+    // Match 8 (y=460) -> QF 4 (y=620)
+    paths.push("M 1648 460 L 1624 460 L 1624 620 L 1600 620");
+    // Match 10 Decider (y=780) -> QF 4 (y=620)
+    paths.push("M 1648 780 L 1624 780 L 1624 620 L 1600 620");
+
+    // Match 9 Play-in (y=620) -> Match 10 Decider (y=780)
+    paths.push("M 1648 620 L 1634 620 L 1634 750 L 1648 750");
 
     return (
-      <div
-        onClick={() => handleMLBBTeamClick(team, stage, slotIndex, label)}
-        className={pillClasses}
-        title={team && hasAccess ? `Klik untuk tentukan lolos/gugur (${team.nama_tim})` : ""}
-      >
-        <div className="flex items-center gap-2 min-w-0 pr-1">
-          <span className={`w-2 h-2 rounded-full shrink-0 ${
-            isGrandFinal
-              ? 'bg-amber-600'
-              : team
-              ? (isEliminated ? 'bg-slate-400' : 'bg-blue-500')
-              : 'bg-slate-300'
-          }`} />
-          <span className={`truncate font-bold ${isEliminated ? 'line-through text-slate-400' : ''}`}>
-            {team ? team.nama_tim : 'TBD (BYE)'}
-          </span>
-        </div>
-        {team && (
-          <span className="text-[10px] shrink-0 font-mono text-slate-400 ml-1">
-            {isEliminated ? '❌' : (isChampionTeam ? '👑' : '')}
-          </span>
-        )}
-      </div>
+      <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 0 }}>
+        {paths.map((d, idx) => (
+          <path key={idx} d={d} fill="none" stroke="#cbd5e1" strokeWidth="2" strokeLinejoin="round" />
+        ))}
+      </svg>
     );
   };
 
@@ -987,49 +993,17 @@ export default function EsportDashboard() {
 
       {/* SECTION 3: Turnamen Bracket Viewer */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden relative">
-        {/* Section 3 Header & Controls */}
-        <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex flex-wrap gap-4 justify-between items-center">
+        <div className="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
           <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center border ${
-              isMLBB ? 'bg-blue-50 border-blue-200 text-blue-600' : 'bg-amber-50 border-amber-200 text-amber-600'
-            }`}>
-              <Trophy className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center border border-amber-100">
+              <Trophy className="w-5 h-5 text-amber-600" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h2 className="text-lg font-bold text-slate-800">
-                  {isMLBB ? "Bagan Pertandingan Mobile Legends" : "Bagan Pertandingan E-Football"}
-                </h2>
-                {isMLBB && (
-                  <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-[10px] font-bold rounded-full uppercase tracking-wider">
-                    Format 18 Tim
-                  </span>
-                )}
-              </div>
-              <p className="text-xs text-slate-500">
-                {isMLBB 
-                  ? "Bagan Kejuaraan 2 Sayap Konvergen Menuju Grand Final & Pemenang Trofi" 
-                  : "Preview Bracket Turnamen & Pengundian"}
-              </p>
+              <h2 className="text-lg font-bold text-slate-800">Bagan Pertandingan</h2>
+              <p className="text-xs text-slate-500">Preview Bracket Turnamen & Pengundian</p>
             </div>
           </div>
-          
-          <div className="flex items-center gap-2 flex-wrap">
-            {isMLBB && (
-              <button 
-                onClick={() => setMlbbTheme(prev => prev === 'arena' ? 'clean' : 'arena')}
-                className={`px-3 py-2 text-xs font-semibold rounded-xl border transition-all flex items-center gap-1.5 shadow-sm ${
-                  mlbbTheme === 'arena' 
-                    ? 'bg-slate-900 text-cyan-300 border-slate-700 hover:bg-slate-800' 
-                    : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
-                }`}
-                title="Ganti Tema Visual Bagan"
-              >
-                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                <span>{mlbbTheme === 'arena' ? 'Tema Arena MLBB' : 'Tema Bersih'}</span>
-              </button>
-            )}
-
+          <div className="flex items-center gap-2">
             {hasAccess && (
               <>
                 <button 
@@ -1087,26 +1061,11 @@ export default function EsportDashboard() {
           </div>
         </div>
 
-        {/* BRACKET CANVAS CONTAINER */}
-        <div 
-          ref={bracketRef} 
-          className={`w-full overflow-x-auto relative transition-colors duration-300 ${
-            isFullscreen 
-              ? (isMLBB && mlbbTheme === 'arena' ? 'bg-[#030712] p-8 sm:p-12 h-screen' : 'bg-slate-50 p-8 sm:p-12 h-screen') 
-              : (isMLBB && mlbbTheme === 'arena' ? 'bg-[#030712] p-6 sm:p-8' : 'bg-slate-50/50 p-6 sm:p-8')
-          }`}
-        >
+        <div ref={bracketRef} className={`w-full overflow-x-auto relative ${isFullscreen ? 'bg-slate-50 p-12 h-screen' : 'bg-slate-50/50 p-8'}`}>
+          <div className="absolute inset-0 bg-[linear-gradient(rgba(0,0,0,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(0,0,0,0.02)_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none"></div>
+          
           {isFullscreen && (
             <div className="absolute top-6 right-6 z-50 flex items-center gap-3">
-              {isMLBB && (
-                <button 
-                  onClick={() => setMlbbTheme(prev => prev === 'arena' ? 'clean' : 'arena')}
-                  className="px-3.5 py-2 text-xs font-semibold rounded-xl bg-slate-900/90 text-cyan-300 border border-slate-700 shadow-lg flex items-center gap-1.5"
-                >
-                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                  <span>{mlbbTheme === 'arena' ? 'Tema Arena' : 'Tema Bersih'}</span>
-                </button>
-              )}
               {hasAccess && (
                 <>
                   <button 
@@ -1159,437 +1118,233 @@ export default function EsportDashboard() {
           )}
 
           {/* ======================================================== */}
-          {/* CASE A: MOBILE LEGENDS 18-TEAM TWO-SIDED CONVERGING ARENA */}
+          {/* CASE A: MOBILE LEGENDS 18-TEAM TWO-SIDED BRACKET         */}
+          {/* DESAIN ASLI DASHBOARD: ABU-ABU PUTIH, KOTAK MINIMALIS   */}
           {/* ======================================================== */}
           {isMLBB ? (
-            <div className="relative z-10 min-w-[1440px] max-w-[1600px] mx-auto select-none">
-              
-              {/* BANNER HEADER */}
-              <div className="relative rounded-2xl overflow-hidden mb-8 border border-blue-500/30 shadow-2xl bg-[#091b3a]">
-                <img 
-                  src="/images/bracket-mlbb-bg.png" 
-                  alt="Bagan Mobile Legends SI FEST 2026" 
-                  className="w-full h-auto object-cover max-h-[175px] opacity-90 hover:opacity-100 transition-opacity" 
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#040b18] via-[#040b18]/40 to-transparent flex items-end p-5">
-                  <div className="flex items-center justify-between w-full">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="px-2.5 py-0.5 bg-blue-600 text-white text-[10px] font-extrabold rounded-full uppercase tracking-wider shadow">
-                          E-SPORT • SI FEST 2026
-                        </span>
-                        <span className="px-2 py-0.5 bg-amber-400/20 text-amber-300 border border-amber-400/40 text-[10px] font-bold rounded-full uppercase tracking-wider">
-                          18 Tim Peserta
-                        </span>
-                        <span className="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-bold rounded-full uppercase tracking-wider">
-                          Mobile Legends 5v5 MOBA
-                        </span>
-                      </div>
-                      <h3 className="text-white font-black text-xl sm:text-2xl mt-1 tracking-wide drop-shadow-md">
-                        BAGAN TURNAMEN MOBILE LEGENDS: BANG BANG
-                      </h3>
-                    </div>
-                    <div className="hidden sm:flex items-center gap-3 bg-slate-900/80 backdrop-blur-md px-3.5 py-2 rounded-xl border border-blue-500/30">
-                      <div className="text-right">
-                        <div className="text-[10px] text-blue-300 font-semibold uppercase tracking-wider">Format Pertandingan</div>
-                        <div className="text-xs font-bold text-white">2 Sayap Konvergen Menuju Grand Final</div>
-                      </div>
-                      <Trophy className="w-6 h-6 text-amber-400 shrink-0" />
-                    </div>
-                  </div>
-                </div>
-              </div>
+            <div className="relative z-10 min-w-[1900px] h-[860px] flex gap-12 px-4 py-4 mx-auto max-w-max">
+              <MLBB18Lines />
 
-              {/* 7-COLUMNS CHAMPIONSHIP TOURNAMENT BRACKET */}
-              <div className={`p-6 sm:p-8 rounded-2xl border transition-all ${
-                mlbbTheme === 'arena' 
-                  ? 'bg-gradient-to-b from-[#061226] via-[#081a38] to-[#040a15] border-blue-900/60 shadow-2xl text-white' 
-                  : 'bg-white border-slate-200 text-slate-800 shadow-sm'
-              }`}>
+              {/* Col 0: Round of 18 Kiri (9 Tim) */}
+              <div className="w-56 shrink-0 relative z-10 h-full">
+                <div className="absolute -top-6 text-xs font-bold text-slate-400 uppercase tracking-widest text-center w-full">ROUND OF 18</div>
                 
-                {/* COLUMN TITLES HEADER ROW */}
-                <div className="grid grid-cols-7 gap-6 text-center mb-6 pb-3 border-b border-blue-500/20">
-                  <div className="text-xs font-black tracking-wider text-blue-400 uppercase">
-                    ROUND OF 18 →
-                    <div className="text-[9px] font-medium text-slate-400">Sayap Kiri (9 Tim)</div>
+                {/* Match 1 */}
+                <div className="w-full bg-white border border-slate-200 shadow-sm rounded-lg overflow-hidden flex flex-col text-xs absolute" style={{ top: '64px' }}>
+                  <div className="bg-slate-50 border-b border-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-400 flex justify-between items-center">
+                    <span>Match 1</span>
+                    <span className="text-[8px] text-slate-400">Sayap Kiri</span>
                   </div>
-                  <div className="text-xs font-black tracking-wider text-cyan-400 uppercase">
-                    QUARTERFINALS →
-                    <div className="text-[9px] font-medium text-slate-400">4 Tim Pemenang</div>
-                  </div>
-                  <div className="text-xs font-black tracking-wider text-indigo-400 uppercase">
-                    SEMIFINAL →
-                    <div className="text-[9px] font-medium text-slate-400">Tiket Final Kiri</div>
-                  </div>
-                  <div className="text-xs font-black tracking-wider text-amber-400 uppercase">
-                    👑 GRAND FINAL 👑
-                    <div className="text-[9px] font-medium text-amber-300/80">Puncak Juara MLBB</div>
-                  </div>
-                  <div className="text-xs font-black tracking-wider text-indigo-400 uppercase">
-                    ← SEMIFINAL
-                    <div className="text-[9px] font-medium text-slate-400">Tiket Final Kanan</div>
-                  </div>
-                  <div className="text-xs font-black tracking-wider text-cyan-400 uppercase">
-                    ← QUARTERFINALS
-                    <div className="text-[9px] font-medium text-slate-400">4 Tim Pemenang</div>
-                  </div>
-                  <div className="text-xs font-black tracking-wider text-blue-400 uppercase">
-                    ← ROUND OF 18
-                    <div className="text-[9px] font-medium text-slate-400">Sayap Kanan (9 Tim)</div>
-                  </div>
+                  {renderTeamSlot(shuffledTeams[0], 'r18', 0, true)}
+                  {renderTeamSlot(shuffledTeams[1], 'r18', 1, false)}
                 </div>
 
-                {/* 7 COLUMNS MAIN ARENA */}
-                <div className="grid grid-cols-7 gap-6 items-center">
-
-                  {/* ========================================= */}
-                  {/* COLUMN 1: LEFT ROUND OF 18 (9 TEAMS)      */}
-                  {/* ========================================= */}
-                  <div className="flex flex-col gap-4">
-                    {/* Match L1 */}
-                    <div className={`p-2.5 rounded-xl border flex flex-col gap-1.5 transition-all ${
-                      mlbbTheme === 'arena' 
-                        ? 'bg-[#0a1832]/90 border-blue-900/80 shadow-md hover:border-blue-500' 
-                        : 'bg-slate-50 border-slate-200 shadow-sm hover:border-slate-300'
-                    }`}>
-                      <div className="flex justify-between items-center text-[10px] font-bold px-1">
-                        <span className="text-blue-400">Match 1</span>
-                        <span className="text-[9px] text-slate-400">Lolos ke QF 1 →</span>
-                      </div>
-                      {renderMLBBTeamSlot(shuffledTeams[0], 'r18', 0, false, 'Match 1')}
-                      {renderMLBBTeamSlot(shuffledTeams[1], 'r18', 1, false, 'Match 1')}
-                    </div>
-
-                    {/* Match L2 */}
-                    <div className={`p-2.5 rounded-xl border flex flex-col gap-1.5 transition-all ${
-                      mlbbTheme === 'arena' 
-                        ? 'bg-[#0a1832]/90 border-blue-900/80 shadow-md hover:border-blue-500' 
-                        : 'bg-slate-50 border-slate-200 shadow-sm hover:border-slate-300'
-                    }`}>
-                      <div className="flex justify-between items-center text-[10px] font-bold px-1">
-                        <span className="text-blue-400">Match 2</span>
-                        <span className="text-[9px] text-slate-400">Lolos ke QF 1 →</span>
-                      </div>
-                      {renderMLBBTeamSlot(shuffledTeams[2], 'r18', 2, false, 'Match 2')}
-                      {renderMLBBTeamSlot(shuffledTeams[3], 'r18', 3, false, 'Match 2')}
-                    </div>
-
-                    {/* Match L3 */}
-                    <div className={`p-2.5 rounded-xl border flex flex-col gap-1.5 transition-all ${
-                      mlbbTheme === 'arena' 
-                        ? 'bg-[#0a1832]/90 border-blue-900/80 shadow-md hover:border-blue-500' 
-                        : 'bg-slate-50 border-slate-200 shadow-sm hover:border-slate-300'
-                    }`}>
-                      <div className="flex justify-between items-center text-[10px] font-bold px-1">
-                        <span className="text-blue-400">Match 3</span>
-                        <span className="text-[9px] text-slate-400">Lolos ke QF 2 →</span>
-                      </div>
-                      {renderMLBBTeamSlot(shuffledTeams[4], 'r18', 4, false, 'Match 3')}
-                      {renderMLBBTeamSlot(shuffledTeams[5], 'r18', 5, false, 'Match 3')}
-                    </div>
-
-                    {/* Match L4 & L5 (Play-in & Decider Kiri) */}
-                    <div className={`p-2.5 rounded-xl border flex flex-col gap-2 transition-all ${
-                      mlbbTheme === 'arena' 
-                        ? 'bg-gradient-to-b from-[#0e244d] to-[#07152d] border-amber-500/40 shadow-lg' 
-                        : 'bg-amber-50/40 border-amber-200 shadow-sm'
-                    }`}>
-                      {/* Decider Match L5 */}
-                      <div>
-                        <div className="flex items-center justify-between text-[10px] font-black px-1 text-amber-400 mb-1">
-                          <span className="flex items-center gap-1">
-                            <Shield className="w-3 h-3 text-amber-400" /> Decider L5
-                          </span>
-                          <span className="text-[8px] px-1.5 py-0.2 rounded bg-amber-400/20 text-amber-300 border border-amber-400/30">
-                            Tiket QF 2 →
-                          </span>
-                        </div>
-                        <div className="flex flex-col gap-1">
-                          {renderMLBBTeamSlot(shuffledTeams[6], 'r18', 6, false, 'Decider L5 (Tim 7 BYE)')}
-                          {renderMLBBTeamSlot(playInWinners[0], 'playin_winner', 0, false, 'Decider L5 (Pemenang Play-in L4)')}
-                        </div>
-                      </div>
-
-                      {/* Play-in Match L4 */}
-                      <div className="border-t border-dashed border-blue-700/60 pt-2">
-                        <div className="flex items-center justify-between text-[9px] font-bold px-1 text-blue-300 mb-1">
-                          <span className="flex items-center gap-1">
-                            <Swords className="w-2.5 h-2.5" /> Babak Play-in L4
-                          </span>
-                          <span className="text-slate-400 text-[8px]">Ke Decider ↑</span>
-                        </div>
-                        <div className="flex flex-col gap-1">
-                          {renderMLBBTeamSlot(shuffledTeams[7], 'r18', 7, false, 'Play-in L4 (Tim 8)')}
-                          {renderMLBBTeamSlot(shuffledTeams[8], 'r18', 8, false, 'Play-in L4 (Tim 9)')}
-                        </div>
-                      </div>
-                    </div>
+                {/* Match 2 */}
+                <div className="w-full bg-white border border-slate-200 shadow-sm rounded-lg overflow-hidden flex flex-col text-xs absolute" style={{ top: '224px' }}>
+                  <div className="bg-slate-50 border-b border-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-400 flex justify-between items-center">
+                    <span>Match 2</span>
+                    <span className="text-[8px] text-slate-400">Sayap Kiri</span>
                   </div>
+                  {renderTeamSlot(shuffledTeams[2], 'r18', 2, true)}
+                  {renderTeamSlot(shuffledTeams[3], 'r18', 3, false)}
+                </div>
 
-                  {/* ========================================= */}
-                  {/* COLUMN 2: LEFT QUARTERFINALS (4 TEAMS)    */}
-                  {/* ========================================= */}
-                  <div className="flex flex-col gap-10">
-                    {/* QF 1 */}
-                    <div className={`p-3 rounded-xl border flex flex-col gap-2 transition-all ${
-                      mlbbTheme === 'arena' 
-                        ? 'bg-[#0a1832]/90 border-cyan-900/80 shadow-md hover:border-cyan-500' 
-                        : 'bg-slate-50 border-slate-200 shadow-sm hover:border-slate-300'
-                    }`}>
-                      <div className="flex justify-between items-center text-[10px] font-bold px-1">
-                        <span className="text-cyan-400 font-extrabold">Quarterfinal 1</span>
-                        <span className="text-[9px] text-slate-400">Ke Semifinal 1 →</span>
-                      </div>
-                      {renderMLBBTeamSlot(quarterFinals[0], 'qf', 0, false, 'Quarterfinal 1')}
-                      {renderMLBBTeamSlot(quarterFinals[1], 'qf', 1, false, 'Quarterfinal 1')}
-                    </div>
-
-                    {/* QF 2 */}
-                    <div className={`p-3 rounded-xl border flex flex-col gap-2 transition-all ${
-                      mlbbTheme === 'arena' 
-                        ? 'bg-[#0a1832]/90 border-cyan-900/80 shadow-md hover:border-cyan-500' 
-                        : 'bg-slate-50 border-slate-200 shadow-sm hover:border-slate-300'
-                    }`}>
-                      <div className="flex justify-between items-center text-[10px] font-bold px-1">
-                        <span className="text-cyan-400 font-extrabold">Quarterfinal 2</span>
-                        <span className="text-[9px] text-slate-400">Ke Semifinal 1 →</span>
-                      </div>
-                      {renderMLBBTeamSlot(quarterFinals[2], 'qf', 2, false, 'Quarterfinal 2')}
-                      {renderMLBBTeamSlot(quarterFinals[3], 'qf', 3, false, 'Quarterfinal 2')}
-                    </div>
+                {/* Match 3 */}
+                <div className="w-full bg-white border border-slate-200 shadow-sm rounded-lg overflow-hidden flex flex-col text-xs absolute" style={{ top: '424px' }}>
+                  <div className="bg-slate-50 border-b border-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-400 flex justify-between items-center">
+                    <span>Match 3</span>
+                    <span className="text-[8px] text-slate-400">Sayap Kiri</span>
                   </div>
+                  {renderTeamSlot(shuffledTeams[4], 'r18', 4, true)}
+                  {renderTeamSlot(shuffledTeams[5], 'r18', 5, false)}
+                </div>
 
-                  {/* ========================================= */}
-                  {/* COLUMN 3: LEFT SEMIFINAL (2 TEAMS)        */}
-                  {/* ========================================= */}
-                  <div className="flex flex-col justify-center">
-                    <div className={`p-3.5 rounded-xl border flex flex-col gap-2 transition-all ${
-                      mlbbTheme === 'arena' 
-                        ? 'bg-gradient-to-b from-[#0f2856] to-[#091b38] border-indigo-500/50 shadow-xl' 
-                        : 'bg-indigo-50/50 border-indigo-200 shadow-sm'
-                    }`}>
-                      <div className="flex justify-between items-center text-[10px] font-black px-1">
-                        <span className="text-indigo-300">SEMIFINAL 1</span>
-                        <span className="text-[9px] text-amber-300">Ke Grand Final →</span>
-                      </div>
-                      {renderMLBBTeamSlot(semiFinals[0], 'sf', 0, false, 'Semifinal 1 (Atas)')}
-                      {renderMLBBTeamSlot(semiFinals[1], 'sf', 1, false, 'Semifinal 1 (Bawah)')}
-                    </div>
+                {/* Match 4 (Play-in) */}
+                <div className="w-full bg-white border border-slate-200 shadow-sm rounded-lg overflow-hidden flex flex-col text-xs absolute" style={{ top: '584px' }}>
+                  <div className="bg-slate-50 border-b border-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-400 flex justify-between items-center">
+                    <span>Match 4 (Play-in)</span>
+                    <span className="px-1 rounded text-[8px] font-bold bg-blue-100 text-blue-700">Play-in</span>
                   </div>
+                  {renderTeamSlot(shuffledTeams[7], 'r18', 7, true)}
+                  {renderTeamSlot(shuffledTeams[8], 'r18', 8, false)}
+                </div>
 
-                  {/* ========================================= */}
-                  {/* COLUMN 4: CENTER GRAND FINAL & TROPHY     */}
-                  {/* ========================================= */}
-                  <div className="flex flex-col items-center justify-center gap-6">
-                    {/* GRAND FINAL MATCH CARD */}
-                    <div className={`w-full p-4 rounded-2xl border-2 flex flex-col gap-2.5 transition-all relative ${
-                      mlbbTheme === 'arena'
-                        ? 'bg-gradient-to-b from-amber-500/10 via-[#0d2247] to-[#061226] border-amber-400/80 shadow-2xl shadow-amber-500/20'
-                        : 'bg-gradient-to-b from-amber-50 via-white to-amber-50/50 border-amber-300 shadow-lg'
-                    }`}>
-                      <div className="flex items-center justify-center gap-1.5 text-xs font-black uppercase tracking-wider text-amber-400">
-                        <Crown className="w-4 h-4 text-amber-400 animate-bounce" />
-                        <span>GRAND FINAL MATCH</span>
-                        <Crown className="w-4 h-4 text-amber-400 animate-bounce" />
-                      </div>
-                      
-                      {/* Left Finalist */}
-                      <div className="flex flex-col gap-1">
-                        <div className="text-[9px] font-bold text-amber-400/90 px-1">Finalis Sayap Kiri:</div>
-                        {renderMLBBTeamSlot(finals[0], 'final', 0, true, 'Grand Finalist Kiri')}
-                      </div>
-
-                      {/* VS Divider */}
-                      <div className="flex items-center justify-center gap-2 my-0.5">
-                        <div className="h-[1px] bg-amber-400/40 flex-1"></div>
-                        <span className="px-2 py-0.5 rounded-full bg-amber-500 text-slate-950 font-black text-[10px] shadow">
-                          VS
-                        </span>
-                        <div className="h-[1px] bg-amber-400/40 flex-1"></div>
-                      </div>
-
-                      {/* Right Finalist */}
-                      <div className="flex flex-col gap-1">
-                        <div className="text-[9px] font-bold text-amber-400/90 px-1 text-right">Finalis Sayap Kanan:</div>
-                        {renderMLBBTeamSlot(finals[1], 'final', 1, true, 'Grand Finalist Kanan')}
-                      </div>
-                    </div>
-
-                    {/* CENTER TROPHY & MOBILE LEGENDS LOGO */}
-                    <div className="flex flex-col items-center justify-center text-center">
-                      <div className="relative">
-                        <div className="absolute inset-0 bg-amber-400/20 blur-xl rounded-full"></div>
-                        <Trophy className="w-16 h-16 text-amber-400 drop-shadow-[0_0_15px_rgba(251,191,36,0.5)] relative z-10" />
-                      </div>
-                      <div className="text-[11px] font-black tracking-widest text-amber-300 mt-2 uppercase">
-                        MOBILE LEGENDS
-                      </div>
-                      <div className="text-[9px] font-medium text-blue-300 uppercase tracking-widest">
-                        5v5 Fair MOBA for Mobile
-                      </div>
-                    </div>
-
-                    {/* CHAMPION SHOWCASE */}
-                    <div className={`w-full p-4 rounded-2xl border text-center transition-all ${
-                      champion 
-                        ? 'bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 border-amber-500 text-slate-950 shadow-xl shadow-amber-400/30' 
-                        : (mlbbTheme === 'arena' ? 'bg-[#081833]/60 border-blue-900/60 text-slate-400' : 'bg-slate-100 border-slate-200 text-slate-400')
-                    }`}>
-                      <div className="flex items-center justify-center gap-1.5 mb-1">
-                        <Trophy className={`w-4 h-4 ${champion ? 'text-amber-900' : 'text-slate-400'}`} />
-                        <span className={`text-[10px] font-black uppercase tracking-widest ${champion ? 'text-amber-950' : 'text-slate-400'}`}>
-                          {champion ? 'JUARA 1 SI FEST 2026' : 'CHAMPION'}
-                        </span>
-                      </div>
-                      <div className={`text-base font-black truncate px-2 ${champion ? 'text-slate-950 font-extrabold' : 'text-slate-400'}`}>
-                        {champion ? champion.nama_tim : 'Trofi Menanti Juara'}
-                      </div>
-                      {champion && (
-                        <div className="text-[10px] font-medium text-amber-950/80 mt-0.5">
-                          Kapten: {champion.kapten}
-                        </div>
-                      )}
-                    </div>
+                {/* Match 5 (Decider) */}
+                <div className="w-full bg-white border border-slate-200 shadow-sm rounded-lg overflow-hidden flex flex-col text-xs absolute" style={{ top: '744px' }}>
+                  <div className="bg-slate-50 border-b border-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-400 flex justify-between items-center">
+                    <span>Match 5 (Decider)</span>
+                    <span className="px-1 rounded text-[8px] font-bold bg-amber-100 text-amber-700">Decider</span>
                   </div>
-
-                  {/* ========================================= */}
-                  {/* COLUMN 5: RIGHT SEMIFINAL (2 TEAMS)       */}
-                  {/* ========================================= */}
-                  <div className="flex flex-col justify-center">
-                    <div className={`p-3.5 rounded-xl border flex flex-col gap-2 transition-all ${
-                      mlbbTheme === 'arena' 
-                        ? 'bg-gradient-to-b from-[#0f2856] to-[#091b38] border-indigo-500/50 shadow-xl' 
-                        : 'bg-indigo-50/50 border-indigo-200 shadow-sm'
-                    }`}>
-                      <div className="flex justify-between items-center text-[10px] font-black px-1">
-                        <span className="text-amber-300">← Ke Grand Final</span>
-                        <span className="text-indigo-300">SEMIFINAL 2</span>
-                      </div>
-                      {renderMLBBTeamSlot(semiFinals[2], 'sf', 2, false, 'Semifinal 2 (Atas)')}
-                      {renderMLBBTeamSlot(semiFinals[3], 'sf', 3, false, 'Semifinal 2 (Bawah)')}
-                    </div>
-                  </div>
-
-                  {/* ========================================= */}
-                  {/* COLUMN 6: RIGHT QUARTERFINALS (4 TEAMS)   */}
-                  {/* ========================================= */}
-                  <div className="flex flex-col gap-10">
-                    {/* QF 3 */}
-                    <div className={`p-3 rounded-xl border flex flex-col gap-2 transition-all ${
-                      mlbbTheme === 'arena' 
-                        ? 'bg-[#0a1832]/90 border-cyan-900/80 shadow-md hover:border-cyan-500' 
-                        : 'bg-slate-50 border-slate-200 shadow-sm hover:border-slate-300'
-                    }`}>
-                      <div className="flex justify-between items-center text-[10px] font-bold px-1">
-                        <span className="text-[9px] text-slate-400">← Ke Semifinal 2</span>
-                        <span className="text-cyan-400 font-extrabold">Quarterfinal 3</span>
-                      </div>
-                      {renderMLBBTeamSlot(quarterFinals[4], 'qf', 4, false, 'Quarterfinal 3')}
-                      {renderMLBBTeamSlot(quarterFinals[5], 'qf', 5, false, 'Quarterfinal 3')}
-                    </div>
-
-                    {/* QF 4 */}
-                    <div className={`p-3 rounded-xl border flex flex-col gap-2 transition-all ${
-                      mlbbTheme === 'arena' 
-                        ? 'bg-[#0a1832]/90 border-cyan-900/80 shadow-md hover:border-cyan-500' 
-                        : 'bg-slate-50 border-slate-200 shadow-sm hover:border-slate-300'
-                    }`}>
-                      <div className="flex justify-between items-center text-[10px] font-bold px-1">
-                        <span className="text-[9px] text-slate-400">← Ke Semifinal 2</span>
-                        <span className="text-cyan-400 font-extrabold">Quarterfinal 4</span>
-                      </div>
-                      {renderMLBBTeamSlot(quarterFinals[6], 'qf', 6, false, 'Quarterfinal 4')}
-                      {renderMLBBTeamSlot(quarterFinals[7], 'qf', 7, false, 'Quarterfinal 4')}
-                    </div>
-                  </div>
-
-                  {/* ========================================= */}
-                  {/* COLUMN 7: RIGHT ROUND OF 18 (9 TEAMS)     */}
-                  {/* ========================================= */}
-                  <div className="flex flex-col gap-4">
-                    {/* Match R1 (Match 6) */}
-                    <div className={`p-2.5 rounded-xl border flex flex-col gap-1.5 transition-all ${
-                      mlbbTheme === 'arena' 
-                        ? 'bg-[#0a1832]/90 border-blue-900/80 shadow-md hover:border-blue-500' 
-                        : 'bg-slate-50 border-slate-200 shadow-sm hover:border-slate-300'
-                    }`}>
-                      <div className="flex justify-between items-center text-[10px] font-bold px-1">
-                        <span className="text-[9px] text-slate-400">← Lolos ke QF 3</span>
-                        <span className="text-blue-400">Match 6</span>
-                      </div>
-                      {renderMLBBTeamSlot(shuffledTeams[9], 'r18', 9, false, 'Match 6')}
-                      {renderMLBBTeamSlot(shuffledTeams[10], 'r18', 10, false, 'Match 6')}
-                    </div>
-
-                    {/* Match R2 (Match 7) */}
-                    <div className={`p-2.5 rounded-xl border flex flex-col gap-1.5 transition-all ${
-                      mlbbTheme === 'arena' 
-                        ? 'bg-[#0a1832]/90 border-blue-900/80 shadow-md hover:border-blue-500' 
-                        : 'bg-slate-50 border-slate-200 shadow-sm hover:border-slate-300'
-                    }`}>
-                      <div className="flex justify-between items-center text-[10px] font-bold px-1">
-                        <span className="text-[9px] text-slate-400">← Lolos ke QF 3</span>
-                        <span className="text-blue-400">Match 7</span>
-                      </div>
-                      {renderMLBBTeamSlot(shuffledTeams[11], 'r18', 11, false, 'Match 7')}
-                      {renderMLBBTeamSlot(shuffledTeams[12], 'r18', 12, false, 'Match 7')}
-                    </div>
-
-                    {/* Match R3 (Match 8) */}
-                    <div className={`p-2.5 rounded-xl border flex flex-col gap-1.5 transition-all ${
-                      mlbbTheme === 'arena' 
-                        ? 'bg-[#0a1832]/90 border-blue-900/80 shadow-md hover:border-blue-500' 
-                        : 'bg-slate-50 border-slate-200 shadow-sm hover:border-slate-300'
-                    }`}>
-                      <div className="flex justify-between items-center text-[10px] font-bold px-1">
-                        <span className="text-[9px] text-slate-400">← Lolos ke QF 4</span>
-                        <span className="text-blue-400">Match 8</span>
-                      </div>
-                      {renderMLBBTeamSlot(shuffledTeams[13], 'r18', 13, false, 'Match 8')}
-                      {renderMLBBTeamSlot(shuffledTeams[14], 'r18', 14, false, 'Match 8')}
-                    </div>
-
-                    {/* Match R4 & R5 (Play-in & Decider Kanan) */}
-                    <div className={`p-2.5 rounded-xl border flex flex-col gap-2 transition-all ${
-                      mlbbTheme === 'arena' 
-                        ? 'bg-gradient-to-b from-[#0e244d] to-[#07152d] border-amber-500/40 shadow-lg' 
-                        : 'bg-amber-50/40 border-amber-200 shadow-sm'
-                    }`}>
-                      {/* Decider Match R5 */}
-                      <div>
-                        <div className="flex items-center justify-between text-[10px] font-black px-1 text-amber-400 mb-1">
-                          <span className="text-[8px] px-1.5 py-0.2 rounded bg-amber-400/20 text-amber-300 border border-amber-400/30">
-                            ← Tiket QF 4
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Shield className="w-3 h-3 text-amber-400" /> Decider R5
-                          </span>
-                        </div>
-                        <div className="flex flex-col gap-1">
-                          {renderMLBBTeamSlot(shuffledTeams[15], 'r18', 15, false, 'Decider R5 (Tim 16 BYE)')}
-                          {renderMLBBTeamSlot(playInWinners[1], 'playin_winner', 1, false, 'Decider R5 (Pemenang Play-in R4)')}
-                        </div>
-                      </div>
-
-                      {/* Play-in Match R4 */}
-                      <div className="border-t border-dashed border-blue-700/60 pt-2">
-                        <div className="flex items-center justify-between text-[9px] font-bold px-1 text-blue-300 mb-1">
-                          <span className="text-slate-400 text-[8px]">Ke Decider ↑</span>
-                          <span className="flex items-center gap-1">
-                            <Swords className="w-2.5 h-2.5" /> Babak Play-in R4
-                          </span>
-                        </div>
-                        <div className="flex flex-col gap-1">
-                          {renderMLBBTeamSlot(shuffledTeams[16], 'r18', 16, false, 'Play-in R4 (Tim 17)')}
-                          {renderMLBBTeamSlot(shuffledTeams[17], 'r18', 17, false, 'Play-in R4 (Tim 18)')}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
+                  {renderTeamSlot(shuffledTeams[6], 'r18', 6, true)}
+                  {renderTeamSlot(playInWinners[0], 'playin_winner', 0, false)}
                 </div>
               </div>
 
+              {/* Col 1: Quarterfinals Kiri (4 Tim) */}
+              <div className="w-56 shrink-0 relative z-10 h-full">
+                <div className="absolute -top-6 text-xs font-bold text-slate-400 uppercase tracking-widest text-center w-full">QUARTERFINALS</div>
+                
+                {/* QF 1 */}
+                <div className="w-full bg-white border border-slate-200 shadow-sm rounded-lg overflow-hidden flex flex-col text-xs absolute" style={{ top: '144px' }}>
+                  <div className="bg-slate-50 border-b border-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-400 flex justify-between items-center">
+                    <span>Quarterfinal 1</span>
+                    <span className="text-[8px] text-slate-400">Sayap Kiri</span>
+                  </div>
+                  {renderTeamSlot(quarterFinals[0], 'qf', 0, true)}
+                  {renderTeamSlot(quarterFinals[1], 'qf', 1, false)}
+                </div>
+
+                {/* QF 2 */}
+                <div className="w-full bg-white border border-slate-200 shadow-sm rounded-lg overflow-hidden flex flex-col text-xs absolute" style={{ top: '584px' }}>
+                  <div className="bg-slate-50 border-b border-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-400 flex justify-between items-center">
+                    <span>Quarterfinal 2</span>
+                    <span className="text-[8px] text-slate-400">Sayap Kiri</span>
+                  </div>
+                  {renderTeamSlot(quarterFinals[2], 'qf', 2, true)}
+                  {renderTeamSlot(quarterFinals[3], 'qf', 3, false)}
+                </div>
+              </div>
+
+              {/* Col 2: Semifinal Kiri (2 Tim) */}
+              <div className="w-56 shrink-0 relative z-10 h-full">
+                <div className="absolute -top-6 text-xs font-bold text-slate-400 uppercase tracking-widest text-center w-full">SEMIFINALS</div>
+                
+                {/* Semifinal 1 */}
+                <div className="w-full bg-white border border-slate-200 shadow-sm rounded-lg overflow-hidden flex flex-col text-xs absolute" style={{ top: '364px' }}>
+                  <div className="bg-slate-50 border-b border-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-400 flex justify-between items-center">
+                    <span>Semifinal 1</span>
+                    <span className="text-[8px] text-slate-400">Sayap Kiri</span>
+                  </div>
+                  {renderTeamSlot(semiFinals[0], 'sf', 0, true)}
+                  {renderTeamSlot(semiFinals[1], 'sf', 1, false)}
+                </div>
+              </div>
+
+              {/* Col 3: Grand Final & Champion (Pusat Tengah) */}
+              <div className="w-56 shrink-0 relative z-10 h-full">
+                <div className="absolute -top-6 text-xs font-bold text-slate-400 uppercase tracking-widest text-center w-full">GRAND FINAL</div>
+                
+                {/* Grand Final Card */}
+                <div className="w-full bg-white border border-amber-300 shadow-md rounded-lg overflow-hidden flex flex-col text-xs absolute" style={{ top: '364px' }}>
+                  <div className="bg-amber-100 text-amber-700 text-[10px] font-bold text-center py-1 uppercase tracking-wider">Final Match</div>
+                  {renderTeamSlot(finals[0], 'final', 0, true)}
+                  {renderTeamSlot(finals[1], 'final', 1, false)}
+                </div>
+
+                {/* Champion Card */}
+                <div 
+                  className={`w-full p-4 border rounded-xl flex flex-col items-center justify-center gap-2 shadow-sm text-center transition-all absolute ${
+                    champion 
+                      ? 'bg-gradient-to-r from-amber-100 to-amber-50 border-amber-300 shadow-amber-200/50' 
+                      : 'bg-white border-slate-200'
+                  }`}
+                  style={{ top: '500px' }}
+                >
+                  <Trophy className={`w-8 h-8 mb-1 ${champion ? 'text-amber-500' : 'text-slate-300'}`} />
+                  <span className={`text-[10px] font-bold uppercase tracking-widest ${champion ? 'text-amber-700' : 'text-slate-400'}`}>Champion</span>
+                  <span className={`font-bold text-lg ${champion ? 'text-slate-800' : 'text-slate-400'}`}>
+                    {champion ? champion.nama_tim : 'TBD'}
+                  </span>
+                  {champion && (
+                    <span className="text-[10px] text-slate-500">Kapten: {champion.kapten}</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Col 4: Semifinal Kanan (2 Tim) */}
+              <div className="w-56 shrink-0 relative z-10 h-full">
+                <div className="absolute -top-6 text-xs font-bold text-slate-400 uppercase tracking-widest text-center w-full">SEMIFINALS</div>
+                
+                {/* Semifinal 2 */}
+                <div className="w-full bg-white border border-slate-200 shadow-sm rounded-lg overflow-hidden flex flex-col text-xs absolute" style={{ top: '364px' }}>
+                  <div className="bg-slate-50 border-b border-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-400 flex justify-between items-center">
+                    <span>Semifinal 2</span>
+                    <span className="text-[8px] text-slate-400">Sayap Kanan</span>
+                  </div>
+                  {renderTeamSlot(semiFinals[2], 'sf', 2, true)}
+                  {renderTeamSlot(semiFinals[3], 'sf', 3, false)}
+                </div>
+              </div>
+
+              {/* Col 5: Quarterfinals Kanan (4 Tim) */}
+              <div className="w-56 shrink-0 relative z-10 h-full">
+                <div className="absolute -top-6 text-xs font-bold text-slate-400 uppercase tracking-widest text-center w-full">QUARTERFINALS</div>
+                
+                {/* QF 3 */}
+                <div className="w-full bg-white border border-slate-200 shadow-sm rounded-lg overflow-hidden flex flex-col text-xs absolute" style={{ top: '144px' }}>
+                  <div className="bg-slate-50 border-b border-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-400 flex justify-between items-center">
+                    <span>Quarterfinal 3</span>
+                    <span className="text-[8px] text-slate-400">Sayap Kanan</span>
+                  </div>
+                  {renderTeamSlot(quarterFinals[4], 'qf', 4, true)}
+                  {renderTeamSlot(quarterFinals[5], 'qf', 5, false)}
+                </div>
+
+                {/* QF 4 */}
+                <div className="w-full bg-white border border-slate-200 shadow-sm rounded-lg overflow-hidden flex flex-col text-xs absolute" style={{ top: '584px' }}>
+                  <div className="bg-slate-50 border-b border-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-400 flex justify-between items-center">
+                    <span>Quarterfinal 4</span>
+                    <span className="text-[8px] text-slate-400">Sayap Kanan</span>
+                  </div>
+                  {renderTeamSlot(quarterFinals[6], 'qf', 6, true)}
+                  {renderTeamSlot(quarterFinals[7], 'qf', 7, false)}
+                </div>
+              </div>
+
+              {/* Col 6: Round of 18 Kanan (9 Tim) */}
+              <div className="w-56 shrink-0 relative z-10 h-full">
+                <div className="absolute -top-6 text-xs font-bold text-slate-400 uppercase tracking-widest text-center w-full">ROUND OF 18</div>
+                
+                {/* Match 6 */}
+                <div className="w-full bg-white border border-slate-200 shadow-sm rounded-lg overflow-hidden flex flex-col text-xs absolute" style={{ top: '64px' }}>
+                  <div className="bg-slate-50 border-b border-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-400 flex justify-between items-center">
+                    <span>Match 6</span>
+                    <span className="text-[8px] text-slate-400">Sayap Kanan</span>
+                  </div>
+                  {renderTeamSlot(shuffledTeams[9], 'r18', 9, true)}
+                  {renderTeamSlot(shuffledTeams[10], 'r18', 10, false)}
+                </div>
+
+                {/* Match 7 */}
+                <div className="w-full bg-white border border-slate-200 shadow-sm rounded-lg overflow-hidden flex flex-col text-xs absolute" style={{ top: '224px' }}>
+                  <div className="bg-slate-50 border-b border-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-400 flex justify-between items-center">
+                    <span>Match 7</span>
+                    <span className="text-[8px] text-slate-400">Sayap Kanan</span>
+                  </div>
+                  {renderTeamSlot(shuffledTeams[11], 'r18', 11, true)}
+                  {renderTeamSlot(shuffledTeams[12], 'r18', 12, false)}
+                </div>
+
+                {/* Match 8 */}
+                <div className="w-full bg-white border border-slate-200 shadow-sm rounded-lg overflow-hidden flex flex-col text-xs absolute" style={{ top: '424px' }}>
+                  <div className="bg-slate-50 border-b border-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-400 flex justify-between items-center">
+                    <span>Match 8</span>
+                    <span className="text-[8px] text-slate-400">Sayap Kanan</span>
+                  </div>
+                  {renderTeamSlot(shuffledTeams[13], 'r18', 13, true)}
+                  {renderTeamSlot(shuffledTeams[14], 'r18', 14, false)}
+                </div>
+
+                {/* Match 9 (Play-in) */}
+                <div className="w-full bg-white border border-slate-200 shadow-sm rounded-lg overflow-hidden flex flex-col text-xs absolute" style={{ top: '584px' }}>
+                  <div className="bg-slate-50 border-b border-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-400 flex justify-between items-center">
+                    <span>Match 9 (Play-in)</span>
+                    <span className="px-1 rounded text-[8px] font-bold bg-blue-100 text-blue-700">Play-in</span>
+                  </div>
+                  {renderTeamSlot(shuffledTeams[16], 'r18', 16, true)}
+                  {renderTeamSlot(shuffledTeams[17], 'r18', 17, false)}
+                </div>
+
+                {/* Match 10 (Decider) */}
+                <div className="w-full bg-white border border-slate-200 shadow-sm rounded-lg overflow-hidden flex flex-col text-xs absolute" style={{ top: '744px' }}>
+                  <div className="bg-slate-50 border-b border-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-400 flex justify-between items-center">
+                    <span>Match 10 (Decider)</span>
+                    <span className="px-1 rounded text-[8px] font-bold bg-amber-100 text-amber-700">Decider</span>
+                  </div>
+                  {renderTeamSlot(shuffledTeams[15], 'r18', 15, true)}
+                  {renderTeamSlot(playInWinners[1], 'playin_winner', 1, false)}
+                </div>
+              </div>
             </div>
           ) : (
             // ========================================================
