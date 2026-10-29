@@ -210,8 +210,8 @@ export default function EsportDashboard() {
   }, [isSpinning]);
 
   const calculateFitScale = () => {
-    const baseWidth = isMLBB ? 1900 : 1400;
-    const baseHeight = isMLBB ? 860 : 800;
+    const baseWidth = 1900;
+    const baseHeight = 860;
     
     const vw = typeof window !== 'undefined' ? window.innerWidth : 1920;
     const vh = typeof window !== 'undefined' ? window.innerHeight : 1080;
@@ -786,41 +786,50 @@ export default function EsportDashboard() {
     );
   };
 
-  // SVG Lines generator
-  const SVGLines = () => {
-    const COL_WIDTH = 224; // w-56 is 14rem = 224px
-    const GAP = 48; // gap-12 is 3rem = 48px
-    const PADDING_X = 16; // px-4 is 1rem = 16px
-    const HEIGHT = 800; // h-[800px]
+  // SVG Lines generator for 16-Team Two-Sided Championship Bracket (E-Football)
+  const EFootball16Lines = () => {
+    const paths: string[] = [];
 
-    const paths = [];
-    const roundsCount = [8, 4, 2, 1];
-    
-    for (let r = 0; r < roundsCount.length - 1; r++) {
-      const numMatches = roundsCount[r];
-      const nextMatches = roundsCount[r+1];
-      const boxHeight = HEIGHT / numMatches;
-      const nextBoxHeight = HEIGHT / nextMatches;
-      
-      for (let i = 0; i < numMatches; i++) {
-        const startX = PADDING_X + (r + 1) * COL_WIDTH + r * GAP;
-        const startY = boxHeight * i + (boxHeight / 2);
-        
-        const midX = startX + GAP / 2;
-        
-        const nextI = Math.floor(i / 2);
-        const endX = startX + GAP;
-        const endY = nextBoxHeight * nextI + (nextBoxHeight / 2);
-        
-        paths.push(`M ${startX} ${startY} L ${midX} ${startY} L ${midX} ${endY} L ${endX} ${endY}`);
-      }
-    }
-    
-    // Final to Champion line
-    const finalStartX = PADDING_X + 4 * COL_WIDTH + 3 * GAP;
-    const finalStartY = HEIGHT / 2;
-    const finalEndX = finalStartX + GAP;
-    paths.push(`M ${finalStartX} ${finalStartY} L ${finalEndX} ${finalStartY}`);
+    // Left Wing (Sayap Kiri: Flow Kiri -> Kanan):
+    // Match 1 (y=96) -> QF 1 (y=176)
+    paths.push("M 240 96 L 264 96 L 264 176 L 288 176");
+    // Match 2 (y=256) -> QF 1 (y=176)
+    paths.push("M 240 256 L 264 256 L 264 176 L 288 176");
+
+    // Match 3 (y=516) -> QF 2 (y=596)
+    paths.push("M 240 516 L 264 516 L 264 596 L 288 596");
+    // Match 4 (y=676) -> QF 2 (y=596)
+    paths.push("M 240 676 L 264 676 L 264 596 L 288 596");
+
+    // QF 1 (y=176) -> Semifinal 1 (y=386)
+    paths.push("M 512 176 L 536 176 L 536 386 L 560 386");
+    // QF 2 (y=596) -> Semifinal 1 (y=386)
+    paths.push("M 512 596 L 536 596 L 536 386 L 560 386");
+
+    // Semifinal 1 (y=386) -> Grand Final (y=386)
+    paths.push("M 784 386 L 832 386");
+
+    // Grand Final (y=422) ke Champion (y=480)
+    paths.push("M 944 422 L 944 480");
+
+    // Right Wing (Sayap Kanan: Flow Kanan -> Kiri):
+    // Semifinal 2 (y=386) -> Grand Final (y=386)
+    paths.push("M 1104 386 L 1056 386");
+
+    // QF 3 (y=176) -> Semifinal 2 (y=386)
+    paths.push("M 1376 176 L 1352 176 L 1352 386 L 1328 386");
+    // QF 4 (y=596) -> Semifinal 2 (y=386)
+    paths.push("M 1376 596 L 1352 596 L 1352 386 L 1328 386");
+
+    // Match 5 (y=96) -> QF 3 (y=176)
+    paths.push("M 1648 96 L 1624 96 L 1624 176 L 1600 176");
+    // Match 6 (y=256) -> QF 3 (y=176)
+    paths.push("M 1648 256 L 1624 256 L 1624 176 L 1600 176");
+
+    // Match 7 (y=516) -> QF 4 (y=596)
+    paths.push("M 1648 516 L 1624 516 L 1624 596 L 1600 596");
+    // Match 8 (y=676) -> QF 4 (y=596)
+    paths.push("M 1648 676 L 1624 676 L 1624 596 L 1600 596");
 
     return (
       <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 0 }}>
@@ -1302,8 +1311,8 @@ export default function EsportDashboard() {
               style={
                 isFullscreen
                   ? {
-                      width: `${(isMLBB ? 1900 : 1400) * zoomScale}px`,
-                      height: `${(isMLBB ? 860 : 800) * zoomScale}px`,
+                      width: `${1900 * zoomScale}px`,
+                      height: `${860 * zoomScale}px`,
                       position: 'relative',
                       flexShrink: 0,
                       margin: 'auto',
@@ -1316,8 +1325,8 @@ export default function EsportDashboard() {
                 style={
                   isFullscreen
                     ? {
-                        width: `${isMLBB ? 1900 : 1400}px`,
-                        height: `${isMLBB ? 860 : 800}px`,
+                        width: '1900px',
+                        height: '860px',
                         transform: `scale(${zoomScale})`,
                         transformOrigin: 'top left',
                         position: 'absolute',
@@ -1557,78 +1566,210 @@ export default function EsportDashboard() {
               </div>
             </div>
           ) : (
-            // ========================================================
-            // CASE B: E-FOOTBALL 16-SLOT LINEAR BRACKET
-            // ========================================================
-            <div className="relative z-10 min-w-[1000px] h-[800px] flex gap-12 px-4 py-4 mx-auto max-w-max">
-              <SVGLines />
+            <div className="relative z-10 min-w-[1900px] h-[860px] flex gap-12 px-4 py-4 mx-auto max-w-max">
+            <EFootball16Lines />
+
+            {/* Col 0: Round of 16 Kiri (8 Tim / 4 Match) */}
+            <div className="w-56 shrink-0 relative z-10 h-full">
+              <div className="absolute top-2 text-xs font-bold text-slate-400 uppercase tracking-widest text-center w-full">ROUND OF 16</div>
               
-              {/* Round 1 (16 Teams) */}
-              <div className="flex flex-col justify-around w-56 shrink-0 relative z-10">
-                <div className="absolute -top-6 text-xs font-bold text-slate-400 uppercase tracking-widest text-center w-full">Round of 16</div>
-                {Array(8).fill(0).map((_, i) => (
-                  <div key={`r1-${i}`} className="w-full bg-white border border-slate-200 shadow-sm rounded-lg overflow-hidden flex flex-col text-xs relative">
-                    <div className="bg-slate-50 border-b border-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-400 flex justify-between items-center">
-                      <span>Match {i + 1}</span>
-                      <span className={`px-1 rounded text-[8px] font-bold ${i < 4 ? 'bg-blue-100 text-blue-700' : 'bg-purple-100 text-purple-700'}`}>
-                        {i < 4 ? 'Bagan Atas' : 'Bagan Bawah'}
-                      </span>
-                    </div>
-                    {renderTeamSlot(shuffledTeams[i * 2], 1, i * 2, true)}
-                    {renderTeamSlot(shuffledTeams[i * 2 + 1], 1, i * 2 + 1, false)}
-                  </div>
-                ))}
-              </div>
-
-              {/* Quarterfinals */}
-              <div className="flex flex-col justify-around w-56 shrink-0 relative z-10">
-                <div className="absolute -top-6 text-xs font-bold text-slate-400 uppercase tracking-widest text-center w-full">Quarterfinals</div>
-                {Array(4).fill(0).map((_, i) => (
-                  <div key={`qf-${i}`} className="w-full bg-white border border-slate-200 shadow-sm rounded-lg overflow-hidden flex flex-col text-xs relative">
-                    {renderTeamSlot(quarterFinals[i * 2], 2, i * 2, true)}
-                    {renderTeamSlot(quarterFinals[i * 2 + 1], 2, i * 2 + 1, false)}
-                  </div>
-                ))}
-              </div>
-
-              {/* Semifinals */}
-              <div className="flex flex-col justify-around w-56 shrink-0 relative z-10">
-                <div className="absolute -top-6 text-xs font-bold text-slate-400 uppercase tracking-widest text-center w-full">Semifinals</div>
-                {Array(2).fill(0).map((_, i) => (
-                  <div key={`sf-${i}`} className="w-full bg-white border border-slate-200 shadow-sm rounded-lg overflow-hidden flex flex-col text-xs relative">
-                    {renderTeamSlot(semiFinals[i * 2], 3, i * 2, true)}
-                    {renderTeamSlot(semiFinals[i * 2 + 1], 3, i * 2 + 1, false)}
-                  </div>
-                ))}
-              </div>
-
-              {/* Final */}
-              <div className="flex flex-col justify-around w-56 shrink-0 relative z-10">
-                <div className="absolute -top-6 text-xs font-bold text-slate-400 uppercase tracking-widest text-center w-full">Grand Final</div>
-                <div className="w-full bg-white border border-amber-300 shadow-md rounded-lg overflow-hidden flex flex-col text-xs relative">
-                  <div className="bg-amber-100 text-amber-700 text-[10px] font-bold text-center py-1 uppercase tracking-wider">Final Match</div>
-                  {renderTeamSlot(finals[0], 4, 0, true)}
-                  {renderTeamSlot(finals[1], 4, 1, false)}
+              {/* Match 1 */}
+              <div className="w-full bg-white border border-slate-200 shadow-sm rounded-lg overflow-hidden flex flex-col text-xs absolute" style={{ top: '60px' }}>
+                <div className="bg-slate-50 border-b border-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-400 flex justify-between items-center">
+                  <span>Match 1</span>
+                  <span className="text-[8px] text-slate-400">Sayap Kiri</span>
                 </div>
+                {renderTeamSlot(shuffledTeams[0], 1, 0, true)}
+                {renderTeamSlot(shuffledTeams[1], 1, 1, false)}
               </div>
 
-              {/* Winner */}
-              <div className="flex flex-col justify-center w-56 shrink-0 relative pl-4 z-10">
-                <div 
-                  className={`p-4 border rounded-xl flex flex-col items-center justify-center gap-2 shadow-sm text-center transition-all ${
-                    champion 
-                      ? 'bg-gradient-to-r from-amber-100 to-amber-50 border-amber-300 shadow-amber-200/50' 
-                      : 'bg-slate-50 border-slate-200'
-                  }`}
-                >
-                  <Trophy className={`w-8 h-8 mb-1 ${champion ? 'text-amber-500' : 'text-slate-300'}`} />
-                  <span className={`text-[10px] font-bold uppercase tracking-widest ${champion ? 'text-amber-700' : 'text-slate-400'}`}>Champion</span>
-                  <span className={`font-bold text-lg ${champion ? 'text-slate-800' : 'text-slate-400'}`}>
-                    {champion ? champion.nama_tim : 'TBD'}
-                  </span>
+              {/* Match 2 */}
+              <div className="w-full bg-white border border-slate-200 shadow-sm rounded-lg overflow-hidden flex flex-col text-xs absolute" style={{ top: '220px' }}>
+                <div className="bg-slate-50 border-b border-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-400 flex justify-between items-center">
+                  <span>Match 2</span>
+                  <span className="text-[8px] text-slate-400">Sayap Kiri</span>
                 </div>
+                {renderTeamSlot(shuffledTeams[2], 1, 2, true)}
+                {renderTeamSlot(shuffledTeams[3], 1, 3, false)}
+              </div>
+
+              {/* Match 3 */}
+              <div className="w-full bg-white border border-slate-200 shadow-sm rounded-lg overflow-hidden flex flex-col text-xs absolute" style={{ top: '480px' }}>
+                <div className="bg-slate-50 border-b border-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-400 flex justify-between items-center">
+                  <span>Match 3</span>
+                  <span className="text-[8px] text-slate-400">Sayap Kiri</span>
+                </div>
+                {renderTeamSlot(shuffledTeams[4], 1, 4, true)}
+                {renderTeamSlot(shuffledTeams[5], 1, 5, false)}
+              </div>
+
+              {/* Match 4 */}
+              <div className="w-full bg-white border border-slate-200 shadow-sm rounded-lg overflow-hidden flex flex-col text-xs absolute" style={{ top: '640px' }}>
+                <div className="bg-slate-50 border-b border-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-400 flex justify-between items-center">
+                  <span>Match 4</span>
+                  <span className="text-[8px] text-slate-400">Sayap Kiri</span>
+                </div>
+                {renderTeamSlot(shuffledTeams[6], 1, 6, true)}
+                {renderTeamSlot(shuffledTeams[7], 1, 7, false)}
               </div>
             </div>
+
+            {/* Col 1: Quarterfinals Kiri (4 Tim / 2 Match) */}
+            <div className="w-56 shrink-0 relative z-10 h-full">
+              <div className="absolute top-2 text-xs font-bold text-slate-400 uppercase tracking-widest text-center w-full">QUARTERFINALS</div>
+              
+              {/* QF 1 */}
+              <div className="w-full bg-white border border-slate-200 shadow-sm rounded-lg overflow-hidden flex flex-col text-xs absolute" style={{ top: '140px' }}>
+                <div className="bg-slate-50 border-b border-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-400 flex justify-between items-center">
+                  <span>Quarterfinal 1</span>
+                  <span className="text-[8px] text-slate-400">Sayap Kiri</span>
+                </div>
+                {renderTeamSlot(quarterFinals[0], 2, 0, true)}
+                {renderTeamSlot(quarterFinals[1], 2, 1, false)}
+              </div>
+
+              {/* QF 2 */}
+              <div className="w-full bg-white border border-slate-200 shadow-sm rounded-lg overflow-hidden flex flex-col text-xs absolute" style={{ top: '560px' }}>
+                <div className="bg-slate-50 border-b border-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-400 flex justify-between items-center">
+                  <span>Quarterfinal 2</span>
+                  <span className="text-[8px] text-slate-400">Sayap Kiri</span>
+                </div>
+                {renderTeamSlot(quarterFinals[2], 2, 2, true)}
+                {renderTeamSlot(quarterFinals[3], 2, 3, false)}
+              </div>
+            </div>
+
+            {/* Col 2: Semifinal Kiri (2 Tim / 1 Match) */}
+            <div className="w-56 shrink-0 relative z-10 h-full">
+              <div className="absolute top-2 text-xs font-bold text-slate-400 uppercase tracking-widest text-center w-full">SEMIFINAL</div>
+              
+              {/* Semifinal 1 */}
+              <div className="w-full bg-white border border-slate-200 shadow-sm rounded-lg overflow-hidden flex flex-col text-xs absolute" style={{ top: '350px' }}>
+                <div className="bg-slate-50 border-b border-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-400 flex justify-between items-center">
+                  <span>Semifinal 1</span>
+                  <span className="text-[8px] text-slate-400">Sayap Kiri</span>
+                </div>
+                {renderTeamSlot(semiFinals[0], 3, 0, true)}
+                {renderTeamSlot(semiFinals[1], 3, 1, false)}
+              </div>
+            </div>
+
+            {/* Col 3: Grand Final & Champion (Pusat Tengah) */}
+            <div className="w-56 shrink-0 relative z-10 h-full">
+              <div className="absolute top-2 text-xs font-bold text-slate-400 uppercase tracking-widest text-center w-full">GRAND FINAL</div>
+              
+              {/* Grand Final Card */}
+              <div className="w-full bg-white border border-amber-300 shadow-md rounded-lg overflow-hidden flex flex-col text-xs absolute" style={{ top: '350px' }}>
+                <div className="bg-amber-100 text-amber-700 text-[10px] font-bold text-center py-1 uppercase tracking-wider">Final Match</div>
+                {renderTeamSlot(finals[0], 4, 0, true)}
+                {renderTeamSlot(finals[1], 4, 1, false)}
+              </div>
+
+              {/* Champion Card */}
+              <div 
+                className={`w-full p-4 border rounded-xl flex flex-col items-center justify-center gap-2 shadow-sm text-center transition-all absolute ${
+                  champion 
+                    ? 'bg-gradient-to-r from-amber-100 to-amber-50 border-amber-300 shadow-amber-200/50' 
+                    : 'bg-white border-slate-200'
+                }`}
+                style={{ top: '480px' }}
+              >
+                <Trophy className={`w-8 h-8 mb-1 ${champion ? 'text-amber-500' : 'text-slate-300'}`} />
+                <span className={`text-[10px] font-bold uppercase tracking-widest ${champion ? 'text-amber-700' : 'text-slate-400'}`}>Champion</span>
+                <span className={`font-bold text-lg ${champion ? 'text-slate-800' : 'text-slate-400'}`}>
+                  {champion ? champion.nama_tim : 'TBD'}
+                </span>
+                {champion && (
+                  <span className="text-[10px] text-slate-500">Kapten: {champion.kapten}</span>
+                )}
+              </div>
+            </div>
+
+            {/* Col 4: Semifinal Kanan (2 Tim / 1 Match) */}
+            <div className="w-56 shrink-0 relative z-10 h-full">
+              <div className="absolute top-2 text-xs font-bold text-slate-400 uppercase tracking-widest text-center w-full">SEMIFINAL</div>
+              
+              {/* Semifinal 2 */}
+              <div className="w-full bg-white border border-slate-200 shadow-sm rounded-lg overflow-hidden flex flex-col text-xs absolute" style={{ top: '350px' }}>
+                <div className="bg-slate-50 border-b border-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-400 flex justify-between items-center">
+                  <span>Semifinal 2</span>
+                  <span className="text-[8px] text-slate-400">Sayap Kanan</span>
+                </div>
+                {renderTeamSlot(semiFinals[2], 3, 2, true)}
+                {renderTeamSlot(semiFinals[3], 3, 3, false)}
+              </div>
+            </div>
+
+            {/* Col 5: Quarterfinals Kanan (4 Tim / 2 Match) */}
+            <div className="w-56 shrink-0 relative z-10 h-full">
+              <div className="absolute top-2 text-xs font-bold text-slate-400 uppercase tracking-widest text-center w-full">QUARTERFINALS</div>
+              
+              {/* QF 3 */}
+              <div className="w-full bg-white border border-slate-200 shadow-sm rounded-lg overflow-hidden flex flex-col text-xs absolute" style={{ top: '140px' }}>
+                <div className="bg-slate-50 border-b border-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-400 flex justify-between items-center">
+                  <span>Quarterfinal 3</span>
+                  <span className="text-[8px] text-slate-400">Sayap Kanan</span>
+                </div>
+                {renderTeamSlot(quarterFinals[4], 2, 4, true)}
+                {renderTeamSlot(quarterFinals[5], 2, 5, false)}
+              </div>
+
+              {/* QF 4 */}
+              <div className="w-full bg-white border border-slate-200 shadow-sm rounded-lg overflow-hidden flex flex-col text-xs absolute" style={{ top: '560px' }}>
+                <div className="bg-slate-50 border-b border-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-400 flex justify-between items-center">
+                  <span>Quarterfinal 4</span>
+                  <span className="text-[8px] text-slate-400">Sayap Kanan</span>
+                </div>
+                {renderTeamSlot(quarterFinals[6], 2, 6, true)}
+                {renderTeamSlot(quarterFinals[7], 2, 7, false)}
+              </div>
+            </div>
+
+            {/* Col 6: Round of 16 Kanan (8 Tim / 4 Match) */}
+            <div className="w-56 shrink-0 relative z-10 h-full">
+              <div className="absolute top-2 text-xs font-bold text-slate-400 uppercase tracking-widest text-center w-full">ROUND OF 16</div>
+              
+              {/* Match 5 */}
+              <div className="w-full bg-white border border-slate-200 shadow-sm rounded-lg overflow-hidden flex flex-col text-xs absolute" style={{ top: '60px' }}>
+                <div className="bg-slate-50 border-b border-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-400 flex justify-between items-center">
+                  <span>Match 5</span>
+                  <span className="text-[8px] text-slate-400">Sayap Kanan</span>
+                </div>
+                {renderTeamSlot(shuffledTeams[8], 1, 8, true)}
+                {renderTeamSlot(shuffledTeams[9], 1, 9, false)}
+              </div>
+
+              {/* Match 6 */}
+              <div className="w-full bg-white border border-slate-200 shadow-sm rounded-lg overflow-hidden flex flex-col text-xs absolute" style={{ top: '220px' }}>
+                <div className="bg-slate-50 border-b border-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-400 flex justify-between items-center">
+                  <span>Match 6</span>
+                  <span className="text-[8px] text-slate-400">Sayap Kanan</span>
+                </div>
+                {renderTeamSlot(shuffledTeams[10], 1, 10, true)}
+                {renderTeamSlot(shuffledTeams[11], 1, 11, false)}
+              </div>
+
+              {/* Match 7 */}
+              <div className="w-full bg-white border border-slate-200 shadow-sm rounded-lg overflow-hidden flex flex-col text-xs absolute" style={{ top: '480px' }}>
+                <div className="bg-slate-50 border-b border-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-400 flex justify-between items-center">
+                  <span>Match 7</span>
+                  <span className="text-[8px] text-slate-400">Sayap Kanan</span>
+                </div>
+                {renderTeamSlot(shuffledTeams[12], 1, 12, true)}
+                {renderTeamSlot(shuffledTeams[13], 1, 13, false)}
+              </div>
+
+              {/* Match 8 */}
+              <div className="w-full bg-white border border-slate-200 shadow-sm rounded-lg overflow-hidden flex flex-col text-xs absolute" style={{ top: '640px' }}>
+                <div className="bg-slate-50 border-b border-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-400 flex justify-between items-center">
+                  <span>Match 8</span>
+                  <span className="text-[8px] text-slate-400">Sayap Kanan</span>
+                </div>
+                {renderTeamSlot(shuffledTeams[14], 1, 14, true)}
+                {renderTeamSlot(shuffledTeams[15], 1, 15, false)}
+              </div>
+            </div>
+          </div>
           )}
 
               </div>
