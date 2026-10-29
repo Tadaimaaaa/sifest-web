@@ -52,10 +52,13 @@ type EventData = {
 export default function FutsalDashboard() {
   const params = useParams();
   const category = params.category as string;
-  const gameSlug = category === 'sma' ? 'turnamen-futsal-slta' : 'turnamen-futsal-umum';
+  const isSMA = category === 'sma';
+  const targetSlots = isSMA ? 12 : 16;
+  const teamsPerGroup = isSMA ? 3 : 4;
+  const gameSlug = isSMA ? 'turnamen-futsal-slta' : 'turnamen-futsal-umum';
 
-  const categoryTitle = category === 'sma' ? "Futsal Tingkat SMA/Sederajat" : "Futsal Mahasiswa/Umum";
-  const eventId = category === 'sma' ? "futsal_sma" : "futsal_umum";
+  const categoryTitle = isSMA ? "Futsal Tingkat SMA/Sederajat" : "Futsal Mahasiswa/Umum";
+  const eventId = isSMA ? "futsal_sma" : "futsal_umum";
 
   const [currentUserRole, setCurrentUserRole] = useState("ROLE-001");
   const [isLoading, setIsLoading] = useState(true);
@@ -84,7 +87,7 @@ export default function FutsalDashboard() {
   const [teams, setTeams] = useState<Team[]>([]);
   
   // BRACKET STATE
-  const [shuffledTeams, setShuffledTeams] = useState<(Team | null)[]>(Array(16).fill(null));
+  const [shuffledTeams, setShuffledTeams] = useState<(Team | null)[]>(() => Array(isSMA ? 12 : 16).fill(null));
   const [quarterFinals, setQuarterFinals] = useState<(Team | null)[]>(Array(8).fill(null));
   const [semiFinals, setSemiFinals] = useState<(Team | null)[]>(Array(4).fill(null));
   const [finals, setFinals] = useState<(Team | null)[]>(Array(2).fill(null));
@@ -143,17 +146,50 @@ export default function FutsalDashboard() {
         if (dataResult.bracket) {
           // Restore bracket state
           const b = dataResult.bracket;
-          setShuffledTeams(b.shuffledTeams || Array(16).fill(null));
+          let loadedShuffled = b.shuffledTeams || [];
+          if (loadedShuffled.length < targetSlots) {
+            loadedShuffled = [...loadedShuffled, ...Array(targetSlots - loadedShuffled.length).fill(null)];
+          } else if (loadedShuffled.length > targetSlots) {
+            loadedShuffled = loadedShuffled.slice(0, targetSlots);
+          }
+          setShuffledTeams(loadedShuffled);
           setQuarterFinals(b.quarterFinals || Array(8).fill(null));
           setSemiFinals(b.semiFinals || Array(4).fill(null));
           setFinals(b.finals || Array(2).fill(null));
           setChampion(b.champion || null);
           setEliminatedTeams(new Set(b.eliminatedTeams || []));
-          setGroupMatches(b.groupMatches || []);
+          
+          // Periksa apakah jadwal SMA perlu diperbaiki dari versi 16-tim sebelumnya
+          const hasInvalidSMAMatches = isSMA && Array.isArray(b.groupMatches) && (
+            b.groupMatches.length !== 12 ||
+            b.groupMatches.some((m: GroupMatch) => m.team1Index >= 12 || m.team2Index >= 12)
+          );
+
+          if (hasInvalidSMAMatches) {
+            // Generate jadwal 12 pertandingan bersih untuk 3 tim per grup
+            const cleanMatches: GroupMatch[] = [];
+            for (let g = 0; g < 4; g++) {
+              const offset = g * 3;
+              const pairings = [[0,1], [1,2], [0,2]];
+              pairings.forEach((pair, idx) => {
+                cleanMatches.push({
+                  id: `g${g}-m${idx}`,
+                  groupId: g,
+                  team1Index: offset + pair[0],
+                  team2Index: offset + pair[1],
+                  score1: null,
+                  score2: null,
+                });
+              });
+            }
+            setGroupMatches(cleanMatches);
+          } else {
+            setGroupMatches(b.groupMatches || []);
+          }
           setKnockoutMatches(b.knockoutMatches || []);
         } else {
           // Initialize empty bracket
-          setShuffledTeams(Array(16).fill(null));
+          setShuffledTeams(Array(targetSlots).fill(null));
         }
         setErrorMessage(null);
       } else {
@@ -211,7 +247,7 @@ export default function FutsalDashboard() {
 
     if (!result.isConfirmed) return;
 
-    const emptyShuffled = Array(16).fill(null);
+    const emptyShuffled = Array(targetSlots).fill(null);
     const emptyQF = Array(8).fill(null);
     const emptySF = Array(4).fill(null);
     const emptyFinals = Array(2).fill(null);
@@ -265,10 +301,11 @@ export default function FutsalDashboard() {
 
     // Reset semua skor pertandingan grup
     let resetMatches: GroupMatch[] = [];
-    if (category === 'sma') {
+    if (isSMA) {
+      // 4 Grup, masing-masing 3 tim: 3 pertandingan per grup (total 12 laga)
       for (let g = 0; g < 4; g++) {
-        const offset = g * 4;
-        const pairings = [[0,1], [2,3], [0,2], [1,3], [0,3], [1,2]];
+        const offset = g * 3;
+        const pairings = [[0,1], [1,2], [0,2]];
         pairings.forEach((pair, idx) => {
           resetMatches.push({
             id: `g${g}-m${idx}`,
@@ -364,11 +401,11 @@ export default function FutsalDashboard() {
       }, 50); // 50ms fast shuffle
     } else {
       // WHEN SPIN STOPS: Only generate new matches if none exist yet (first spin)
-      if (category === 'sma' && shuffledTeams.some(t => t !== null) && groupMatches.length === 0) {
+      if (isSMA && shuffledTeams.some(t => t !== null) && groupMatches.length === 0) {
         const matches: GroupMatch[] = [];
         for (let g = 0; g < 4; g++) {
-          const offset = g * 4;
-          const pairings = [[0,1], [2,3], [0,2], [1,3], [0,3], [1,2]];
+          const offset = g * 3;
+          const pairings = [[0,1], [1,2], [0,2]];
           pairings.forEach((pair, idx) => {
             matches.push({
               id: `g${g}-m${idx}`,
@@ -384,7 +421,7 @@ export default function FutsalDashboard() {
       }
     }
     return () => clearInterval(interval);
-  }, [isSpinning, category]);
+  }, [isSpinning, isSMA]);
 
   useEffect(() => {
     const handleFullscreenChange = () => {
@@ -398,10 +435,10 @@ export default function FutsalDashboard() {
     if (!isSpinning) {
       // Start spin: reset bracket progression and sync with current teams
       const initialBracket: (Team | null)[] = [...teams];
-      while (initialBracket.length < 16) {
+      while (initialBracket.length < targetSlots) {
         initialBracket.push(null);
       }
-      setShuffledTeams(initialBracket.slice(0, 16));
+      setShuffledTeams(initialBracket.slice(0, targetSlots));
       
       setQuarterFinals(Array(8).fill(null));
       setSemiFinals(Array(4).fill(null));
@@ -435,7 +472,7 @@ export default function FutsalDashboard() {
     
     const emptySlotIndex = shuffledTeams.findIndex(t => t === null);
     if (emptySlotIndex === -1) {
-      toast.error("Bagan sudah penuh! (Maksimal 16 Tim)");
+      toast.error(`Bagan sudah penuh! (Maksimal ${targetSlots} Tim)`);
       return;
     }
     
@@ -451,8 +488,8 @@ export default function FutsalDashboard() {
   const handleTeamClick = async (team: Team | null, round: number, slotIndex: number) => {
     if (!team || !hasAccess || isSpinning) return;
 
-    // Block interaction for Rank 3 and 4 in Group Stage
-    if (category === 'sma' && round === 1 && slotIndex % 4 > 1) {
+    // Block interaction for Rank 3 in Group Stage (hanya peringkat 1 dan 2 yang lolos)
+    if (isSMA && round === 1 && (slotIndex % teamsPerGroup) > 1) {
       toast.error("Hanya Peringkat 1 dan 2 yang bisa melaju ke babak Knockout!");
       return;
     }
@@ -474,11 +511,10 @@ export default function FutsalDashboard() {
       // Lolos
       const nextSlotIndex = Math.floor(slotIndex / 2);
       if (round === 1) {
-        if (category === 'sma') {
-          // Crossover Rule
-          // slotIndex is (gIndex * 4) + i
-          const gIndex = Math.floor(slotIndex / 4);
-          const rank = slotIndex % 4;
+        if (isSMA) {
+          // Crossover Rule untuk grup berisi 3 tim (Peringkat 0 dan 1 yang lolos)
+          const gIndex = Math.floor(slotIndex / 3);
+          const rank = slotIndex % 3;
           
           const crossoverMap: Record<string, number> = {
             "0-0": 0, // Juara A -> QF M1 T1
@@ -578,15 +614,11 @@ export default function FutsalDashboard() {
 
   // Helper to calculate standings for a group
   const calculateGroupStandings = (groupId: number) => {
-    const groupTeams = [
-      shuffledTeams[groupId * 4],
-      shuffledTeams[groupId * 4 + 1],
-      shuffledTeams[groupId * 4 + 2],
-      shuffledTeams[groupId * 4 + 3],
-    ];
+    const teamsInGroup = isSMA ? 3 : 4;
+    const groupTeams = Array.from({ length: teamsInGroup }, (_, i) => shuffledTeams[groupId * teamsInGroup + i]);
 
     const stats = groupTeams.map((team, localIdx) => {
-      const globalIdx = groupId * 4 + localIdx;
+      const globalIdx = groupId * teamsInGroup + localIdx;
       let M = 0, W = 0, D = 0, L = 0, GF = 0, GA = 0;
 
       groupMatches.filter(m => m.groupId === groupId).forEach(m => {
@@ -1351,7 +1383,7 @@ export default function FutsalDashboard() {
                             {standings.map((stat, i) => {
                               const isQualify = i < 2; // Top 2
                               return (
-                                <div key={`g${gIndex}-team${i}`} className={`flex justify-between items-center px-4 py-3 border-b border-slate-100 ${isQualify ? 'bg-emerald-50 hover:bg-emerald-100' : 'bg-rose-50'} transition-colors ${isQualify ? 'cursor-pointer' : 'cursor-not-allowed'}`} onClick={() => handleTeamClick(stat.team, 1, gIndex * 4 + i)}>
+                                <div key={`g${gIndex}-team${i}`} className={`flex justify-between items-center px-4 py-3 border-b border-slate-100 ${isQualify ? 'bg-emerald-50 hover:bg-emerald-100' : 'bg-rose-50'} transition-colors ${isQualify ? 'cursor-pointer' : 'cursor-not-allowed'}`} onClick={() => handleTeamClick(stat.team, 1, gIndex * teamsPerGroup + i)}>
                                   <div className="flex items-center gap-3 overflow-hidden flex-1 mr-4">
                                     <span className={`w-6 h-6 shrink-0 flex items-center justify-center rounded-full text-xs font-bold ${isQualify ? 'bg-emerald-500 text-white' : 'bg-rose-200 text-rose-700'}`}>{i + 1}</span>
                                     <span className={`font-bold text-sm truncate ${isQualify ? 'text-emerald-900' : 'text-rose-900'}`}>{stat.team ? stat.team.nama_tim : 'TBD'}</span>
