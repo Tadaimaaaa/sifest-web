@@ -996,8 +996,8 @@ export default function FutsalDashboard() {
       // Semifinal 1 (y=236) -> Perebutan Juara 3 (y=526)
       "M 536 236 L 536 526 L 560 526",
 
-      // Grand Final (x=672, y=272) -> Champion Juara 1 (y=320)
-      "M 672 272 L 672 320",
+      // Grand Final (x=672, y=200) -> Champion Juara 1 di atas (y=156)
+      "M 672 200 L 672 156",
       // Perebutan Juara 3 (x=672, y=562) -> Juara 3 Box (y=610)
       "M 672 562 L 672 610",
 
@@ -1589,20 +1589,15 @@ export default function FutsalDashboard() {
                   Babak Final & Juara
                 </div>
                 
-                {/* Grand Final (Perebutan Juara 1) */}
-                <div className="absolute top-[200px] w-full">
-                  {renderMatchSlot(4, 0, finals[0], finals[1], 'final')}
-                </div>
-
-                {/* Champion (Juara 1) Box */}
+                {/* Champion (Juara 1) Box - Di atas Grand Final */}
                 <div 
-                  className={`absolute top-[320px] w-full p-4 border rounded-xl flex flex-col items-center justify-center gap-1.5 shadow-sm text-center transition-all ${
+                  className={`absolute top-[64px] w-full p-3.5 border rounded-xl flex flex-col items-center justify-center gap-1 shadow-sm text-center transition-all ${
                     champion 
                       ? 'bg-gradient-to-r from-amber-100 via-yellow-50 to-amber-100 border-amber-300 shadow-amber-200/50' 
                       : 'bg-white border-slate-200'
                   }`}
                 >
-                  <Trophy className={`w-8 h-8 mb-1 ${champion ? 'text-amber-500' : 'text-slate-300'}`} />
+                  <Trophy className={`w-7 h-7 mb-0.5 ${champion ? 'text-amber-500' : 'text-slate-300'}`} />
                   <span className={`text-[10px] font-bold uppercase tracking-widest ${champion ? 'text-amber-700' : 'text-slate-400'}`}>Champion / Juara 1</span>
                   <span className={`font-bold text-base ${champion ? 'text-slate-800' : 'text-slate-400'} truncate w-full`}>
                     {champion ? champion.nama_tim : 'TBD'}
@@ -1610,6 +1605,11 @@ export default function FutsalDashboard() {
                   {champion?.kapten && (
                     <span className="text-[10px] text-slate-500 truncate w-full">Kapten: {champion.kapten}</span>
                   )}
+                </div>
+
+                {/* Grand Final (Perebutan Juara 1) */}
+                <div className="absolute top-[200px] w-full">
+                  {renderMatchSlot(4, 0, finals[0], finals[1], 'final')}
                 </div>
 
                 {/* Perebutan Juara 3 */}
