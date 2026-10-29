@@ -94,6 +94,9 @@ export default function FutsalDashboard() {
   const [thirdPlaceMatch, setThirdPlaceMatch] = useState<(Team | null)[]>(Array(2).fill(null));
   const [champion, setChampion] = useState<Team | null>(null);
   const [thirdPlaceWinner, setThirdPlaceWinner] = useState<Team | null>(null);
+  const runnerUp = champion && finals[0] && finals[1]
+    ? (finals[0].id_tim === champion.id_tim ? finals[1] : finals[0])
+    : null;
   const [eliminatedTeams, setEliminatedTeams] = useState<Set<string>>(new Set());
   const [groupMatches, setGroupMatches] = useState<GroupMatch[]>([]);
   const [knockoutMatches, setKnockoutMatches] = useState<KnockoutMatch[]>([]);
@@ -993,18 +996,13 @@ export default function FutsalDashboard() {
 
       // Semifinal 1 (y=236) -> Grand Final (y=236)
       "M 512 236 L 560 236",
-      // Semifinal 1 (y=236) -> Perebutan Juara 3 (y=526)
-      "M 536 236 L 536 526 L 560 526",
-
-      // Grand Final (x=672, y=200) -> Champion Juara 1 di atas (y=156)
-      "M 672 200 L 672 156",
-      // Perebutan Juara 3 (x=672, y=562) -> Juara 3 Box (y=610)
-      "M 672 562 L 672 610",
+      // Semifinal 1 (y=236) -> Perebutan Juara 3 (y=416)
+      "M 536 236 L 536 416 L 560 416",
 
       // Semifinal 2 (y=236) -> Grand Final (y=236)
       "M 832 236 L 784 236",
-      // Semifinal 2 (y=236) -> Perebutan Juara 3 (y=526)
-      "M 808 236 L 808 526 L 784 526",
+      // Semifinal 2 (y=236) -> Perebutan Juara 3 (y=416)
+      "M 808 236 L 808 416 L 784 416",
 
       // Sayap Kanan: QF 3 (y=116) -> SF 2 (y=236)
       "M 1104 116 L 1080 116 L 1080 236 L 1056 236",
@@ -1583,28 +1581,10 @@ export default function FutsalDashboard() {
                 </div>
               </div>
 
-              {/* Col 2: Pusat Tengah (Grand Final, Juara 1, Perebutan Juara 3, Juara 3) */}
+              {/* Col 2: Pusat Tengah (Grand Final & Perebutan Juara 3) */}
               <div className="w-56 shrink-0 relative z-10 h-full">
                 <div className="absolute top-2 text-xs font-bold text-slate-400 uppercase tracking-widest text-center w-full">
-                  Babak Final & Juara
-                </div>
-                
-                {/* Champion (Juara 1) Box - Di atas Grand Final */}
-                <div 
-                  className={`absolute top-[64px] w-full p-3.5 border rounded-xl flex flex-col items-center justify-center gap-1 shadow-sm text-center transition-all ${
-                    champion 
-                      ? 'bg-gradient-to-r from-amber-100 via-yellow-50 to-amber-100 border-amber-300 shadow-amber-200/50' 
-                      : 'bg-white border-slate-200'
-                  }`}
-                >
-                  <Trophy className={`w-7 h-7 mb-0.5 ${champion ? 'text-amber-500' : 'text-slate-300'}`} />
-                  <span className={`text-[10px] font-bold uppercase tracking-widest ${champion ? 'text-amber-700' : 'text-slate-400'}`}>Champion / Juara 1</span>
-                  <span className={`font-bold text-base ${champion ? 'text-slate-800' : 'text-slate-400'} truncate w-full`}>
-                    {champion ? champion.nama_tim : 'TBD'}
-                  </span>
-                  {champion?.kapten && (
-                    <span className="text-[10px] text-slate-500 truncate w-full">Kapten: {champion.kapten}</span>
-                  )}
+                  Babak Final
                 </div>
 
                 {/* Grand Final (Perebutan Juara 1) */}
@@ -1613,26 +1593,8 @@ export default function FutsalDashboard() {
                 </div>
 
                 {/* Perebutan Juara 3 */}
-                <div className="absolute top-[490px] w-full">
+                <div className="absolute top-[380px] w-full">
                   {renderMatchSlot(5, 0, thirdPlaceMatch[0], thirdPlaceMatch[1], 'third_place')}
-                </div>
-
-                {/* Juara 3 Box */}
-                <div 
-                  className={`absolute top-[610px] w-full p-4 border rounded-xl flex flex-col items-center justify-center gap-1.5 shadow-sm text-center transition-all ${
-                    thirdPlaceWinner 
-                      ? 'bg-gradient-to-r from-orange-100 via-amber-50 to-orange-100 border-orange-300 shadow-orange-200/50' 
-                      : 'bg-white border-slate-200'
-                  }`}
-                >
-                  <Medal className={`w-8 h-8 mb-1 ${thirdPlaceWinner ? 'text-orange-500' : 'text-slate-300'}`} />
-                  <span className={`text-[10px] font-bold uppercase tracking-widest ${thirdPlaceWinner ? 'text-orange-700' : 'text-slate-400'}`}>Juara 3 (3rd Place)</span>
-                  <span className={`font-bold text-base ${thirdPlaceWinner ? 'text-slate-800' : 'text-slate-400'} truncate w-full`}>
-                    {thirdPlaceWinner ? thirdPlaceWinner.nama_tim : 'TBD'}
-                  </span>
-                  {thirdPlaceWinner?.kapten && (
-                    <span className="text-[10px] text-slate-500 truncate w-full">Kapten: {thirdPlaceWinner.kapten}</span>
-                  )}
                 </div>
               </div>
 
@@ -1656,6 +1618,71 @@ export default function FutsalDashboard() {
                 </div>
                 <div className="absolute top-[320px] w-full">
                   {renderMatchSlot(2, 3, quarterFinals[6], quarterFinals[7], 'default', 'Quarterfinal 4 (D1 vs C2)')}
+                </div>
+              </div>
+
+              {/* Tabel Rekap Juara (Pojok Kanan Bawah) */}
+              <div className="absolute bottom-6 right-8 z-20 w-80 bg-white border border-slate-200/90 rounded-2xl shadow-sm p-4 flex flex-col gap-2.5">
+                <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                  <div className="flex items-center gap-2">
+                    <Trophy className="w-4 h-4 text-amber-500" />
+                    <span className="font-bold text-slate-800 text-xs tracking-wider uppercase">Daftar Juara Turnamen</span>
+                  </div>
+                  <span className="text-[10px] text-slate-400 font-medium">SIFEST 2026</span>
+                </div>
+
+                {/* Juara 1 */}
+                <div className="flex items-center justify-between p-2.5 rounded-xl bg-amber-50/70 border border-amber-200/80">
+                  <div className="flex items-center gap-2.5 overflow-hidden">
+                    <div className="w-6 h-6 rounded-lg bg-amber-500 text-white font-black text-xs flex items-center justify-center shrink-0 shadow-sm">
+                      1
+                    </div>
+                    <div className="flex flex-col overflow-hidden">
+                      <span className="text-[9px] font-bold text-amber-700 uppercase tracking-wider">Juara 1</span>
+                      <span className="font-bold text-slate-800 text-xs truncate max-w-[190px]">
+                        {champion ? champion.nama_tim : 'TBD'}
+                      </span>
+                      {champion?.kapten && (
+                        <span className="text-[9px] text-slate-400 truncate">Kapten: {champion.kapten}</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Juara 2 */}
+                <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-200">
+                  <div className="flex items-center gap-2.5 overflow-hidden">
+                    <div className="w-6 h-6 rounded-lg bg-slate-400 text-white font-black text-xs flex items-center justify-center shrink-0 shadow-sm">
+                      2
+                    </div>
+                    <div className="flex flex-col overflow-hidden">
+                      <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Juara 2 (Runner-up)</span>
+                      <span className="font-bold text-slate-800 text-xs truncate max-w-[190px]">
+                        {runnerUp ? runnerUp.nama_tim : 'TBD'}
+                      </span>
+                      {runnerUp?.kapten && (
+                        <span className="text-[9px] text-slate-400 truncate">Kapten: {runnerUp.kapten}</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Juara 3 */}
+                <div className="flex items-center justify-between p-2.5 rounded-xl bg-orange-50/70 border border-orange-200/80">
+                  <div className="flex items-center gap-2.5 overflow-hidden">
+                    <div className="w-6 h-6 rounded-lg bg-amber-600 text-white font-black text-xs flex items-center justify-center shrink-0 shadow-sm">
+                      3
+                    </div>
+                    <div className="flex flex-col overflow-hidden">
+                      <span className="text-[9px] font-bold text-orange-700 uppercase tracking-wider">Juara 3</span>
+                      <span className="font-bold text-slate-800 text-xs truncate max-w-[190px]">
+                        {thirdPlaceWinner ? thirdPlaceWinner.nama_tim : 'TBD'}
+                      </span>
+                      {thirdPlaceWinner?.kapten && (
+                        <span className="text-[9px] text-slate-400 truncate">Kapten: {thirdPlaceWinner.kapten}</span>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
