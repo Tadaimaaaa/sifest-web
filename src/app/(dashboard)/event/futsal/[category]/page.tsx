@@ -8,7 +8,7 @@ import Cookies from "js-cookie";
 import { toast } from "sonner";
 import FullPageLoader from "@/components/FullPageLoader";
 import { getFutsalData, saveBracket } from "../actions";
-import { Loader2, Shuffle, Maximize, Minimize, Share2, RotateCcw, CalendarX, ExternalLink } from "lucide-react";
+import { Loader2, Shuffle, Maximize, Minimize, Share2, RotateCcw, CalendarX, ExternalLink, Medal } from "lucide-react";
 import { useParams } from "next/navigation";
 import Swal from "sweetalert2";
 
@@ -91,7 +91,9 @@ export default function FutsalDashboard() {
   const [quarterFinals, setQuarterFinals] = useState<(Team | null)[]>(Array(8).fill(null));
   const [semiFinals, setSemiFinals] = useState<(Team | null)[]>(Array(4).fill(null));
   const [finals, setFinals] = useState<(Team | null)[]>(Array(2).fill(null));
+  const [thirdPlaceMatch, setThirdPlaceMatch] = useState<(Team | null)[]>(Array(2).fill(null));
   const [champion, setChampion] = useState<Team | null>(null);
+  const [thirdPlaceWinner, setThirdPlaceWinner] = useState<Team | null>(null);
   const [eliminatedTeams, setEliminatedTeams] = useState<Set<string>>(new Set());
   const [groupMatches, setGroupMatches] = useState<GroupMatch[]>([]);
   const [knockoutMatches, setKnockoutMatches] = useState<KnockoutMatch[]>([]);
@@ -156,7 +158,9 @@ export default function FutsalDashboard() {
           setQuarterFinals(b.quarterFinals || Array(8).fill(null));
           setSemiFinals(b.semiFinals || Array(4).fill(null));
           setFinals(b.finals || Array(2).fill(null));
+          setThirdPlaceMatch(b.thirdPlaceMatch || Array(2).fill(null));
           setChampion(b.champion || null);
+          setThirdPlaceWinner(b.thirdPlaceWinner || null);
           setEliminatedTeams(new Set(b.eliminatedTeams || []));
           
           // Periksa apakah jadwal SMA perlu diperbaiki dari versi 16-tim sebelumnya
@@ -213,7 +217,9 @@ export default function FutsalDashboard() {
         quarterFinals,
         semiFinals,
         finals,
+        thirdPlaceMatch,
         champion,
+        thirdPlaceWinner,
         eliminatedTeams: Array.from(eliminatedTeams),
         groupMatches,
         knockoutMatches
@@ -251,12 +257,15 @@ export default function FutsalDashboard() {
     const emptyQF = Array(8).fill(null);
     const emptySF = Array(4).fill(null);
     const emptyFinals = Array(2).fill(null);
+    const emptyThird = Array(2).fill(null);
 
     setShuffledTeams(emptyShuffled);
     setQuarterFinals(emptyQF);
     setSemiFinals(emptySF);
     setFinals(emptyFinals);
+    setThirdPlaceMatch(emptyThird);
     setChampion(null);
+    setThirdPlaceWinner(null);
     setEliminatedTeams(new Set());
     setKnockoutMatches([]);
 
@@ -267,7 +276,9 @@ export default function FutsalDashboard() {
         quarterFinals: emptyQF,
         semiFinals: emptySF,
         finals: emptyFinals,
+        thirdPlaceMatch: emptyThird,
         champion: null,
+        thirdPlaceWinner: null,
         eliminatedTeams: [],
         groupMatches,
         knockoutMatches: []
@@ -443,7 +454,9 @@ export default function FutsalDashboard() {
       setQuarterFinals(Array(8).fill(null));
       setSemiFinals(Array(4).fill(null));
       setFinals(Array(2).fill(null));
+      setThirdPlaceMatch(Array(2).fill(null));
       setChampion(null);
+      setThirdPlaceWinner(null);
       setEliminatedTeams(new Set());
       setGroupMatches([]);
       setKnockoutMatches([]);
@@ -541,8 +554,15 @@ export default function FutsalDashboard() {
         setSemiFinals(prev => { const n = [...prev]; n[nextSlotIndex] = team; return n; });
       } else if (round === 3) {
         setFinals(prev => { const n = [...prev]; n[nextSlotIndex] = team; return n; });
+        const oppSlot = slotIndex % 2 === 0 ? slotIndex + 1 : slotIndex - 1;
+        const oppTeam = semiFinals[oppSlot];
+        if (oppTeam) {
+          setThirdPlaceMatch(prev => { const n = [...prev]; n[nextSlotIndex] = oppTeam; return n; });
+        }
       } else if (round === 4) {
         setChampion(team);
+      } else if (round === 5) {
+        setThirdPlaceWinner(team);
       }
       
       // Remove from eliminated if they were accidentally marked
@@ -583,18 +603,12 @@ export default function FutsalDashboard() {
     if (!t1 || !t2) return;
     
     let roundName = "";
-    if (category === 'sma') {
-      // SMA: Round 2 = Perempat Final (4 matches), Round 3 = Semi Final (2 matches), Round 4 = Grand Final (1 match)
-      if (round === 2) roundName = "Perempat Final";
-      else if (round === 3) roundName = "Semi Final";
-      else if (round === 4) roundName = "Grand Final";
-    } else {
-      // Umum: Round 1 = R16, Round 2 = QF, Round 3 = SF, Round 4 = Final
-      if (round === 1) roundName = "Round of 16";
-      else if (round === 2) roundName = "Perempat Final";
-      else if (round === 3) roundName = "Semi Final";
-      else if (round === 4) roundName = "Grand Final";
-    }
+    if (round === 1) roundName = "Round of 16";
+    else if (round === 2) roundName = "Perempat Final (Quarterfinal)";
+    else if (round === 3) roundName = "Semi Final";
+    else if (round === 4) roundName = "Grand Final (Perebutan Juara 1)";
+    else if (round === 5) roundName = "Perebutan Juara 3";
+    else roundName = "Babak Gugur";
     
     const hasScore = existingMatch && existingMatch.score1 !== null && existingMatch.score2 !== null;
     let scoreText = "";
@@ -742,6 +756,9 @@ export default function FutsalDashboard() {
     } else if (round === 4) {
       t1 = finals[0];
       t2 = finals[1];
+    } else if (round === 5) {
+      t1 = thirdPlaceMatch[0];
+      t2 = thirdPlaceMatch[1];
     }
 
     if (!t1 || !t2) {
@@ -865,15 +882,25 @@ export default function FutsalDashboard() {
         setSemiFinals(prev => { const n = [...prev]; n[matchIndex] = winner; return n; });
       } else if (round === 3) {
         setFinals(prev => { const n = [...prev]; n[matchIndex] = winner; return n; });
+        setThirdPlaceMatch(prev => { const n = [...prev]; n[matchIndex] = loser; return n; });
       } else if (round === 4) {
         setChampion(winner);
+      } else if (round === 5) {
+        setThirdPlaceWinner(winner);
       }
 
       toast.success(`${winner.nama_tim} berhasil melaju!`);
     }
   };
 
-  const renderMatchSlot = (round: number, matchIndex: number, t1: Team | null, t2: Team | null, isFinal = false) => {
+  const renderMatchSlot = (
+    round: number, 
+    matchIndex: number, 
+    t1: Team | null, 
+    t2: Team | null, 
+    matchType: 'default' | 'final' | 'third_place' = 'default',
+    headerLabel?: string
+  ) => {
     const matchId = `r${round}-m${matchIndex}`;
     const match = knockoutMatches.find(m => m.id === matchId);
     const hasScore = match && match.score1 !== null && match.score2 !== null;
@@ -888,9 +915,13 @@ export default function FutsalDashboard() {
       return `${score}`;
     };
 
+    let borderClass = 'border-slate-200 shadow-sm';
+    if (matchType === 'final') borderClass = 'border-amber-300 shadow-md';
+    if (matchType === 'third_place') borderClass = 'border-orange-300 shadow-md';
+
     return (
       <div 
-        className={`w-full bg-white border ${isFinal ? 'border-amber-300 shadow-md' : 'border-slate-200 shadow-sm'} rounded-lg overflow-hidden flex flex-col text-xs relative group ${hasAccess && !isSpinning ? 'cursor-pointer hover:border-blue-400 hover:shadow-md transition-all' : ''}`}
+        className={`w-full bg-white border ${borderClass} rounded-lg overflow-hidden flex flex-col text-xs relative group ${hasAccess && !isSpinning ? 'cursor-pointer hover:border-blue-400 hover:shadow-md transition-all' : ''}`}
         onClick={() => handleKnockoutMatchClick(round, matchIndex)}
         title={hasAccess && !isSpinning ? "Klik untuk input skor pertandingan" : ""}
       >
@@ -903,26 +934,90 @@ export default function FutsalDashboard() {
             <Share2 size={12} />
           </div>
         )}
-        {isFinal && (
-          <div className="bg-amber-100 text-amber-700 text-[10px] font-bold text-center py-1 uppercase tracking-wider">Final Match</div>
+        {matchType === 'final' && (
+          <div className="bg-amber-100 text-amber-700 text-[10px] font-bold text-center py-1 uppercase tracking-wider">Grand Final (Perebutan Juara 1)</div>
+        )}
+        {matchType === 'third_place' && (
+          <div className="bg-orange-100 text-orange-700 text-[10px] font-bold text-center py-1 uppercase tracking-wider">Perebutan Juara 3</div>
+        )}
+        {matchType === 'default' && headerLabel && (
+          <div className="bg-slate-50 border-b border-slate-100 px-2.5 py-1 text-[9px] font-semibold text-slate-500 flex justify-between items-center">
+            <span>{headerLabel}</span>
+          </div>
         )}
         <div className={`px-3 py-2 flex justify-between items-center bg-slate-50 border-b border-slate-100 ${t1Eliminated ? 'opacity-50 grayscale' : ''}`}>
-          <span className={`font-semibold ${t1 ? (t1Eliminated ? 'text-slate-400 line-through' : 'text-slate-800') : 'text-slate-400'} truncate max-w-[140px]`}>
-            {t1 ? t1.nama_tim : 'TBD (BYE)'}
+          <span 
+            className={`font-semibold ${t1 ? (t1Eliminated ? 'text-slate-400 line-through' : 'text-slate-800') : 'text-slate-400'} truncate max-w-[140px] hover:underline cursor-pointer`}
+            onClick={(e) => {
+              if (t1) {
+                e.stopPropagation();
+                handleTeamClick(t1, round, matchIndex * 2);
+              }
+            }}
+            title={t1 ? "Klik nama tim untuk meloloskan/gugurkan" : ""}
+          >
+            {t1 ? t1.nama_tim : 'TBD'}
           </span>
           <span className={`font-black ${hasScore ? 'text-slate-800' : 'text-slate-300'}`}>
             {formatScore(match?.score1 ?? null, isPen ? match?.pen1 ?? null : null)}
           </span>
         </div>
         <div className={`px-3 py-2 flex justify-between items-center bg-white ${t2Eliminated ? 'opacity-50 grayscale' : ''}`}>
-          <span className={`font-semibold ${t2 ? (t2Eliminated ? 'text-slate-400 line-through' : 'text-slate-800') : 'text-slate-400'} truncate max-w-[140px]`}>
-            {t2 ? t2.nama_tim : 'TBD (BYE)'}
+          <span 
+            className={`font-semibold ${t2 ? (t2Eliminated ? 'text-slate-400 line-through' : 'text-slate-800') : 'text-slate-400'} truncate max-w-[140px] hover:underline cursor-pointer`}
+            onClick={(e) => {
+              if (t2) {
+                e.stopPropagation();
+                handleTeamClick(t2, round, matchIndex * 2 + 1);
+              }
+            }}
+            title={t2 ? "Klik nama tim untuk meloloskan/gugurkan" : ""}
+          >
+            {t2 ? t2.nama_tim : 'TBD'}
           </span>
           <span className={`font-black ${hasScore ? 'text-slate-800' : 'text-slate-300'}`}>
             {formatScore(match?.score2 ?? null, isPen ? match?.pen2 ?? null : null)}
           </span>
         </div>
       </div>
+    );
+  };
+
+  // SVG Lines generator for Two-Sided Futsal Knockout Bracket
+  const FutsalTwoSidedLines = () => {
+    const paths = [
+      // Sayap Kiri: QF 1 (y=116) -> SF 1 (y=236)
+      "M 240 116 L 264 116 L 264 236 L 288 236",
+      // Sayap Kiri: QF 2 (y=356) -> SF 1 (y=236)
+      "M 240 356 L 264 356 L 264 236 L 288 236",
+
+      // Semifinal 1 (y=236) -> Grand Final (y=236)
+      "M 512 236 L 560 236",
+      // Semifinal 1 (y=236) -> Perebutan Juara 3 (y=526)
+      "M 536 236 L 536 526 L 560 526",
+
+      // Grand Final (x=672, y=272) -> Champion Juara 1 (y=320)
+      "M 672 272 L 672 320",
+      // Perebutan Juara 3 (x=672, y=562) -> Juara 3 Box (y=610)
+      "M 672 562 L 672 610",
+
+      // Semifinal 2 (y=236) -> Grand Final (y=236)
+      "M 832 236 L 784 236",
+      // Semifinal 2 (y=236) -> Perebutan Juara 3 (y=526)
+      "M 808 236 L 808 526 L 784 526",
+
+      // Sayap Kanan: QF 3 (y=116) -> SF 2 (y=236)
+      "M 1104 116 L 1080 116 L 1080 236 L 1056 236",
+      // Sayap Kanan: QF 4 (y=356) -> SF 2 (y=236)
+      "M 1104 356 L 1080 356 L 1080 236 L 1056 236",
+    ];
+
+    return (
+      <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 0 }}>
+        {paths.map((d, idx) => (
+          <path key={idx} d={d} fill="none" stroke="#cbd5e1" strokeWidth="2" strokeLinejoin="round" />
+        ))}
+      </svg>
     );
   };
 
@@ -1461,11 +1556,114 @@ export default function FutsalDashboard() {
             </div>
           )}
 
-          <div className="relative z-10 min-w-[1000px] h-[800px] flex gap-12 px-4 py-4 mx-auto max-w-max">
-            <SVGLines />
-            
-            {/* Round 1 / Fase Grup */}
-            {category !== 'sma' && (
+          {isSMA ? (
+            <div className="relative z-10 min-w-[1360px] h-[780px] flex gap-12 px-4 py-4 mx-auto max-w-max">
+              <FutsalTwoSidedLines />
+
+              {/* Col 0: Quarterfinals Kiri (Sayap Kiri) */}
+              <div className="w-56 shrink-0 relative z-10 h-full">
+                <div className="absolute top-2 text-xs font-bold text-slate-400 uppercase tracking-widest text-center w-full">
+                  Quarterfinals (Kiri)
+                </div>
+                <div className="absolute top-[80px] w-full">
+                  {renderMatchSlot(2, 0, quarterFinals[0], quarterFinals[1], 'default', 'Quarterfinal 1 (A1 vs B2)')}
+                </div>
+                <div className="absolute top-[320px] w-full">
+                  {renderMatchSlot(2, 1, quarterFinals[2], quarterFinals[3], 'default', 'Quarterfinal 2 (C1 vs D2)')}
+                </div>
+              </div>
+
+              {/* Col 1: Semifinal Kiri (Sayap Kiri) */}
+              <div className="w-56 shrink-0 relative z-10 h-full">
+                <div className="absolute top-2 text-xs font-bold text-slate-400 uppercase tracking-widest text-center w-full">
+                  Semifinal 1
+                </div>
+                <div className="absolute top-[200px] w-full">
+                  {renderMatchSlot(3, 0, semiFinals[0], semiFinals[1], 'default', 'Semifinal 1 (QF1 vs QF2)')}
+                </div>
+              </div>
+
+              {/* Col 2: Pusat Tengah (Grand Final, Juara 1, Perebutan Juara 3, Juara 3) */}
+              <div className="w-56 shrink-0 relative z-10 h-full">
+                <div className="absolute top-2 text-xs font-bold text-slate-400 uppercase tracking-widest text-center w-full">
+                  Babak Final & Juara
+                </div>
+                
+                {/* Grand Final (Perebutan Juara 1) */}
+                <div className="absolute top-[200px] w-full">
+                  {renderMatchSlot(4, 0, finals[0], finals[1], 'final')}
+                </div>
+
+                {/* Champion (Juara 1) Box */}
+                <div 
+                  className={`absolute top-[320px] w-full p-4 border rounded-xl flex flex-col items-center justify-center gap-1.5 shadow-sm text-center transition-all ${
+                    champion 
+                      ? 'bg-gradient-to-r from-amber-100 via-yellow-50 to-amber-100 border-amber-300 shadow-amber-200/50' 
+                      : 'bg-white border-slate-200'
+                  }`}
+                >
+                  <Trophy className={`w-8 h-8 mb-1 ${champion ? 'text-amber-500' : 'text-slate-300'}`} />
+                  <span className={`text-[10px] font-bold uppercase tracking-widest ${champion ? 'text-amber-700' : 'text-slate-400'}`}>Champion / Juara 1</span>
+                  <span className={`font-bold text-base ${champion ? 'text-slate-800' : 'text-slate-400'} truncate w-full`}>
+                    {champion ? champion.nama_tim : 'TBD'}
+                  </span>
+                  {champion?.kapten && (
+                    <span className="text-[10px] text-slate-500 truncate w-full">Kapten: {champion.kapten}</span>
+                  )}
+                </div>
+
+                {/* Perebutan Juara 3 */}
+                <div className="absolute top-[490px] w-full">
+                  {renderMatchSlot(5, 0, thirdPlaceMatch[0], thirdPlaceMatch[1], 'third_place')}
+                </div>
+
+                {/* Juara 3 Box */}
+                <div 
+                  className={`absolute top-[610px] w-full p-4 border rounded-xl flex flex-col items-center justify-center gap-1.5 shadow-sm text-center transition-all ${
+                    thirdPlaceWinner 
+                      ? 'bg-gradient-to-r from-orange-100 via-amber-50 to-orange-100 border-orange-300 shadow-orange-200/50' 
+                      : 'bg-white border-slate-200'
+                  }`}
+                >
+                  <Medal className={`w-8 h-8 mb-1 ${thirdPlaceWinner ? 'text-orange-500' : 'text-slate-300'}`} />
+                  <span className={`text-[10px] font-bold uppercase tracking-widest ${thirdPlaceWinner ? 'text-orange-700' : 'text-slate-400'}`}>Juara 3 (3rd Place)</span>
+                  <span className={`font-bold text-base ${thirdPlaceWinner ? 'text-slate-800' : 'text-slate-400'} truncate w-full`}>
+                    {thirdPlaceWinner ? thirdPlaceWinner.nama_tim : 'TBD'}
+                  </span>
+                  {thirdPlaceWinner?.kapten && (
+                    <span className="text-[10px] text-slate-500 truncate w-full">Kapten: {thirdPlaceWinner.kapten}</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Col 3: Semifinal Kanan (Sayap Kanan) */}
+              <div className="w-56 shrink-0 relative z-10 h-full">
+                <div className="absolute top-2 text-xs font-bold text-slate-400 uppercase tracking-widest text-center w-full">
+                  Semifinal 2
+                </div>
+                <div className="absolute top-[200px] w-full">
+                  {renderMatchSlot(3, 1, semiFinals[2], semiFinals[3], 'default', 'Semifinal 2 (QF3 vs QF4)')}
+                </div>
+              </div>
+
+              {/* Col 4: Quarterfinals Kanan (Sayap Kanan) */}
+              <div className="w-56 shrink-0 relative z-10 h-full">
+                <div className="absolute top-2 text-xs font-bold text-slate-400 uppercase tracking-widest text-center w-full">
+                  Quarterfinals (Kanan)
+                </div>
+                <div className="absolute top-[80px] w-full">
+                  {renderMatchSlot(2, 2, quarterFinals[4], quarterFinals[5], 'default', 'Quarterfinal 3 (B1 vs A2)')}
+                </div>
+                <div className="absolute top-[320px] w-full">
+                  {renderMatchSlot(2, 3, quarterFinals[6], quarterFinals[7], 'default', 'Quarterfinal 4 (D1 vs C2)')}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="relative z-10 min-w-[1000px] h-[800px] flex gap-12 px-4 py-4 mx-auto max-w-max">
+              <SVGLines />
+              
+              {/* Round 1 / Round of 16 */}
               <div className="flex flex-col justify-around w-56 shrink-0 relative z-10">
                 <div className="absolute -top-6 text-xs font-bold text-slate-400 uppercase tracking-widest text-center w-full">Round of 16</div>
                 {Array(8).fill(0).map((_, i) => (
@@ -1474,51 +1672,51 @@ export default function FutsalDashboard() {
                   </div>
                 ))}
               </div>
-            )}
 
-            {/* Quarterfinals */}
-            <div className="flex flex-col justify-around w-56 shrink-0 relative z-10">
-              <div className="absolute -top-6 text-xs font-bold text-slate-400 uppercase tracking-widest text-center w-full">Quarterfinals</div>
-              {Array(4).fill(0).map((_, i) => (
-                <div key={`qf-${i}`}>
-                  {renderMatchSlot(2, i, quarterFinals[i * 2], quarterFinals[i * 2 + 1])}
+              {/* Quarterfinals */}
+              <div className="flex flex-col justify-around w-56 shrink-0 relative z-10">
+                <div className="absolute -top-6 text-xs font-bold text-slate-400 uppercase tracking-widest text-center w-full">Quarterfinals</div>
+                {Array(4).fill(0).map((_, i) => (
+                  <div key={`qf-${i}`}>
+                    {renderMatchSlot(2, i, quarterFinals[i * 2], quarterFinals[i * 2 + 1])}
+                  </div>
+                ))}
+              </div>
+
+              {/* Semifinals */}
+              <div className="flex flex-col justify-around w-56 shrink-0 relative z-10">
+                <div className="absolute -top-6 text-xs font-bold text-slate-400 uppercase tracking-widest text-center w-full">Semifinals</div>
+                {Array(2).fill(0).map((_, i) => (
+                  <div key={`sf-${i}`}>
+                    {renderMatchSlot(3, i, semiFinals[i * 2], semiFinals[i * 2 + 1])}
+                  </div>
+                ))}
+              </div>
+
+              {/* Final */}
+              <div className="flex flex-col justify-around w-56 shrink-0 relative z-10">
+                <div className="absolute -top-6 text-xs font-bold text-slate-400 uppercase tracking-widest text-center w-full">Grand Final</div>
+                {renderMatchSlot(4, 0, finals[0], finals[1], 'final')}
+              </div>
+
+              {/* Winner */}
+              <div className="flex flex-col justify-center w-56 shrink-0 relative pl-4 z-10">
+                <div 
+                  className={`p-4 border rounded-xl flex flex-col items-center justify-center gap-2 shadow-sm text-center transition-all ${
+                    champion 
+                      ? 'bg-gradient-to-r from-amber-100 to-amber-50 border-amber-300 shadow-amber-200/50' 
+                      : 'bg-slate-50 border-slate-200'
+                  }`}
+                >
+                  <Trophy className={`w-8 h-8 mb-1 ${champion ? 'text-amber-500' : 'text-slate-300'}`} />
+                  <span className={`text-[10px] font-bold uppercase tracking-widest ${champion ? 'text-amber-700' : 'text-slate-400'}`}>Champion</span>
+                  <span className={`font-bold text-lg ${champion ? 'text-slate-800' : 'text-slate-400'}`}>
+                    {champion ? champion.nama_tim : 'TBD'}
+                  </span>
                 </div>
-              ))}
-            </div>
-
-            {/* Semifinals */}
-            <div className="flex flex-col justify-around w-56 shrink-0 relative z-10">
-              <div className="absolute -top-6 text-xs font-bold text-slate-400 uppercase tracking-widest text-center w-full">Semifinals</div>
-              {Array(2).fill(0).map((_, i) => (
-                <div key={`sf-${i}`}>
-                  {renderMatchSlot(3, i, semiFinals[i * 2], semiFinals[i * 2 + 1])}
-                </div>
-              ))}
-            </div>
-
-            {/* Final */}
-            <div className="flex flex-col justify-around w-56 shrink-0 relative z-10">
-              <div className="absolute -top-6 text-xs font-bold text-slate-400 uppercase tracking-widest text-center w-full">Grand Final</div>
-              {renderMatchSlot(4, 0, finals[0], finals[1], true)}
-            </div>
-
-            {/* Winner */}
-            <div className="flex flex-col justify-center w-56 shrink-0 relative pl-4 z-10">
-              <div 
-                className={`p-4 border rounded-xl flex flex-col items-center justify-center gap-2 shadow-sm text-center transition-all ${
-                  champion 
-                    ? 'bg-gradient-to-r from-amber-100 to-amber-50 border-amber-300 shadow-amber-200/50' 
-                    : 'bg-slate-50 border-slate-200'
-                }`}
-              >
-                <Trophy className={`w-8 h-8 mb-1 ${champion ? 'text-amber-500' : 'text-slate-300'}`} />
-                <span className={`text-[10px] font-bold uppercase tracking-widest ${champion ? 'text-amber-700' : 'text-slate-400'}`}>Champion</span>
-                <span className={`font-bold text-lg ${champion ? 'text-slate-800' : 'text-slate-400'}`}>
-                  {champion ? champion.nama_tim : 'TBD'}
-                </span>
               </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>
