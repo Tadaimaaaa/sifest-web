@@ -14,7 +14,8 @@ import {
   Sparkles,
   Users,
   Trash2,
-  Upload
+  Upload,
+  SwitchCamera
 } from "lucide-react";
 import { PanitiaUser } from "@/app/(dashboard)/absensi-panitia/page";
 import { toast } from "sonner";
@@ -47,6 +48,11 @@ export default function FaceEnrollmentModal({
   const [selectedUser, setSelectedUser] = useState<PanitiaUser | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStatus, setFilterStatus] = useState<"ALL" | "ENROLLED" | "NOT_ENROLLED">("ALL");
+
+  // Camera Facing Mode: "user" (Depan/Selfie) atau "environment" (Kamera Belakang)
+  const [facingMode, setFacingMode] = useState<"user" | "environment">("user");
+  // Mobile Tab: "camera" atau "panitia" (khusus tampilan HP / layar kecil)
+  const [mobileTab, setMobileTab] = useState<"camera" | "panitia">("camera");
 
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [isCameraReady, setIsCameraReady] = useState(false);
@@ -81,17 +87,18 @@ export default function FaceEnrollmentModal({
     }
   }, [initialSelectedUser, panitiaList, isOpen]);
 
-  // Start Camera
-  const startCamera = useCallback(async () => {
+  // Start Camera with facingMode support (user = selfie, environment = rear/kamera belakang)
+  const startCamera = useCallback(async (mode: "user" | "environment" = facingMode) => {
     setCameraError(null);
     setIsCameraReady(false);
     try {
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((t) => t.stop());
+        streamRef.current = null;
       }
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
-          facingMode: "user",
+          facingMode: { ideal: mode },
           width: { ideal: 1280 },
           height: { ideal: 720 }
         },
@@ -107,13 +114,34 @@ export default function FaceEnrollmentModal({
       }
     } catch (err: any) {
       console.error("Camera access failed:", err);
-      setCameraError(
-        err.name === "NotAllowedError" || err.name === "PermissionDeniedError"
-          ? "Akses kamera ditolak. Berikan izin akses kamera di browser Anda."
-          : "Kamera tidak terdeteksi atau sedang digunakan aplikasi lain."
-      );
+      // Fallback try simple video: true jika ideal constraint ditolak browser HP tertentu
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        streamRef.current = stream;
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.onloadedmetadata = () => {
+            videoRef.current?.play().catch(() => {});
+            setIsCameraReady(true);
+          };
+        }
+      } catch (fallbackErr: any) {
+        setCameraError(
+          fallbackErr.name === "NotAllowedError" || fallbackErr.name === "PermissionDeniedError"
+            ? "Akses kamera ditolak. Berikan izin akses kamera di browser Anda."
+            : "Kamera tidak terdeteksi atau sedang digunakan aplikasi lain."
+        );
+      }
     }
-  }, []);
+  }, [facingMode]);
+
+  // Beralih antara Kamera Depan & Kamera Belakang
+  const toggleFacingMode = () => {
+    const nextMode = facingMode === "user" ? "environment" : "user";
+    setFacingMode(nextMode);
+    startCamera(nextMode);
+    toast.info(`Beralih ke ${nextMode === "user" ? "Kamera Depan (Selfie)" : "Kamera Belakang"}`);
+  };
 
   // Stop Camera
   const stopCamera = useCallback(() => {
@@ -146,13 +174,16 @@ export default function FaceEnrollmentModal({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Draw square cropped & mirrored
+    // Draw square cropped
     const minDim = Math.min(video.videoWidth || 640, video.videoHeight || 480);
     const startX = ((video.videoWidth || 640) - minDim) / 2;
     const startY = ((video.videoHeight || 480) - minDim) / 2;
 
-    ctx.translate(canvas.width, 0);
-    ctx.scale(-1, 1);
+    if (facingMode === "user") {
+      // Mirror hanya jika kamera depan (selfie)
+      ctx.translate(canvas.width, 0);
+      ctx.scale(-1, 1);
+    }
     ctx.drawImage(video, startX, startY, minDim, minDim, 0, 0, canvas.width, canvas.height);
 
     const base64 = canvas.toDataURL("image/jpeg", 0.85);
@@ -235,42 +266,87 @@ export default function FaceEnrollmentModal({
   const enrolledCount = panitiaList.filter((p) => !!enrolledFaces[p.user_id]).length;
 
   return (
-    <div className="fixed inset-0 z-[80] bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-3 md:p-6 animate-in fade-in duration-200">
-      <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-4xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+    <div className="fixed inset-0 z-[80] bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 md:p-6 animate-in fade-in duration-200">
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl sm:rounded-3xl w-full max-w-4xl shadow-2xl overflow-hidden flex flex-col max-h-[96dvh] sm:max-h-[90vh]">
         {/* Header Bar */}
-        <div className="p-4 md:px-6 md:py-4 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-purple-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-purple-500/20">
-              <Camera className="w-5 h-5 text-white" />
+        <div className="p-3 sm:p-4 md:px-6 md:py-4 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-tr from-purple-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-purple-500/20 flex-shrink-0">
+              <Camera className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-white font-extrabold text-base md:text-lg tracking-tight">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h3 className="text-white font-extrabold text-sm sm:text-base md:text-lg tracking-tight truncate">
                   Pendaftaran Wajah Panitia
                 </h3>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-purple-500/20 text-purple-300 border border-purple-500/30 uppercase tracking-widest">
+                <span className="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-black bg-purple-500/20 text-purple-300 border border-purple-500/30 uppercase tracking-widest">
                   Face Enrollment
                 </span>
               </div>
-              <p className="text-xs text-slate-400">
+              <p className="text-[11px] sm:text-xs text-slate-400 hidden sm:block truncate">
                 Daftarkan foto selfie master panitia agar Face ID mengenali otomatis saat presensi.
               </p>
             </div>
           </div>
 
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+            {/* Tombol Switch Kamera Depan / Belakang di Header */}
+            <button
+              type="button"
+              onClick={toggleFacingMode}
+              className="flex items-center gap-1 px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-purple-300 border border-slate-700 rounded-xl text-xs font-semibold transition-colors cursor-pointer"
+              title={facingMode === "user" ? "Beralih ke Kamera Belakang" : "Beralih ke Kamera Depan (Selfie)"}
+            >
+              <SwitchCamera className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-purple-400" />
+              <span className="hidden sm:inline">{facingMode === "user" ? "Kamera Belakang" : "Kamera Depan"}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-1.5 sm:p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile Navigation Tabs (Khusus Tampilan HP / Layar < lg) */}
+        <div className="flex lg:hidden border-b border-slate-800 bg-slate-900 px-3 py-2 gap-2">
           <button
             type="button"
-            onClick={onClose}
-            className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
+            onClick={() => setMobileTab("camera")}
+            className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+              mobileTab === "camera"
+                ? "bg-purple-600 text-white shadow-md shadow-purple-600/30"
+                : "bg-slate-800 text-slate-400 hover:text-white"
+            }`}
           >
-            <X className="w-5 h-5" />
+            <Camera className="w-3.5 h-3.5" />
+            <span>Kamera & Foto</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setMobileTab("panitia")}
+            className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+              mobileTab === "panitia"
+                ? "bg-purple-600 text-white shadow-md shadow-purple-600/30"
+                : "bg-slate-800 text-slate-400 hover:text-white"
+            }`}
+          >
+            <Users className="w-3.5 h-3.5" />
+            <span>Pilih Panitia ({panitiaList.length})</span>
           </button>
         </div>
 
         {/* Content Body: Split View (Panitia List + Camera Enrollment Viewport) */}
         <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 overflow-y-auto">
           {/* Left Panel: Panitia Directory (Col 5) */}
-          <div className="lg:col-span-5 p-4 border-b lg:border-b-0 lg:border-r border-slate-800 bg-slate-900/60 flex flex-col">
+          <div
+            className={`lg:col-span-5 p-3 sm:p-4 border-b lg:border-b-0 lg:border-r border-slate-800 bg-slate-900/60 flex flex-col ${
+              mobileTab === "panitia" ? "flex" : "hidden lg:flex"
+            }`}
+          >
             <div className="space-y-2 mb-3">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
@@ -344,6 +420,7 @@ export default function FaceEnrollmentModal({
                       onClick={() => {
                         setSelectedUser(p);
                         setCapturedPreview(null);
+                        setMobileTab("camera"); // Otomatis beralih ke tab kamera di HP
                       }}
                       className={`p-2.5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between ${
                         isSelected
@@ -391,15 +468,19 @@ export default function FaceEnrollmentModal({
           </div>
 
           {/* Right Panel: Camera & Photo Capture Viewport (Col 7) */}
-          <div className="lg:col-span-7 p-4 md:p-6 flex flex-col items-center justify-center bg-black/40">
+          <div
+            className={`lg:col-span-7 p-3 sm:p-6 flex flex-col items-center justify-center bg-black/40 ${
+              mobileTab === "camera" ? "flex" : "hidden lg:flex"
+            }`}
+          >
             <canvas ref={canvasRef} className="hidden" />
 
             {selectedUser ? (
-              <div className="w-full max-w-md flex flex-col items-center space-y-4">
+              <div className="w-full max-w-md flex flex-col items-center space-y-3 sm:space-y-4">
                 {/* Selected User Header Card */}
-                <div className="w-full bg-slate-900 border border-slate-800 rounded-2xl p-3 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-slate-800 border border-purple-500/40 overflow-hidden flex items-center justify-center">
+                <div className="w-full bg-slate-900 border border-slate-800 rounded-2xl p-2.5 sm:p-3 flex items-center justify-between">
+                  <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+                    <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-slate-800 border border-purple-500/40 overflow-hidden flex items-center justify-center flex-shrink-0">
                       {enrolledFaces[selectedUser.user_id] ? (
                         <img
                           src={enrolledFaces[selectedUser.user_id]}
@@ -410,30 +491,41 @@ export default function FaceEnrollmentModal({
                         <User className="w-5 h-5 text-slate-400" />
                       )}
                     </div>
-                    <div>
-                      <h4 className="text-white font-extrabold text-sm truncate max-w-[200px]">
+                    <div className="min-w-0">
+                      <h4 className="text-white font-extrabold text-xs sm:text-sm truncate max-w-[170px] sm:max-w-[220px]">
                         {selectedUser.name}
                       </h4>
-                      <p className="text-[11px] text-purple-300 font-mono">
+                      <p className="text-[10px] sm:text-[11px] text-purple-300 font-mono truncate">
                         {selectedUser.division} • {selectedUser.nim}
                       </p>
                     </div>
                   </div>
 
-                  {enrolledFaces[selectedUser.user_id] && (
+                  <div className="flex items-center gap-1.5 flex-shrink-0">
+                    {/* Tombol Ganti Panitia di HP */}
                     <button
                       type="button"
-                      onClick={() => handleDeleteEnrollment(selectedUser)}
-                      className="p-1.5 text-rose-400 hover:text-rose-300 hover:bg-rose-950/50 rounded-xl transition-colors"
-                      title="Hapus foto wajah ini"
+                      onClick={() => setMobileTab("panitia")}
+                      className="lg:hidden px-2 py-1 bg-slate-800 hover:bg-slate-700 text-purple-300 border border-slate-700 rounded-lg text-[10px] font-bold"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      Ganti Panitia
                     </button>
-                  )}
+
+                    {enrolledFaces[selectedUser.user_id] && (
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteEnrollment(selectedUser)}
+                        className="p-1.5 text-rose-400 hover:text-rose-300 hover:bg-rose-950/50 rounded-xl transition-colors"
+                        title="Hapus foto wajah ini"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 {/* Viewfinder Viewport */}
-                <div className="relative w-full aspect-square max-w-sm rounded-3xl overflow-hidden bg-slate-950 border-2 border-slate-800 shadow-2xl flex items-center justify-center group">
+                <div className="relative w-full aspect-square max-w-[320px] sm:max-w-sm rounded-3xl overflow-hidden bg-slate-950 border-2 border-slate-800 shadow-2xl flex items-center justify-center group">
                   {capturedPreview ? (
                     /* Captured Photo Preview */
                     <div className="relative w-full h-full">
@@ -455,12 +547,25 @@ export default function FaceEnrollmentModal({
                         autoPlay
                         playsInline
                         muted
-                        className="w-full h-full object-cover transform -scale-x-100"
+                        className={`w-full h-full object-cover ${
+                          facingMode === "user" ? "transform -scale-x-100" : "transform-none"
+                        }`}
                       />
+
+                      {/* Tombol Floating Switch Kamera di atas Layar Video */}
+                      <button
+                        type="button"
+                        onClick={toggleFacingMode}
+                        className="absolute top-3 left-3 z-10 px-2.5 py-1.5 bg-black/75 hover:bg-black/90 backdrop-blur-md rounded-full text-white text-[11px] font-bold border border-white/20 flex items-center gap-1.5 shadow-lg active:scale-95 transition-all cursor-pointer"
+                        title="Ganti ke Kamera Depan / Belakang"
+                      >
+                        <SwitchCamera className="w-3.5 h-3.5 text-purple-400" />
+                        <span>{facingMode === "user" ? "Kamera Belakang" : "Kamera Depan"}</span>
+                      </button>
 
                       {/* Oval Portrait Guide */}
                       <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center p-6">
-                        <div className="w-52 h-64 rounded-[50%] border-2 border-dashed border-purple-400/80 shadow-[0_0_30px_rgba(168,85,247,0.25)] flex items-center justify-center">
+                        <div className="w-48 sm:w-52 h-60 sm:h-64 rounded-[50%] border-2 border-dashed border-purple-400/80 shadow-[0_0_30px_rgba(168,85,247,0.25)] flex items-center justify-center">
                           <div className="text-center px-3 py-1 bg-black/60 rounded-full text-[10px] text-purple-200 font-semibold backdrop-blur-sm">
                             Posisikan wajah di dalam oval
                           </div>
@@ -475,7 +580,7 @@ export default function FaceEnrollmentModal({
                       <p className="font-bold text-xs text-rose-400 mb-2">{cameraError}</p>
                       <button
                         type="button"
-                        onClick={startCamera}
+                        onClick={() => startCamera(facingMode)}
                         className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 rounded-xl text-xs font-bold"
                       >
                         Coba Lagi
@@ -491,7 +596,7 @@ export default function FaceEnrollmentModal({
                       <button
                         type="button"
                         onClick={() => setCapturedPreview(null)}
-                        className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer"
+                        className="flex-1 py-2.5 sm:py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer"
                       >
                         <RefreshCw className="w-4 h-4" />
                         <span>Foto Ulang</span>
@@ -501,12 +606,12 @@ export default function FaceEnrollmentModal({
                         type="button"
                         disabled={isSavingDb}
                         onClick={handleSaveEnrollment}
-                        className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer"
+                        className="flex-1 py-2.5 sm:py-3 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer"
                       >
                         {isSavingDb ? (
                           <>
                             <RefreshCw className="w-4 h-4 animate-spin" />
-                            <span>Menyimpan ke Database...</span>
+                            <span>Menyimpan...</span>
                           </>
                         ) : (
                           <>
@@ -521,16 +626,20 @@ export default function FaceEnrollmentModal({
                       type="button"
                       disabled={!isCameraReady}
                       onClick={handleCapture}
-                      className="w-full py-3 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:opacity-50 text-white rounded-2xl text-xs md:text-sm font-extrabold shadow-lg shadow-purple-600/30 transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
+                      className="w-full py-3 sm:py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 disabled:opacity-50 text-white rounded-2xl text-xs sm:text-sm font-extrabold shadow-lg shadow-purple-600/30 transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
                     >
                       <Camera className="w-4 h-4" />
-                      <span>Ambil Foto Wajah (Selfie)</span>
+                      <span>
+                        {facingMode === "user"
+                          ? "Ambil Foto Wajah (Selfie)"
+                          : "Ambil Foto Wajah (Kamera Belakang)"}
+                      </span>
                     </button>
                   )}
                 </div>
               </div>
             ) : (
-              <div className="text-center text-slate-500 text-xs">
+              <div className="text-center text-slate-500 text-xs p-6">
                 Pilih panitia di sebelah kiri untuk mulai mendaftarkan wajah.
               </div>
             )}

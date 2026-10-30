@@ -17,7 +17,8 @@ import {
   Users,
   Search,
   CheckCheck,
-  UserX
+  UserX,
+  SwitchCamera
 } from "lucide-react";
 import Cookies from "js-cookie";
 import { PanitiaUser } from "@/app/(dashboard)/absensi-panitia/page";
@@ -52,6 +53,11 @@ export default function FaceIDScannerModal({
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
+
+  // Camera Facing Mode: "user" (Depan/Selfie) atau "environment" (Kamera Belakang)
+  const [facingMode, setFacingMode] = useState<"user" | "environment">("user");
+  // Mobile Tab: "scanner" atau "panitia" (khusus tampilan HP / layar kecil)
+  const [mobileTab, setMobileTab] = useState<"scanner" | "panitia">("scanner");
 
   // States
   const [cameraError, setCameraError] = useState<string | null>(null);
@@ -186,19 +192,20 @@ export default function FaceIDScannerModal({
     }
   }, [initialSelectedUser, isOpen]);
 
-  // Start Camera
-  const startCamera = useCallback(async () => {
+  // Start Camera with facingMode support (user = selfie, environment = rear/kamera belakang)
+  const startCamera = useCallback(async (mode: "user" | "environment" = facingMode) => {
     setCameraError(null);
     setIsCameraReady(false);
 
     try {
       if (streamRef.current) {
         streamRef.current.getTracks().forEach((t) => t.stop());
+        streamRef.current = null;
       }
 
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
-          facingMode: "user",
+          facingMode: { ideal: mode },
           width: { ideal: 1280 },
           height: { ideal: 720 }
         },
@@ -215,13 +222,33 @@ export default function FaceIDScannerModal({
       }
     } catch (err: any) {
       console.error("Camera access failed:", err);
-      setCameraError(
-        err.name === "NotAllowedError" || err.name === "PermissionDeniedError"
-          ? "Akses kamera ditolak. Mohon izinkan izin kamera di browser Anda."
-          : "Kamera tidak terdeteksi atau sedang digunakan aplikasi lain."
-      );
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        streamRef.current = stream;
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.onloadedmetadata = () => {
+            videoRef.current?.play().catch(() => {});
+            setIsCameraReady(true);
+          };
+        }
+      } catch (fallbackErr: any) {
+        setCameraError(
+          fallbackErr.name === "NotAllowedError" || fallbackErr.name === "PermissionDeniedError"
+            ? "Akses kamera ditolak. Mohon izinkan izin kamera di browser Anda."
+            : "Kamera tidak terdeteksi atau sedang digunakan aplikasi lain."
+        );
+      }
     }
-  }, []);
+  }, [facingMode]);
+
+  // Beralih antara Kamera Depan & Kamera Belakang
+  const toggleFacingMode = () => {
+    const nextMode = facingMode === "user" ? "environment" : "user";
+    setFacingMode(nextMode);
+    startCamera(nextMode);
+    toast.info(`Beralih ke ${nextMode === "user" ? "Kamera Depan (Selfie)" : "Kamera Belakang"}`);
+  };
 
   // Stop Camera
   const stopCamera = useCallback(() => {
@@ -257,13 +284,15 @@ export default function FaceIDScannerModal({
     const ctx = canvas.getContext("2d");
     if (!ctx) return null;
 
-    // Draw square cropped & mirrored
     const minDim = Math.min(video.videoWidth || 640, video.videoHeight || 480);
     const startX = ((video.videoWidth || 640) - minDim) / 2;
     const startY = ((video.videoHeight || 480) - minDim) / 2;
 
-    ctx.translate(canvas.width, 0);
-    ctx.scale(-1, 1);
+    if (facingMode === "user") {
+      // Mirror hanya jika kamera depan (selfie)
+      ctx.translate(canvas.width, 0);
+      ctx.scale(-1, 1);
+    }
     ctx.drawImage(video, startX, startY, minDim, minDim, 0, 0, canvas.width, canvas.height);
     return canvas.toDataURL("image/jpeg", 0.85);
   };
@@ -454,41 +483,52 @@ export default function FaceIDScannerModal({
   });
 
   return (
-    <div className="fixed inset-0 z-[80] bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-3 md:p-6 animate-in fade-in duration-200">
-      <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-4xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+    <div className="fixed inset-0 z-[80] bg-slate-950/90 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 md:p-6 animate-in fade-in duration-200">
+      <div className="bg-slate-900 border border-slate-800 rounded-2xl sm:rounded-3xl w-full max-w-4xl shadow-2xl overflow-hidden flex flex-col max-h-[96dvh] sm:max-h-[92vh]">
         {/* Header Bar */}
-        <div className="p-4 md:px-6 md:py-4 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20">
-              <Scan className="w-5 h-5 text-white animate-pulse" />
+        <div className="p-3 sm:p-4 md:px-6 md:py-4 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between">
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-gradient-to-tr from-cyan-500 to-blue-600 flex items-center justify-center shadow-lg shadow-cyan-500/20 flex-shrink-0">
+              <Scan className="w-4 h-4 sm:w-5 sm:h-5 text-white animate-pulse" />
             </div>
-            <div>
+            <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="text-white font-extrabold text-base md:text-lg tracking-tight">
-                  SI FEST Face ID Biometric Recognition
+                <h3 className="text-white font-extrabold text-sm sm:text-base md:text-lg tracking-tight truncate">
+                  Face ID Biometric
                 </h3>
                 {sessionTitle && (
-                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                  <span className="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30">
                     Sesi: {sessionTitle}
                   </span>
                 )}
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+                <span className="px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                   <span>Cloud: {enrolledCount} Terdaftar</span>
                 </span>
               </div>
-              <p className="text-xs text-slate-400">
+              <p className="text-[11px] sm:text-xs text-slate-400 hidden sm:block truncate">
                 Kamera membandingkan wajah Anda langsung dengan foto master yang telah terdaftar.
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 flex-shrink-0">
+            {/* Switch Camera Button */}
+            <button
+              type="button"
+              onClick={toggleFacingMode}
+              className="flex items-center gap-1 px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-cyan-300 border border-slate-700 rounded-xl text-xs font-semibold transition-colors cursor-pointer"
+              title={facingMode === "user" ? "Beralih ke Kamera Belakang" : "Beralih ke Kamera Depan (Selfie)"}
+            >
+              <SwitchCamera className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-cyan-400" />
+              <span className="hidden sm:inline">{facingMode === "user" ? "Kamera Belakang" : "Kamera Depan"}</span>
+            </button>
+
             {/* Audio Toggle */}
             <button
               type="button"
               onClick={() => setSoundEnabled(!soundEnabled)}
-              className={`p-2 rounded-xl border transition-colors ${
+              className={`p-1.5 sm:p-2 rounded-xl border transition-colors ${
                 soundEnabled
                   ? "bg-slate-800 text-cyan-400 border-slate-700"
                   : "bg-slate-800/40 text-slate-500 border-slate-800"
@@ -502,17 +542,49 @@ export default function FaceIDScannerModal({
             <button
               type="button"
               onClick={onClose}
-              className="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
+              className="p-1.5 sm:p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-colors cursor-pointer"
             >
               <X className="w-5 h-5" />
             </button>
           </div>
         </div>
 
+        {/* Mobile Navigation Tabs (khusus HP & Layar Kecil) */}
+        <div className="flex lg:hidden border-b border-slate-800 bg-slate-900 px-3 py-2 gap-2">
+          <button
+            type="button"
+            onClick={() => setMobileTab("scanner")}
+            className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+              mobileTab === "scanner"
+                ? "bg-blue-600 text-white shadow-md shadow-blue-600/30"
+                : "bg-slate-800 text-slate-400 hover:text-white"
+            }`}
+          >
+            <Scan className="w-3.5 h-3.5" />
+            <span>Scanner Kamera</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setMobileTab("panitia")}
+            className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+              mobileTab === "panitia"
+                ? "bg-blue-600 text-white shadow-md shadow-blue-600/30"
+                : "bg-slate-800 text-slate-400 hover:text-white"
+            }`}
+          >
+            <Users className="w-3.5 h-3.5" />
+            <span>Pilih Target ({enrolledCount})</span>
+          </button>
+        </div>
+
         {/* Content Body: Split View (Camera Viewfinder + Panitia Target Queue) */}
         <div className="flex-1 grid grid-cols-1 lg:grid-cols-12 overflow-y-auto">
           {/* Main Viewfinder (Col 8) */}
-          <div className="lg:col-span-8 p-4 md:p-6 flex flex-col items-center justify-center bg-black/40 relative">
+          <div
+            className={`lg:col-span-8 p-3 sm:p-6 flex flex-col items-center justify-center bg-black/40 relative ${
+              mobileTab === "scanner" ? "flex" : "hidden lg:flex"
+            }`}
+          >
             {/* Hidden Canvas for Frame Snapshots */}
             <canvas ref={canvasRef} className="hidden" />
 
@@ -524,8 +596,21 @@ export default function FaceIDScannerModal({
                 autoPlay
                 playsInline
                 muted
-                className="w-full h-full object-cover transform -scale-x-100"
+                className={`w-full h-full object-cover ${
+                  facingMode === "user" ? "transform -scale-x-100" : "transform-none"
+                }`}
               />
+
+              {/* Floating Switch Camera button on the viewfinder */}
+              <button
+                type="button"
+                onClick={toggleFacingMode}
+                className="absolute top-12 sm:top-14 right-3 z-30 px-2.5 py-1.5 bg-black/75 hover:bg-black/90 backdrop-blur-md rounded-full text-white text-[11px] font-bold border border-cyan-500/30 flex items-center gap-1.5 shadow-lg active:scale-95 transition-all cursor-pointer pointer-events-auto"
+                title="Ganti ke Kamera Depan / Belakang"
+              >
+                <SwitchCamera className="w-3.5 h-3.5 text-cyan-400" />
+                <span className="hidden xs:inline">{facingMode === "user" ? "Kamera Belakang" : "Kamera Depan"}</span>
+              </button>
 
               {/* Camera Error Message */}
               {cameraError && (
@@ -534,7 +619,7 @@ export default function FaceIDScannerModal({
                   <p className="font-bold text-sm text-rose-400 mb-2">{cameraError}</p>
                   <button
                     type="button"
-                    onClick={startCamera}
+                    onClick={() => startCamera(facingMode)}
                     className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-xl text-xs font-bold transition-all flex items-center gap-2 cursor-pointer"
                   >
                     <RefreshCw className="w-4 h-4" /> Coba Lagi
@@ -743,7 +828,11 @@ export default function FaceIDScannerModal({
           </div>
 
           {/* Right Sidebar: Panitia Queue / Selection (Col 4) */}
-          <div className="lg:col-span-4 p-4 border-t lg:border-t-0 lg:border-l border-slate-800 bg-slate-900/60 flex flex-col">
+          <div
+            className={`lg:col-span-4 p-3 sm:p-4 border-t lg:border-t-0 lg:border-l border-slate-800 bg-slate-900/60 flex flex-col ${
+              mobileTab === "panitia" ? "flex" : "hidden lg:flex"
+            }`}
+          >
             <div className="mb-3 space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
@@ -776,6 +865,7 @@ export default function FaceIDScannerModal({
                       setQuickNimInput(String(p.nim));
                       setScanState("IDLE");
                       setConfidence(0);
+                      setMobileTab("scanner"); // Otomatis kembali ke scanner kamera di HP
                       toast.info(`Target Face ID: ${p.name}`);
                     }}
                     className={`p-2.5 rounded-xl border transition-all cursor-pointer flex items-center justify-between ${

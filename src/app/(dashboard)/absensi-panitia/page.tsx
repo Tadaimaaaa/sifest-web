@@ -896,7 +896,7 @@ export default function AbsensiPanitiaPage() {
                 setFaceIDTargetUser(null);
                 setIsFaceIDOpen(true);
               }}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition-colors cursor-pointer"
+              className="flex items-center justify-center gap-1.5 sm:gap-2 px-3.5 sm:px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs sm:text-sm font-semibold transition-colors cursor-pointer flex-1 sm:flex-initial shadow-sm active:scale-95"
             >
               <Scan className="w-4 h-4" />
               <span>Presensi Face ID</span>
@@ -908,7 +908,7 @@ export default function AbsensiPanitiaPage() {
                 setEnrollModalUser(null);
                 setIsEnrollModalOpen(true);
               }}
-              className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-sm font-semibold transition-colors cursor-pointer"
+              className="flex items-center justify-center gap-1.5 sm:gap-2 px-3.5 sm:px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs sm:text-sm font-semibold transition-colors cursor-pointer flex-1 sm:flex-initial shadow-sm active:scale-95"
             >
               <Camera className="w-4 h-4" />
               <span>Daftar Wajah</span>
@@ -917,11 +917,11 @@ export default function AbsensiPanitiaPage() {
             <button
               type="button"
               onClick={handleExportExcel}
-              className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 rounded-lg text-sm font-medium border border-slate-200 transition-colors cursor-pointer"
+              className="flex items-center justify-center gap-1.5 px-3 py-2 bg-white hover:bg-slate-50 text-slate-700 rounded-xl text-xs sm:text-sm font-medium border border-slate-200 transition-colors cursor-pointer"
               title="Download Rekap Excel"
             >
               <Download className="w-4 h-4" />
-              <span>Export Excel</span>
+              <span className="hidden sm:inline">Export Excel</span>
             </button>
 
             <button
@@ -933,11 +933,11 @@ export default function AbsensiPanitiaPage() {
                 }
                 window.print();
               }}
-              className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 rounded-lg text-sm font-medium border border-slate-200 transition-colors cursor-pointer"
+              className="flex items-center justify-center gap-1.5 px-3 py-2 bg-white hover:bg-slate-50 text-slate-700 rounded-xl text-xs sm:text-sm font-medium border border-slate-200 transition-colors cursor-pointer"
               title="Cetak Rekap Absensi"
             >
               <Printer className="w-4 h-4" />
-              <span>Cetak Rekap</span>
+              <span className="hidden sm:inline">Cetak Rekap</span>
             </button>
           </div>
         </div>
@@ -1326,7 +1326,7 @@ export default function AbsensiPanitiaPage() {
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm border-collapse">
+            <table className="w-full text-left text-sm border-collapse min-w-[720px]">
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-200/80 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                   <th className="py-3.5 px-4 w-12 text-center">No</th>
