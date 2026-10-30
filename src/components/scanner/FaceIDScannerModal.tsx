@@ -376,8 +376,12 @@ export default function FaceIDScannerModal({
           const score = computeBiometricMatch(liveVector, enrolledVec);
           setConfidence(score);
 
-          // Threshold verifikasi 1:1 adalah 68%
-          if (score >= 68) {
+          // Threshold 1:1: Langsung tembus jika >= 70%, atau 2 frame jika >= 56%
+          if (score >= 70) {
+            matchStreakRef.current = { candidateId: null, count: 0, scores: [] };
+            setAnalyzingStreak(0);
+            triggerVerification(manualTargetUser, score);
+          } else if (score >= 56) {
             if (matchStreakRef.current.candidateId === manualTargetUser.user_id) {
               matchStreakRef.current.count++;
               matchStreakRef.current.scores.push(score);
@@ -392,7 +396,6 @@ export default function FaceIDScannerModal({
             setScanState("ANALYZING");
             setDetectedUser(manualTargetUser);
 
-            // Butuh 2 frame konsisten berturut-turut (~400ms)
             if (currentCount >= 2) {
               const avgScore = Math.round(
                 matchStreakRef.current.scores.reduce((a, b) => a + b, 0) /
@@ -449,12 +452,22 @@ export default function FaceIDScannerModal({
       const matchedPanitia = bestUserId ? panitiaList.find((p) => p.user_id === bestUserId) : null;
       const margin = bestScore - secondScore;
 
-      // THRESHOLD KETAT ANTI-SALAH-NAMA:
-      // 1. Skor kemiripan terbaik harus >= 70%
-      // 2. Selisih margin terhadap kandidat kedua harus >= 8% (mencegah salah tebak antar wajah yang mirip)
-      const isConfidentCandidate = matchedPanitia && bestScore >= 70 && margin >= 8;
+      // DETEKSI KILAT & AKURAT:
+      // Kasus 1: Kecocokan Sangat Jelas (>= 78% & margin >= 6%) -> Verifikasi Langsung 1 Frame (< 150ms)
+      if (matchedPanitia && bestScore >= 78 && margin >= 6) {
+        matchStreakRef.current = { candidateId: null, count: 0, scores: [] };
+        setAnalyzingStreak(0);
+        setConfidence(bestScore);
+        setDetectedUser(matchedPanitia);
+        playAudioChime("scan");
+        triggerVerification(matchedPanitia, bestScore);
+        return;
+      }
 
-      if (isConfidentCandidate && bestUserId) {
+      // Kasus 2: Kecocokan Bagus (>= 62% & margin >= 4%) -> Cukup 2 Frame Konsisten (~280ms)
+      const isCandidate = matchedPanitia && bestScore >= 62 && margin >= 4;
+
+      if (isCandidate && bestUserId) {
         if (matchStreakRef.current.candidateId === bestUserId) {
           matchStreakRef.current.count++;
           matchStreakRef.current.scores.push(bestScore);
@@ -470,9 +483,8 @@ export default function FaceIDScannerModal({
         setDetectedUser(matchedPanitia);
         setScanState("ANALYZING");
 
-        // Konfirmasi harus stabil 3 frame berturut-turut (~600ms)
-        // Ini mutlak mencegah false-positive dari gerakan cepat atau bayangan sekejap!
-        if (streak >= 3) {
+        // 2 frame konsisten berturut-turut (~280ms) langsung terverifikasi
+        if (streak >= 2) {
           const avgScore = Math.round(
             matchStreakRef.current.scores.reduce((a, b) => a + b, 0) /
               matchStreakRef.current.scores.length
@@ -491,7 +503,7 @@ export default function FaceIDScannerModal({
       }
     };
 
-    matchInterval = setInterval(runBiometricComparison, 220);
+    matchInterval = setInterval(runBiometricComparison, 140);
 
     return () => {
       isCancelled = true;
@@ -735,7 +747,7 @@ export default function FaceIDScannerModal({
                       <span className="truncate">
                         {scanState === "VERIFIED" && "WAJAH TERVERIFIKASI HADIR!"}
                         {scanState === "ANALYZING" &&
-                          `MEMVALIDASI: ${(currentDisplayUser?.name || "").toUpperCase()} (${confidence}%) [${analyzingStreak}/3]`}
+                          `MEMVALIDASI: ${(currentDisplayUser?.name || "").toUpperCase()} (${confidence}%) [${analyzingStreak}/2]`}
                         {scanState === "UNMATCHED" &&
                           (enrolledCount === 0
                             ? "BELUM ADA WAJAH TERDAFTAR DI SISTEM"
