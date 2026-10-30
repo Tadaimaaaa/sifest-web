@@ -35,6 +35,7 @@ interface FaceIDScannerModalProps {
   initialSelectedUser?: PanitiaUser | null;
   onAttendanceSuccess: (user: PanitiaUser, snapshotBase64?: string) => Promise<any>;
   onOpenEnrollment?: (user?: PanitiaUser | null) => void;
+  sessionTitle?: string;
 }
 
 // ==================== MAIN COMPONENT ====================
@@ -45,7 +46,8 @@ export default function FaceIDScannerModal({
   panitiaList,
   initialSelectedUser,
   onAttendanceSuccess,
-  onOpenEnrollment
+  onOpenEnrollment,
+  sessionTitle
 }: FaceIDScannerModalProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -461,13 +463,18 @@ export default function FaceIDScannerModal({
               <Scan className="w-5 h-5 text-white animate-pulse" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <h3 className="text-white font-extrabold text-base md:text-lg tracking-tight">
                   SI FEST Face ID Biometric Recognition
                 </h3>
+                {sessionTitle && (
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                    Sesi: {sessionTitle}
+                  </span>
+                )}
                 <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  <span>Database Cloud: {enrolledCount} Terdaftar</span>
+                  <span>Cloud: {enrolledCount} Terdaftar</span>
                 </span>
               </div>
               <p className="text-xs text-slate-400">

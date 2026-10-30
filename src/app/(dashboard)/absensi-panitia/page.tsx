@@ -31,13 +31,20 @@ import {
   Scan,
   RotateCcw,
   Trash2,
-  AlertTriangle
+  AlertTriangle,
+  Play,
+  Square
 } from "lucide-react";
 import FullPageLoader from "@/components/FullPageLoader";
 import FaceIDScannerModal from "@/components/scanner/FaceIDScannerModal";
 import FaceEnrollmentModal from "@/components/scanner/FaceEnrollmentModal";
 import { SCRIPT_URL } from "@/lib/api";
-import { fetchEnrolledFacesFromDb } from "@/lib/face-biometrics";
+import {
+  fetchEnrolledFacesFromDb,
+  fetchSessionStatesFromDb,
+  saveSessionStateToDb,
+  SessionStateInfo
+} from "@/lib/face-biometrics";
 
 export interface PanitiaUser {
   user_id: string;
@@ -139,6 +146,12 @@ export default function AbsensiPanitiaPage() {
   const [isSessionConfigOpen, setIsSessionConfigOpen] = useState(false);
   const [tempTimes, setTempTimes] = useState<Record<SessionId, string>>({ Pagi: "08:00", Siang: "12:00", Sore: "16:00" });
 
+  // Session State (IDLE, ACTIVE, CLOSED) synced via Supabase Cloud
+  const [sessionStates, setSessionStates] = useState<Record<string, SessionStateInfo>>({});
+  const sessionKey = `${tanggal}_${sesi}`;
+  const currentSessionInfo = sessionStates[sessionKey];
+  const currentSessionState = currentSessionInfo?.status || "IDLE";
+
   const [searchQuery, setSearchQuery] = useState("");
   const [divisionFilter, setDivisionFilter] = useState("ALL");
   const [statusFilter, setStatusFilter] = useState<"ALL" | AttendanceStatus>("ALL");
@@ -209,7 +222,131 @@ export default function AbsensiPanitiaPage() {
     return `sifest_absensi_panitia_${tanggal}_${(activeSesi || "default").replace(/[^a-zA-Z0-9]/g, "_")}`;
   }, [tanggal, activeSesi]);
 
-  // Load User Data & session times dari localStorage
+  // Helper: pencocokan nama sesi yang fleksibel
+  const isSameSession = (recordSesi: string | undefined, currentSesi: string): boolean => {
+    if (!recordSesi || !currentSesi) return false;
+    const r = recordSesi.toLowerCase().trim();
+    const c = currentSesi.toLowerCase().trim();
+    if (r === c || r.startsWith(c) || c.startsWith(r) || r.includes(c)) return true;
+    const currentTime = getSessionTime(currentSesi as SessionId);
+    if (currentTime && r.includes(currentTime)) return true;
+    return false;
+  };
+
+  // Start / Open Session
+  const handleStartSession = async () => {
+    const timeNow = new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) + " WIB";
+    const nextStates: Record<string, SessionStateInfo> = {
+      ...sessionStates,
+      [sessionKey]: {
+        sessionKey,
+        status: "ACTIVE",
+        startedAt: timeNow,
+        closedAt: null,
+        updatedAt: new Date().toISOString()
+      }
+    };
+    setSessionStates(nextStates);
+    await saveSessionStateToDb(sessionKey, "ACTIVE", timeNow, null);
+    toast.success(`Presensi Sesi ${sesi} (${getSessionTime(sesi)}) RESMI DIBUKA!`, {
+      description: `Waktu mulai: ${timeNow}`
+    });
+  };
+
+  // Close / End Session (dengan konfirmasi tandai Alpha sisa yang belum hadir)
+  const handleCloseSession = async () => {
+    const belumCount = stats.belum;
+    const shouldMarkAlpha = belumCount > 0 && confirm(
+      `Tutup Sesi ${sesi}?\n\nTerdapat ${belumCount} panitia yang belum hadir.\nApakah Anda ingin otomatis menandai mereka sebagai ALPHA untuk sesi ${sesi}?`
+    );
+
+    const timeNow = new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) + " WIB";
+
+    if (shouldMarkAlpha) {
+      setIsSaving(true);
+      const nextMap = { ...attendanceMap };
+      const recordsToSync: AttendanceRecord[] = [];
+
+      filteredPanitia.forEach((user) => {
+        const current = nextMap[user.user_id];
+        if (!current || current.status === "BELUM") {
+          const rec: AttendanceRecord = {
+            id_absensi: current?.id_absensi || `ABS-${Date.now()}-${Math.random().toString(36).substr(2, 4)}`,
+            user_id: user.user_id,
+            nim: user.nim,
+            nama: user.name,
+            divisi: user.division,
+            jabatan: user.position,
+            tanggal,
+            sesi: activeSesi,
+            status: "ALPHA",
+            waktu_absen: timeNow,
+            keterangan: "Alpha (Sesi Ditutup)",
+            recorded_by: currentAdminName,
+            updated_at: new Date().toISOString()
+          };
+          nextMap[user.user_id] = rec;
+          recordsToSync.push(rec);
+        }
+      });
+
+      setAttendanceMap(nextMap);
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(nextMap));
+      } catch (e) {}
+
+      try {
+        const token = Cookies.get("session_token") || "";
+        fetch(`${SCRIPT_URL}?action=bulkRecordAbsensiPanitia`, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({
+            action: "bulkRecordAbsensiPanitia",
+            token,
+            tanggal,
+            sesi: activeSesi,
+            recorded_by: currentAdminName,
+            records: recordsToSync
+          })
+        }).catch(() => {});
+      } catch (e) {}
+      setIsSaving(false);
+    }
+
+    const nextStates: Record<string, SessionStateInfo> = {
+      ...sessionStates,
+      [sessionKey]: {
+        sessionKey,
+        status: "CLOSED",
+        startedAt: currentSessionInfo?.startedAt || null,
+        closedAt: timeNow,
+        updatedAt: new Date().toISOString()
+      }
+    };
+    setSessionStates(nextStates);
+    await saveSessionStateToDb(sessionKey, "CLOSED", currentSessionInfo?.startedAt, timeNow);
+    toast.info(`Sesi ${sesi} telah ditutup pada ${timeNow}.`);
+  };
+
+  // Reopen Session
+  const handleReopenSession = async () => {
+    const timeNow = new Date().toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) + " WIB";
+    const nextStates: Record<string, SessionStateInfo> = {
+      ...sessionStates,
+      [sessionKey]: {
+        sessionKey,
+        status: "ACTIVE",
+        startedAt: currentSessionInfo?.startedAt || timeNow,
+        closedAt: null,
+        updatedAt: new Date().toISOString()
+      }
+    };
+    setSessionStates(nextStates);
+    await saveSessionStateToDb(sessionKey, "ACTIVE", nextStates[sessionKey].startedAt, null);
+    toast.success(`Sesi ${sesi} dibuka kembali.`);
+  };
+
+  // Load User Data, session times & session states dari Cloud & Local
   useEffect(() => {
     const userDataStr = Cookies.get("user_data");
     if (userDataStr) {
@@ -223,6 +360,11 @@ export default function AbsensiPanitiaPage() {
       setEnrolledMap(photos);
     });
 
+    // Load session states from Cloud Database
+    fetchSessionStatesFromDb().then((states) => {
+      setSessionStates(states);
+    });
+
     // Load saved session times
     try {
       const saved = localStorage.getItem("sifest_session_times");
@@ -231,8 +373,24 @@ export default function AbsensiPanitiaPage() {
   }, []);
 
   useEffect(() => {
+    // 1. Seketika bersihkan / muat cache sesi yang baru dipilih agar tabel & statistik langsung berganti
+    if (typeof window !== "undefined") {
+      try {
+        const cached = localStorage.getItem(storageKey);
+        if (cached) {
+          setAttendanceMap(JSON.parse(cached));
+        } else {
+          setAttendanceMap({});
+        }
+      } catch (e) {
+        setAttendanceMap({});
+      }
+    } else {
+      setAttendanceMap({});
+    }
+    // 2. Muat data mutakhir dari Google Apps Script
     fetchData();
-  }, [tanggal, activeSesi]);
+  }, [tanggal, activeSesi, storageKey]);
 
   const fetchData = async () => {
     if (panitiaList.length === 0) {
@@ -267,7 +425,7 @@ export default function AbsensiPanitiaPage() {
         const json = await attRes.json();
         if (json.success && Array.isArray(json.data) && json.data.length > 0) {
           json.data.forEach((r: AttendanceRecord) => {
-            if (!activeSesi || r.sesi === activeSesi) {
+            if (isSameSession(r.sesi, activeSesi)) {
               if (r.user_id) remoteMap[r.user_id] = r;
             }
           });
@@ -784,8 +942,8 @@ export default function AbsensiPanitiaPage() {
           </div>
         </div>
 
-        {/* Tanggal, Sesi & Aksi */}
-        <div className="bg-white rounded-xl p-4 border border-slate-200 space-y-3">
+        {/* Tanggal, Sesi & Kontrol Absensi */}
+        <div className="bg-white rounded-xl p-4 border border-slate-200 space-y-3.5">
           {/* Row 1: Tanggal + 3 Sesi + Pengaturan Jam */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
             {/* Tanggal Picker */}
@@ -799,25 +957,39 @@ export default function AbsensiPanitiaPage() {
               />
             </div>
 
-            {/* 3 Sesi Tetap */}
+            {/* 3 Sesi Tetap dengan Indikator Status */}
             <div className="flex items-center gap-1.5 flex-1">
-              {FIXED_SESSIONS.map((s) => (
-                <button
-                  key={s.id}
-                  type="button"
-                  onClick={() => setSesi(s.id)}
-                  className={`flex-1 flex flex-col items-center py-2 px-3 rounded-lg border text-xs font-semibold transition-colors cursor-pointer ${
-                    sesi === s.id
-                      ? "bg-blue-600 border-blue-600 text-white"
-                      : "bg-white border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50"
-                  }`}
-                >
-                  <span>{s.label}</span>
-                  <span className={`text-[10px] font-mono mt-0.5 ${sesi === s.id ? "text-blue-100" : "text-slate-400"}`}>
-                    {getSessionTime(s.id)}
-                  </span>
-                </button>
-              ))}
+              {FIXED_SESSIONS.map((s) => {
+                const sKey = `${tanggal}_${s.id}`;
+                const sState = sessionStates[sKey]?.status || "IDLE";
+                const isSelected = sesi === s.id;
+
+                return (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => setSesi(s.id)}
+                    className={`flex-1 flex flex-col items-center py-2 px-3 rounded-xl border text-xs font-semibold transition-all cursor-pointer relative ${
+                      isSelected
+                        ? "bg-blue-600 border-blue-600 text-white shadow-sm ring-2 ring-blue-500/20"
+                        : "bg-white border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                    }`}
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span>{s.label}</span>
+                      {sState === "ACTIVE" && (
+                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" title="Sesi Sedang Berlangsung" />
+                      )}
+                      {sState === "CLOSED" && (
+                        <span className="w-1.5 h-1.5 rounded-full bg-slate-400" title="Sesi Selesai / Ditutup" />
+                      )}
+                    </div>
+                    <span className={`text-[10px] font-mono mt-0.5 ${isSelected ? "text-blue-100" : "text-slate-400"}`}>
+                      {getSessionTime(s.id)}
+                    </span>
+                  </button>
+                );
+              })}
             </div>
 
             {/* Tombol Atur Jam */}
@@ -832,7 +1004,71 @@ export default function AbsensiPanitiaPage() {
             </button>
           </div>
 
-          {/* Row 2: Aksi */}
+          {/* Row 2: Banner Start / Stop Sesi & Status Presensi Terpilih */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3 bg-slate-50/90 border border-slate-200 rounded-xl">
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <span className="text-xs font-bold text-slate-700">Status Sesi {sesi} ({getSessionTime(sesi)}):</span>
+              {currentSessionState === "ACTIVE" ? (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold border border-emerald-300 shadow-xs">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                  <span>SEDANG BERLANGSUNG</span>
+                  {currentSessionInfo?.startedAt && (
+                    <span className="text-[11px] font-medium text-emerald-700">({currentSessionInfo.startedAt})</span>
+                  )}
+                </span>
+              ) : currentSessionState === "CLOSED" ? (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-200 text-slate-700 text-xs font-semibold">
+                  <span>SESI SELESAI / DITUTUP</span>
+                  {currentSessionInfo?.closedAt && (
+                    <span className="text-[11px] font-normal text-slate-500">({currentSessionInfo.closedAt})</span>
+                  )}
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-50 text-amber-800 text-xs font-semibold border border-amber-200">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                  <span>BELUM DIMULAI</span>
+                </span>
+              )}
+            </div>
+
+            {/* Tombol Kontrol Start / Stop Sesi Terpilih */}
+            <div className="flex items-center gap-2">
+              {currentSessionState === "IDLE" && (
+                <button
+                  type="button"
+                  onClick={handleStartSession}
+                  className="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-sm transition-all hover:scale-[1.02] active:scale-95 cursor-pointer"
+                >
+                  <Play className="w-3.5 h-3.5 fill-white" />
+                  <span>Start Absensi {sesi} ({getSessionTime(sesi)})</span>
+                </button>
+              )}
+
+              {currentSessionState === "ACTIVE" && (
+                <button
+                  type="button"
+                  onClick={handleCloseSession}
+                  className="flex items-center gap-1.5 px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-xs font-bold shadow-sm transition-all active:scale-95 cursor-pointer"
+                >
+                  <Square className="w-3.5 h-3.5 fill-white" />
+                  <span>Tutup Sesi {sesi}</span>
+                </button>
+              )}
+
+              {currentSessionState === "CLOSED" && (
+                <button
+                  type="button"
+                  onClick={handleReopenSession}
+                  className="flex items-center gap-1.5 px-3.5 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-xs font-semibold transition-all active:scale-95 cursor-pointer"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>Buka Kembali Sesi</span>
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Row 3: Aksi Tambahan */}
           <div className="flex items-center gap-2 justify-end border-t border-slate-100 pt-3">
             <button
               type="button"
@@ -841,7 +1077,7 @@ export default function AbsensiPanitiaPage() {
               className="px-3 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold rounded-lg text-xs border border-slate-200 transition-colors cursor-pointer flex items-center gap-1.5"
             >
               <Check className="w-4 h-4" />
-              <span>Tandai Semua Hadir</span>
+              <span>Tandai Semua Hadir (Sesi {sesi})</span>
             </button>
             <button
               type="button"
@@ -850,7 +1086,7 @@ export default function AbsensiPanitiaPage() {
               className="px-3 py-2 bg-slate-50 hover:bg-rose-50 text-slate-600 hover:text-rose-700 font-semibold rounded-lg text-xs border border-slate-200 hover:border-rose-200 transition-colors cursor-pointer flex items-center gap-1.5"
             >
               <RotateCcw className="w-4 h-4" />
-              <span>Reset Presensi</span>
+              <span>Reset Presensi Sesi</span>
             </button>
             <button
               type="button"
@@ -905,11 +1141,11 @@ export default function AbsensiPanitiaPage() {
           </div>
         )}
 
-        {/* Stat Cards */}
+        {/* Stat Cards Sesi Terpilih */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
           {/* Total Panitia */}
           <div className="bg-white p-4 rounded-xl border border-slate-200 flex flex-col justify-between">
-            <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Total Panitia</span>
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Total Panitia</span>
             <div className="mt-3">
               <span className="text-2xl font-bold text-slate-900">{stats.total}</span>
               <span className="text-xs text-slate-400 ml-1">orang</span>
@@ -918,39 +1154,42 @@ export default function AbsensiPanitiaPage() {
 
           {/* Hadir */}
           <div className="bg-white p-4 rounded-xl border border-slate-200 border-l-4 border-l-emerald-500 flex flex-col justify-between">
-            <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Hadir</span>
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-700 uppercase tracking-wide">Hadir ({sesi})</span>
+              <span className="text-[10px] font-mono text-slate-400">{getSessionTime(sesi)}</span>
+            </div>
             <div className="mt-3 flex items-baseline justify-between">
               <div>
-                <span className="text-2xl font-bold text-slate-900">{stats.hadir}</span>
+                <span className="text-2xl font-bold text-emerald-700">{stats.hadir}</span>
                 <span className="text-xs text-slate-400 ml-1">orang</span>
               </div>
-              <span className="text-xs font-semibold text-emerald-600">{stats.persenHadir}%</span>
+              <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full border border-emerald-200">{stats.persenHadir}%</span>
             </div>
           </div>
 
           {/* Izin */}
           <div className="bg-white p-4 rounded-xl border border-slate-200 border-l-4 border-l-amber-400 flex flex-col justify-between">
-            <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Izin</span>
+            <span className="text-xs font-bold text-slate-700 uppercase tracking-wide">Izin ({sesi})</span>
             <div className="mt-3">
-              <span className="text-2xl font-bold text-slate-900">{stats.izin}</span>
+              <span className="text-2xl font-bold text-amber-700">{stats.izin}</span>
               <span className="text-xs text-slate-400 ml-1">orang</span>
             </div>
           </div>
 
           {/* Sakit */}
           <div className="bg-white p-4 rounded-xl border border-slate-200 border-l-4 border-l-blue-400 flex flex-col justify-between">
-            <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Sakit</span>
+            <span className="text-xs font-bold text-slate-700 uppercase tracking-wide">Sakit ({sesi})</span>
             <div className="mt-3">
-              <span className="text-2xl font-bold text-slate-900">{stats.sakit}</span>
+              <span className="text-2xl font-bold text-blue-700">{stats.sakit}</span>
               <span className="text-xs text-slate-400 ml-1">orang</span>
             </div>
           </div>
 
           {/* Belum / Alpha */}
           <div className="col-span-2 md:col-span-1 bg-white p-4 rounded-xl border border-slate-200 border-l-4 border-l-rose-400 flex flex-col justify-between">
-            <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Belum / Alpha</span>
+            <span className="text-xs font-bold text-slate-700 uppercase tracking-wide">Belum / Alpha ({sesi})</span>
             <div className="mt-3">
-              <span className="text-2xl font-bold text-slate-900">{stats.belum + stats.alpha}</span>
+              <span className="text-2xl font-bold text-rose-700">{stats.belum + stats.alpha}</span>
               <span className="text-xs text-slate-400 ml-1">orang</span>
             </div>
           </div>
@@ -1058,15 +1297,31 @@ export default function AbsensiPanitiaPage() {
           </div>
         </div>
 
-        {/* Tabel Data Panitia */}
+        {/* Tabel Data Panitia Mengikuti Sesi Terpilih */}
         <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-          <div className="p-5 border-b border-slate-100 flex items-center justify-between">
-            <h3 className="font-bold text-slate-800 text-base flex items-center gap-2">
+          <div className="p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5 flex-wrap">
               <Users className="w-5 h-5 text-blue-600" />
-              Daftar Presensi Panitia ({filteredPanitia.length} Orang)
-            </h3>
+              <h3 className="font-bold text-slate-800 text-base">
+                Daftar Presensi Panitia — Sesi {sesi} ({getSessionTime(sesi)} WIB)
+              </h3>
+              {currentSessionState === "ACTIVE" ? (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-xs font-bold border border-emerald-300">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping" />
+                  Presensi Dibuka
+                </span>
+              ) : currentSessionState === "CLOSED" ? (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 text-xs font-semibold border border-slate-200">
+                  Sesi Ditutup
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 text-xs font-semibold border border-amber-200">
+                  Belum Dimulai
+                </span>
+              )}
+            </div>
             <span className="text-xs text-slate-400">
-              Menampilkan {filteredPanitia.length} dari {panitiaList.length} total panitia
+              Menampilkan {filteredPanitia.length} dari {panitiaList.length} panitia (Sesi {sesi})
             </span>
           </div>
 
@@ -1225,7 +1480,7 @@ export default function AbsensiPanitiaPage() {
                                 )}
                               </div>
                             ) : (
-                              <span className="text-slate-400 italic">Belum absen</span>
+                              <span className="text-slate-400 italic">Belum absen ({sesi})</span>
                             )}
                             {att?.keterangan && (
                               <p
@@ -1495,6 +1750,7 @@ export default function AbsensiPanitiaPage() {
         }}
         panitiaList={panitiaList}
         initialSelectedUser={faceIDTargetUser}
+        sessionTitle={`${sesi} (${getSessionTime(sesi)} WIB)`}
         onOpenEnrollment={(user) => {
           setIsFaceIDOpen(false);
           setEnrollModalUser(user || null);
@@ -1506,7 +1762,7 @@ export default function AbsensiPanitiaPage() {
               localStorage.setItem(`sifest_face_snapshot_${user.user_id}_${tanggal}`, snapshotBase64);
             } catch (e) {}
           }
-          await updateAttendance(user, "HADIR", "Presensi via Face ID Biometrik");
+          await updateAttendance(user, "HADIR", `Presensi via Face ID Sesi ${sesi}`);
         }}
       />
 

@@ -10,8 +10,8 @@ const supabase = createClient(supabaseUrl, supabaseKey, {
 
 const DB_SLUG = 'panitia_face_biometrics_db';
 
-// Helper: ambil seluruh data wajah dari database
-async function getStoredFaces(): Promise<Record<string, any>> {
+// Helper: ambil seluruh data biometrik & sesi dari database
+async function getStoredData(): Promise<{ faces: Record<string, any>; sessionStates: Record<string, any> }> {
   try {
     const { data, error } = await supabase
       .from('event_brackets')
@@ -20,34 +20,38 @@ async function getStoredFaces(): Promise<Record<string, any>> {
       .maybeSingle();
 
     if (error || !data || !data.bracket_data) {
-      return {};
+      return { faces: {}, sessionStates: {} };
     }
-    return data.bracket_data.faces || {};
+    return {
+      faces: data.bracket_data.faces || {},
+      sessionStates: data.bracket_data.sessionStates || {}
+    };
   } catch (e) {
-    console.error('getStoredFaces error:', e);
-    return {};
+    console.error('getStoredData error:', e);
+    return { faces: {}, sessionStates: {} };
   }
 }
 
-// Helper: simpan kembali seluruh data wajah ke database
-async function saveStoredFaces(faces: Record<string, any>) {
+// Helper: simpan kembali seluruh data ke database
+async function saveStoredData(faces: Record<string, any>, sessionStates: Record<string, any>) {
   return await supabase
     .from('event_brackets')
     .upsert({
       event_slug: DB_SLUG,
-      bracket_data: { faces },
+      bracket_data: { faces, sessionStates },
       updated_at: new Date().toISOString()
     }, { onConflict: 'event_slug' });
 }
 
-// GET: Ambil daftar profil wajah yang sudah terdaftar di database
+// GET: Ambil daftar profil wajah & status sesi presensi dari database
 export async function GET() {
   try {
-    const faces = await getStoredFaces();
+    const { faces, sessionStates } = await getStoredData();
     return NextResponse.json({
       success: true,
       count: Object.keys(faces).length,
-      faces
+      faces,
+      sessionStates
     }, {
       headers: {
         'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -58,18 +62,47 @@ export async function GET() {
   }
 }
 
-// POST: Daftarkan atau perbarui wajah panitia ke database
+// POST: Daftarkan wajah ATAU perbarui status sesi presensi
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { userId, name, nim, photo, vector } = body;
 
+    // Mode A: Update Status Sesi (Start / Tutup Sesi)
+    if (body.type === 'session_state') {
+      const { sessionKey, status, startedAt, closedAt } = body;
+      if (!sessionKey) {
+        return NextResponse.json({ success: false, message: 'sessionKey is required' }, { status: 400 });
+      }
+
+      const { faces, sessionStates } = await getStoredData();
+      sessionStates[sessionKey] = {
+        sessionKey,
+        status: status || 'IDLE',
+        startedAt: startedAt || null,
+        closedAt: closedAt || null,
+        updatedAt: new Date().toISOString()
+      };
+
+      const { error } = await saveStoredData(faces, sessionStates);
+      if (error) {
+        return NextResponse.json({ success: false, message: error.message }, { status: 500 });
+      }
+
+      return NextResponse.json({
+        success: true,
+        message: 'Status sesi berhasil disimpan',
+        sessionState: sessionStates[sessionKey]
+      });
+    }
+
+    // Mode B: Simpan Wajah Panitia
+    const { userId, name, nim, photo, vector } = body;
     if (!userId) {
       return NextResponse.json({ success: false, message: 'userId is required' }, { status: 400 });
     }
 
-    const currentFaces = await getStoredFaces();
-    currentFaces[userId] = {
+    const { faces, sessionStates } = await getStoredData();
+    faces[userId] = {
       userId,
       name: name || '',
       nim: nim || '',
@@ -78,7 +111,7 @@ export async function POST(req: NextRequest) {
       updatedAt: new Date().toISOString()
     };
 
-    const { error } = await saveStoredFaces(currentFaces);
+    const { error } = await saveStoredData(faces, sessionStates);
     if (error) {
       return NextResponse.json({ success: false, message: error.message }, { status: 500 });
     }
@@ -86,7 +119,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       message: 'Wajah berhasil disimpan ke database',
-      count: Object.keys(currentFaces).length
+      count: Object.keys(faces).length
     });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });
@@ -110,10 +143,10 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ success: false, message: 'userId is required' }, { status: 400 });
     }
 
-    const currentFaces = await getStoredFaces();
-    delete currentFaces[userId];
+    const { faces, sessionStates } = await getStoredData();
+    delete faces[userId];
 
-    const { error } = await saveStoredFaces(currentFaces);
+    const { error } = await saveStoredData(faces, sessionStates);
     if (error) {
       return NextResponse.json({ success: false, message: error.message }, { status: 500 });
     }
@@ -121,7 +154,7 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({
       success: true,
       message: 'Wajah berhasil dihapus dari database',
-      count: Object.keys(currentFaces).length
+      count: Object.keys(faces).length
     });
   } catch (error: any) {
     return NextResponse.json({ success: false, error: error.message }, { status: 500 });

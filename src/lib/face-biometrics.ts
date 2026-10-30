@@ -269,3 +269,80 @@ export async function deleteEnrolledFaceFromDb(userId: string): Promise<boolean>
     return false;
   }
 }
+
+// -------------------------------------------------------------
+// 4. SESSION STATUS SYNCHRONIZATION (SUPABASE CLOUD + LOCAL)
+// -------------------------------------------------------------
+export interface SessionStateInfo {
+  sessionKey: string;
+  status: "IDLE" | "ACTIVE" | "CLOSED";
+  startedAt?: string | null;
+  closedAt?: string | null;
+  updatedAt?: string;
+}
+
+const SESSION_STATES_KEY = "sifest_panitia_session_states";
+
+export async function fetchSessionStatesFromDb(): Promise<Record<string, SessionStateInfo>> {
+  let states: Record<string, SessionStateInfo> = {};
+
+  try {
+    const res = await fetch("/api/face-biometrics", { method: "GET", cache: "no-store" });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.sessionStates) {
+        states = data.sessionStates;
+      }
+    }
+  } catch (e) {}
+
+  if (typeof window !== "undefined") {
+    try {
+      const cached = localStorage.getItem(SESSION_STATES_KEY);
+      if (cached) {
+        states = { ...JSON.parse(cached), ...states };
+      }
+      localStorage.setItem(SESSION_STATES_KEY, JSON.stringify(states));
+    } catch (e) {}
+  }
+
+  return states;
+}
+
+export async function saveSessionStateToDb(
+  sessionKey: string,
+  status: "IDLE" | "ACTIVE" | "CLOSED",
+  startedAt?: string | null,
+  closedAt?: string | null
+): Promise<boolean> {
+  const payload = {
+    type: "session_state",
+    sessionKey,
+    status,
+    startedAt,
+    closedAt
+  };
+
+  if (typeof window !== "undefined") {
+    try {
+      const cached = localStorage.getItem(SESSION_STATES_KEY);
+      const data = cached ? JSON.parse(cached) : {};
+      data[sessionKey] = { sessionKey, status, startedAt, closedAt, updatedAt: new Date().toISOString() };
+      localStorage.setItem(SESSION_STATES_KEY, JSON.stringify(data));
+    } catch (e) {}
+  }
+
+  try {
+    const res = await fetch("/api/face-biometrics", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    const json = await res.json();
+    return json.success === true;
+  } catch (err) {
+    return false;
+  }
+}
+
+
