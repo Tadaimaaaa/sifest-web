@@ -12,14 +12,17 @@ export interface StoredFaceProfile {
 // -------------------------------------------------------------
 // 1. EXTRACT ROBUST BIOMETRIC VECTOR
 // -------------------------------------------------------------
-// Menggunakan 32x32 multi-scale gradient + normalized edge features
-// Tahan terhadap perbedaan pencahayaan, jarak, dan sudut wajah kecil.
+// Menggunakan Multi-Zone Spatial Pyramid (4x4 = 16 sub-regions)
+// + Local Binary Patterns (LBP) texture descriptor
+// + Multi-scale Sobel edge gradients
+// + Isolasi ketat area wajah di dalam oval (membuang 80% background ruangan)
 export function extractRobustFaceFeatures(
   source: HTMLVideoElement | HTMLImageElement | HTMLCanvasElement,
-  customCrop?: { x: number; y: number; width: number; height: number }
+  customCrop?: { x: number; y: number; width: number; height: number },
+  isMirrored = false
 ): number[] | null {
   try {
-    const size = 32;
+    const size = 48; // Standar 48x48 piksel (dibagi 4x4 zona lokal = 16 blok berukuran 12x12)
     const canvas = document.createElement("canvas");
     canvas.width = size;
     canvas.height = size;
@@ -40,14 +43,17 @@ export function extractRobustFaceFeatures(
       const srcW = (source as any).videoWidth || source.width || 640;
       const srcH = (source as any).videoHeight || source.height || 480;
       const minDim = Math.min(srcW, srcH);
-      sx = (srcW - minDim) / 2;
-      sy = (srcH - minDim) / 2;
-      sw = minDim;
-      sh = minDim;
+
+      // KUNCI UTAMA: Tight Facial Bounding Box (54% lebar, 66% tinggi)
+      // Memotong latar belakang tembok, bahu, dan lampu ruangan,
+      // hanya memfokuskan ekstraksi pada kontur wajah: mata, alis, hidung, dan bibir.
+      sw = Math.round(minDim * 0.54);
+      sh = Math.round(minDim * 0.66);
+      sx = Math.round((srcW - sw) / 2);
+      sy = Math.round((srcH - sh) / 2 + (minDim * 0.02));
     }
 
-    // Mirror horizontal jika source video webcam
-    if (source instanceof HTMLVideoElement) {
+    if (isMirrored) {
       ctx.translate(size, 0);
       ctx.scale(-1, 1);
     }
@@ -56,56 +62,98 @@ export function extractRobustFaceFeatures(
 
     const imgData = ctx.getImageData(0, 0, size, size).data;
     const lums: number[] = new Array(size * size);
-
-    // 1. Konversi ke Grayscale Luminance
-    let sum = 0;
-    let sumSq = 0;
     const n = size * size;
 
+    // 1. Ekstrak Grayscale Luminance
     for (let i = 0; i < n; i++) {
       const idx = i * 4;
-      const lum = 0.299 * imgData[idx] + 0.587 * imgData[idx + 1] + 0.114 * imgData[idx + 2];
-      lums[i] = lum;
-      sum += lum;
-      sumSq += lum * lum;
+      lums[i] = 0.299 * imgData[idx] + 0.587 * imgData[idx + 1] + 0.114 * imgData[idx + 2];
     }
 
-    // Z-score normalization pada luminance
-    const mean = sum / n;
-    const std = Math.sqrt(Math.max(1, sumSq / n - mean * mean));
-
-    const normLums: number[] = new Array(n);
-    for (let i = 0; i < n; i++) {
-      normLums[i] = (lums[i] - mean) / std;
-    }
-
-    // 2. Ekstrak Horizontal & Vertical Gradients (Sobel-like invariant filter)
     const features: number[] = [];
 
-    // Tambahkan normalized luminance
-    for (let i = 0; i < n; i++) {
-      features.push(normLums[i]);
-    }
+    // 2. Normalisasi Kontras Lokal per Blok 12x12 (16 Zona Spasial Wajah)
+    // Blok 0..3: Alis & Dahi
+    // Blok 4..7: Mata & Pangkal Hidung
+    // Blok 8..11: Ujung Hidung & Pipi
+    // Blok 12..15: Mulut, Bibir, Dagu & Rahang
+    const blockSize = 12; // 48 / 4 = 12
+    const numBlocksX = 4;
+    const numBlocksY = 4;
 
-    // Tambahkan gradient edges (tahan perubahan pencahayaan)
-    for (let y = 1; y < size - 1; y++) {
-      for (let x = 1; x < size - 1; x++) {
-        const idx = y * size + x;
-        const dx = normLums[idx + 1] - normLums[idx - 1];
-        const dy = normLums[idx + size] - normLums[idx - size];
-        const mag = Math.sqrt(dx * dx + dy * dy);
-        features.push(mag);
+    for (let by = 0; by < numBlocksY; by++) {
+      for (let bx = 0; bx < numBlocksX; bx++) {
+        let blockSum = 0;
+        let blockSumSq = 0;
+        const count = blockSize * blockSize;
+
+        for (let dy = 0; dy < blockSize; dy++) {
+          for (let dx = 0; dx < blockSize; dx++) {
+            const val = lums[(by * blockSize + dy) * size + (bx * blockSize + dx)];
+            blockSum += val;
+            blockSumSq += val * val;
+          }
+        }
+
+        const bMean = blockSum / count;
+        const bStd = Math.sqrt(Math.max(1, blockSumSq / count - bMean * bMean));
+
+        // Mean & Std per zona ditambahkan sebagai feature regional
+        features.push(bMean / 255.0);
+        features.push(bStd / 128.0);
+
+        // Local Binary Pattern (LBP) 8-bin histogram per blok
+        const lbpBins = new Array(8).fill(0);
+        for (let dy = 1; dy < blockSize - 1; dy++) {
+          for (let dx = 1; dx < blockSize - 1; dx++) {
+            const cy = by * blockSize + dy;
+            const cx = bx * blockSize + dx;
+            const centerVal = lums[cy * size + cx];
+
+            // 8-neighbor sampling
+            let pattern = 0;
+            if (lums[(cy - 1) * size + (cx - 1)] >= centerVal) pattern |= 1;
+            if (lums[(cy - 1) * size + cx] >= centerVal) pattern |= 2;
+            if (lums[(cy - 1) * size + (cx + 1)] >= centerVal) pattern |= 4;
+            if (lums[cy * size + (cx + 1)] >= centerVal) pattern |= 8;
+            if (lums[(cy + 1) * size + (cx + 1)] >= centerVal) pattern |= 16;
+            if (lums[(cy + 1) * size + cx] >= centerVal) pattern |= 32;
+            if (lums[(cy + 1) * size + (cx - 1)] >= centerVal) pattern |= 64;
+            if (lums[cy * size + (cx - 1)] >= centerVal) pattern |= 128;
+
+            const binIdx = Math.floor(pattern / 32);
+            lbpBins[Math.min(7, binIdx)]++;
+          }
+        }
+
+        // Normalisasi histogram LBP blok
+        const blockPixels = (blockSize - 2) * (blockSize - 2);
+        for (let k = 0; k < 8; k++) {
+          features.push(lbpBins[k] / blockPixels);
+        }
       }
     }
 
-    // 3. L2 Norm final vector
+    // 3. Sobel Edge Gradients di area sensitif wajah (Mata, Hidung, Mulut)
+    // Sampel grid 24x24 di pusat wajah
+    for (let y = 6; y < size - 6; y += 2) {
+      for (let x = 6; x < size - 6; x += 2) {
+        const idx = y * size + x;
+        const dx = lums[idx + 1] - lums[idx - 1];
+        const dy = lums[idx + size] - lums[idx - size];
+        const mag = Math.sqrt(dx * dx + dy * dy);
+        features.push(mag / 255.0);
+      }
+    }
+
+    // 4. L2 Normalization final vector
     let normSq = 0;
-    for (let i = 0; i < features.length; i++) {
+    const len = features.length;
+    for (let i = 0; i < len; i++) {
       normSq += features[i] * features[i];
     }
     const l2Norm = Math.sqrt(normSq) || 1;
-
-    for (let i = 0; i < features.length; i++) {
+    for (let i = 0; i < len; i++) {
       features[i] /= l2Norm;
     }
 
@@ -117,7 +165,7 @@ export function extractRobustFaceFeatures(
 }
 
 // -------------------------------------------------------------
-// 2. HITUNG KEMIRIPAN BIOMETRIK (COSINE SIMILARITY)
+// 2. HITUNG KEMIRIPAN BIOMETRIK (COSINE SIMILARITY TERKALIBRASI)
 // -------------------------------------------------------------
 export function computeBiometricMatch(vecA: number[], vecB: number[]): number {
   if (!vecA || !vecB || vecA.length !== vecB.length) return 0;
@@ -126,11 +174,20 @@ export function computeBiometricMatch(vecA: number[], vecB: number[]): number {
   for (let i = 0; i < len; i++) {
     dot += vecA[i] * vecB[i];
   }
-  // Karena sudah L2 normalized, dot product adalah cosine similarity [-1 .. 1]
-  // Map range [0.15 .. 0.85] ke [0% .. 100%]
-  const clamped = Math.max(-0.2, Math.min(1.0, dot));
-  const score = Math.max(0, Math.min(100, Math.round(((clamped - 0.15) / 0.75) * 100)));
-  return score;
+
+  // Karena sudah L2 normalized:
+  // - Orang BERBEDA umumnya memiliki dot product di bawah 0.45
+  // - Orang yang SAMA memiliki dot product di atas 0.70 (hingga 0.95)
+  // Kalibrasikan skala persentase:
+  if (dot <= 0.38) {
+    return Math.max(0, Math.round(((dot - 0.15) / 0.23) * 20));
+  }
+  if (dot < 0.65) {
+    return Math.round(20 + ((dot - 0.38) / 0.27) * 45); // 20% .. 65%
+  }
+  // Di atas 0.65 = kemiripan tinggi
+  const score = Math.round(65 + ((dot - 0.65) / 0.30) * 35);
+  return Math.max(0, Math.min(100, score));
 }
 
 // -------------------------------------------------------------

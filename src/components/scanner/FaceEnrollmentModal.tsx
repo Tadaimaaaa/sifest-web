@@ -202,7 +202,7 @@ export default function FaceEnrollmentModal({
       await new Promise((resolve) => {
         img.onload = resolve;
       });
-      const vector = extractRobustFaceFeatures(img) || [];
+      const vector = extractRobustFaceFeatures(img, undefined, false) || [];
 
       // Simpan ke Database Cloud Supabase
       await saveEnrolledFaceToDb(

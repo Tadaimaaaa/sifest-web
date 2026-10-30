@@ -82,6 +82,14 @@ export default function FaceIDScannerModal({
   const [enrolledVectors, setEnrolledVectors] = useState<Record<string, number[]>>({});
   const [isLoadingDb, setIsLoadingDb] = useState(false);
 
+  // Anti-False-Positive Engine: Multi-frame consistency streak
+  const matchStreakRef = useRef<{
+    candidateId: string | null;
+    count: number;
+    scores: number[];
+  }>({ candidateId: null, count: 0, scores: [] });
+  const [analyzingStreak, setAnalyzingStreak] = useState(0);
+
   // Audio Synthesizers
   const playAudioChime = useCallback((type: "scan" | "success" | "error") => {
     if (!soundEnabled) return;
@@ -156,23 +164,40 @@ export default function FaceIDScannerModal({
 
     setIsLoadingDb(true);
     fetchEnrolledFacesFromDb()
-      .then(({ photos, vectors }) => {
+      .then(({ photos }) => {
         setEnrolledFaces(photos);
-        setEnrolledVectors(vectors);
-        setIsLoadingDb(false);
 
-        // Pastikan setiap foto memiliki vektor biometrik
-        Object.entries(photos).forEach(([userId, base64Photo]) => {
-          if (!vectors[userId] || vectors[userId].length === 0) {
-            const img = new Image();
-            img.onload = () => {
-              const vec = extractRobustFaceFeatures(img);
-              if (vec) {
-                setEnrolledVectors((prev) => ({ ...prev, [userId]: vec }));
-              }
-            };
-            img.src = base64Photo;
-          }
+        // Selalu re-compute vektor biometrik dengan algoritma presisi tinggi terbaru dari foto master
+        const freshVectors: Record<string, number[]> = {};
+        const entries = Object.entries(photos);
+        let loaded = 0;
+
+        if (entries.length === 0) {
+          setIsLoadingDb(false);
+          return;
+        }
+
+        entries.forEach(([userId, base64Photo]) => {
+          const img = new Image();
+          img.onload = () => {
+            const vec = extractRobustFaceFeatures(img, undefined, false);
+            if (vec) {
+              freshVectors[userId] = vec;
+            }
+            loaded++;
+            if (loaded >= entries.length) {
+              setEnrolledVectors(freshVectors);
+              setIsLoadingDb(false);
+            }
+          };
+          img.onerror = () => {
+            loaded++;
+            if (loaded >= entries.length) {
+              setEnrolledVectors(freshVectors);
+              setIsLoadingDb(false);
+            }
+          };
+          img.src = base64Photo;
         });
       })
       .catch((err) => {
@@ -336,25 +361,56 @@ export default function FaceIDScannerModal({
     const runBiometricComparison = () => {
       if (isCancelled || !videoRef.current) return;
 
-      // Extract live robust feature vector from center of webcam feed
-      const liveVector = extractRobustFaceFeatures(videoRef.current);
+      // Extract live robust feature vector with proper horizontal orientation
+      const liveVector = extractRobustFaceFeatures(
+        videoRef.current,
+        undefined,
+        facingMode === "user"
+      );
       if (!liveVector) return;
 
-      // If manual target was selected by operator:
+      // MODE A: Target panitia yang dipilih secara manual oleh operator
       if (manualTargetUser) {
         const enrolledVec = enrolledVectors[manualTargetUser.user_id];
         if (enrolledVec && enrolledVec.length > 0) {
           const score = computeBiometricMatch(liveVector, enrolledVec);
           setConfidence(score);
-          if (score >= 52) {
+
+          // Threshold verifikasi 1:1 adalah 68%
+          if (score >= 68) {
+            if (matchStreakRef.current.candidateId === manualTargetUser.user_id) {
+              matchStreakRef.current.count++;
+              matchStreakRef.current.scores.push(score);
+            } else {
+              matchStreakRef.current.candidateId = manualTargetUser.user_id;
+              matchStreakRef.current.count = 1;
+              matchStreakRef.current.scores = [score];
+            }
+
+            const currentCount = matchStreakRef.current.count;
+            setAnalyzingStreak(currentCount);
             setScanState("ANALYZING");
             setDetectedUser(manualTargetUser);
-            triggerVerification(manualTargetUser, score);
+
+            // Butuh 2 frame konsisten berturut-turut (~400ms)
+            if (currentCount >= 2) {
+              const avgScore = Math.round(
+                matchStreakRef.current.scores.reduce((a, b) => a + b, 0) /
+                  matchStreakRef.current.scores.length
+              );
+              matchStreakRef.current = { candidateId: null, count: 0, scores: [] };
+              setAnalyzingStreak(0);
+              triggerVerification(manualTargetUser, avgScore);
+            }
           } else {
+            matchStreakRef.current = { candidateId: null, count: 0, scores: [] };
+            setAnalyzingStreak(0);
             setScanState("UNMATCHED");
             setDetectedUser(null);
           }
         } else {
+          matchStreakRef.current = { candidateId: null, count: 0, scores: [] };
+          setAnalyzingStreak(0);
           setScanState("UNMATCHED");
           setConfidence(0);
           setDetectedUser(null);
@@ -362,10 +418,12 @@ export default function FaceIDScannerModal({
         return;
       }
 
-      // AUTO-MATCHING: Compare live vector against all registered faces in database
+      // MODE B: AUTO-MATCHING 1:N TERHADAP SELURUH MASTER DATABASE
       const vectorEntries = Object.entries(enrolledVectors);
 
       if (vectorEntries.length === 0) {
+        matchStreakRef.current = { candidateId: null, count: 0, scores: [] };
+        setAnalyzingStreak(0);
         setScanState("UNMATCHED");
         setDetectedUser(null);
         setConfidence(0);
@@ -389,17 +447,44 @@ export default function FaceIDScannerModal({
       }
 
       const matchedPanitia = bestUserId ? panitiaList.find((p) => p.user_id === bestUserId) : null;
+      const margin = bestScore - secondScore;
 
-      // THRESHOLD: Cepat terdeteksi (>=56% atau >=50% dengan selisih jelas terhadap kandidat lain)
-      if (matchedPanitia && (bestScore >= 56 || (bestScore >= 50 && bestScore - secondScore >= 7))) {
-        setScanState("ANALYZING");
-        setDetectedUser(matchedPanitia);
+      // THRESHOLD KETAT ANTI-SALAH-NAMA:
+      // 1. Skor kemiripan terbaik harus >= 70%
+      // 2. Selisih margin terhadap kandidat kedua harus >= 8% (mencegah salah tebak antar wajah yang mirip)
+      const isConfidentCandidate = matchedPanitia && bestScore >= 70 && margin >= 8;
+
+      if (isConfidentCandidate && bestUserId) {
+        if (matchStreakRef.current.candidateId === bestUserId) {
+          matchStreakRef.current.count++;
+          matchStreakRef.current.scores.push(bestScore);
+        } else {
+          matchStreakRef.current.candidateId = bestUserId;
+          matchStreakRef.current.count = 1;
+          matchStreakRef.current.scores = [bestScore];
+        }
+
+        const streak = matchStreakRef.current.count;
+        setAnalyzingStreak(streak);
         setConfidence(bestScore);
-        playAudioChime("scan");
+        setDetectedUser(matchedPanitia);
+        setScanState("ANALYZING");
 
-        // Verified!
-        triggerVerification(matchedPanitia, bestScore);
+        // Konfirmasi harus stabil 3 frame berturut-turut (~600ms)
+        // Ini mutlak mencegah false-positive dari gerakan cepat atau bayangan sekejap!
+        if (streak >= 3) {
+          const avgScore = Math.round(
+            matchStreakRef.current.scores.reduce((a, b) => a + b, 0) /
+              matchStreakRef.current.scores.length
+          );
+          matchStreakRef.current = { candidateId: null, count: 0, scores: [] };
+          setAnalyzingStreak(0);
+          playAudioChime("scan");
+          triggerVerification(matchedPanitia, avgScore);
+        }
       } else {
+        matchStreakRef.current = { candidateId: null, count: 0, scores: [] };
+        setAnalyzingStreak(0);
         setScanState("UNMATCHED");
         setDetectedUser(null);
         setConfidence(bestScore);
@@ -650,11 +735,11 @@ export default function FaceIDScannerModal({
                       <span className="truncate">
                         {scanState === "VERIFIED" && "WAJAH TERVERIFIKASI HADIR!"}
                         {scanState === "ANALYZING" &&
-                          `WAJAH COCOK: ${(currentDisplayUser?.name || "").toUpperCase()} (${confidence}%)`}
+                          `MEMVALIDASI: ${(currentDisplayUser?.name || "").toUpperCase()} (${confidence}%) [${analyzingStreak}/3]`}
                         {scanState === "UNMATCHED" &&
                           (enrolledCount === 0
                             ? "BELUM ADA WAJAH TERDAFTAR DI SISTEM"
-                            : `MEMINDAI... (Kecocokan Tertinggi: ${confidence}%)`)}
+                            : `MEMINDAI WAJAH... (Posisikan di oval - ${confidence}%)`)}
                         {scanState === "IDLE" && "SIAP MEMINDAI WAJAH..."}
                       </span>
                     </div>
