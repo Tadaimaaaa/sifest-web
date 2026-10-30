@@ -21,7 +21,6 @@ import {
   RefreshCw,
   Check,
   X,
-  Sparkles,
   FileText,
   SlidersHorizontal,
   ChevronDown,
@@ -745,84 +744,73 @@ export default function AbsensiPanitiaPage() {
 
       {/* ==================== WEB DASHBOARD VIEW ==================== */}
       <div className="print:hidden space-y-6">
-        {/* Header Hero Section */}
-        <div className="bg-gradient-to-r from-blue-700 via-indigo-700 to-blue-900 rounded-3xl p-6 md:p-8 text-white shadow-xl shadow-blue-950/10 relative overflow-hidden">
-          <div className="absolute right-0 top-0 -mr-16 -mt-16 w-80 h-80 bg-white/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute right-40 bottom-0 -mb-16 w-60 h-60 bg-blue-400/20 rounded-full blur-2xl pointer-events-none" />
+        {/* Header Section */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-xl font-bold text-slate-900 flex items-center gap-2">
+              <UserCheck className="w-5 h-5 text-slate-600" />
+              Absensi Panitia
+            </h1>
+            <p className="text-sm text-slate-500 mt-0.5">
+              Presensi harian, rapat pleno, dan agenda kepanitiaan SI FEST 2026.
+            </p>
+          </div>
 
-          <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-            <div className="space-y-2">
-              <div className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 backdrop-blur-md rounded-full text-xs font-semibold text-blue-200 border border-white/15">
-                <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                Presensi & Log Kehadiran Panitia SI FEST 2026
-              </div>
-              <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight flex items-center gap-3">
-                <UserCheck className="w-8 h-8 text-blue-300" />
-                Absensi Panitia
-              </h1>
-              <p className="text-sm text-blue-100 max-w-xl">
-                Catat presensi harian, rapat pleno, dan agenda kepanitiaan dengan Presensi Face ID Biometrik AI dan Pendaftaran Wajah.
-              </p>
-            </div>
+          {/* Quick Action Buttons */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              type="button"
+              onClick={() => {
+                if (!activeSesi) {
+                  toast.error("Silakan buat atau pilih sesi / agenda terlebih dahulu sebelum scan Face ID!");
+                  return;
+                }
+                setFaceIDTargetUser(null);
+                setIsFaceIDOpen(true);
+              }}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition-colors cursor-pointer"
+            >
+              <Scan className="w-4 h-4" />
+              <span>Presensi Face ID</span>
+            </button>
 
-            {/* Quick Action Buttons */}
-            <div className="flex items-center gap-2.5 flex-wrap">
-              {/* Fitur 1: Presensi Face ID */}
-              <button
-                type="button"
-                onClick={() => {
-                  if (!activeSesi) {
-                    toast.error("Silakan buat atau pilih sesi / agenda terlebih dahulu sebelum scan Face ID!");
-                    return;
-                  }
-                  setFaceIDTargetUser(null);
-                  setIsFaceIDOpen(true);
-                }}
-                className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white rounded-xl text-xs md:text-sm font-extrabold shadow-lg shadow-cyan-600/30 transition-all hover:scale-105 active:scale-95 cursor-pointer ring-2 ring-cyan-300/40"
-              >
-                <Scan className="w-4 h-4 animate-pulse text-cyan-100" />
-                <span>Presensi Face ID</span>
-              </button>
+            <button
+              type="button"
+              onClick={() => {
+                setEnrollModalUser(null);
+                setIsEnrollModalOpen(true);
+              }}
+              className="flex items-center gap-2 px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-sm font-semibold transition-colors cursor-pointer"
+            >
+              <Camera className="w-4 h-4" />
+              <span>Daftar Wajah</span>
+            </button>
 
-              {/* Fitur 2: Daftar Wajah Panitia */}
-              <button
-                type="button"
-                onClick={() => {
-                  setEnrollModalUser(null);
-                  setIsEnrollModalOpen(true);
-                }}
-                className="flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-400 hover:to-indigo-500 text-white rounded-xl text-xs md:text-sm font-extrabold shadow-lg shadow-purple-600/30 transition-all hover:scale-105 active:scale-95 cursor-pointer ring-2 ring-purple-300/40"
-              >
-                <Camera className="w-4 h-4 text-purple-100" />
-                <span>Daftar Wajah Panitia</span>
-              </button>
+            <button
+              type="button"
+              onClick={handleExportExcel}
+              className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 rounded-lg text-sm font-medium border border-slate-200 transition-colors cursor-pointer"
+              title="Download Rekap Excel"
+            >
+              <Download className="w-4 h-4" />
+              <span>Export Excel</span>
+            </button>
 
-              <button
-                type="button"
-                onClick={handleExportExcel}
-                className="flex items-center gap-2 px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs md:text-sm font-semibold border border-white/20 backdrop-blur-md transition-all hover:scale-105 active:scale-95 cursor-pointer"
-                title="Download Rekap Excel"
-              >
-                <Download className="w-4 h-4" />
-                <span>Export Excel</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  if (!activeSesi) {
-                    toast.error("Silakan buat atau pilih sesi / agenda terlebih dahulu sebelum cetak!");
-                    return;
-                  }
-                  window.print();
-                }}
-                className="flex items-center gap-2 px-4 py-2.5 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs md:text-sm font-semibold border border-white/20 backdrop-blur-md transition-all hover:scale-105 active:scale-95 cursor-pointer"
-                title="Cetak Rekap Absensi"
-              >
-                <Printer className="w-4 h-4" />
-                <span>Cetak Rekap</span>
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => {
+                if (!activeSesi) {
+                  toast.error("Silakan buat atau pilih sesi / agenda terlebih dahulu sebelum cetak!");
+                  return;
+                }
+                window.print();
+              }}
+              className="flex items-center gap-2 px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 rounded-lg text-sm font-medium border border-slate-200 transition-colors cursor-pointer"
+              title="Cetak Rekap Absensi"
+            >
+              <Printer className="w-4 h-4" />
+              <span>Cetak Rekap</span>
+            </button>
           </div>
         </div>
 
@@ -958,80 +946,53 @@ export default function AbsensiPanitiaPage() {
           </div>
         )}
 
-        {/* 4 Stat Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3.5">
+        {/* Stat Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
           {/* Total Panitia */}
-          <div className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col justify-between">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Panitia</span>
-              <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-xs">
-                <Users className="w-4 h-4" />
-              </div>
-            </div>
-            <div className="mt-2">
-              <span className="text-2xl font-black text-slate-900">{stats.total}</span>
-              <span className="text-xs text-slate-500 ml-1">orang</span>
+          <div className="bg-white p-4 rounded-xl border border-slate-200 flex flex-col justify-between">
+            <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Total Panitia</span>
+            <div className="mt-3">
+              <span className="text-2xl font-bold text-slate-900">{stats.total}</span>
+              <span className="text-xs text-slate-400 ml-1">orang</span>
             </div>
           </div>
 
           {/* Hadir */}
-          <div className="bg-emerald-50/60 p-4 rounded-2xl border border-emerald-200/80 shadow-sm flex flex-col justify-between">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-emerald-700 uppercase tracking-wider">Hadir</span>
-              <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xs">
-                <CheckCircle2 className="w-4 h-4" />
-              </div>
-            </div>
-            <div className="mt-2 flex items-baseline justify-between">
+          <div className="bg-white p-4 rounded-xl border border-slate-200 border-l-4 border-l-emerald-500 flex flex-col justify-between">
+            <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Hadir</span>
+            <div className="mt-3 flex items-baseline justify-between">
               <div>
-                <span className="text-2xl font-black text-emerald-700">{stats.hadir}</span>
-                <span className="text-xs text-emerald-600 ml-1">orang</span>
+                <span className="text-2xl font-bold text-slate-900">{stats.hadir}</span>
+                <span className="text-xs text-slate-400 ml-1">orang</span>
               </div>
-              <span className="text-xs font-bold text-emerald-700 bg-emerald-100/80 px-2 py-0.5 rounded-full">
-                {stats.persenHadir}%
-              </span>
+              <span className="text-xs font-semibold text-emerald-600">{stats.persenHadir}%</span>
             </div>
           </div>
 
           {/* Izin */}
-          <div className="bg-amber-50/60 p-4 rounded-2xl border border-amber-200/80 shadow-sm flex flex-col justify-between">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-amber-700 uppercase tracking-wider">Izin</span>
-              <div className="w-8 h-8 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center font-bold text-xs">
-                <FileText className="w-4 h-4" />
-              </div>
-            </div>
-            <div className="mt-2">
-              <span className="text-2xl font-black text-amber-700">{stats.izin}</span>
-              <span className="text-xs text-amber-600 ml-1">orang</span>
+          <div className="bg-white p-4 rounded-xl border border-slate-200 border-l-4 border-l-amber-400 flex flex-col justify-between">
+            <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Izin</span>
+            <div className="mt-3">
+              <span className="text-2xl font-bold text-slate-900">{stats.izin}</span>
+              <span className="text-xs text-slate-400 ml-1">orang</span>
             </div>
           </div>
 
           {/* Sakit */}
-          <div className="bg-blue-50/60 p-4 rounded-2xl border border-blue-200/80 shadow-sm flex flex-col justify-between">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-blue-700 uppercase tracking-wider">Sakit</span>
-              <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs">
-                <AlertCircle className="w-4 h-4" />
-              </div>
-            </div>
-            <div className="mt-2">
-              <span className="text-2xl font-black text-blue-700">{stats.sakit}</span>
-              <span className="text-xs text-blue-600 ml-1">orang</span>
+          <div className="bg-white p-4 rounded-xl border border-slate-200 border-l-4 border-l-blue-400 flex flex-col justify-between">
+            <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Sakit</span>
+            <div className="mt-3">
+              <span className="text-2xl font-bold text-slate-900">{stats.sakit}</span>
+              <span className="text-xs text-slate-400 ml-1">orang</span>
             </div>
           </div>
 
-          {/* Belum Hadir / Alpha */}
-          <div className="col-span-2 md:col-span-1 bg-rose-50/60 p-4 rounded-2xl border border-rose-200/80 shadow-sm flex flex-col justify-between">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-rose-700 uppercase tracking-wider">Belum / Alpha</span>
-              <div className="w-8 h-8 rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center font-bold text-xs">
-                <XCircle className="w-4 h-4" />
-              </div>
-            </div>
-            <div className="mt-2">
-              <span className="text-2xl font-black text-rose-700">{stats.belum + stats.alpha}</span>
-              <span className="text-xs text-rose-600 ml-1">orang</span>
+          {/* Belum / Alpha */}
+          <div className="col-span-2 md:col-span-1 bg-white p-4 rounded-xl border border-slate-200 border-l-4 border-l-rose-400 flex flex-col justify-between">
+            <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Belum / Alpha</span>
+            <div className="mt-3">
+              <span className="text-2xl font-bold text-slate-900">{stats.belum + stats.alpha}</span>
+              <span className="text-xs text-slate-400 ml-1">orang</span>
             </div>
           </div>
         </div>
