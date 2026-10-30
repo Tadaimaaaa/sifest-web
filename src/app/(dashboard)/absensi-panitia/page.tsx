@@ -125,10 +125,18 @@ export default function AbsensiPanitiaPage() {
     const today = new Date();
     return today.toISOString().split("T")[0];
   });
-  const [sessions, setSessions] = useState<string[]>([]);
-  const [sesi, setSesi] = useState<string>("");
-  const [customSesi, setCustomSesi] = useState<string>("");
-  const [isCustomSesi, setIsCustomSesi] = useState(false);
+  const FIXED_SESSIONS = [
+    { id: "Pagi", label: "Pagi", defaultTime: "08:00" },
+    { id: "Siang", label: "Siang", defaultTime: "12:00" },
+    { id: "Sore", label: "Sore", defaultTime: "16:00" },
+  ] as const;
+  type SessionId = typeof FIXED_SESSIONS[number]["id"];
+
+  const [sesi, setSesi] = useState<SessionId>("Pagi");
+  // sessionTimes: { [tanggal]: { Pagi: "08:00", Siang: "12:00", Sore: "16:00" } }
+  const [sessionTimes, setSessionTimes] = useState<Record<string, Record<SessionId, string>>>({});
+  const [isSessionConfigOpen, setIsSessionConfigOpen] = useState(false);
+  const [tempTimes, setTempTimes] = useState<Record<SessionId, string>>({ Pagi: "08:00", Siang: "12:00", Sore: "16:00" });
 
   const [searchQuery, setSearchQuery] = useState("");
   const [divisionFilter, setDivisionFilter] = useState("ALL");
@@ -169,54 +177,38 @@ export default function AbsensiPanitiaPage() {
 
   const activeSesi = sesi;
 
+  // Ambil jam sesi untuk tanggal aktif
+  const getSessionTime = (id: SessionId) => {
+    return sessionTimes[tanggal]?.[id] || FIXED_SESSIONS.find(s => s.id === id)?.defaultTime || "00:00";
+  };
+
+  // Label sesi lengkap: "Pagi - 08:00"
+  const getSessionLabel = (id: SessionId) => `${id} - ${getSessionTime(id)}`;
+
+  // Buka modal konfigurasi jam
+  const openSessionConfig = () => {
+    const current = sessionTimes[tanggal] || { Pagi: "08:00", Siang: "12:00", Sore: "16:00" };
+    setTempTimes({ ...current });
+    setIsSessionConfigOpen(true);
+  };
+
+  // Simpan konfigurasi jam
+  const saveSessionConfig = () => {
+    setSessionTimes(prev => {
+      const next = { ...prev, [tanggal]: { ...tempTimes } };
+      try { localStorage.setItem("sifest_session_times", JSON.stringify(next)); } catch (e) {}
+      return next;
+    });
+    setIsSessionConfigOpen(false);
+    toast.success("Jam sesi berhasil disimpan.");
+  };
+
   // Key untuk penyimpanan lokal cadangan per tanggal & sesi
   const storageKey = useMemo(() => {
     return `sifest_absensi_panitia_${tanggal}_${(activeSesi || "default").replace(/[^a-zA-Z0-9]/g, "_")}`;
   }, [tanggal, activeSesi]);
 
-  // Tambah sesi baru dan simpan ke localStorage
-  const handleAddSession = (name?: string) => {
-    const newSesi = (name || customSesi).trim();
-    if (!newSesi) {
-      toast.error("Nama sesi / agenda tidak boleh kosong");
-      return;
-    }
-    setSessions(prev => {
-      const exists = prev.find(s => s.toLowerCase() === newSesi.toLowerCase());
-      if (exists) {
-        setSesi(exists);
-        return prev;
-      }
-      const next = [...prev, newSesi];
-      try {
-        localStorage.setItem("sifest_panitia_sessions", JSON.stringify(next));
-      } catch (e) {}
-      return next;
-    });
-    setSesi(newSesi);
-    setIsCustomSesi(false);
-    setCustomSesi("");
-    toast.success(`Sesi "${newSesi}" berhasil ditambahkan!`);
-  };
-
-  // Hapus sesi dari daftar
-  const handleDeleteSession = (target: string) => {
-    if (!target) return;
-    if (!confirm(`Hapus sesi "${target}" dari daftar pilihan?`)) return;
-    setSessions(prev => {
-      const next = prev.filter(s => s !== target);
-      try {
-        localStorage.setItem("sifest_panitia_sessions", JSON.stringify(next));
-      } catch (e) {}
-      if (sesi === target) {
-        setSesi(next[0] || "");
-      }
-      return next;
-    });
-    toast.success(`Sesi "${target}" telah dihapus.`);
-  };
-
-  // Load User Data, Sesi Tersimpan & Initial Attendance
+  // Load User Data & session times dari localStorage
   useEffect(() => {
     const userDataStr = Cookies.get("user_data");
     if (userDataStr) {
@@ -230,16 +222,10 @@ export default function AbsensiPanitiaPage() {
       if (cachedFaces) setEnrolledMap(JSON.parse(cachedFaces));
     } catch (e) {}
 
-    // Load saved custom sessions
+    // Load saved session times
     try {
-      const saved = localStorage.getItem("sifest_panitia_sessions");
-      if (saved) {
-        const list = JSON.parse(saved);
-        if (Array.isArray(list) && list.length > 0) {
-          setSessions(list);
-          setSesi(prev => prev || list[0]);
-        }
-      }
+      const saved = localStorage.getItem("sifest_session_times");
+      if (saved) setSessionTimes(JSON.parse(saved));
     } catch (e) {}
   }, []);
 
@@ -279,28 +265,11 @@ export default function AbsensiPanitiaPage() {
       if (attRes && attRes.ok) {
         const json = await attRes.json();
         if (json.success && Array.isArray(json.data) && json.data.length > 0) {
-          const remoteSessions: string[] = [];
           json.data.forEach((r: AttendanceRecord) => {
-            if (r.sesi && !remoteSessions.includes(r.sesi)) {
-              remoteSessions.push(r.sesi);
-            }
             if (!activeSesi || r.sesi === activeSesi) {
               if (r.user_id) remoteMap[r.user_id] = r;
             }
           });
-
-          if (remoteSessions.length > 0) {
-            setSessions(prev => {
-              const merged = Array.from(new Set([...prev, ...remoteSessions]));
-              try {
-                localStorage.setItem("sifest_panitia_sessions", JSON.stringify(merged));
-              } catch (e) {}
-              return merged;
-            });
-            if (!activeSesi) {
-              setSesi(remoteSessions[0]);
-            }
-          }
         }
       }
 
@@ -814,12 +783,13 @@ export default function AbsensiPanitiaPage() {
           </div>
         </div>
 
-        {/* Setting Agenda, Tanggal, & Sesi */}
-        <div className="bg-white rounded-2xl p-4 md:p-5 border border-slate-200/80 shadow-sm flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1">
+        {/* Tanggal, Sesi & Aksi */}
+        <div className="bg-white rounded-xl p-4 border border-slate-200 space-y-3">
+          {/* Row 1: Tanggal + 3 Sesi + Pengaturan Jam */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
             {/* Tanggal Picker */}
-            <div className="flex items-center gap-2 bg-slate-50 px-3.5 py-2 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700">
-              <Calendar className="w-4 h-4 text-blue-600" />
+            <div className="flex items-center gap-2 bg-slate-50 px-3 py-2 rounded-lg border border-slate-200 text-sm font-semibold text-slate-700 shrink-0">
+              <Calendar className="w-4 h-4 text-slate-500" />
               <input
                 type="date"
                 value={tanggal}
@@ -828,107 +798,64 @@ export default function AbsensiPanitiaPage() {
               />
             </div>
 
-            {/* Sesi / Agenda Selector */}
-            <div className="flex-1 flex items-center gap-2">
-              {sessions.length === 0 || isCustomSesi ? (
-                <div className="flex items-center gap-2 w-full">
-                  <input
-                    type="text"
-                    autoFocus
-                    placeholder="Ketik nama sesi / agenda (contoh: Rapat Pleno 1)..."
-                    value={customSesi}
-                    onChange={(e) => setCustomSesi(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        handleAddSession();
-                      }
-                    }}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-blue-400 rounded-xl text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => handleAddSession()}
-                    disabled={!customSesi.trim()}
-                    className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white rounded-xl text-xs font-bold whitespace-nowrap transition-all shadow-sm flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <Plus className="w-4 h-4" />
-                    <span>Tambah</span>
-                  </button>
-                  {sessions.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsCustomSesi(false);
-                        setCustomSesi("");
-                      }}
-                      className="p-2.5 text-slate-400 hover:text-slate-600 bg-slate-100 hover:bg-slate-200 rounded-xl text-xs cursor-pointer"
-                      title="Batal"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  )}
-                </div>
-              ) : (
-                <div className="flex items-center gap-2 w-full">
-                  <div className="relative flex-1">
-                    <select
-                      value={sesi}
-                      onChange={(e) => {
-                        if (e.target.value === "__CUSTOM__") {
-                          setIsCustomSesi(true);
-                          setCustomSesi("");
-                        } else {
-                          setSesi(e.target.value);
-                        }
-                      }}
-                      className="w-full bg-slate-50 border border-slate-200 px-3.5 py-2.5 rounded-xl text-sm font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 cursor-pointer appearance-none pr-9"
-                    >
-                      {sessions.map(s => (
-                        <option key={s} value={s}>{s}</option>
-                      ))}
-                      <option value="__CUSTOM__">+ Buat Sesi / Agenda Baru...</option>
-                    </select>
-                    <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => handleDeleteSession(sesi)}
-                    className="p-2.5 text-slate-400 hover:text-rose-600 bg-slate-100 hover:bg-rose-50 border border-transparent hover:border-rose-200 rounded-xl transition-colors cursor-pointer"
-                    title={`Hapus sesi "${sesi}" dari daftar`}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              )}
+            {/* 3 Sesi Tetap */}
+            <div className="flex items-center gap-1.5 flex-1">
+              {FIXED_SESSIONS.map((s) => (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => setSesi(s.id)}
+                  className={`flex-1 flex flex-col items-center py-2 px-3 rounded-lg border text-xs font-semibold transition-colors cursor-pointer ${
+                    sesi === s.id
+                      ? "bg-blue-600 border-blue-600 text-white"
+                      : "bg-white border-slate-200 text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                  }`}
+                >
+                  <span>{s.label}</span>
+                  <span className={`text-[10px] font-mono mt-0.5 ${sesi === s.id ? "text-blue-100" : "text-slate-400"}`}>
+                    {getSessionTime(s.id)}
+                  </span>
+                </button>
+              ))}
             </div>
+
+            {/* Tombol Atur Jam */}
+            <button
+              type="button"
+              onClick={openSessionConfig}
+              className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-slate-600 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer shrink-0"
+              title="Atur jam tiap sesi untuk tanggal ini"
+            >
+              <Clock className="w-4 h-4" />
+              <span className="hidden sm:inline">Atur Jam</span>
+            </button>
           </div>
 
-          <div className="flex items-center gap-2 justify-end">
+          {/* Row 2: Aksi */}
+          <div className="flex items-center gap-2 justify-end border-t border-slate-100 pt-3">
             <button
               type="button"
               disabled={isSaving}
               onClick={handleMarkAllHadir}
-              className="px-4 py-2.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold rounded-xl text-xs md:text-sm border border-blue-200/80 transition-all active:scale-95 cursor-pointer flex items-center gap-1.5"
+              className="px-3 py-2 bg-slate-50 hover:bg-slate-100 text-slate-700 font-semibold rounded-lg text-xs border border-slate-200 transition-colors cursor-pointer flex items-center gap-1.5"
             >
-              <Check className="w-4 h-4 text-blue-600" />
+              <Check className="w-4 h-4" />
               <span>Tandai Semua Hadir</span>
             </button>
             <button
               type="button"
               disabled={isSaving}
               onClick={() => setIsResetModalOpen(true)}
-              className="px-3.5 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold rounded-xl text-xs md:text-sm border border-rose-200/80 transition-all active:scale-95 cursor-pointer flex items-center gap-1.5"
-              title="Reset seluruh data kehadiran & foto (sisakan list 69 panitia)"
+              className="px-3 py-2 bg-slate-50 hover:bg-rose-50 text-slate-600 hover:text-rose-700 font-semibold rounded-lg text-xs border border-slate-200 hover:border-rose-200 transition-colors cursor-pointer flex items-center gap-1.5"
             >
-              <RotateCcw className="w-4 h-4 text-rose-600" />
+              <RotateCcw className="w-4 h-4" />
               <span>Reset Presensi</span>
             </button>
             <button
               type="button"
               onClick={fetchData}
               disabled={isFetching}
-              className="p-2.5 text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+              className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
               title="Refresh Data"
             >
               <RefreshCw className={`w-4 h-4 ${isFetching ? "animate-spin text-blue-600" : ""}`} />
@@ -936,12 +863,43 @@ export default function AbsensiPanitiaPage() {
           </div>
         </div>
 
-        {/* Warning Alert jika belum ada sesi */}
-        {!activeSesi && (
-          <div className="bg-amber-50/90 border border-amber-200/80 rounded-2xl p-4 flex items-center gap-3 text-amber-900 text-sm shadow-sm animate-in fade-in">
-            <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0" />
-            <div className="text-xs md:text-sm">
-              <span className="font-bold">Belum ada sesi / agenda yang aktif:</span> Silakan ketik nama sesi baru pada kolom di atas (misalnya: <em>Rapat Pleno 1</em>, <em>Briefing Panitia</em>, dll) lalu klik <strong>Tambah</strong> untuk memulai absensi.
+        {/* Modal: Atur Jam Sesi */}
+        {isSessionConfigOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setIsSessionConfigOpen(false)}>
+            <div className="bg-white rounded-xl border border-slate-200 shadow-xl w-full max-w-sm mx-4 p-6" onClick={e => e.stopPropagation()}>
+              <h3 className="text-base font-bold text-slate-900 mb-1">Atur Jam Sesi</h3>
+              <p className="text-xs text-slate-500 mb-5">
+                Tanggal: <span className="font-semibold text-slate-700">{tanggal}</span>
+              </p>
+              <div className="space-y-3">
+                {FIXED_SESSIONS.map((s) => (
+                  <div key={s.id} className="flex items-center justify-between gap-4">
+                    <span className="text-sm font-semibold text-slate-700 w-12">{s.label}</span>
+                    <input
+                      type="time"
+                      value={tempTimes[s.id] ?? s.defaultTime}
+                      onChange={(e) => setTempTimes(prev => ({ ...prev, [s.id]: e.target.value }))}
+                      className="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm font-mono text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+                    />
+                  </div>
+                ))}
+              </div>
+              <div className="flex gap-2 mt-6">
+                <button
+                  type="button"
+                  onClick={() => setIsSessionConfigOpen(false)}
+                  className="flex-1 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-semibold transition-colors cursor-pointer"
+                >
+                  Batal
+                </button>
+                <button
+                  type="button"
+                  onClick={saveSessionConfig}
+                  className="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition-colors cursor-pointer"
+                >
+                  Simpan
+                </button>
+              </div>
             </div>
           </div>
         )}
