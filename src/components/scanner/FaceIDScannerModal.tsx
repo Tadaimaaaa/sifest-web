@@ -22,6 +22,11 @@ import {
 import Cookies from "js-cookie";
 import { PanitiaUser } from "@/app/(dashboard)/absensi-panitia/page";
 import { toast } from "sonner";
+import {
+  extractRobustFaceFeatures,
+  computeBiometricMatch,
+  fetchEnrolledFacesFromDb
+} from "@/lib/face-biometrics";
 
 interface FaceIDScannerModalProps {
   isOpen: boolean;
@@ -30,87 +35,6 @@ interface FaceIDScannerModalProps {
   initialSelectedUser?: PanitiaUser | null;
   onAttendanceSuccess: (user: PanitiaUser, snapshotBase64?: string) => Promise<any>;
   onOpenEnrollment?: (user?: PanitiaUser | null) => void;
-}
-
-// ==================== BIOMETRIC FEATURE EXTRACTION & SIMILARITY ====================
-
-// Extract a 32x32 normalized biometric feature vector (Z-score luminance)
-function extractFaceFeatures(
-  source: HTMLVideoElement | HTMLImageElement,
-  cropCenter = true
-): number[] | null {
-  try {
-    const size = 32;
-    const canvas = document.createElement("canvas");
-    canvas.width = size;
-    canvas.height = size;
-    const ctx = canvas.getContext("2d", { willReadFrequently: true });
-    if (!ctx) return null;
-
-    if (source instanceof HTMLVideoElement && cropCenter) {
-      const vw = source.videoWidth || 640;
-      const vh = source.videoHeight || 480;
-      const minDim = Math.min(vw, vh);
-      const sx = (vw - minDim) / 2;
-      const sy = (vh - minDim) / 2;
-      // Mirror live video horizontally to match mirrored user preview & enrolled selfies
-      ctx.translate(size, 0);
-      ctx.scale(-1, 1);
-      ctx.drawImage(source, sx, sy, minDim, minDim, 0, 0, size, size);
-    } else {
-      ctx.drawImage(source, 0, 0, size, size);
-    }
-
-    const imgData = ctx.getImageData(0, 0, size, size).data;
-    const features: number[] = [];
-
-    // Grayscale luminance with Z-score normalization
-    let sum = 0;
-    let sumSq = 0;
-    const lums: number[] = [];
-    const n = size * size;
-
-    for (let i = 0; i < imgData.length; i += 4) {
-      // Perceptual luminance formula
-      const lum = 0.299 * imgData[i] + 0.587 * imgData[i + 1] + 0.114 * imgData[i + 2];
-      lums.push(lum);
-      sum += lum;
-      sumSq += lum * lum;
-    }
-
-    const mean = sum / n;
-    const variance = Math.max(1, sumSq / n - mean * mean);
-    const std = Math.sqrt(variance);
-
-    for (let i = 0; i < n; i++) {
-      features.push((lums[i] - mean) / std);
-    }
-
-    return features;
-  } catch {
-    return null;
-  }
-}
-
-// Compute normalized Cosine similarity between two feature vectors
-function computeBiometricSimilarity(vecA: number[], vecB: number[]): number {
-  if (!vecA || !vecB || vecA.length !== vecB.length) return 0;
-  let dot = 0;
-  let normA = 0;
-  let normB = 0;
-  const len = vecA.length;
-
-  for (let i = 0; i < len; i++) {
-    dot += vecA[i] * vecB[i];
-    normA += vecA[i] * vecA[i];
-    normB += vecB[i] * vecB[i];
-  }
-
-  if (normA === 0 || normB === 0) return 0;
-  const cos = dot / (Math.sqrt(normA) * Math.sqrt(normB));
-  // Map normalized cosine [-0.2 .. 1.0] to [0% .. 100%]
-  const similarity = Math.max(0, Math.min(100, Math.round(((cos + 0.15) / 1.15) * 100)));
-  return similarity;
 }
 
 // ==================== MAIN COMPONENT ====================
@@ -148,6 +72,7 @@ export default function FaceIDScannerModal({
   // Enrolled faces & pre-computed biometric vectors
   const [enrolledFaces, setEnrolledFaces] = useState<Record<string, string>>({});
   const [enrolledVectors, setEnrolledVectors] = useState<Record<string, number[]>>({});
+  const [isLoadingDb, setIsLoadingDb] = useState(false);
 
   // Audio Synthesizers
   const playAudioChime = useCallback((type: "scan" | "success" | "error") => {
@@ -217,33 +142,35 @@ export default function FaceIDScannerModal({
     } catch (e) {}
   }, [voiceEnabled]);
 
-  // Load enrolled faces & pre-compute biometric vectors
+  // Load enrolled faces from Cloud Database & pre-compute biometric vectors
   useEffect(() => {
-    if (!isOpen || typeof window === "undefined") return;
+    if (!isOpen) return;
 
-    try {
-      const cached = localStorage.getItem("sifest_enrolled_face_profiles");
-      if (cached) {
-        const faceMap: Record<string, string> = JSON.parse(cached);
-        setEnrolledFaces(faceMap);
+    setIsLoadingDb(true);
+    fetchEnrolledFacesFromDb()
+      .then(({ photos, vectors }) => {
+        setEnrolledFaces(photos);
+        setEnrolledVectors(vectors);
+        setIsLoadingDb(false);
 
-        // Pre-compute vectors for each enrolled face
-        const nextVectors: Record<string, number[]> = {};
-        const entries = Object.entries(faceMap);
-
-        entries.forEach(([userId, base64Photo]) => {
-          const img = new Image();
-          img.onload = () => {
-            const vec = extractFaceFeatures(img, false);
-            if (vec) {
-              nextVectors[userId] = vec;
-              setEnrolledVectors((prev) => ({ ...prev, [userId]: vec }));
-            }
-          };
-          img.src = base64Photo;
+        // Pastikan setiap foto memiliki vektor biometrik
+        Object.entries(photos).forEach(([userId, base64Photo]) => {
+          if (!vectors[userId] || vectors[userId].length === 0) {
+            const img = new Image();
+            img.onload = () => {
+              const vec = extractRobustFaceFeatures(img);
+              if (vec) {
+                setEnrolledVectors((prev) => ({ ...prev, [userId]: vec }));
+              }
+            };
+            img.src = base64Photo;
+          }
         });
-      }
-    } catch (e) {}
+      })
+      .catch((err) => {
+        console.error("Gagal load wajah dari database:", err);
+        setIsLoadingDb(false);
+      });
   }, [isOpen]);
 
   // Sync initial user prop if provided
@@ -368,7 +295,7 @@ export default function FaceIDScannerModal({
   };
 
   // ==================== REAL-TIME BIOMETRIC MATCHING ENGINE ====================
-  // Scans webcam frame every 400ms and compares against all registered panitia faces
+  // Scans webcam frame every 220ms and compares against all registered panitia faces from database
   useEffect(() => {
     if (!isOpen || !isCameraReady || scanState === "VERIFIED") return;
 
@@ -378,17 +305,17 @@ export default function FaceIDScannerModal({
     const runBiometricComparison = () => {
       if (isCancelled || !videoRef.current) return;
 
-      // Extract live feature vector from center of webcam feed
-      const liveVector = extractFaceFeatures(videoRef.current, true);
+      // Extract live robust feature vector from center of webcam feed
+      const liveVector = extractRobustFaceFeatures(videoRef.current);
       if (!liveVector) return;
 
       // If manual target was selected by operator:
       if (manualTargetUser) {
         const enrolledVec = enrolledVectors[manualTargetUser.user_id];
-        if (enrolledVec) {
-          const score = computeBiometricSimilarity(liveVector, enrolledVec);
+        if (enrolledVec && enrolledVec.length > 0) {
+          const score = computeBiometricMatch(liveVector, enrolledVec);
           setConfidence(score);
-          if (score >= 68) {
+          if (score >= 52) {
             setScanState("ANALYZING");
             setDetectedUser(manualTargetUser);
             triggerVerification(manualTargetUser, score);
@@ -397,7 +324,6 @@ export default function FaceIDScannerModal({
             setDetectedUser(null);
           }
         } else {
-          // Manual target without enrolled photo: do NOT verify
           setScanState("UNMATCHED");
           setConfidence(0);
           setDetectedUser(null);
@@ -405,11 +331,10 @@ export default function FaceIDScannerModal({
         return;
       }
 
-      // AUTO-MATCHING: Compare live vector against all registered faces in enrolledVectors
+      // AUTO-MATCHING: Compare live vector against all registered faces in database
       const vectorEntries = Object.entries(enrolledVectors);
 
       if (vectorEntries.length === 0) {
-        // No enrolled faces in the system
         setScanState("UNMATCHED");
         setDetectedUser(null);
         setConfidence(0);
@@ -417,20 +342,25 @@ export default function FaceIDScannerModal({
       }
 
       let bestScore = 0;
+      let secondScore = 0;
       let bestUserId: string | null = null;
 
       for (const [userId, vec] of vectorEntries) {
-        const score = computeBiometricSimilarity(liveVector, vec);
+        if (!vec || vec.length === 0) continue;
+        const score = computeBiometricMatch(liveVector, vec);
         if (score > bestScore) {
+          secondScore = bestScore;
           bestScore = score;
           bestUserId = userId;
+        } else if (score > secondScore) {
+          secondScore = score;
         }
       }
 
       const matchedPanitia = bestUserId ? panitiaList.find((p) => p.user_id === bestUserId) : null;
 
-      // THRESHOLD: 68% similarity required for positive biometric face match
-      if (matchedPanitia && bestScore >= 68) {
+      // THRESHOLD: Cepat terdeteksi (>=56% atau >=50% dengan selisih jelas terhadap kandidat lain)
+      if (matchedPanitia && (bestScore >= 56 || (bestScore >= 50 && bestScore - secondScore >= 7))) {
         setScanState("ANALYZING");
         setDetectedUser(matchedPanitia);
         setConfidence(bestScore);
@@ -439,14 +369,13 @@ export default function FaceIDScannerModal({
         // Verified!
         triggerVerification(matchedPanitia, bestScore);
       } else {
-        // Face is in front of camera, but doesn't match any enrolled user sufficiently
         setScanState("UNMATCHED");
         setDetectedUser(null);
         setConfidence(bestScore);
       }
     };
 
-    matchInterval = setInterval(runBiometricComparison, 450);
+    matchInterval = setInterval(runBiometricComparison, 220);
 
     return () => {
       isCancelled = true;
@@ -536,8 +465,9 @@ export default function FaceIDScannerModal({
                 <h3 className="text-white font-extrabold text-base md:text-lg tracking-tight">
                   SI FEST Face ID Biometric Recognition
                 </h3>
-                <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 uppercase tracking-widest">
-                  AI Real-Time Match
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  <span>Database Cloud: {enrolledCount} Terdaftar</span>
                 </span>
               </div>
               <p className="text-xs text-slate-400">

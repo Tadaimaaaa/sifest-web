@@ -37,6 +37,7 @@ import FullPageLoader from "@/components/FullPageLoader";
 import FaceIDScannerModal from "@/components/scanner/FaceIDScannerModal";
 import FaceEnrollmentModal from "@/components/scanner/FaceEnrollmentModal";
 import { SCRIPT_URL } from "@/lib/api";
+import { fetchEnrolledFacesFromDb } from "@/lib/face-biometrics";
 
 export interface PanitiaUser {
   user_id: string;
@@ -217,10 +218,10 @@ export default function AbsensiPanitiaPage() {
         if (u.name) setCurrentAdminName(u.name);
       } catch (e) {}
     }
-    try {
-      const cachedFaces = localStorage.getItem("sifest_enrolled_face_profiles");
-      if (cachedFaces) setEnrolledMap(JSON.parse(cachedFaces));
-    } catch (e) {}
+    // Load enrolled faces from Cloud Database
+    fetchEnrolledFacesFromDb().then(({ photos }) => {
+      setEnrolledMap(photos);
+    });
 
     // Load saved session times
     try {
@@ -1293,27 +1294,6 @@ export default function AbsensiPanitiaPage() {
           </div>
         </div>
       </div>
-
-      {/* ==================== MODAL PENDAFTARAN WAJAH PANITIA (FACE ENROLLMENT) ==================== */}
-      <FaceEnrollmentModal
-        isOpen={isEnrollModalOpen}
-        onClose={() => {
-          setIsEnrollModalOpen(false);
-          setEnrollModalUser(null);
-          try {
-            const cached = localStorage.getItem("sifest_enrolled_face_profiles");
-            if (cached) setEnrolledMap(JSON.parse(cached));
-          } catch (e) {}
-        }}
-        panitiaList={panitiaList}
-        initialSelectedUser={enrollModalUser}
-        onEnrollSuccess={() => {
-          try {
-            const cached = localStorage.getItem("sifest_enrolled_face_profiles");
-            if (cached) setEnrolledMap(JSON.parse(cached));
-          } catch (e) {}
-        }}
-      />
 
       {/* ==================== MODAL DETAIL PRESENSI & BUKTI FACE ID ==================== */}
       {noteModalUser && (() => {

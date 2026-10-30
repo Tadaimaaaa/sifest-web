@@ -18,6 +18,12 @@ import {
 } from "lucide-react";
 import { PanitiaUser } from "@/app/(dashboard)/absensi-panitia/page";
 import { toast } from "sonner";
+import {
+  extractRobustFaceFeatures,
+  fetchEnrolledFacesFromDb,
+  saveEnrolledFaceToDb,
+  deleteEnrolledFaceFromDb
+} from "@/lib/face-biometrics";
 
 interface FaceEnrollmentModalProps {
   isOpen: boolean;
@@ -48,17 +54,21 @@ export default function FaceEnrollmentModal({
 
   // Store enrolled faces { [userId]: base64Snapshot }
   const [enrolledFaces, setEnrolledFaces] = useState<Record<string, string>>({});
+  const [isSyncingDb, setIsSyncingDb] = useState(false);
+  const [isSavingDb, setIsSavingDb] = useState(false);
 
-  // Load enrolled faces on mount
+  // Load enrolled faces from database cloud on mount / open
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const cached = localStorage.getItem("sifest_enrolled_face_profiles");
-        if (cached) {
-          setEnrolledFaces(JSON.parse(cached));
-        }
-      } catch (e) {}
-    }
+    if (!isOpen) return;
+
+    setIsSyncingDb(true);
+    fetchEnrolledFacesFromDb()
+      .then(({ photos }) => {
+        setEnrolledFaces(photos);
+      })
+      .finally(() => {
+        setIsSyncingDb(false);
+      });
   }, [isOpen]);
 
   // Sync initial user
@@ -149,32 +159,61 @@ export default function FaceEnrollmentModal({
     setCapturedPreview(base64);
   };
 
-  // Save Enrollment
-  const handleSaveEnrollment = () => {
+  // Save Enrollment to Database
+  const handleSaveEnrollment = async () => {
     if (!selectedUser || !capturedPreview) return;
 
-    const next = { ...enrolledFaces, [selectedUser.user_id]: capturedPreview };
-    setEnrolledFaces(next);
+    setIsSavingDb(true);
     try {
-      localStorage.setItem("sifest_enrolled_face_profiles", JSON.stringify(next));
-    } catch (e) {}
+      // Hitung feature vector biometrik
+      const img = new Image();
+      img.src = capturedPreview;
+      await new Promise((resolve) => {
+        img.onload = resolve;
+      });
+      const vector = extractRobustFaceFeatures(img) || [];
 
-    toast.success(`Wajah ${selectedUser.name} berhasil didaftarkan ke sistem Face ID!`);
-    if (onEnrollSuccess) {
-      onEnrollSuccess(selectedUser, capturedPreview);
+      // Simpan ke Database Cloud Supabase
+      await saveEnrolledFaceToDb(
+        selectedUser.user_id,
+        selectedUser.name,
+        String(selectedUser.nim || ""),
+        capturedPreview,
+        vector
+      );
+
+      const next = { ...enrolledFaces, [selectedUser.user_id]: capturedPreview };
+      setEnrolledFaces(next);
+
+      toast.success(`Wajah ${selectedUser.name} tersimpan di Database Cloud! Siap dicocokkan saat login.`);
+      if (onEnrollSuccess) {
+        onEnrollSuccess(selectedUser, capturedPreview);
+      }
+      setCapturedPreview(null);
+    } catch (err) {
+      console.error(err);
+      toast.error("Gagal menyimpan data wajah ke database.");
+    } finally {
+      setIsSavingDb(false);
     }
-    setCapturedPreview(null);
   };
 
-  // Delete Enrollment
-  const handleDeleteEnrollment = (user: PanitiaUser) => {
-    const next = { ...enrolledFaces };
-    delete next[user.user_id];
-    setEnrolledFaces(next);
+  // Delete Enrollment from Database
+  const handleDeleteEnrollment = async (user: PanitiaUser) => {
+    if (!confirm(`Hapus data wajah terdaftar untuk ${user.name} dari database?`)) return;
+
+    setIsSavingDb(true);
     try {
-      localStorage.setItem("sifest_enrolled_face_profiles", JSON.stringify(next));
-    } catch (e) {}
-    toast.info(`Data wajah ${user.name} telah dihapus.`);
+      await deleteEnrolledFaceFromDb(user.user_id);
+      const next = { ...enrolledFaces };
+      delete next[user.user_id];
+      setEnrolledFaces(next);
+      toast.info(`Data wajah ${user.name} telah dihapus dari database.`);
+    } catch (err) {
+      toast.error("Gagal menghapus data wajah.");
+    } finally {
+      setIsSavingDb(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -460,11 +499,21 @@ export default function FaceEnrollmentModal({
 
                       <button
                         type="button"
+                        disabled={isSavingDb}
                         onClick={handleSaveEnrollment}
-                        className="flex-1 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl text-xs font-extrabold shadow-lg shadow-emerald-600/30 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                        className="flex-1 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 cursor-pointer"
                       >
-                        <Check className="w-4 h-4" />
-                        <span>Simpan Wajah</span>
+                        {isSavingDb ? (
+                          <>
+                            <RefreshCw className="w-4 h-4 animate-spin" />
+                            <span>Menyimpan ke Database...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Check className="w-4 h-4" />
+                            <span>Simpan ke Database</span>
+                          </>
+                        )}
                       </button>
                     </>
                   ) : (
