@@ -33,9 +33,13 @@ import {
   Trash2,
   AlertTriangle,
   Play,
-  Square
+  Square,
+  QrCode,
+  CreditCard
 } from "lucide-react";
 import FullPageLoader from "@/components/FullPageLoader";
+import PanitiaBarcodeScannerModal from "@/components/scanner/PanitiaBarcodeScannerModal";
+import PanitiaBarcodeCardModal from "@/components/scanner/PanitiaBarcodeCardModal";
 import FaceIDScannerModal from "@/components/scanner/FaceIDScannerModal";
 import FaceEnrollmentModal from "@/components/scanner/FaceEnrollmentModal";
 import { SCRIPT_URL } from "@/lib/api";
@@ -155,6 +159,11 @@ export default function AbsensiPanitiaPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [divisionFilter, setDivisionFilter] = useState("ALL");
   const [statusFilter, setStatusFilter] = useState<"ALL" | AttendanceStatus>("ALL");
+
+  // Barcode / QR Scanner & ID Card Modals
+  const [isBarcodeScannerOpen, setIsBarcodeScannerOpen] = useState(false);
+  const [isBarcodeCardOpen, setIsBarcodeCardOpen] = useState(false);
+  const [selectedBarcodeUser, setSelectedBarcodeUser] = useState<PanitiaUser | null>(null);
 
   // Face ID & Enrollment Modals
   const [isFaceIDOpen, setIsFaceIDOpen] = useState(false);
@@ -518,6 +527,53 @@ export default function AbsensiPanitiaPage() {
 
     return record;
   };
+
+  // Global USB Barcode Scanner Gun Listener
+  useEffect(() => {
+    let buffer = "";
+    let lastKeyTime = Date.now();
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const targetTag = (document.activeElement?.tagName || "").toLowerCase();
+      if (targetTag === "input" || targetTag === "textarea" || targetTag === "select") {
+        return;
+      }
+
+      const now = Date.now();
+      if (now - lastKeyTime > 150) {
+        buffer = "";
+      }
+      lastKeyTime = now;
+
+      if (e.key === "Enter") {
+        if (buffer.length >= 3) {
+          const scanned = buffer.trim().toLowerCase();
+          buffer = "";
+
+          const matched = panitiaList.find((p) => {
+            const pNim = String(p.nim).toLowerCase();
+            const pUser = String(p.user_id).toLowerCase();
+            return pNim === scanned || pUser === scanned || scanned.includes(pNim) || scanned.includes(pUser);
+          });
+
+          if (matched) {
+            playBeep(1046, 180);
+            updateAttendance(matched, "HADIR", `Presensi Barcode USB Sesi ${activeSesi}`);
+            toast.success(`Barcode Scanner: ${matched.name} terverifikasi HADIR!`);
+          } else {
+            playBeep(220, 200);
+            toast.error(`Barcode "${scanned}" tidak cocok dengan data panitia.`);
+          }
+        }
+        buffer = "";
+      } else if (e.key.length === 1) {
+        buffer += e.key;
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [panitiaList, activeSesi, updateAttendance]);
 
   // Tandai Semua Hadir
   const handleMarkAllHadir = async () => {
@@ -886,6 +942,36 @@ export default function AbsensiPanitiaPage() {
 
           {/* Quick Action Buttons */}
           <div className="flex items-center gap-2 flex-wrap">
+            {/* FITUR UTAMA: Presensi Barcode / QR */}
+            <button
+              type="button"
+              onClick={() => {
+                if (!activeSesi) {
+                  toast.error("Silakan buat atau pilih sesi / agenda terlebih dahulu sebelum scan Barcode!");
+                  return;
+                }
+                setIsBarcodeScannerOpen(true);
+              }}
+              className="flex items-center justify-center gap-1.5 sm:gap-2 px-3.5 sm:px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-xs sm:text-sm font-bold shadow-md shadow-blue-500/20 transition-all cursor-pointer flex-1 sm:flex-initial active:scale-95"
+            >
+              <QrCode className="w-4 h-4" />
+              <span>Presensi Barcode / QR</span>
+            </button>
+
+            {/* ID Card & Barcode Panitia Generator */}
+            <button
+              type="button"
+              onClick={() => {
+                setSelectedBarcodeUser(null);
+                setIsBarcodeCardOpen(true);
+              }}
+              className="flex items-center justify-center gap-1.5 sm:gap-2 px-3.5 sm:px-4 py-2 bg-slate-900 hover:bg-black text-white rounded-xl text-xs sm:text-sm font-semibold transition-colors cursor-pointer flex-1 sm:flex-initial shadow-sm active:scale-95"
+            >
+              <CreditCard className="w-4 h-4 text-blue-400" />
+              <span>ID Card & Barcode</span>
+            </button>
+
+            {/* Fitur Alternatif: Face ID (Opsional) */}
             <button
               type="button"
               onClick={() => {
@@ -896,10 +982,10 @@ export default function AbsensiPanitiaPage() {
                 setFaceIDTargetUser(null);
                 setIsFaceIDOpen(true);
               }}
-              className="flex items-center justify-center gap-1.5 sm:gap-2 px-3.5 sm:px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs sm:text-sm font-semibold transition-colors cursor-pointer flex-1 sm:flex-initial shadow-sm active:scale-95"
+              className="flex items-center justify-center gap-1.5 px-3 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium transition-colors cursor-pointer flex-1 sm:flex-initial shadow-xs active:scale-95"
             >
-              <Scan className="w-4 h-4" />
-              <span>Presensi Face ID</span>
+              <Scan className="w-4 h-4 text-slate-500" />
+              <span>Face ID (Opsional)</span>
             </button>
 
             <button
@@ -908,10 +994,10 @@ export default function AbsensiPanitiaPage() {
                 setEnrollModalUser(null);
                 setIsEnrollModalOpen(true);
               }}
-              className="flex items-center justify-center gap-1.5 sm:gap-2 px-3.5 sm:px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs sm:text-sm font-semibold transition-colors cursor-pointer flex-1 sm:flex-initial shadow-sm active:scale-95"
+              className="flex items-center justify-center gap-1.5 px-3 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium transition-colors cursor-pointer"
             >
-              <Camera className="w-4 h-4" />
-              <span>Daftar Wajah</span>
+              <Camera className="w-4 h-4 text-slate-500" />
+              <span className="hidden sm:inline">Daftar Wajah</span>
             </button>
 
             <button
@@ -1500,7 +1586,20 @@ export default function AbsensiPanitiaPage() {
                         {/* Actions */}
                         <td className="py-3 px-4 text-center">
                           <div className="flex items-center justify-center gap-1.5">
-                            {/* Fitur 1: Presensi Face ID */}
+                            {/* Fitur Utama: Kartu Barcode & QR Code */}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedBarcodeUser(p);
+                                setIsBarcodeCardOpen(true);
+                              }}
+                              className="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
+                              title="Lihat & Cetak ID Card Barcode / QR Panitia Ini"
+                            >
+                              <QrCode className="w-4 h-4" />
+                            </button>
+
+                            {/* Fitur Alternatif: Presensi Face ID */}
                             <button
                               type="button"
                               onClick={() => {
@@ -1740,6 +1839,37 @@ export default function AbsensiPanitiaPage() {
           </div>
         );
       })()}
+
+      {/* ==================== MODAL BARCODE / QR SCANNER ==================== */}
+      <PanitiaBarcodeScannerModal
+        isOpen={isBarcodeScannerOpen}
+        onClose={() => setIsBarcodeScannerOpen(false)}
+        panitiaList={panitiaList}
+        sessionTitle={`${sesi} (${getSessionTime(sesi)} WIB)`}
+        onAttendanceSuccess={async (user, keterangan) => {
+          await updateAttendance(user, "HADIR", keterangan || `Presensi Barcode Sesi ${sesi}`);
+        }}
+        onOpenIdCardModal={(user) => {
+          setIsBarcodeScannerOpen(false);
+          setSelectedBarcodeUser(user || null);
+          setIsBarcodeCardOpen(true);
+        }}
+      />
+
+      {/* ==================== MODAL ID CARD & BARCODE GENERATOR ==================== */}
+      <PanitiaBarcodeCardModal
+        isOpen={isBarcodeCardOpen}
+        onClose={() => {
+          setIsBarcodeCardOpen(false);
+          setSelectedBarcodeUser(null);
+        }}
+        panitiaList={panitiaList}
+        initialUser={selectedBarcodeUser}
+        onOpenScanner={() => {
+          setIsBarcodeCardOpen(false);
+          setIsBarcodeScannerOpen(true);
+        }}
+      />
 
       {/* ==================== MODAL FACE ID BIOMETRIC SCANNER ==================== */}
       <FaceIDScannerModal
