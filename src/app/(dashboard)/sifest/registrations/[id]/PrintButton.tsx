@@ -59,11 +59,22 @@ export default function PrintButton({ registration }: { registration?: any }) {
       // Delay sejenak untuk memastikan render DOM stabil
       await new Promise(r => setTimeout(r, 200));
       
+      const node = printRef.current;
+      const naturalWidth = 794;
+      const naturalHeight = node.scrollHeight || 1123;
+
       // Kompresi langsung ke JPEG berukuran optimal tanpa mengurangi ketajaman teks
-      const dataUrl = await toJpeg(printRef.current, { 
-        quality: 0.82,
-        pixelRatio: 1.6,
+      const dataUrl = await toJpeg(node, { 
+        quality: 0.92,
+        pixelRatio: 2,
+        width: naturalWidth,
+        height: naturalHeight,
         backgroundColor: '#ffffff',
+        style: {
+          transform: 'none',
+          transformOrigin: 'top left',
+          margin: '0',
+        }
       });
       
       const pdf = new jsPDF({
@@ -80,15 +91,25 @@ export default function PrintButton({ registration }: { registration?: any }) {
         img.onload = resolve;
       });
       
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (img.height * pdfWidth) / img.width;
+      const pageWidth = pdf.internal.pageSize.getWidth(); // 210mm
+      const pageHeight = pdf.internal.pageSize.getHeight(); // 297mm
       
-      if (pdfHeight > pdf.internal.pageSize.getHeight()) {
-        pdf.addImage(dataUrl, "JPEG", 0, 0, pdfWidth, pdfHeight, undefined, "FAST");
+      let renderWidth = pageWidth;
+      let renderHeight = (img.height * pageWidth) / img.width;
+      let posX = 0;
+      let posY = 0;
+      
+      if (renderHeight > pageHeight) {
+        // Skala agar PAS 1 halaman tanpa pernah terpotong
+        renderHeight = pageHeight;
+        renderWidth = (img.width * pageHeight) / img.height;
+        posX = (pageWidth - renderWidth) / 2;
+        posY = 0;
       } else {
-        const marginY = (pdf.internal.pageSize.getHeight() - pdfHeight) / 2;
-        pdf.addImage(dataUrl, "JPEG", 0, marginY, pdfWidth, pdfHeight, undefined, "FAST");
+        posY = Math.max(0, (pageHeight - renderHeight) / 2);
       }
+      
+      pdf.addImage(dataUrl, "JPEG", posX, posY, renderWidth, renderHeight, undefined, "FAST");
       
       const blob = pdf.output('blob');
       const blobUrl = URL.createObjectURL(blob);
@@ -154,222 +175,239 @@ export default function PrintButton({ registration }: { registration?: any }) {
   const FormDocument = () => (
     <div 
       ref={printRef} 
-      className="w-[794px] min-h-[1123px] bg-white text-black px-10 py-12 font-serif relative shadow-2xl rounded-sm border border-slate-200 select-text" 
+      className="w-[794px] min-h-[1123px] bg-white text-black px-10 py-7 font-serif flex flex-col justify-between relative shadow-2xl rounded-sm border border-slate-200 select-text" 
       style={{ fontFamily: '"Times New Roman", Times, serif' }}
     >
-      {/* KOP SURAT */}
-      <div className="flex items-center justify-between pb-3">
-        <img src="/logo-hmjsi.jpg" alt="Logo HMJ SI" className="w-[90px] h-[90px] object-contain" />
-        <div className="text-center flex-1 px-4 text-black">
-          <h1 className="text-[15px] font-bold leading-snug" style={{ fontFamily: '"Times New Roman", Times, serif' }}>PANITIA PELAKSANA SISTEM INFORMASI FESTIVAL</h1>
-          <h2 className="text-[15px] font-bold leading-snug" style={{ fontFamily: '"Times New Roman", Times, serif' }}>HIMPUNAN MAHASISWA JURUSAN SISTEM INFORMASI</h2>
-          <h3 className="text-[15px] font-bold leading-snug" style={{ fontFamily: '"Times New Roman", Times, serif' }}>FAKULTAS ILMU KOMPUTER</h3>
-          <h4 className="text-[15px] font-bold leading-snug" style={{ fontFamily: '"Times New Roman", Times, serif' }}>REPUBLIK MAHASISWA UNIVERSITAS PUTRA INDONESIA "YPTK" PADANG</h4>
-          <p className="text-[12px] leading-snug mt-1" style={{ fontFamily: '"Times New Roman", Times, serif' }}>Sekretariat Jl. Raya Lubuk Begalung, Student Center Lt. 1 Padang Sumbar</p>
-          <p className="text-[12px] leading-snug text-black" style={{ fontFamily: '"Times New Roman", Times, serif' }}>Email : sinformationfest@gmail.com | Instagram : @sifest.hmjsi</p>
+      <div className="flex-1 flex flex-col">
+        {/* KOP SURAT */}
+        <div className="flex items-center justify-between pb-2">
+          <img src="/logo-hmjsi.jpg" alt="Logo HMJ SI" className="w-[74px] h-[74px] object-contain shrink-0" />
+          <div className="text-center flex-1 px-3 text-black">
+            <h1 className="text-[13.5px] font-bold leading-tight" style={{ fontFamily: '"Times New Roman", Times, serif' }}>PANITIA PELAKSANA SISTEM INFORMASI FESTIVAL</h1>
+            <h2 className="text-[13.5px] font-bold leading-tight" style={{ fontFamily: '"Times New Roman", Times, serif' }}>HIMPUNAN MAHASISWA JURUSAN SISTEM INFORMASI</h2>
+            <h3 className="text-[13.5px] font-bold leading-tight" style={{ fontFamily: '"Times New Roman", Times, serif' }}>FAKULTAS ILMU KOMPUTER</h3>
+            <h4 className="text-[13.5px] font-bold leading-tight" style={{ fontFamily: '"Times New Roman", Times, serif' }}>REPUBLIK MAHASISWA UNIVERSITAS PUTRA INDONESIA "YPTK" PADANG</h4>
+            <p className="text-[11px] leading-tight mt-1" style={{ fontFamily: '"Times New Roman", Times, serif' }}>Sekretariat Jl. Raya Lubuk Begalung, Student Center Lt. 1 Padang Sumbar</p>
+            <p className="text-[11px] leading-tight text-black" style={{ fontFamily: '"Times New Roman", Times, serif' }}>Email : sinformationfest@gmail.com | Instagram : @sifest.hmjsi</p>
+          </div>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <img src="/logo-rema.png" alt="Logo REMA" className="w-[70px] h-[70px] object-contain" />
+            <img src="/logo-sifest.png" alt="Logo SIFEST" className="w-[74px] h-[74px] object-contain" />
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <img src="/logo-rema.png" alt="Logo REMA" className="w-[85px] h-[85px] object-contain" />
-          <img src="/logo-sifest.png" alt="Logo SIFEST" className="w-[90px] h-[90px] object-contain" />
-        </div>
+        
+        {/* Garis Pembatas */}
+        <div className="w-full border-t-[2.5px] border-black mt-1 mb-[2px]"></div>
+        <div className="w-full border-t border-black mb-3"></div>
+
+        {/* Judul Formulir */}
+        <h2 className="text-center font-bold text-[15px] mb-3 tracking-wide" style={{ fontFamily: '"Times New Roman", Times, serif', textDecoration: 'underline' }}>
+          FORMULIR PENDAFTARAN {e.name?.toUpperCase() || "PESERTA"}
+        </h2>
+
+        {/* Konten Data Utama */}
+        <table className="w-full text-[13px] mb-3" style={{ fontFamily: '"Times New Roman", Times, serif', lineHeight: '1.45' }}>
+          <tbody>
+            <tr>
+              <td className="w-[35%] font-bold align-top py-0.5">Kode Pendaftaran</td>
+              <td className="w-[20px] align-top py-0.5">:</td>
+              <td className="align-top font-mono font-bold text-black py-0.5">{registration.registration_code}</td>
+            </tr>
+            <tr>
+              <td className="w-[35%] font-bold align-top py-0.5">Event</td>
+              <td className="w-[20px] align-top py-0.5">:</td>
+              <td className="align-top font-bold py-0.5">{e.name}</td>
+            </tr>
+            <tr>
+              <td className="w-[35%] font-bold align-top py-0.5">{e.slug?.startsWith('open-bazaar') ? "Nama Penanggung Jawab" : "Nama Lengkap / Kapten"}</td>
+              <td className="w-[20px] align-top py-0.5">:</td>
+              <td className="align-top py-0.5">{p.full_name}</td>
+            </tr>
+            <tr>
+              <td className="w-[35%] font-bold align-top py-0.5">{e.slug?.startsWith('open-bazaar') ? "Nama Usaha/Brand" : "Asal Institusi / Tim"}</td>
+              <td className="w-[20px] align-top py-0.5">:</td>
+              <td className="align-top py-0.5">{p.institution}</td>
+            </tr>
+            <tr>
+              <td className="w-[35%] font-bold align-top py-0.5">Email</td>
+              <td className="w-[20px] align-top py-0.5">:</td>
+              <td className="align-top py-0.5">{p.email}</td>
+            </tr>
+            <tr>
+              <td className="w-[35%] font-bold align-top py-0.5">No. WhatsApp</td>
+              <td className="w-[20px] align-top py-0.5">:</td>
+              <td className="align-top py-0.5">{p.whatsapp}</td>
+            </tr>
+            
+            {/* Mahasiswa UPI YPTK */}
+            {p.institution === 'UPI YPTK Padang' && m.jurusan && (
+              <>
+                <tr>
+                  <td className="w-[35%] font-bold align-top py-0.5">Jurusan / Kelas</td>
+                  <td className="w-[20px] align-top py-0.5">:</td>
+                  <td className="align-top py-0.5">{m.jurusan} {m.kelas ? `- ${m.kelas}` : ''}</td>
+                </tr>
+                <tr>
+                  <td className="w-[35%] font-bold align-top py-0.5">No BP</td>
+                  <td className="w-[20px] align-top py-0.5">:</td>
+                  <td className="align-top py-0.5">{m.nobp}</td>
+                </tr>
+              </>
+            )}
+
+            {/* Data Khusus Bazaar */}
+            {e.slug?.startsWith('open-bazaar') && (
+              <>
+                <tr>
+                  <td className="w-[35%] font-bold align-top py-0.5">Lokasi Tenda</td>
+                  <td className="w-[20px] align-top py-0.5">:</td>
+                  <td className="align-top py-0.5 font-bold text-black">
+                    {getTentLocationLabel(m.id_tenda || m.lokasi_tenda)}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="w-[35%] font-bold align-top py-0.5">Alamat Usaha</td>
+                  <td className="w-[20px] align-top py-0.5">:</td>
+                  <td className="align-top py-0.5">{m.address || '-'}</td>
+                </tr>
+                <tr>
+                  <td className="w-[35%] font-bold align-top py-0.5">Kategori & Produk</td>
+                  <td className="w-[20px] align-top py-0.5">:</td>
+                  <td className="align-top py-0.5">{m.category || '-'} ({m.products || '-'})</td>
+                </tr>
+                <tr>
+                  <td className="w-[35%] font-bold align-top py-0.5">Instagram</td>
+                  <td className="w-[20px] align-top py-0.5">:</td>
+                  <td className="align-top py-0.5">{m.instagram || '-'}</td>
+                </tr>
+              </>
+            )}
+
+            {/* Data Khusus MTQ */}
+            {e.slug === 'lomba-keagamaan' && (
+              <>
+                <tr>
+                  <td className="w-[35%] font-bold align-top py-0.5">Nama Pembimbing</td>
+                  <td className="w-[20px] align-top py-0.5">:</td>
+                  <td className="align-top py-0.5">{m.guruPendamping || '-'}</td>
+                </tr>
+                <tr>
+                  <td className="w-[35%] font-bold align-top py-0.5">No. WA Pembimbing</td>
+                  <td className="w-[20px] align-top py-0.5">:</td>
+                  <td className="align-top py-0.5">{m.nowaGuruPendamping || '-'}</td>
+                </tr>
+              </>
+            )}
+          </tbody>
+        </table>
+
+        {/* Data Khusus Futsal & E-Sport (Pelatih) */}
+        {m.teamData && (
+          <div className="mb-3">
+            <h3 className="font-bold text-[13px] mb-1" style={{ fontFamily: '"Times New Roman", Times, serif', textDecoration: 'underline' }}>Data Pelatih (Coach)</h3>
+            <table className="w-full text-[13px]" style={{ fontFamily: '"Times New Roman", Times, serif', lineHeight: '1.45' }}>
+              <tbody>
+                <tr>
+                  <td className="w-[35%] font-bold align-top py-0.5">Nama Pelatih</td>
+                  <td className="w-[20px] align-top py-0.5">:</td>
+                  <td className="align-top py-0.5">{m.teamData.coachName || '-'}</td>
+                </tr>
+                <tr>
+                  <td className="w-[35%] font-bold align-top py-0.5">No. WA Pelatih</td>
+                  <td className="w-[20px] align-top py-0.5">:</td>
+                  <td className="align-top py-0.5">{m.teamData.coachWhatsapp || '-'}</td>
+                </tr>
+                {m.teamData.assistantCoachName && (
+                  <tr>
+                    <td className="w-[35%] font-bold align-top py-0.5">Asisten Pelatih</td>
+                    <td className="w-[20px] align-top py-0.5">:</td>
+                    <td className="align-top py-0.5">{m.teamData.assistantCoachName}</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {/* Data Khusus Tim (Pemain) */}
+        {m.players && m.players.length > 0 && (
+          <div className="mb-3">
+            <h3 className="font-bold text-[13px] mb-1" style={{ fontFamily: '"Times New Roman", Times, serif', textDecoration: 'underline' }}>
+              Daftar Anggota Tim ({m.players.length} Pemain)
+            </h3>
+            <table className="w-full text-[11.5px] border-collapse border border-black" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
+              <thead>
+                <tr className="bg-gray-100 font-bold">
+                  <th className="border border-black px-2 py-0.5 text-center w-[7%]">No</th>
+                  <th className="border border-black px-2 py-0.5 text-left w-[36%]">Nama Lengkap</th>
+                  {e.slug?.includes('esport') || e.slug === 'mlbb' ? (
+                    <th className="border border-black px-2 py-0.5 text-left">Nickname / ID</th>
+                  ) : (
+                    <th className="border border-black px-2 py-0.5 text-left">NISN / No. BP</th>
+                  )}
+                  <th className="border border-black px-2 py-0.5 text-center w-[20%]">Status / Posisi</th>
+                  {e.slug?.includes('futsal') && (
+                    <th className="border border-black px-2 py-0.5 text-center w-[15%]">No. Punggung</th>
+                  )}
+                </tr>
+              </thead>
+              <tbody>
+                {m.players.map((player: any, idx: number) => (
+                  <tr key={idx} className="leading-tight">
+                    <td className="border border-black px-2 py-[2.5px] text-center">{idx + 1}</td>
+                    <td className="border border-black px-2 py-[2.5px] font-medium">{player.name}</td>
+                    {e.slug?.includes('esport') || e.slug === 'mlbb' ? (
+                      <td className="border border-black px-2 py-[2.5px]">{player.nickname || '-'}</td>
+                    ) : (
+                      <td className="border border-black px-2 py-[2.5px]">{player.nisn || player.nobp || '-'}</td>
+                    )}
+                    <td className="border border-black px-2 py-[2.5px] text-center">{player.posisi || player.role || (idx === 0 ? 'Kapten' : 'Anggota')}</td>
+                    {e.slug?.includes('futsal') && (
+                      <td className="border border-black px-2 py-[2.5px] text-center font-bold">{player.jerseyNumber || '-'}</td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
-      
-      {/* Garis Pembatas */}
-      <div className="w-full border-t-[3px] border-black mt-2 mb-1"></div>
-      <div className="w-full border-t border-black mb-6"></div>
 
-      {/* Judul Formulir */}
-      <h2 className="text-center font-bold text-lg mb-8" style={{ fontFamily: '"Times New Roman", Times, serif', textDecoration: 'underline' }}>
-        FORMULIR PENDAFTARAN {e.name?.toUpperCase() || "PESERTA"}
-      </h2>
-
-      {/* Konten Data Utama */}
-      <table className="w-full text-[14px] mb-6" style={{ fontFamily: '"Times New Roman", Times, serif', lineHeight: '1.8' }}>
-        <tbody>
-          <tr>
-            <td className="w-[35%] font-bold align-top">Kode Pendaftaran</td>
-            <td className="w-[20px] align-top">:</td>
-            <td className="align-top font-mono font-bold text-black">{registration.registration_code}</td>
-          </tr>
-          <tr>
-            <td className="w-[35%] font-bold align-top">Event</td>
-            <td className="w-[20px] align-top">:</td>
-            <td className="align-top font-bold">{e.name}</td>
-          </tr>
-          <tr>
-            <td className="w-[35%] font-bold align-top pt-4">{e.slug?.startsWith('open-bazaar') ? "Nama Penanggung Jawab" : "Nama Lengkap / Kapten"}</td>
-            <td className="w-[20px] align-top pt-4">:</td>
-            <td className="align-top pt-4">{p.full_name}</td>
-          </tr>
-          <tr>
-            <td className="w-[35%] font-bold align-top">{e.slug?.startsWith('open-bazaar') ? "Nama Usaha/Brand" : "Asal Institusi / Tim"}</td>
-            <td className="w-[20px] align-top">:</td>
-            <td className="align-top">{p.institution}</td>
-          </tr>
-          <tr>
-            <td className="w-[35%] font-bold align-top">Email</td>
-            <td className="w-[20px] align-top">:</td>
-            <td className="align-top">{p.email}</td>
-          </tr>
-          <tr>
-            <td className="w-[35%] font-bold align-top">No. WhatsApp</td>
-            <td className="w-[20px] align-top">:</td>
-            <td className="align-top">{p.whatsapp}</td>
-          </tr>
-          
-          {/* Mahasiswa UPI YPTK */}
-          {p.institution === 'UPI YPTK Padang' && m.jurusan && (
-            <>
+      {/* Bagian Bawah: Status Pendaftaran & Tanda Tangan */}
+      <div className="mt-auto pt-3 border-t border-slate-300 flex items-start justify-between gap-6" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
+        {/* Kolom Kiri: Status & Informasi */}
+        <div className="flex-1 max-w-[420px]">
+          <table className="w-full text-[13px]" style={{ lineHeight: '1.45' }}>
+            <tbody>
               <tr>
-                <td className="w-[35%] font-bold align-top">Jurusan / Kelas</td>
-                <td className="w-[20px] align-top">:</td>
-                <td className="align-top">{m.jurusan} {m.kelas ? `- ${m.kelas}` : ''}</td>
-              </tr>
-              <tr>
-                <td className="w-[35%] font-bold align-top">No BP</td>
-                <td className="w-[20px] align-top">:</td>
-                <td className="align-top">{m.nobp}</td>
-              </tr>
-            </>
-          )}
-
-          {/* Data Khusus Bazaar */}
-          {e.slug?.startsWith('open-bazaar') && (
-            <>
-              <tr>
-                <td className="w-[35%] font-bold align-top pt-4">Lokasi Tenda</td>
-                <td className="w-[20px] align-top pt-4">:</td>
-                <td className="align-top pt-4 font-bold text-black">
-                  {getTentLocationLabel(m.id_tenda || m.lokasi_tenda)}
+                <td className="w-[145px] font-bold align-top py-0.5">Status Pendaftaran</td>
+                <td className="w-[15px] align-top py-0.5">:</td>
+                <td className="align-top font-bold uppercase py-0.5">
+                  {registration.status === 'VERIFIED' ? 'TERVERIFIKASI' : registration.status === 'PAID' ? 'LUNAS (Menunggu Verifikasi)' : registration.status}
                 </td>
               </tr>
               <tr>
-                <td className="w-[35%] font-bold align-top">Alamat Usaha</td>
-                <td className="w-[20px] align-top">:</td>
-                <td className="align-top">{m.address || '-'}</td>
+                <td className="w-[145px] font-bold align-top py-0.5">Status Pembayaran</td>
+                <td className="w-[15px] align-top py-0.5">:</td>
+                <td className="align-top font-bold uppercase py-0.5">
+                  {getPaymentStatusText()}
+                </td>
               </tr>
-              <tr>
-                <td className="w-[35%] font-bold align-top">Kategori & Produk</td>
-                <td className="w-[20px] align-top">:</td>
-                <td className="align-top">{m.category || '-'} ({m.products || '-'})</td>
-              </tr>
-              <tr>
-                <td className="w-[35%] font-bold align-top">Instagram</td>
-                <td className="w-[20px] align-top">:</td>
-                <td className="align-top">{m.instagram || '-'}</td>
-              </tr>
-            </>
-          )}
-
-          {/* Data Khusus MTQ */}
-          {e.slug === 'lomba-keagamaan' && (
-            <>
-              <tr>
-                <td className="w-[35%] font-bold align-top pt-4">Nama Pembimbing</td>
-                <td className="w-[20px] align-top pt-4">:</td>
-                <td className="align-top pt-4">{m.guruPendamping || '-'}</td>
-              </tr>
-              <tr>
-                <td className="w-[35%] font-bold align-top">No. WA Pembimbing</td>
-                <td className="w-[20px] align-top">:</td>
-                <td className="align-top">{m.nowaGuruPendamping || '-'}</td>
-              </tr>
-            </>
-          )}
-        </tbody>
-      </table>
-
-      {/* Data Khusus Futsal & E-Sport (Pelatih) */}
-      {m.teamData && (
-        <div className="mb-6">
-          <h3 className="font-bold text-[15px] mb-2" style={{ fontFamily: '"Times New Roman", Times, serif', textDecoration: 'underline' }}>Data Pelatih (Coach)</h3>
-          <table className="w-full text-[15px]" style={{ fontFamily: '"Times New Roman", Times, serif', lineHeight: '1.8' }}>
-            <tbody>
-              <tr>
-                <td className="w-[35%] font-bold align-top">Nama Pelatih</td>
-                <td className="w-[20px] align-top">:</td>
-                <td className="align-top">{m.teamData.coachName || '-'}</td>
-              </tr>
-              <tr>
-                <td className="w-[35%] font-bold align-top">No. WA Pelatih</td>
-                <td className="w-[20px] align-top">:</td>
-                <td className="align-top">{m.teamData.coachWhatsapp || '-'}</td>
-              </tr>
-              {m.teamData.assistantCoachName && (
-                <tr>
-                  <td className="w-[35%] font-bold align-top">Asisten Pelatih</td>
-                  <td className="w-[20px] align-top">:</td>
-                  <td className="align-top">{m.teamData.assistantCoachName}</td>
-                </tr>
-              )}
             </tbody>
           </table>
+          <p className="text-[11px] text-slate-600 mt-2 italic leading-relaxed">
+            * Simpan formulir pendaftaran ini sebagai bukti registrasi kepesertaan yang sah pada SI FEST 2026.
+          </p>
         </div>
-      )}
 
-      {/* Data Khusus Tim (Pemain) */}
-      {m.players && m.players.length > 0 && (
-        <div className="mb-6">
-          <h3 className="font-bold text-[15px] mb-2" style={{ fontFamily: '"Times New Roman", Times, serif', textDecoration: 'underline' }}>Daftar Anggota Tim</h3>
-          <table className="w-full text-[14px] border-collapse border border-black" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
-            <thead>
-              <tr className="bg-gray-100">
-                <th className="border border-black px-2 py-1 text-center w-[10%]">No</th>
-                <th className="border border-black px-2 py-1 text-left w-[35%]">Nama Lengkap</th>
-                {e.slug?.includes('esport') || e.slug === 'mlbb' ? (
-                  <th className="border border-black px-2 py-1 text-left">Nickname / ID</th>
-                ) : (
-                  <th className="border border-black px-2 py-1 text-left">NISN / No. BP</th>
-                )}
-                <th className="border border-black px-2 py-1 text-center w-[20%]">Status / Posisi</th>
-                {e.slug?.includes('futsal') && (
-                  <th className="border border-black px-2 py-1 text-center w-[15%]">No. Punggung</th>
-                )}
-              </tr>
-            </thead>
-            <tbody>
-              {m.players.map((player: any, idx: number) => (
-                <tr key={idx}>
-                  <td className="border border-black px-2 py-1 text-center">{idx + 1}</td>
-                  <td className="border border-black px-2 py-1">{player.name}</td>
-                  {e.slug?.includes('esport') || e.slug === 'mlbb' ? (
-                    <td className="border border-black px-2 py-1">{player.nickname || '-'}</td>
-                  ) : (
-                    <td className="border border-black px-2 py-1">{player.nisn || player.nobp || '-'}</td>
-                  )}
-                  <td className="border border-black px-2 py-1 text-center">{player.posisi || player.role || (idx === 0 ? 'Kapten' : 'Anggota')}</td>
-                  {e.slug?.includes('futsal') && (
-                    <td className="border border-black px-2 py-1 text-center">{player.jerseyNumber || '-'}</td>
-                  )}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {/* Status Pendaftaran & Pembayaran */}
-      <table className="w-full text-[15px] mb-8" style={{ fontFamily: '"Times New Roman", Times, serif', lineHeight: '1.8' }}>
-        <tbody>
-          <tr>
-            <td className="w-[35%] font-bold align-top">Status Pendaftaran</td>
-            <td className="w-[20px] align-top">:</td>
-            <td className="align-top font-bold uppercase">{registration.status === 'VERIFIED' ? 'TERVERIFIKASI' : registration.status === 'PAID' ? 'LUNAS (Menunggu Verifikasi)' : registration.status}</td>
-          </tr>
-          <tr>
-            <td className="w-[35%] font-bold align-top">Status Pembayaran</td>
-            <td className="w-[20px] align-top">:</td>
-            <td className="align-top font-bold uppercase">{getPaymentStatusText()}</td>
-          </tr>
-        </tbody>
-      </table>
-
-      {/* Tanda Tangan */}
-      <div className="absolute bottom-16 right-16 flex justify-end" style={{ fontFamily: '"Times New Roman", Times, serif' }}>
-        <div className="text-center w-[250px]">
-          <p className="mb-20">Padang, {new Date(registration.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Jakarta' })}</p>
-          <p className="font-bold border-b border-black inline-block px-4 pb-1">{p.full_name}</p>
-          <p className="mt-1">Pendaftar</p>
+        {/* Kolom Kanan: Tanda Tangan Pendaftar */}
+        <div className="text-center w-[230px] shrink-0 text-[13px]">
+          <p>Padang, {new Date(registration.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Asia/Jakarta' })}</p>
+          <div className="h-14 flex items-center justify-center">
+            {/* Ruang untuk tanda tangan fisik */}
+          </div>
+          <p className="font-bold border-b border-black inline-block px-4 pb-0.5">{p.full_name}</p>
+          <p className="mt-0.5 text-[12px] text-slate-700">Pendaftar</p>
         </div>
       </div>
     </div>
@@ -484,15 +522,22 @@ export default function PrintButton({ registration }: { registration?: any }) {
           {/* Scrollable Document Canvas */}
           <div className="flex-1 overflow-auto p-4 md:p-8 flex justify-center items-start bg-slate-950/70">
             <div 
+              className="shrink-0 my-4 shadow-2xl transition-all duration-150"
               style={{ 
-                transform: `scale(${scale})`, 
-                transformOrigin: 'top center',
-                transition: 'transform 0.15s ease-out',
-                marginBottom: scale < 1 ? `-${(1 - scale) * 1123}px` : '40px'
+                width: `${794 * scale}px`,
+                height: `${1123 * scale}px`,
               }}
-              className="shrink-0 my-4"
             >
-              <FormDocument />
+              <div 
+                style={{ 
+                  transform: `scale(${scale})`, 
+                  transformOrigin: 'top left',
+                  width: '794px',
+                  minHeight: '1123px',
+                }}
+              >
+                <FormDocument />
+              </div>
             </div>
           </div>
 
