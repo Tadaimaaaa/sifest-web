@@ -633,7 +633,7 @@ export default function AbsensiPanitiaPage() {
             const k = localStorage.key(i);
             if (k) {
               if (resetScope === "ALL_DATA") {
-                if (k.startsWith("sifest_absensi_panitia_")) {
+                if (k.startsWith("sifest_absensi_panitia_") || k === "sifest_panitia_session_states") {
                   keysToRemove.push(k);
                 }
               } else {
@@ -647,37 +647,30 @@ export default function AbsensiPanitiaPage() {
         } catch (e) {}
       }
 
-      // 3. Backend Sync
-      const resetRecords = panitiaList.map(p => ({
-        user_id: p.user_id,
-        status: "BELUM",
-        waktu_absen: "",
-        keterangan: ""
-      }));
+      // Reset session state
+      if (resetScope === "ALL_DATA") {
+        setSessionStates({});
+        await saveSessionStateToDb(sessionKey, "IDLE", null, null);
+      } else {
+        const nextStates = { ...sessionStates };
+        delete nextStates[sessionKey];
+        setSessionStates(nextStates);
+        await saveSessionStateToDb(sessionKey, "IDLE", null, null);
+      }
 
-      await fetch(`${SCRIPT_URL}?action=bulkRecordAbsensiPanitia`, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify({
-          action: "bulkRecordAbsensiPanitia",
-          token,
-          tanggal,
-          sesi: activeSesi,
-          recorded_by: currentAdminName,
-          records: resetRecords
-        })
-      }).catch(() => {});
-
-      // Call backend resetAbsensiPanitia if available
-      fetch(`${SCRIPT_URL}?action=resetAbsensiPanitia`, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify({
-          token,
-          tanggal: resetScope === "SESSION_ONLY" ? tanggal : undefined,
-          sesi: resetScope === "SESSION_ONLY" ? activeSesi : undefined
-        })
-      }).catch(() => {});
+      // 3. Backend Sync Google Apps Script
+      try {
+        await fetch(`${SCRIPT_URL}?action=resetAbsensiPanitia`, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify({
+            action: "resetAbsensiPanitia",
+            token,
+            tanggal: resetScope === "SESSION_ONLY" ? tanggal : undefined,
+            sesi: resetScope === "SESSION_ONLY" ? activeSesi : "ALL"
+          })
+        });
+      } catch (e) {}
 
       setIsResetModalOpen(false);
       toast.success(
