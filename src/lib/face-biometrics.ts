@@ -10,19 +10,19 @@ export interface StoredFaceProfile {
 }
 
 // -------------------------------------------------------------
-// 1. EXTRACT ROBUST BIOMETRIC VECTOR (FAST & ACCURATE)
+// 1. EXTRACT ROBUST BIOMETRIC VECTOR (FAST & HIGH-DISCRIMINATION)
 // -------------------------------------------------------------
-// Menggunakan 3x3 Spatial Pyramid (9 zona wajah mandiri)
-// + Local Binary Patterns (LBP) texture descriptor
-// + Fast Sobel Edge Gradients
-// + Bounding box oval proporsional (< 1ms per ekstraksi)
+// Menggunakan Zero-Mean Normalized Facial Grid (32x32 = 1024 titik)
+// + Normalized Sobel Edge Contour Gradient (30x30 = 900 titik)
+// Total: 1924 dimensi vektor biometrik.
+// Tahan terhadap variasi pencahayaan, kontras, dan pergeseran wajar.
 export function extractRobustFaceFeatures(
   source: HTMLVideoElement | HTMLImageElement | HTMLCanvasElement,
   customCrop?: { x: number; y: number; width: number; height: number },
   isMirrored = false
 ): number[] | null {
   try {
-    const size = 36; // 36x36 grid dipecah menjadi 3x3 blok (9 zona spasial 12x12)
+    const size = 32;
     const canvas = document.createElement("canvas");
     canvas.width = size;
     canvas.height = size;
@@ -44,11 +44,9 @@ export function extractRobustFaceFeatures(
       const srcH = (source as any).videoHeight || source.height || 480;
       const minDim = Math.min(srcW, srcH);
 
-      // Area oval wajah proporsional: 64% lebar x 76% tinggi di tengah
-      // Luas yang nyaman: tidak memotong dagu/dahi saat kepala bergerak wajar,
-      // sekaligus membuang latar belakang ruangan.
-      sw = Math.round(minDim * 0.64);
-      sh = Math.round(minDim * 0.76);
+      // Area oval wajah: 65% lebar x 75% tinggi di tengah
+      sw = Math.round(minDim * 0.65);
+      sh = Math.round(minDim * 0.75);
       sx = Math.round((srcW - sw) / 2);
       sy = Math.round((srcH - sh) / 2);
     }
@@ -61,105 +59,109 @@ export function extractRobustFaceFeatures(
     ctx.drawImage(source, sx, sy, sw, sh, 0, 0, size, size);
 
     const imgData = ctx.getImageData(0, 0, size, size).data;
-    const lums: number[] = new Array(size * size);
-    const n = size * size;
+    const numPixels = size * size;
+    const lums = new Float32Array(numPixels);
 
     // 1. Grayscale Luminance
-    for (let i = 0; i < n; i++) {
+    let sumLums = 0;
+    for (let i = 0; i < numPixels; i++) {
       const idx = i * 4;
-      lums[i] = 0.299 * imgData[idx] + 0.587 * imgData[idx + 1] + 0.114 * imgData[idx + 2];
+      const lum = 0.299 * imgData[idx] + 0.587 * imgData[idx + 1] + 0.114 * imgData[idx + 2];
+      lums[i] = lum;
+      sumLums += lum;
     }
 
-    const features: number[] = [];
+    // 2. Zero-Mean & Unit Variance Standardization (Lighting-Invariant)
+    const meanLums = sumLums / numPixels;
+    let variance = 0;
+    for (let i = 0; i < numPixels; i++) {
+      const diff = lums[i] - meanLums;
+      variance += diff * diff;
+    }
+    const stdLums = Math.sqrt(variance / numPixels) || 1;
 
-    // 2. Analisis 9 Zona Spasial Wajah (3x3 Blok berukuran 12x12)
-    // Baris 1: Alis Kiri, Hidung Atas, Alis Kanan
-    // Baris 2: Pipi Kiri, Batang & Cuping Hidung, Pipi Kanan
-    // Baris 3: Sudut Bibir Kiri, Mulut & Dagu, Sudut Bibir Kanan
-    const blockSize = 12;
-    const numBlocks = 3;
+    const gradPoints = (size - 2) * (size - 2);
+    const totalDim = numPixels + gradPoints;
+    const features = new Float32Array(totalDim);
+    let fIdx = 0;
 
-    for (let by = 0; by < numBlocks; by++) {
-      for (let bx = 0; bx < numBlocks; bx++) {
-        let blockSum = 0;
-        let blockSumSq = 0;
-        const count = blockSize * blockSize;
-
-        for (let dy = 0; dy < blockSize; dy++) {
-          for (let dx = 0; dx < blockSize; dx++) {
-            const val = lums[(by * blockSize + dy) * size + (bx * blockSize + dx)];
-            blockSum += val;
-            blockSumSq += val * val;
-          }
-        }
-
-        const bMean = blockSum / count;
-        const bStd = Math.sqrt(Math.max(1, blockSumSq / count - bMean * bMean));
-
-        features.push(bMean / 255.0);
-        features.push(bStd / 128.0);
-
-        // LBP 8-bin histogram per zona
-        const lbpBins = new Array(8).fill(0);
-        for (let dy = 1; dy < blockSize - 1; dy++) {
-          for (let dx = 1; dx < blockSize - 1; dx++) {
-            const cy = by * blockSize + dy;
-            const cx = bx * blockSize + dx;
-            const centerVal = lums[cy * size + cx];
-
-            let pattern = 0;
-            if (lums[(cy - 1) * size + (cx - 1)] >= centerVal) pattern |= 1;
-            if (lums[(cy - 1) * size + cx] >= centerVal) pattern |= 2;
-            if (lums[(cy - 1) * size + (cx + 1)] >= centerVal) pattern |= 4;
-            if (lums[cy * size + (cx + 1)] >= centerVal) pattern |= 8;
-            if (lums[(cy + 1) * size + (cx + 1)] >= centerVal) pattern |= 16;
-            if (lums[(cy + 1) * size + cx] >= centerVal) pattern |= 32;
-            if (lums[(cy + 1) * size + (cx - 1)] >= centerVal) pattern |= 64;
-            if (lums[cy * size + (cx - 1)] >= centerVal) pattern |= 128;
-
-            const binIdx = Math.floor(pattern / 32);
-            lbpBins[Math.min(7, binIdx)]++;
-          }
-        }
-
-        const blockPixels = (blockSize - 2) * (blockSize - 2);
-        for (let k = 0; k < 8; k++) {
-          features.push(lbpBins[k] / blockPixels);
-        }
-      }
+    // Feature Part 1: Standardized Pixel Grid (1024)
+    for (let i = 0; i < numPixels; i++) {
+      features[fIdx++] = (lums[i] - meanLums) / stdLums;
     }
 
-    // 3. Fast Sobel Gradients di pusat wajah (Mata & Hidung)
-    for (let y = 6; y < size - 6; y += 3) {
-      for (let x = 6; x < size - 6; x += 3) {
+    // Feature Part 2: Normalized Sobel Edge Contour (900)
+    let sumGrad = 0;
+    for (let y = 1; y < size - 1; y++) {
+      for (let x = 1; x < size - 1; x++) {
         const idx = y * size + x;
         const dx = lums[idx + 1] - lums[idx - 1];
         const dy = lums[idx + size] - lums[idx - size];
         const mag = Math.sqrt(dx * dx + dy * dy);
-        features.push(mag / 255.0);
+        sumGrad += mag;
+      }
+    }
+    const meanGrad = sumGrad / gradPoints;
+
+    for (let y = 1; y < size - 1; y++) {
+      for (let x = 1; x < size - 1; x++) {
+        const idx = y * size + x;
+        const dx = lums[idx + 1] - lums[idx - 1];
+        const dy = lums[idx + size] - lums[idx - size];
+        const mag = Math.sqrt(dx * dx + dy * dy);
+        features[fIdx++] = (mag - meanGrad) / 32.0;
       }
     }
 
-    // 4. L2 Normalization final vector
+    // 3. Final L2 Normalization
     let normSq = 0;
-    const len = features.length;
-    for (let i = 0; i < len; i++) {
+    for (let i = 0; i < totalDim; i++) {
       normSq += features[i] * features[i];
     }
     const l2Norm = Math.sqrt(normSq) || 1;
-    for (let i = 0; i < len; i++) {
-      features[i] /= l2Norm;
+    const result: number[] = new Array(totalDim);
+    for (let i = 0; i < totalDim; i++) {
+      result[i] = features[i] / l2Norm;
     }
 
-    return features;
+    return result;
   } catch (e) {
     console.error("Feature extraction error:", e);
     return null;
   }
 }
 
+// Ekstrak kandidat vektor multi-skala & pergeseran agar tahan jarak kepala & pergerakan
+export function extractMultiScaleBiometricVectors(
+  source: HTMLVideoElement | HTMLImageElement | HTMLCanvasElement,
+  isMirrored = false
+): number[][] {
+  const vectors: number[][] = [];
+  const srcW = (source as any).videoWidth || source.width || 640;
+  const srcH = (source as any).videoHeight || source.height || 480;
+  const minDim = Math.min(srcW, srcH);
+
+  const configs = [
+    { scaleW: 0.65, scaleH: 0.75, offY: 0 },
+    { scaleW: 0.58, scaleH: 0.68, offY: 0 },
+    { scaleW: 0.72, scaleH: 0.82, offY: 0 },
+    { scaleW: 0.65, scaleH: 0.75, offY: -0.03 },
+  ];
+
+  for (const cfg of configs) {
+    const sw = Math.round(minDim * cfg.scaleW);
+    const sh = Math.round(minDim * cfg.scaleH);
+    const sx = Math.round((srcW - sw) / 2);
+    const sy = Math.round((srcH - sh) / 2 + (minDim * cfg.offY));
+    const vec = extractRobustFaceFeatures(source, { x: sx, y: sy, width: sw, height: sh }, isMirrored);
+    if (vec) vectors.push(vec);
+  }
+
+  return vectors;
+}
+
 // -------------------------------------------------------------
-// 2. HITUNG KEMIRIPAN BIOMETRIK (RESPONSIF & CEPAT)
+// 2. HITUNG KEMIRIPAN BIOMETRIK (HIGH DYNAMIC RANGE & HIGH SEPARATION)
 // -------------------------------------------------------------
 export function computeBiometricMatch(vecA: number[], vecB: number[]): number {
   if (!vecA || !vecB || vecA.length !== vecB.length) return 0;
@@ -169,16 +171,14 @@ export function computeBiometricMatch(vecA: number[], vecB: number[]): number {
     dot += vecA[i] * vecB[i];
   }
 
-  // Linear calibrated mapping:
-  // dot <= 0.22 -> 0%
-  // dot 0.22 .. 0.44 -> 0% .. 50% (bukan orang yang sama)
-  // dot 0.45 .. 0.70 -> 55% .. 88% (kemiripan kuat orang yang sama)
-  // dot > 0.70 -> 90% .. 100%
-  if (dot <= 0.22) return 0;
-  if (dot < 0.44) {
-    return Math.round(((dot - 0.22) / 0.22) * 50);
+  // Kalibrasi Zero-Mean Cosine Similarity:
+  // - Orang berbeda: dot umumnya <= 0.25 (skor 0% .. 30%)
+  // - Orang yang sama: dot umumnya >= 0.50 (skor 65% .. 100%)
+  if (dot <= 0.10) return 0;
+  if (dot < 0.40) {
+    return Math.round(((dot - 0.10) / 0.30) * 45); // 0% .. 45%
   }
-  const score = Math.round(52 + ((dot - 0.44) / 0.32) * 48);
+  const score = Math.round(50 + ((dot - 0.40) / 0.40) * 50); // 50% .. 100%
   return Math.max(0, Math.min(100, score));
 }
 
@@ -244,7 +244,7 @@ export async function fetchEnrolledFacesFromDb(): Promise<{
 
   for (const [uid, profile] of Object.entries(remoteFaces)) {
     if (profile.photo) photos[uid] = profile.photo;
-    if (Array.isArray(profile.vector) && profile.vector.length > 0) {
+    if (Array.isArray(profile.vector) && profile.vector.length === 1924) {
       vectors[uid] = profile.vector;
     }
   }

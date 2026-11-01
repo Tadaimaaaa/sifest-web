@@ -25,6 +25,7 @@ import { PanitiaUser } from "@/app/(dashboard)/absensi-panitia/page";
 import { toast } from "sonner";
 import {
   extractRobustFaceFeatures,
+  extractMultiScaleBiometricVectors,
   computeBiometricMatch,
   fetchEnrolledFacesFromDb
 } from "@/lib/face-biometrics";
@@ -164,40 +165,24 @@ export default function FaceIDScannerModal({
 
     setIsLoadingDb(true);
     fetchEnrolledFacesFromDb()
-      .then(({ photos }) => {
+      .then(({ photos, vectors }) => {
         setEnrolledFaces(photos);
+        setEnrolledVectors(vectors || {});
+        setIsLoadingDb(false);
 
-        // Selalu re-compute vektor biometrik dengan algoritma presisi tinggi terbaru dari foto master
-        const freshVectors: Record<string, number[]> = {};
+        // Jika ada foto yang belum memiliki vektor 1924, hitung di background
         const entries = Object.entries(photos);
-        let loaded = 0;
-
-        if (entries.length === 0) {
-          setIsLoadingDb(false);
-          return;
-        }
-
         entries.forEach(([userId, base64Photo]) => {
-          const img = new Image();
-          img.onload = () => {
-            const vec = extractRobustFaceFeatures(img, undefined, false);
-            if (vec) {
-              freshVectors[userId] = vec;
-            }
-            loaded++;
-            if (loaded >= entries.length) {
-              setEnrolledVectors(freshVectors);
-              setIsLoadingDb(false);
-            }
-          };
-          img.onerror = () => {
-            loaded++;
-            if (loaded >= entries.length) {
-              setEnrolledVectors(freshVectors);
-              setIsLoadingDb(false);
-            }
-          };
-          img.src = base64Photo;
+          if (!vectors || !vectors[userId] || vectors[userId].length !== 1924) {
+            const img = new Image();
+            img.onload = () => {
+              const vec = extractRobustFaceFeatures(img, undefined, false);
+              if (vec) {
+                setEnrolledVectors((prev) => ({ ...prev, [userId]: vec }));
+              }
+            };
+            img.src = base64Photo;
+          }
         });
       })
       .catch((err) => {
@@ -361,34 +346,37 @@ export default function FaceIDScannerModal({
     const runBiometricComparison = () => {
       if (isCancelled || !videoRef.current) return;
 
-      // Extract live robust feature vector with proper horizontal orientation
-      const liveVector = extractRobustFaceFeatures(
+      // Extract multi-scale biometric vectors from live webcam
+      const liveVectors = extractMultiScaleBiometricVectors(
         videoRef.current,
-        undefined,
         facingMode === "user"
       );
-      if (!liveVector) return;
+      if (!liveVectors || liveVectors.length === 0) return;
 
       // MODE A: Target panitia yang dipilih secara manual oleh operator
       if (manualTargetUser) {
         const enrolledVec = enrolledVectors[manualTargetUser.user_id];
         if (enrolledVec && enrolledVec.length > 0) {
-          const score = computeBiometricMatch(liveVector, enrolledVec);
-          setConfidence(score);
+          let bestLiveScore = 0;
+          for (const lVec of liveVectors) {
+            const s = computeBiometricMatch(lVec, enrolledVec);
+            if (s > bestLiveScore) bestLiveScore = s;
+          }
+          setConfidence(bestLiveScore);
 
-          // Threshold 1:1: Langsung tembus jika >= 70%, atau 2 frame jika >= 56%
-          if (score >= 70) {
+          // Threshold 1:1: Langsung tembus jika >= 70%, atau 2 frame jika >= 55%
+          if (bestLiveScore >= 70) {
             matchStreakRef.current = { candidateId: null, count: 0, scores: [] };
             setAnalyzingStreak(0);
-            triggerVerification(manualTargetUser, score);
-          } else if (score >= 56) {
+            triggerVerification(manualTargetUser, bestLiveScore);
+          } else if (bestLiveScore >= 55) {
             if (matchStreakRef.current.candidateId === manualTargetUser.user_id) {
               matchStreakRef.current.count++;
-              matchStreakRef.current.scores.push(score);
+              matchStreakRef.current.scores.push(bestLiveScore);
             } else {
               matchStreakRef.current.candidateId = manualTargetUser.user_id;
               matchStreakRef.current.count = 1;
-              matchStreakRef.current.scores = [score];
+              matchStreakRef.current.scores = [bestLiveScore];
             }
 
             const currentCount = matchStreakRef.current.count;
@@ -439,13 +427,18 @@ export default function FaceIDScannerModal({
 
       for (const [userId, vec] of vectorEntries) {
         if (!vec || vec.length === 0) continue;
-        const score = computeBiometricMatch(liveVector, vec);
-        if (score > bestScore) {
+        let userMaxScore = 0;
+        for (const lVec of liveVectors) {
+          const s = computeBiometricMatch(lVec, vec);
+          if (s > userMaxScore) userMaxScore = s;
+        }
+
+        if (userMaxScore > bestScore) {
           secondScore = bestScore;
-          bestScore = score;
+          bestScore = userMaxScore;
           bestUserId = userId;
-        } else if (score > secondScore) {
-          secondScore = score;
+        } else if (userMaxScore > secondScore) {
+          secondScore = userMaxScore;
         }
       }
 
@@ -453,8 +446,8 @@ export default function FaceIDScannerModal({
       const margin = bestScore - secondScore;
 
       // DETEKSI KILAT & AKURAT:
-      // Kasus 1: Kecocokan Sangat Jelas (>= 78% & margin >= 6%) -> Verifikasi Langsung 1 Frame (< 150ms)
-      if (matchedPanitia && bestScore >= 78 && margin >= 6) {
+      // Kasus 1: Kecocokan Sangat Jelas (>= 75% & margin >= 12%) -> Verifikasi Langsung 1 Frame (< 150ms)
+      if (matchedPanitia && bestScore >= 75 && margin >= 12) {
         matchStreakRef.current = { candidateId: null, count: 0, scores: [] };
         setAnalyzingStreak(0);
         setConfidence(bestScore);
@@ -464,8 +457,8 @@ export default function FaceIDScannerModal({
         return;
       }
 
-      // Kasus 2: Kecocokan Bagus (>= 62% & margin >= 4%) -> Cukup 2 Frame Konsisten (~280ms)
-      const isCandidate = matchedPanitia && bestScore >= 62 && margin >= 4;
+      // Kasus 2: Kecocokan Bagus (>= 58% & margin >= 8%) -> Cukup 2 Frame Konsisten (~300ms)
+      const isCandidate = matchedPanitia && bestScore >= 58 && margin >= 8;
 
       if (isCandidate && bestUserId) {
         if (matchStreakRef.current.candidateId === bestUserId) {
@@ -483,7 +476,7 @@ export default function FaceIDScannerModal({
         setDetectedUser(matchedPanitia);
         setScanState("ANALYZING");
 
-        // 2 frame konsisten berturut-turut (~280ms) langsung terverifikasi
+        // 2 frame konsisten berturut-turut (~300ms) langsung terverifikasi
         if (streak >= 2) {
           const avgScore = Math.round(
             matchStreakRef.current.scores.reduce((a, b) => a + b, 0) /
@@ -503,7 +496,7 @@ export default function FaceIDScannerModal({
       }
     };
 
-    matchInterval = setInterval(runBiometricComparison, 140);
+    matchInterval = setInterval(runBiometricComparison, 150);
 
     return () => {
       isCancelled = true;
@@ -918,10 +911,26 @@ export default function FaceIDScannerModal({
               ) : scanState === "UNMATCHED" && enrolledCount > 0 ? (
                 <div className="text-[10px] text-amber-400 bg-amber-950/60 border border-amber-500/30 px-2 py-1 rounded-xl text-right">
                   <span>Wajah belum cocok</span>
-                  <span className="block font-mono text-slate-400">Min. 68%</span>
+                  <span className="block font-mono text-slate-400">Min. 58%</span>
                 </div>
               ) : null}
             </div>
+
+            {/* One-Click Fallback: Foto & Hadirkan Manual */}
+            {currentDisplayUser && scanState !== "VERIFIED" && (
+              <div className="w-full max-w-lg mt-2.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    triggerVerification(currentDisplayUser, confidence > 0 ? confidence : 100);
+                  }}
+                  className="w-full py-2.5 px-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-emerald-600/25 flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer"
+                >
+                  <Camera className="w-4 h-4 text-emerald-200" />
+                  <span>Ambil Foto & Hadirkan: {currentDisplayUser.name.split(" ")[0]} (Manual)</span>
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Right Sidebar: Panitia Queue / Selection (Col 4) */}
