@@ -40,11 +40,8 @@ import {
 import FullPageLoader from "@/components/FullPageLoader";
 import PanitiaBarcodeScannerModal from "@/components/scanner/PanitiaBarcodeScannerModal";
 import PanitiaBarcodeCardModal from "@/components/scanner/PanitiaBarcodeCardModal";
-import FaceIDScannerModal from "@/components/scanner/FaceIDScannerModal";
-import FaceEnrollmentModal from "@/components/scanner/FaceEnrollmentModal";
 import { SCRIPT_URL } from "@/lib/api";
 import {
-  fetchEnrolledFacesFromDb,
   fetchSessionStatesFromDb,
   saveSessionStateToDb,
   SessionStateInfo
@@ -165,12 +162,6 @@ export default function AbsensiPanitiaPage() {
   const [isBarcodeCardOpen, setIsBarcodeCardOpen] = useState(false);
   const [selectedBarcodeUser, setSelectedBarcodeUser] = useState<PanitiaUser | null>(null);
 
-  // Face ID & Enrollment Modals
-  const [isFaceIDOpen, setIsFaceIDOpen] = useState(false);
-  const [faceIDTargetUser, setFaceIDTargetUser] = useState<PanitiaUser | null>(null);
-  const [isEnrollModalOpen, setIsEnrollModalOpen] = useState(false);
-  const [enrollModalUser, setEnrollModalUser] = useState<PanitiaUser | null>(null);
-  const [enrolledMap, setEnrolledMap] = useState<Record<string, string>>({});
   const [quickCodeInput, setQuickCodeInput] = useState("");
   const [noteModalUser, setNoteModalUser] = useState<PanitiaUser | null>(null);
   const [noteInput, setNoteInput] = useState("");
@@ -179,7 +170,6 @@ export default function AbsensiPanitiaPage() {
   // Reset Modal State
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
   const [resetScope, setResetScope] = useState<"SESSION_ONLY" | "ALL_DATA">("ALL_DATA");
-  const [includeFaceProfiles, setIncludeFaceProfiles] = useState(true);
 
   // Audio Beep Synthesizer for Fast Scanning Feedback
   const playBeep = (freq = 880, duration = 120) => {
@@ -364,10 +354,6 @@ export default function AbsensiPanitiaPage() {
         if (u.name) setCurrentAdminName(u.name);
       } catch (e) {}
     }
-    // Load enrolled faces from Cloud Database
-    fetchEnrolledFacesFromDb().then(({ photos }) => {
-      setEnrolledMap(photos);
-    });
 
     // Load session states from Cloud Database
     fetchSessionStatesFromDb().then((states) => {
@@ -467,8 +453,7 @@ export default function AbsensiPanitiaPage() {
   const updateAttendance = async (
     user: PanitiaUser,
     newStatus: AttendanceStatus,
-    keteranganCustom?: string,
-    snapshotBase64?: string
+    keteranganCustom?: string
   ) => {
     if (!activeSesi) {
       toast.error("Silakan buat atau pilih sesi / agenda terlebih dahulu!");
@@ -477,11 +462,6 @@ export default function AbsensiPanitiaPage() {
     const now = new Date();
     const timeStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")} WIB`;
     const prev = attendanceMap[user.user_id];
-
-    let facePhoto = snapshotBase64;
-    if (!facePhoto && typeof window !== "undefined") {
-      facePhoto = localStorage.getItem(`sifest_face_snapshot_${user.user_id}_${tanggal}`) || prev?.face_snapshot;
-    }
 
     const record: AttendanceRecord = {
       id_absensi: prev?.id_absensi || `ABS-${Date.now()}`,
@@ -496,8 +476,7 @@ export default function AbsensiPanitiaPage() {
       waktu_absen: newStatus === "HADIR" ? (prev?.waktu_absen || timeStr) : (newStatus === "BELUM" ? "" : timeStr),
       keterangan: keteranganCustom !== undefined ? keteranganCustom : (prev?.keterangan || ""),
       recorded_by: currentAdminName,
-      updated_at: now.toISOString(),
-      face_snapshot: facePhoto || undefined
+      updated_at: now.toISOString()
     };
 
     // Update state optimis di UI
@@ -654,7 +633,7 @@ export default function AbsensiPanitiaPage() {
             const k = localStorage.key(i);
             if (k) {
               if (resetScope === "ALL_DATA") {
-                if (k.startsWith("sifest_absensi_panitia_") || k.startsWith("sifest_face_snapshot_")) {
+                if (k.startsWith("sifest_absensi_panitia_")) {
                   keysToRemove.push(k);
                 }
               } else {
@@ -665,11 +644,6 @@ export default function AbsensiPanitiaPage() {
             }
           }
           keysToRemove.forEach(k => localStorage.removeItem(k));
-
-          if (resetScope === "ALL_DATA" && includeFaceProfiles) {
-            localStorage.removeItem("sifest_enrolled_face_profiles");
-            setEnrolledMap({});
-          }
         } catch (e) {}
       }
 
@@ -708,9 +682,7 @@ export default function AbsensiPanitiaPage() {
       setIsResetModalOpen(false);
       toast.success(
         resetScope === "ALL_DATA"
-          ? (includeFaceProfiles
-              ? "Seluruh data presensi dan biometrik berhasil direset bersih! (Daftar 69 panitia tetap aman)."
-              : "Seluruh data presensi berhasil direset bersih ke 0 Hadir!")
+          ? "Seluruh data presensi berhasil direset bersih ke 0 Hadir! (Daftar 69 panitia tetap aman)."
           : `Data presensi untuk sesi "${activeSesi}" berhasil direset.`
       );
 
@@ -969,35 +941,6 @@ export default function AbsensiPanitiaPage() {
             >
               <CreditCard className="w-4 h-4 text-blue-400" />
               <span>ID Card & Barcode</span>
-            </button>
-
-            {/* Fitur Alternatif: Face ID (Opsional) */}
-            <button
-              type="button"
-              onClick={() => {
-                if (!activeSesi) {
-                  toast.error("Silakan buat atau pilih sesi / agenda terlebih dahulu sebelum scan Face ID!");
-                  return;
-                }
-                setFaceIDTargetUser(null);
-                setIsFaceIDOpen(true);
-              }}
-              className="flex items-center justify-center gap-1.5 px-3 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium transition-colors cursor-pointer flex-1 sm:flex-initial shadow-xs active:scale-95"
-            >
-              <Scan className="w-4 h-4 text-slate-500" />
-              <span>Face ID (Opsional)</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setEnrollModalUser(null);
-                setIsEnrollModalOpen(true);
-              }}
-              className="flex items-center justify-center gap-1.5 px-3 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium transition-colors cursor-pointer"
-            >
-              <Camera className="w-4 h-4 text-slate-500" />
-              <span className="hidden sm:inline">Daftar Wajah</span>
             </button>
 
             <button
@@ -1447,31 +1390,16 @@ export default function AbsensiPanitiaPage() {
                         <td className="py-3 px-4">
                           <div className="flex items-center gap-3">
                             <div className="w-9 h-9 rounded-full bg-slate-200 overflow-hidden flex-shrink-0 border border-slate-200">
-                              {enrolledMap[p.user_id] ? (
-                                <img
-                                  src={enrolledMap[p.user_id]}
-                                  alt={p.name}
-                                  className="w-full h-full object-cover"
-                                />
-                              ) : (
-                                <img
-                                  src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${p.name}`}
-                                  alt={p.name}
-                                  className="w-full h-full object-cover"
-                                />
-                              )}
+                              <img
+                                src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${p.name}`}
+                                alt={p.name}
+                                className="w-full h-full object-cover"
+                              />
                             </div>
                             <div className="min-w-0">
-                              <div className="flex items-center gap-1.5">
-                                <p className="font-bold text-slate-800 text-sm truncate" title={p.name}>
-                                  {p.name}
-                                </p>
-                                {enrolledMap[p.user_id] && (
-                                  <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200/80 px-1.5 py-0.2 rounded-full whitespace-nowrap">
-                                    Face ID
-                                  </span>
-                                )}
-                              </div>
+                              <p className="font-bold text-slate-800 text-sm truncate" title={p.name}>
+                                {p.name}
+                              </p>
                               <div className="flex items-center gap-2 text-xs text-slate-500 mt-0.5">
                                 <span className="font-mono text-slate-600 bg-slate-100 px-1.5 py-0.2 rounded text-[11px] font-semibold">
                                   {p.nim}
@@ -1550,20 +1478,6 @@ export default function AbsensiPanitiaPage() {
                                   <Clock className="w-3.5 h-3.5 text-emerald-600" />
                                   <span>{att.waktu_absen}</span>
                                 </div>
-                                {(att?.face_snapshot || (typeof window !== "undefined" && localStorage.getItem(`sifest_face_snapshot_${p.user_id}_${tanggal}`)) || enrolledMap[p.user_id]) && (
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setNoteModalUser(p);
-                                      setNoteInput(att?.keterangan || "");
-                                    }}
-                                    className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-cyan-50 hover:bg-cyan-100 text-cyan-700 border border-cyan-200 text-[10px] font-bold cursor-pointer transition-colors"
-                                    title="Lihat Foto Bukti Presensi Face ID & Waktu Lengkap"
-                                  >
-                                    <Camera className="w-3 h-3 text-cyan-600" />
-                                    <span>Bukti Foto</span>
-                                  </button>
-                                )}
                               </div>
                             ) : (
                               <span className="text-slate-400 italic">Belum absen ({sesi})</span>
@@ -1599,32 +1513,6 @@ export default function AbsensiPanitiaPage() {
                               <QrCode className="w-4 h-4" />
                             </button>
 
-                            {/* Fitur Alternatif: Presensi Face ID */}
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setFaceIDTargetUser(p);
-                                setIsFaceIDOpen(true);
-                              }}
-                              className="p-1.5 text-slate-400 hover:text-cyan-600 hover:bg-cyan-50 rounded-lg transition-colors cursor-pointer"
-                              title="Presensi Face ID Panitia Ini"
-                            >
-                              <Scan className="w-4 h-4" />
-                            </button>
-
-                            {/* Fitur 2: Daftar Wajah Panitia */}
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setEnrollModalUser(p);
-                                setIsEnrollModalOpen(true);
-                              }}
-                              className="p-1.5 text-slate-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors cursor-pointer"
-                              title="Daftarkan / Perbarui Foto Wajah Panitia"
-                            >
-                              <Camera className="w-4 h-4" />
-                            </button>
-
                             {/* Keterangan */}
                             <button
                               type="button"
@@ -1633,7 +1521,7 @@ export default function AbsensiPanitiaPage() {
                                 setNoteInput(att?.keterangan || "");
                               }}
                               className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors cursor-pointer"
-                              title="Tambah / Ubah Keterangan"
+                              title="Tambah / Ubah Keterangan Presensi"
                             >
                               <FileText className="w-4 h-4" />
                             </button>
@@ -1649,45 +1537,27 @@ export default function AbsensiPanitiaPage() {
         </div>
       </div>
 
-      {/* ==================== MODAL DETAIL PRESENSI & BUKTI FACE ID ==================== */}
+      {/* ==================== MODAL DETAIL PRESENSI & KETERANGAN ==================== */}
       {noteModalUser && (() => {
         const att = attendanceMap[noteModalUser.user_id];
         const status = att?.status || "BELUM";
-        const snapshotPhoto =
-          att?.face_snapshot ||
-          (typeof window !== "undefined"
-            ? localStorage.getItem(`sifest_face_snapshot_${noteModalUser.user_id}_${tanggal}`)
-            : null) ||
-          enrolledMap[noteModalUser.user_id];
-
-        const { fullDate, fullDateTime } = formatFullIndonesianDate(att?.tanggal || tanggal, att?.waktu_absen);
-        const isFaceID = att?.keterangan?.toLowerCase().includes("face id") || !!snapshotPhoto;
+        const { fullDate } = formatFullIndonesianDate(att?.tanggal || tanggal, att?.waktu_absen);
 
         return (
           <div className="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-sm flex items-center justify-center p-3 md:p-4 animate-in fade-in duration-200">
             <div className="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl border border-slate-100 animate-in zoom-in-95 duration-200 flex flex-col max-h-[92vh]">
               {/* Header */}
-              <div
-                className={`p-4 md:p-5 text-white flex items-center justify-between ${
-                  isFaceID
-                    ? "bg-gradient-to-r from-cyan-600 via-blue-600 to-indigo-700"
-                    : "bg-gradient-to-r from-amber-500 to-orange-600"
-                }`}
-              >
+              <div className="p-4 md:p-5 text-white flex items-center justify-between bg-gradient-to-r from-blue-600 to-indigo-700">
                 <div className="flex items-center gap-2.5">
                   <div className="w-10 h-10 rounded-2xl bg-white/20 flex items-center justify-center shadow-inner">
-                    {isFaceID ? (
-                      <Scan className="w-5 h-5 text-white animate-pulse" />
-                    ) : (
-                      <FileText className="w-5 h-5 text-white" />
-                    )}
+                    <FileText className="w-5 h-5 text-white" />
                   </div>
                   <div>
                     <h3 className="font-extrabold text-base leading-tight">
-                      {isFaceID ? "Detail Presensi Face ID" : "Detail & Keterangan Presensi"}
+                      Detail & Keterangan Presensi
                     </h3>
                     <p className="text-xs text-white/80">
-                      Bukti kehadiran dan waktu presensi lengkap
+                      Informasi kehadiran dan catatan panitia
                     </p>
                   </div>
                 </div>
@@ -1706,15 +1576,11 @@ export default function AbsensiPanitiaPage() {
                 <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-3.5 flex items-center justify-between">
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="w-11 h-11 rounded-full bg-slate-200 overflow-hidden border-2 border-white shadow-sm flex-shrink-0">
-                      {snapshotPhoto ? (
-                        <img src={snapshotPhoto} alt={noteModalUser.name} className="w-full h-full object-cover" />
-                      ) : (
-                        <img
-                          src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${noteModalUser.name}`}
-                          alt={noteModalUser.name}
-                          className="w-full h-full object-cover"
-                        />
-                      )}
+                      <img
+                        src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${noteModalUser.name}`}
+                        alt={noteModalUser.name}
+                        className="w-full h-full object-cover"
+                      />
                     </div>
                     <div className="min-w-0">
                       <h4 className="font-extrabold text-slate-900 text-sm truncate">{noteModalUser.name}</h4>
@@ -1737,38 +1603,6 @@ export default function AbsensiPanitiaPage() {
                     {status}
                   </span>
                 </div>
-
-                {/* Foto Bukti Presensi Face ID */}
-                {snapshotPhoto && (
-                  <div className="space-y-1.5">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
-                        <Camera className="w-4 h-4 text-cyan-600" />
-                        Foto Saat Face ID:
-                      </span>
-                      <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full flex items-center gap-1">
-                        <Check className="w-3 h-3 text-emerald-600" /> Wajah Terverifikasi
-                      </span>
-                    </div>
-
-                    <div className="relative rounded-2xl overflow-hidden bg-slate-950 border-2 border-cyan-500/40 shadow-lg aspect-[4/3] max-w-xs mx-auto flex items-center justify-center group">
-                      <img
-                        src={snapshotPhoto}
-                        alt="Foto Bukti Face ID"
-                        className="w-full h-full object-cover"
-                      />
-
-                      {/* Watermark Overlay Tanggal & Jam Lengkap */}
-                      <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/90 via-black/60 to-transparent text-white font-mono text-left">
-                        <p className="font-bold text-cyan-300 text-xs flex items-center gap-1">
-                          <Scan className="w-3.5 h-3.5 text-cyan-400" />
-                          <span>SI FEST 2026 • FACE ID</span>
-                        </p>
-                        <p className="text-[11px] text-slate-200 mt-0.5 font-medium">{fullDateTime}</p>
-                      </div>
-                    </div>
-                  </div>
-                )}
 
                 {/* Detail Waktu & Format Tanggal Lengkap */}
                 <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-4 space-y-2.5 text-xs text-slate-700">
@@ -1806,7 +1640,7 @@ export default function AbsensiPanitiaPage() {
                   </label>
                   <textarea
                     rows={2}
-                    placeholder="Contoh: Presensi via Face ID Biometrik, Sakit demam, Izin kuliah, dll..."
+                    placeholder="Contoh: Presensi via Barcode, Hadir tepat waktu, Izin dinas luar, dll..."
                     value={noteInput}
                     onChange={(e) => setNoteInput(e.target.value)}
                     className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
@@ -1868,45 +1702,6 @@ export default function AbsensiPanitiaPage() {
         onOpenScanner={() => {
           setIsBarcodeCardOpen(false);
           setIsBarcodeScannerOpen(true);
-        }}
-      />
-
-      {/* ==================== MODAL FACE ID BIOMETRIC SCANNER ==================== */}
-      <FaceIDScannerModal
-        isOpen={isFaceIDOpen}
-        onClose={() => {
-          setIsFaceIDOpen(false);
-          setFaceIDTargetUser(null);
-        }}
-        panitiaList={panitiaList}
-        initialSelectedUser={faceIDTargetUser}
-        sessionTitle={`${sesi} (${getSessionTime(sesi)} WIB)`}
-        onOpenEnrollment={(user) => {
-          setIsFaceIDOpen(false);
-          setEnrollModalUser(user || null);
-          setIsEnrollModalOpen(true);
-        }}
-        onAttendanceSuccess={async (user, snapshotBase64) => {
-          if (snapshotBase64) {
-            try {
-              localStorage.setItem(`sifest_face_snapshot_${user.user_id}_${tanggal}`, snapshotBase64);
-            } catch (e) {}
-          }
-          await updateAttendance(user, "HADIR", `Presensi via Face ID Sesi ${sesi}`);
-        }}
-      />
-
-      {/* ==================== MODAL DAFTAR WAJAH PANITIA (MASTER FACE ENROLLMENT) ==================== */}
-      <FaceEnrollmentModal
-        isOpen={isEnrollModalOpen}
-        onClose={() => {
-          setIsEnrollModalOpen(false);
-          setEnrollModalUser(null);
-        }}
-        panitiaList={panitiaList}
-        initialSelectedUser={enrollModalUser}
-        onEnrollSuccess={(user, photoBase64) => {
-          setEnrolledMap((prev) => ({ ...prev, [user.user_id]: photoBase64 }));
         }}
       />
 
@@ -1999,22 +1794,6 @@ export default function AbsensiPanitiaPage() {
                   />
                 </div>
               </div>
-
-              {/* Option to clear Face profiles */}
-              {resetScope === "ALL_DATA" && (
-                <label className="flex items-start gap-3 p-3.5 bg-slate-50 border border-slate-200 rounded-2xl cursor-pointer hover:bg-slate-100 transition-colors">
-                  <input
-                    type="checkbox"
-                    checked={includeFaceProfiles}
-                    onChange={(e) => setIncludeFaceProfiles(e.target.checked)}
-                    className="w-4 h-4 mt-0.5 rounded text-rose-600 focus:ring-rose-500 cursor-pointer"
-                  />
-                  <div className="text-xs text-slate-700">
-                    <span className="font-bold block text-slate-900">Hapus juga Master Wajah & Foto Snapshot Face ID</span>
-                    <span className="text-slate-500">Bersihkan seluruh foto selfie uji coba Face ID agar mulai dari awal.</span>
-                  </div>
-                </label>
-              )}
             </div>
 
             {/* Footer */}
