@@ -130,10 +130,10 @@ export default function PanitiaBarcodeScannerModal({
 
   // Find Panitia by code / raw scan
   const findPanitia = useCallback((raw: string): PanitiaUser | null => {
-    const clean = raw.trim().toLowerCase();
+    const clean = raw.trim();
     if (!clean) return null;
 
-    // Check JSON payload
+    // 1. Check JSON payload
     if (clean.startsWith("{") && clean.endsWith("}")) {
       try {
         const parsed = JSON.parse(raw);
@@ -147,7 +147,18 @@ export default function PanitiaBarcodeScannerModal({
       } catch (e) {}
     }
 
-    // Direct match against NIM, user_id, username, or name
+    // 2. Extract digits only for NIM comparison (handles prefixes like "NIM: 23101152610332", barcode labels, or scanner suffixes)
+    const digitsOnly = clean.replace(/\D/g, "");
+    if (digitsOnly.length >= 6) {
+      const matchByDigits = panitiaList.find((p) => {
+        const pNimDigits = String(p.nim).replace(/\D/g, "");
+        return pNimDigits === digitsOnly || digitsOnly.includes(pNimDigits) || pNimDigits.includes(digitsOnly);
+      });
+      if (matchByDigits) return matchByDigits;
+    }
+
+    // 3. Direct normalized match against NIM, user_id, username, or name
+    const lowerClean = clean.toLowerCase();
     const match = panitiaList.find((p) => {
       const pNim = String(p.nim).toLowerCase();
       const pUser = String(p.user_id).toLowerCase();
@@ -155,12 +166,13 @@ export default function PanitiaBarcodeScannerModal({
       const pName = p.name.toLowerCase();
 
       return (
-        pNim === clean ||
-        pUser === clean ||
-        pUsername === clean ||
-        clean.includes(pNim) ||
-        clean.includes(pUser) ||
-        pName === clean
+        pNim === lowerClean ||
+        pUser === lowerClean ||
+        pUsername === lowerClean ||
+        lowerClean.includes(pNim) ||
+        lowerClean.includes(pUser) ||
+        pName === lowerClean ||
+        lowerClean.includes(pName)
       );
     });
 
@@ -221,16 +233,22 @@ export default function PanitiaBarcodeScannerModal({
       const element = document.getElementById("panitia-barcode-reader");
       if (!element) return;
 
-      const html5QrCode = new Html5Qrcode("panitia-barcode-reader");
+      const html5QrCode = new Html5Qrcode("panitia-barcode-reader", {
+        experimentalFeatures: {
+          useBarCodeDetectorIfSupported: true
+        },
+        verbose: false
+      });
       scannerRef.current = html5QrCode;
 
       const config = {
-        fps: 20,
+        fps: 25,
         qrbox: (w: number, h: number) => {
-          const minDim = Math.min(w, h);
-          return { width: Math.max(220, Math.floor(minDim * 0.8)), height: Math.max(220, Math.floor(minDim * 0.8)) };
-        },
-        aspectRatio: 1.0
+          return {
+            width: Math.min(Math.floor(w * 0.9), 420),
+            height: Math.min(Math.floor(h * 0.65), 260)
+          };
+        }
       };
 
       const handleSuccess = (decodedText: string) => {
@@ -468,7 +486,7 @@ export default function PanitiaBarcodeScannerModal({
               {/* Laser Target Overlay */}
               {!cameraError && isCameraReady && (
                 <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center p-6 z-10">
-                  <div className="relative w-56 h-56 md:w-64 md:h-64 rounded-3xl border-2 border-blue-400/80 shadow-[0_0_35px_rgba(59,130,246,0.3)] flex items-center justify-center">
+                  <div className="relative w-72 h-44 sm:w-80 sm:h-52 md:w-96 md:h-56 rounded-3xl border-2 border-blue-400/80 shadow-[0_0_35px_rgba(59,130,246,0.3)] flex items-center justify-center">
                     {/* Glowing Corner Brackets */}
                     <div className="absolute -top-1 -left-1 w-6 h-6 border-t-4 border-l-4 rounded-tl-xl border-blue-400" />
                     <div className="absolute -top-1 -right-1 w-6 h-6 border-t-4 border-r-4 rounded-tr-xl border-blue-400" />
