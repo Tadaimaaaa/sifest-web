@@ -16,7 +16,6 @@ import {
   ChevronLeft,
   Filter,
   ExternalLink,
-  ImageOff,
 } from "lucide-react";
 import FullPageLoader from "@/components/FullPageLoader";
 
@@ -450,19 +449,15 @@ export default function LaporanKeuanganPage() {
                           const src = getImageSrc(trx.bukti_url);
                           if (!src) return <span className="text-xs text-slate-300">-</span>;
                           return (
-                            <a href={trx.bukti_url} target="_blank" rel="noreferrer">
+                            <a href={trx.bukti_url} target="_blank" rel="noreferrer" title="Lihat nota">
                               <img
                                 src={src}
                                 alt="Nota"
                                 className="w-16 h-16 object-cover rounded-lg border border-slate-200 hover:scale-105 transition-transform cursor-zoom-in mx-auto"
                                 onError={(e) => {
                                   (e.currentTarget as HTMLImageElement).style.display = "none";
-                                  (e.currentTarget.nextElementSibling as HTMLElement | null)?.classList.remove("hidden");
                                 }}
                               />
-                              <span className="hidden text-xs text-rose-400 flex items-center gap-1 justify-center mt-1">
-                                <ImageOff className="w-3 h-3" /> Gagal
-                              </span>
                             </a>
                           );
                         })()}
