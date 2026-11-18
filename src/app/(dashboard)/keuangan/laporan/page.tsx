@@ -56,6 +56,7 @@ export default function LaporanKeuanganPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [monthFilter, setMonthFilter] = useState("");
   const [yearFilter, setYearFilter] = useState("2025/2026");
+  const [showSignatures, setShowSignatures] = useState(false);
   const printRef = useRef<HTMLDivElement>(null);
 
   const fetchTransactions = async () => {
@@ -552,6 +553,81 @@ export default function LaporanKeuanganPage() {
                 </tr>
               </tfoot>
             </table>
+          </div>
+        )}
+
+        {/* ── Lembar Pengesahan / Tanda Tangan (Hanya di akhir laporan / lembar terakhir) ── */}
+        {!isLoading && filtered.length > 0 && (
+          <div className="mt-8 pt-6 border-t border-slate-100 p-6 print:p-0 print:border-none print:mt-10 break-inside-avoid print:break-inside-avoid">
+            {/* Toggle TTD digital (hanya tampil di layar web) */}
+            <div className="print:hidden flex justify-end mb-4">
+              <label className="inline-flex items-center gap-2 text-xs text-slate-600 cursor-pointer bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 transition-colors">
+                <input
+                  type="checkbox"
+                  checked={showSignatures}
+                  onChange={(e) => setShowSignatures(e.target.checked)}
+                  className="rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
+                />
+                <span>Sertakan Tanda Tangan Digital</span>
+              </label>
+            </div>
+
+            <div className="text-center font-medium text-slate-800 text-sm print:text-[13px] mb-2">
+              Hormat kami,
+            </div>
+
+            {/* Baris 1: Ketua Pelaksana (Kiri) & Bendahara I (Kanan) */}
+            <div className="grid grid-cols-2 gap-12 text-center text-slate-800 text-sm print:text-[13px] mb-8 max-w-4xl mx-auto">
+              {/* Kiri: Ketua Pelaksana */}
+              <div className="flex flex-col items-center">
+                <div className="h-20 flex items-center justify-center">
+                  {showSignatures ? (
+                    <img src="/signatures/ttd-dilan.png" alt="TTD Dilan" className="max-h-20 object-contain" />
+                  ) : (
+                    <div className="h-20" />
+                  )}
+                </div>
+                <p className="font-bold underline text-slate-900 print:text-[13.5px]">
+                  Dilan Afri Jones
+                </p>
+                <p className="text-slate-700 text-xs print:text-[12px] mt-0.5">
+                  Ketua Pelaksana
+                </p>
+              </div>
+
+              {/* Kanan: Bendahara I */}
+              <div className="flex flex-col items-center">
+                <div className="h-20 flex items-center justify-center">
+                  {showSignatures ? (
+                    <img src="/signatures/ttd-zhara.png" alt="TTD Zhara" className="max-h-20 object-contain" />
+                  ) : (
+                    <div className="h-20" />
+                  )}
+                </div>
+                <p className="font-bold underline text-slate-900 print:text-[13.5px]">
+                  Zhara Delvian Putri
+                </p>
+                <p className="text-slate-700 text-xs print:text-[12px] mt-0.5">
+                  Bendahara I
+                </p>
+              </div>
+            </div>
+
+            {/* Baris 2: Mengetahui (Tengah) */}
+            <div className="text-center text-slate-800 text-sm print:text-[13px] mb-2">
+              Mengetahui,
+            </div>
+
+            {/* Baris 3: Bupati HMJ-SI (Tengah) */}
+            <div className="flex flex-col items-center text-center text-slate-800 text-sm print:text-[13px]">
+              <div className="h-20" />
+              <p className="font-bold underline text-slate-900 print:text-[13.5px]">
+                Farras Amar Zaim Fasha Khoeroni
+              </p>
+              <p className="text-slate-700 text-xs print:text-[12px] mt-0.5">
+                Bupati HMJ-SI
+              </p>
+            </div>
           </div>
         )}
       </div>
