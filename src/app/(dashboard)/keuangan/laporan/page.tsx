@@ -383,7 +383,7 @@ export default function LaporanKeuanganPage() {
                   <th className="px-3 py-3.5 whitespace-nowrap text-right text-emerald-600 w-[1%]" style={{ width: "1%" }}>Debit</th>
                   <th className="px-3 py-3.5 whitespace-nowrap text-right text-rose-600 w-[1%]" style={{ width: "1%" }}>Kredit</th>
                   <th className="px-3 py-3.5 whitespace-nowrap text-right w-[1%]" style={{ width: "1%" }}>Saldo</th>
-                  <th className="px-3 py-3.5 whitespace-nowrap text-center w-[130px]" style={{ width: "130px" }}>Nota</th>
+                  <th className="px-2 py-3.5 whitespace-nowrap text-center w-[180px] min-w-[170px]" style={{ width: "180px" }}>Nota</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -472,18 +472,18 @@ export default function LaporanKeuanganPage() {
                       </td>
 
                       {/* Nota – tampil utuh di layar dan saat cetak */}
-                      <td className="px-2 py-2 text-center align-middle w-[130px]" style={{ width: "130px" }}>
+                      <td className="px-2 py-2 text-center align-middle w-[180px] min-w-[170px]" style={{ width: "180px" }}>
                         {(() => {
                           const src = getImageSrc(trx.bukti_url);
                           if (!src) return <span className="text-xs text-slate-300">-</span>;
                           return (
-                            <div className="flex flex-col items-center justify-center">
+                            <div className="flex flex-col items-center justify-center gap-1">
                               <a href={trx.bukti_url} target="_blank" rel="noreferrer" title="Klik untuk membuka ukuran penuh">
                                 <img
                                   src={src}
                                   alt="Nota"
                                   loading="eager"
-                                  className="max-h-24 max-w-[115px] w-auto h-auto object-contain rounded-md border border-slate-200 hover:scale-105 transition-transform cursor-zoom-in mx-auto shadow-xs print:max-h-32 print:max-w-[125px]"
+                                  className="max-h-36 max-w-[165px] w-auto h-auto object-contain rounded-md border border-slate-200 hover:scale-105 transition-transform cursor-zoom-in mx-auto shadow-xs print:max-h-44 print:max-w-[175px]"
                                   onError={(e) => {
                                     // Fallback ke thumbnail Google Drive langsung jika proxy server lambat/gagal
                                     const target = e.currentTarget as HTMLImageElement;
@@ -504,7 +504,7 @@ export default function LaporanKeuanganPage() {
                                 rel="noreferrer"
                                 className="print:hidden text-[10.5px] text-blue-600 hover:underline mt-1 font-medium"
                               >
-                                Lihat
+                                Lihat Ukuran Penuh
                               </a>
                             </div>
                           );
@@ -530,7 +530,7 @@ export default function LaporanKeuanganPage() {
                   <td className="px-3 py-4 text-right whitespace-nowrap text-slate-800 text-base w-[1%]" style={{ width: "1%" }}>
                     {formatRupiah(totalSaldo)}
                   </td>
-                  <td className="w-[130px]" style={{ width: "130px" }} />
+                  <td className="w-[180px]" style={{ width: "180px" }} />
                 </tr>
               </tfoot>
             </table>

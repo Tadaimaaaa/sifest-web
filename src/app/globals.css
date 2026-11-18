@@ -32,7 +32,7 @@ body {
   }
   
   body {
-    padding: 8mm 12mm !important; /* Memberikan margin dokumen yang rapi */
+    padding: 6mm 8mm !important; /* Memberikan margin dokumen yang rapi dan memaksimalkan lebar kertas */
   }
 
   table {
@@ -47,25 +47,25 @@ body {
   }
 
   th, td {
-    padding: 0.4rem 0.5rem !important; /* Padding pas agar muat dan tidak meluber */
+    padding: 0.35rem 0.4rem !important; /* Padding pas agar muat dan tidak meluber */
     break-inside: avoid !important;
     page-break-inside: avoid !important;
   }
   
   /* Pastikan foto nota tampil penuh tanpa terpotong (contain) */
   img {
-    max-width: 100px !important;
+    max-width: 200px !important;
     height: auto !important;
   }
 
-  /* Kolom nota cetak: tampil lebih besar, jelas dan utuh tanpa kepotong */
+  /* Kolom nota cetak: tampil jauh lebih besar, jelas dan utuh tanpa kepotong */
   td img[alt="Nota"] {
-    max-width: 120px !important;
-    max-height: 120px !important;
+    max-width: 175px !important;
+    max-height: 175px !important;
     width: auto !important;
     height: auto !important;
     object-fit: contain !important;
-    border-radius: 4px !important;
+    border-radius: 6px !important;
     display: block !important;
     margin: 0 auto !important;
   }
