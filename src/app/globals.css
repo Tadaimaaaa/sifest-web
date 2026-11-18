@@ -27,7 +27,7 @@ body {
 
 @media print {
   @page {
-    size: landscape;
+    size: A4 landscape; /* Kunci ukuran kertas wajib A4 Landscape (297mm x 210mm) */
     margin: 0; /* Menghapus header bawaan browser (jam/tanggal, title 'SI FEST Management') & footer */
   }
   
