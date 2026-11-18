@@ -380,10 +380,10 @@ export default function LaporanKeuanganPage() {
                   <th className="px-4 py-3.5">Keterangan</th>
                   <th className="px-4 py-3.5 whitespace-nowrap">Satuan / Vol</th>
                   <th className="px-4 py-3.5 whitespace-nowrap text-right">Harga Satuan</th>
-                  <th className="px-4 py-3.5 whitespace-nowrap text-right text-emerald-600">Debit</th>
-                  <th className="px-4 py-3.5 whitespace-nowrap text-right text-rose-600">Kredit</th>
-                  <th className="px-4 py-3.5 whitespace-nowrap text-right">Saldo</th>
-                  <th className="px-3 py-3.5 whitespace-nowrap text-center" style={{ width: "95px" }}>Nota</th>
+                  <th className="px-3 py-3.5 whitespace-nowrap text-right text-emerald-600 w-[1%]" style={{ width: "1%" }}>Debit</th>
+                  <th className="px-3 py-3.5 whitespace-nowrap text-right text-rose-600 w-[1%]" style={{ width: "1%" }}>Kredit</th>
+                  <th className="px-3 py-3.5 whitespace-nowrap text-right w-[1%]" style={{ width: "1%" }}>Saldo</th>
+                  <th className="px-3 py-3.5 whitespace-nowrap text-center w-[130px]" style={{ width: "130px" }}>Nota</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -443,7 +443,7 @@ export default function LaporanKeuanganPage() {
                       </td>
 
                       {/* Debit */}
-                      <td className="px-4 py-3 text-right whitespace-nowrap">
+                      <td className="px-3 py-3 text-right whitespace-nowrap w-[1%]" style={{ width: "1%" }}>
                         {trx.jenis === "INCOME" ? (
                           <span className="font-bold text-emerald-600">
                             {formatRupiah(trx.nominal)}
@@ -454,7 +454,7 @@ export default function LaporanKeuanganPage() {
                       </td>
 
                       {/* Kredit */}
-                      <td className="px-4 py-3 text-right whitespace-nowrap">
+                      <td className="px-3 py-3 text-right whitespace-nowrap w-[1%]" style={{ width: "1%" }}>
                         {trx.jenis === "EXPENSE" ? (
                           <span className="font-bold text-rose-600">
                             {formatRupiah(trx.nominal)}
@@ -465,14 +465,14 @@ export default function LaporanKeuanganPage() {
                       </td>
 
                       {/* Saldo */}
-                      <td className="px-4 py-3 text-right whitespace-nowrap">
+                      <td className="px-3 py-3 text-right whitespace-nowrap w-[1%]" style={{ width: "1%" }}>
                         <span className="font-bold text-slate-800">
                           {formatRupiah(trx.saldo_akhir || 0)}
                         </span>
                       </td>
 
                       {/* Nota – tampil utuh di layar dan saat cetak */}
-                      <td className="px-3 py-2 text-center align-middle" style={{ width: "95px" }}>
+                      <td className="px-2 py-2 text-center align-middle w-[130px]" style={{ width: "130px" }}>
                         {(() => {
                           const src = getImageSrc(trx.bukti_url);
                           if (!src) return <span className="text-xs text-slate-300">-</span>;
@@ -483,7 +483,7 @@ export default function LaporanKeuanganPage() {
                                   src={src}
                                   alt="Nota"
                                   loading="eager"
-                                  className="max-h-16 max-w-[80px] w-auto h-auto object-contain rounded border border-slate-200 hover:scale-105 transition-transform cursor-zoom-in mx-auto print:max-h-20 print:max-w-[80px]"
+                                  className="max-h-24 max-w-[115px] w-auto h-auto object-contain rounded-md border border-slate-200 hover:scale-105 transition-transform cursor-zoom-in mx-auto shadow-xs print:max-h-32 print:max-w-[125px]"
                                   onError={(e) => {
                                     // Fallback ke thumbnail Google Drive langsung jika proxy server lambat/gagal
                                     const target = e.currentTarget as HTMLImageElement;
@@ -502,7 +502,7 @@ export default function LaporanKeuanganPage() {
                                 href={trx.bukti_url}
                                 target="_blank"
                                 rel="noreferrer"
-                                className="print:hidden text-[10px] text-blue-600 hover:underline mt-1 font-medium"
+                                className="print:hidden text-[10.5px] text-blue-600 hover:underline mt-1 font-medium"
                               >
                                 Lihat
                               </a>
@@ -521,16 +521,16 @@ export default function LaporanKeuanganPage() {
                   <td colSpan={6} className="px-4 py-4 text-slate-700 text-sm uppercase tracking-wide">
                     Total Saldo
                   </td>
-                  <td className="px-4 py-4 text-right whitespace-nowrap text-emerald-600 text-base">
+                  <td className="px-3 py-4 text-right whitespace-nowrap text-emerald-600 text-base w-[1%]" style={{ width: "1%" }}>
                     {formatRupiah(totalDebit)}
                   </td>
-                  <td className="px-4 py-4 text-right whitespace-nowrap text-rose-600 text-base">
+                  <td className="px-3 py-4 text-right whitespace-nowrap text-rose-600 text-base w-[1%]" style={{ width: "1%" }}>
                     {formatRupiah(totalKredit)}
                   </td>
-                  <td className="px-4 py-4 text-right whitespace-nowrap text-slate-800 text-base">
+                  <td className="px-3 py-4 text-right whitespace-nowrap text-slate-800 text-base w-[1%]" style={{ width: "1%" }}>
                     {formatRupiah(totalSaldo)}
                   </td>
-                  <td />
+                  <td className="w-[130px]" style={{ width: "130px" }} />
                 </tr>
               </tfoot>
             </table>
