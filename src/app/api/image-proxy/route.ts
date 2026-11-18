@@ -20,25 +20,39 @@ export async function GET(request: NextRequest) {
       return new NextResponse('Invalid Google Drive URL', { status: 400 });
     }
 
+    // Coba URL export view terlebih dahulu
     const driveUrl = `https://drive.google.com/uc?export=view&id=${fileId}`;
     
-    const response = await fetch(driveUrl, {
+    let response = await fetch(driveUrl, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
       }
     });
+
+    let contentType = response.headers.get('content-type') || '';
+
+    // Jika uc?export=view gagal atau mengembalikan HTML (misal virus scan warning / consent page),
+    // fallback ke endpoint thumbnail resmi Google Drive yang selalu mengirim gambar
+    if (!response.ok || contentType.includes('text/html')) {
+      const thumbUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w1000`;
+      response = await fetch(thumbUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        }
+      });
+      contentType = response.headers.get('content-type') || 'image/jpeg';
+    }
     
     if (!response.ok) {
       throw new Error(`Failed to fetch image: ${response.statusText}`);
     }
 
-    const contentType = response.headers.get('content-type');
     const buffer = await response.arrayBuffer();
 
     return new NextResponse(buffer, {
       headers: {
         'Content-Type': contentType || 'image/jpeg',
-        'Cache-Control': 'public, max-age=86400',
+        'Cache-Control': 'public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800',
       },
     });
   } catch (error) {

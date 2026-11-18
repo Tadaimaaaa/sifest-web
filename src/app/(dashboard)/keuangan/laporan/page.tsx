@@ -124,7 +124,25 @@ export default function LaporanKeuanganPage() {
     ? "2025/2026"
     : `Tahun ${yearFilter}`;
 
-  const handlePrint = () => {
+  const handlePrint = async () => {
+    // Pastikan gambar nota sudah ter-load sebelum membuka dialog cetak agar tidak kosong/blank
+    const images = Array.from(document.querySelectorAll('img[alt="Nota"]')) as HTMLImageElement[];
+    const pendingImages = images.filter((img) => !img.complete && img.style.display !== "none");
+
+    if (pendingImages.length > 0) {
+      toast.info("Memuat gambar nota sebelum mencetak...");
+      await Promise.all(
+        pendingImages.map(
+          (img) =>
+            new Promise((resolve) => {
+              img.onload = resolve;
+              img.onerror = resolve;
+              setTimeout(resolve, 2500);
+            })
+        )
+      );
+    }
+
     const originalTitle = document.title;
     document.title = "";
     window.print();
@@ -365,9 +383,7 @@ export default function LaporanKeuanganPage() {
                   <th className="px-4 py-3.5 whitespace-nowrap text-right text-emerald-600">Debit</th>
                   <th className="px-4 py-3.5 whitespace-nowrap text-right text-rose-600">Kredit</th>
                   <th className="px-4 py-3.5 whitespace-nowrap text-right">Saldo</th>
-                  {/* Nota: tersembunyi saat layar normal, tampil saat cetak */}
-                  <th className="px-4 py-3.5 whitespace-nowrap text-center print:hidden">Nota</th>
-                  <th className="hidden print:table-cell px-2 py-3.5 whitespace-nowrap text-center" style={{ width: "80px" }}>Nota</th>
+                  <th className="px-3 py-3.5 whitespace-nowrap text-center" style={{ width: "95px" }}>Nota</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -455,37 +471,42 @@ export default function LaporanKeuanganPage() {
                         </span>
                       </td>
 
-                      {/* Nota – gambar langsung tampil di layar & cetak */}
-                      <td className="px-4 py-3 text-center align-top print:hidden">
+                      {/* Nota – tampil utuh di layar dan saat cetak */}
+                      <td className="px-3 py-2 text-center align-middle" style={{ width: "95px" }}>
                         {(() => {
                           const src = getImageSrc(trx.bukti_url);
                           if (!src) return <span className="text-xs text-slate-300">-</span>;
                           return (
-                            <a href={trx.bukti_url} target="_blank" rel="noreferrer" title="Lihat nota">
-                              <img
-                                src={src}
-                                alt="Nota"
-                                className="w-16 h-16 object-cover rounded-lg border border-slate-200 hover:scale-105 transition-transform cursor-zoom-in mx-auto"
-                                onError={(e) => {
-                                  (e.currentTarget as HTMLImageElement).style.display = "none";
-                                }}
-                              />
-                            </a>
-                          );
-                        })()}
-                      </td>
-
-                      {/* Nota versi cetak – gambar lebih besar, selalu tampil */}
-                      <td className="hidden print:table-cell px-2 py-2 text-center align-top" style={{ width: "80px" }}>
-                        {(() => {
-                          const src = getImageSrc(trx.bukti_url);
-                          if (!src) return <span style={{ fontSize: "9px", color: "#aaa" }}>-</span>;
-                          return (
-                            <img
-                              src={src}
-                              alt="Nota"
-                              style={{ width: "70px", height: "70px", objectFit: "cover", borderRadius: "4px", border: "1px solid #e2e8f0" }}
-                            />
+                            <div className="flex flex-col items-center justify-center">
+                              <a href={trx.bukti_url} target="_blank" rel="noreferrer" title="Klik untuk membuka ukuran penuh">
+                                <img
+                                  src={src}
+                                  alt="Nota"
+                                  loading="eager"
+                                  className="max-h-16 max-w-[80px] w-auto h-auto object-contain rounded border border-slate-200 hover:scale-105 transition-transform cursor-zoom-in mx-auto print:max-h-20 print:max-w-[80px]"
+                                  onError={(e) => {
+                                    // Fallback ke thumbnail Google Drive langsung jika proxy server lambat/gagal
+                                    const target = e.currentTarget as HTMLImageElement;
+                                    if (target.src.includes('/api/image-proxy')) {
+                                      const match = trx.bukti_url?.match(/\/d\/([a-zA-Z0-9_-]+)/) || trx.bukti_url?.match(/id=([a-zA-Z0-9_-]+)/);
+                                      if (match && match[1]) {
+                                        target.src = `https://drive.google.com/thumbnail?id=${match[1]}&sz=w800`;
+                                        return;
+                                      }
+                                    }
+                                    target.style.display = "none";
+                                  }}
+                                />
+                              </a>
+                              <a
+                                href={trx.bukti_url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="print:hidden text-[10px] text-blue-600 hover:underline mt-1 font-medium"
+                              >
+                                Lihat
+                              </a>
+                            </div>
                           );
                         })()}
                       </td>
@@ -509,8 +530,7 @@ export default function LaporanKeuanganPage() {
                   <td className="px-4 py-4 text-right whitespace-nowrap text-slate-800 text-base">
                     {formatRupiah(totalSaldo)}
                   </td>
-                  <td className="print:hidden" />
-                  <td className="hidden print:table-cell" />
+                  <td />
                 </tr>
               </tfoot>
             </table>
