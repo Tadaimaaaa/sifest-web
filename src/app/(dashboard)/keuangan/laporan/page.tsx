@@ -482,9 +482,9 @@ export default function LaporanKeuanganPage() {
                 })}
               </tbody>
 
-              {/* ── Baris Total ─────────────────────────────────────────── */}
-              <tfoot>
-                <tr className="bg-slate-50 border-t-2 border-slate-300 font-bold">
+              {/* ── Baris Total (hanya tampil di akhir tabel / lembar terakhir saat cetak) ─────────────────────────────────────────── */}
+              <tfoot className="print:table-row-group">
+                <tr className="bg-slate-50 border-t-2 border-slate-300 font-bold print:break-inside-avoid">
                   <td colSpan={6} className="px-4 py-4 text-slate-700 text-sm uppercase tracking-wide">
                     Total Saldo
                   </td>

@@ -48,4 +48,11 @@ body {
     object-fit: cover !important;
     border-radius: 4px !important;
   }
+
+  /* Jangan ulang tfoot di setiap lembar cetak, hanya tampil sekali di lembar terakhir */
+  tfoot {
+    display: table-row-group !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
 }
