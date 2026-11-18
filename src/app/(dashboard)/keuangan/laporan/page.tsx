@@ -55,7 +55,7 @@ export default function LaporanKeuanganPage() {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [monthFilter, setMonthFilter] = useState("");
-  const [yearFilter, setYearFilter] = useState(new Date().getFullYear().toString());
+  const [yearFilter, setYearFilter] = useState("2025/2026");
   const printRef = useRef<HTMLDivElement>(null);
 
   const fetchTransactions = async () => {
@@ -88,7 +88,12 @@ export default function LaporanKeuanganPage() {
       if (isNaN(d.getTime())) return false;
       const tYear = d.getFullYear().toString();
       const tMonth = String(d.getMonth() + 1).padStart(2, "0");
-      const matchYear = yearFilter ? tYear === yearFilter : true;
+      const matchYear =
+        yearFilter === "2025/2026"
+          ? tYear === "2025" || tYear === "2026"
+          : yearFilter
+          ? tYear === yearFilter
+          : true;
       const matchMonth = monthFilter ? tMonth === monthFilter : true;
       return matchYear && matchMonth;
     })
@@ -114,10 +119,19 @@ export default function LaporanKeuanganPage() {
 
   // ── Judul Periode ──────────────────────────────────────────────────────────
   const judulPeriode = monthFilter
-    ? `${BULAN[parseInt(monthFilter) - 1]} ${yearFilter}`
-    : yearFilter
-    ? `Tahun ${yearFilter}`
-    : "Semua Periode";
+    ? `${BULAN[parseInt(monthFilter) - 1]} 2025/2026`
+    : yearFilter === "2025/2026" || !yearFilter
+    ? "2025/2026"
+    : `Tahun ${yearFilter}`;
+
+  const handlePrint = () => {
+    const originalTitle = document.title;
+    document.title = "";
+    window.print();
+    setTimeout(() => {
+      document.title = originalTitle;
+    }, 1000);
+  };
 
   // ── Tahun tersedia dari data ───────────────────────────────────────────────
   const availableYears = Array.from(
@@ -211,7 +225,7 @@ export default function LaporanKeuanganPage() {
             Excel
           </button>
           <button
-            onClick={() => window.print()}
+            onClick={handlePrint}
             className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors border border-slate-200 shadow-sm"
           >
             <Printer className="w-4 h-4" />
@@ -233,6 +247,7 @@ export default function LaporanKeuanganPage() {
                 onChange={(e) => setYearFilter(e.target.value)}
                 className="bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
               >
+                <option value="2025/2026">Periode 2025/2026</option>
                 <option value="">Semua Tahun</option>
                 {availableYears.map((y) => (
                   <option key={y} value={y.toString()}>{y}</option>
@@ -256,13 +271,13 @@ export default function LaporanKeuanganPage() {
             </div>
 
             {/* Reset */}
-            {(monthFilter || yearFilter !== new Date().getFullYear().toString()) && (
+            {(monthFilter || yearFilter !== "2025/2026") && (
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-medium text-transparent select-none">Reset</label>
                 <button
                   onClick={() => {
                     setMonthFilter("");
-                    setYearFilter(new Date().getFullYear().toString());
+                    setYearFilter("2025/2026");
                   }}
                   className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-sm font-medium transition-colors border border-slate-200"
                 >
@@ -318,15 +333,12 @@ export default function LaporanKeuanganPage() {
         className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden print:shadow-none print:border-none print:rounded-none"
       >
         {/* Print Header (hanya tampil saat cetak) */}
-        <div className="hidden print:block p-6 pb-2 border-b border-slate-200">
-          <div className="text-center mb-3">
+        <div className="hidden print:block p-4 pb-2 border-b border-slate-200">
+          <div className="text-center mb-2">
             <h2 className="text-lg font-bold text-slate-800 uppercase tracking-wide">
               Laporan Keuangan – SI FEST 2026
             </h2>
-            <p className="text-sm text-slate-600">Periode: {judulPeriode}</p>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Dicetak pada: {new Date().toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" })}
-            </p>
+            <p className="text-sm font-semibold text-slate-600 mt-0.5">Periode: {judulPeriode}</p>
           </div>
         </div>
 

@@ -28,9 +28,13 @@ body {
 @media print {
   @page {
     size: landscape;
-    margin: 10mm;
+    margin: 0; /* Menghapus header bawaan browser (jam/tanggal, title 'SI FEST Management') & footer */
   }
   
+  body {
+    padding: 10mm 15mm !important; /* Memberikan margin dokumen yang rapi */
+  }
+
   th, td {
     padding: 0.5rem 0.5rem !important; /* Kurangi padding tabel saat cetak */
   }
