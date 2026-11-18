@@ -40,4 +40,12 @@ body {
     max-width: 100px !important;
     height: auto !important;
   }
+
+  /* Kolom nota cetak: ukuran tetap agar gambar tidak melar */
+  td img[alt="Nota"] {
+    width: 70px !important;
+    height: 70px !important;
+    object-fit: cover !important;
+    border-radius: 4px !important;
+  }
 }

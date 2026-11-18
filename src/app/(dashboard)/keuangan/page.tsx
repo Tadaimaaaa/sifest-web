@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Plus, Wallet, TrendingUp, TrendingDown, Search, X, Trash2, Calendar, Tag, FileText, Printer, Download, Receipt } from "lucide-react";
+import { Plus, Wallet, TrendingUp, TrendingDown, Search, X, Trash2, Calendar, Tag, FileText, Printer, Download, Receipt, BarChart2 } from "lucide-react";
 import * as XLSX from 'xlsx';
 import Link from "next/link";
 import { SCRIPT_URL } from "@/lib/api";
@@ -283,6 +283,14 @@ export default function KeuanganPage() {
           </p>
         </div>
         <div className="flex items-center gap-3 w-full sm:w-auto print:hidden">
+
+              <Link
+                href="/keuangan/laporan"
+                className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors border border-indigo-200 shadow-sm"
+              >
+                <BarChart2 className="w-4 h-4" />
+                Laporan
+              </Link>
 
               <a 
                 href="https://docs.google.com/spreadsheets/d/1KTpEz85NNMhap8VSzSszSptX_DLdUcPj/edit?usp=sharing&ouid=101548209300972862261&rtpof=true&sd=true"
