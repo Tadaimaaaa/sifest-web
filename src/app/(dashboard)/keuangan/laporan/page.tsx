@@ -81,23 +81,41 @@ export default function LaporanKeuanganPage() {
     fetchTransactions();
   }, []);
 
-  // ── Filter & sort ascending (laporan berurutan dari awal) ──────────────────
-  const filtered = transactions
-    .filter((t) => {
-      const d = new Date(t.tanggal);
-      if (isNaN(d.getTime())) return false;
-      const tYear = d.getFullYear().toString();
-      const tMonth = String(d.getMonth() + 1).padStart(2, "0");
-      const matchYear =
-        yearFilter === "2025/2026"
-          ? tYear === "2025" || tYear === "2026"
-          : yearFilter
-          ? tYear === yearFilter
-          : true;
-      const matchMonth = monthFilter ? tMonth === monthFilter : true;
-      return matchYear && matchMonth;
-    })
-    .sort((a, b) => Number(a.no) - Number(b.no));
+  // ── 1. Urutkan seluruh data berdasarkan Tanggal (kronologis: terlama -> terbaru) ──
+  const sortedAll = [...transactions].sort((a, b) => {
+    const timeA = new Date(a.tanggal).getTime() || 0;
+    const timeB = new Date(b.tanggal).getTime() || 0;
+    if (timeA !== timeB) return timeA - timeB;
+    return Number(a.no || 0) - Number(b.no || 0);
+  });
+
+  // ── 2. Hitung running saldo secara kronologis dari awal ───────────────────
+  let runningSaldo = 0;
+  const allWithSaldo = sortedAll.map((trx) => {
+    const masuk = trx.jenis === "INCOME" ? Number(trx.nominal || 0) : 0;
+    const keluar = trx.jenis === "EXPENSE" ? Number(trx.nominal || 0) : 0;
+    runningSaldo = runningSaldo + masuk - keluar;
+    return {
+      ...trx,
+      saldo_kronologis: runningSaldo,
+    };
+  });
+
+  // ── 3. Filter berdasarkan Periode Tahun & Bulan ───────────────────────────
+  const filtered = allWithSaldo.filter((t) => {
+    const d = new Date(t.tanggal);
+    if (isNaN(d.getTime())) return false;
+    const tYear = d.getFullYear().toString();
+    const tMonth = String(d.getMonth() + 1).padStart(2, "0");
+    const matchYear =
+      yearFilter === "2025/2026"
+        ? tYear === "2025" || tYear === "2026"
+        : yearFilter
+        ? tYear === yearFilter
+        : true;
+    const matchMonth = monthFilter ? tMonth === monthFilter : true;
+    return matchYear && matchMonth;
+  });
 
   // ── Harga Satuan ───────────────────────────────────────────────────────────
   const getHargaSatuan = (trx: any) => {
@@ -115,7 +133,7 @@ export default function LaporanKeuanganPage() {
   const totalKredit = filtered
     .filter((t) => t.jenis === "EXPENSE")
     .reduce((acc, t) => acc + Number(t.nominal), 0);
-  const totalSaldo = filtered.length > 0 ? filtered[filtered.length - 1].saldo_akhir : 0;
+  const totalSaldo = filtered.length > 0 ? filtered[filtered.length - 1].saldo_kronologis : 0;
 
   // ── Judul Periode ──────────────────────────────────────────────────────────
   const judulPeriode = monthFilter
@@ -176,7 +194,7 @@ export default function LaporanKeuanganPage() {
         "Harga Satuan": getHargaSatuan(trx),
         Debit: trx.jenis === "INCOME" ? trx.nominal : 0,
         Kredit: trx.jenis === "EXPENSE" ? trx.nominal : 0,
-        Saldo: trx.saldo_akhir || 0,
+        Saldo: trx.saldo_kronologis || trx.saldo_akhir || 0,
         Nota: trx.bukti_url && trx.bukti_url !== "-" ? trx.bukti_url : "-",
         "Penanggung Jawab": trx.penanggung_jawab || trx.recorded_by || "-",
         Status: trx.status || "Lunas",
@@ -351,12 +369,12 @@ export default function LaporanKeuanganPage() {
         className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden print:shadow-none print:border-none print:rounded-none"
       >
         {/* Print Header (hanya tampil saat cetak) */}
-        <div className="hidden print:block p-4 pb-2 border-b border-slate-200">
-          <div className="text-center mb-2">
-            <h2 className="text-lg font-bold text-slate-800 uppercase tracking-wide">
+        <div className="hidden print:block p-4 pb-3 border-b border-slate-200">
+          <div className="text-center mb-1">
+            <h2 className="text-xl print:text-2xl font-bold text-slate-900 uppercase tracking-wide">
               Laporan Keuangan – SI FEST 2026
             </h2>
-            <p className="text-sm font-semibold text-slate-600 mt-0.5">Periode: {judulPeriode}</p>
+            <p className="text-sm print:text-base font-semibold text-slate-700 mt-1">Periode: {judulPeriode}</p>
           </div>
         </div>
 
@@ -371,19 +389,19 @@ export default function LaporanKeuanganPage() {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-slate-700 print:text-[10px]">
+            <table className="w-full text-left text-sm text-slate-800 print:text-[12.5px]">
               <thead>
-                <tr className="bg-slate-50 border-b border-slate-200 text-slate-500 text-xs uppercase font-semibold">
-                  <th className="px-4 py-3.5 whitespace-nowrap">No</th>
-                  <th className="px-4 py-3.5 whitespace-nowrap">Tanggal</th>
-                  <th className="px-4 py-3.5">Kategori</th>
-                  <th className="px-4 py-3.5">Keterangan</th>
-                  <th className="px-4 py-3.5 whitespace-nowrap">Satuan / Vol</th>
-                  <th className="px-4 py-3.5 whitespace-nowrap text-right">Harga Satuan</th>
-                  <th className="px-3 py-3.5 whitespace-nowrap text-right text-emerald-600 w-[1%]" style={{ width: "1%" }}>Debit</th>
-                  <th className="px-3 py-3.5 whitespace-nowrap text-right text-rose-600 w-[1%]" style={{ width: "1%" }}>Kredit</th>
-                  <th className="px-3 py-3.5 whitespace-nowrap text-right w-[1%]" style={{ width: "1%" }}>Saldo</th>
-                  <th className="px-2 py-3.5 whitespace-nowrap text-center w-[180px] min-w-[170px]" style={{ width: "180px" }}>Nota</th>
+                <tr className="bg-slate-50 border-b border-slate-200 text-slate-700 text-xs print:text-[12px] uppercase font-bold">
+                  <th className="px-3 py-3.5 print:py-2.5 whitespace-nowrap">No</th>
+                  <th className="px-3 py-3.5 print:py-2.5 whitespace-nowrap">Tanggal</th>
+                  <th className="px-3 py-3.5 print:py-2.5">Kategori</th>
+                  <th className="px-3 py-3.5 print:py-2.5">Keterangan</th>
+                  <th className="px-3 py-3.5 print:py-2.5 whitespace-nowrap">Satuan / Vol</th>
+                  <th className="px-3 py-3.5 print:py-2.5 whitespace-nowrap text-right">Harga Satuan</th>
+                  <th className="px-3 py-3.5 print:py-2.5 whitespace-nowrap text-right text-emerald-700 w-[1%]" style={{ width: "1%" }}>Debit</th>
+                  <th className="px-3 py-3.5 print:py-2.5 whitespace-nowrap text-right text-rose-700 w-[1%]" style={{ width: "1%" }}>Kredit</th>
+                  <th className="px-3 py-3.5 print:py-2.5 whitespace-nowrap text-right text-slate-900 w-[1%]" style={{ width: "1%" }}>Saldo</th>
+                  <th className="px-2 py-3.5 print:py-2.5 whitespace-nowrap text-center w-[180px] min-w-[170px]" style={{ width: "180px" }}>Nota</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -403,22 +421,22 @@ export default function LaporanKeuanganPage() {
                       className="hover:bg-slate-50/60 transition-colors print:hover:bg-transparent"
                     >
                       {/* No */}
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        <span className="font-semibold text-slate-600">{idx + 1}</span>
+                      <td className="px-3 py-3 print:py-2 whitespace-nowrap">
+                        <span className="font-semibold text-slate-700 print:text-[12px]">{idx + 1}</span>
                       </td>
 
                       {/* Tanggal */}
-                      <td className="px-4 py-3 whitespace-nowrap text-slate-600">
+                      <td className="px-3 py-3 print:py-2 whitespace-nowrap text-slate-700 font-medium print:text-[12px]">
                         {formatTanggal(trx.tanggal)}
                       </td>
 
                       {/* Kategori */}
-                      <td className="px-4 py-3">
+                      <td className="px-3 py-3 print:py-2">
                         <span
-                          className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium
+                          className={`inline-flex items-center px-2 py-0.5 rounded text-[11px] print:text-[11.5px] font-semibold
                             ${trx.jenis === "INCOME"
-                              ? "bg-emerald-100 text-emerald-700"
-                              : "bg-rose-100 text-rose-700"
+                              ? "bg-emerald-100 text-emerald-800"
+                              : "bg-rose-100 text-rose-800"
                             }`}
                         >
                           {trx.kategori}
@@ -426,26 +444,26 @@ export default function LaporanKeuanganPage() {
                       </td>
 
                       {/* Keterangan */}
-                      <td className="px-4 py-3 max-w-xs">
-                        <p className="text-slate-800 line-clamp-2 print:line-clamp-none leading-snug">
+                      <td className="px-3 py-3 print:py-2 max-w-xs">
+                        <p className="text-slate-800 line-clamp-2 print:line-clamp-none leading-snug print:text-[12px]">
                           {trx.keterangan || "-"}
                         </p>
                       </td>
 
                       {/* Satuan / Vol */}
-                      <td className="px-4 py-3 whitespace-nowrap text-slate-600">
+                      <td className="px-3 py-3 print:py-2 whitespace-nowrap text-slate-700 font-medium print:text-[12px]">
                         {volText}
                       </td>
 
                       {/* Harga Satuan */}
-                      <td className="px-4 py-3 text-right whitespace-nowrap text-slate-700 font-medium">
+                      <td className="px-3 py-3 print:py-2 text-right whitespace-nowrap text-slate-700 font-medium print:text-[12px]">
                         {formatRupiah(hargaSatuan)}
                       </td>
 
                       {/* Debit */}
-                      <td className="px-3 py-3 text-right whitespace-nowrap w-[1%]" style={{ width: "1%" }}>
+                      <td className="px-3 py-3 print:py-2 text-right whitespace-nowrap w-[1%]" style={{ width: "1%" }}>
                         {trx.jenis === "INCOME" ? (
-                          <span className="font-bold text-emerald-600">
+                          <span className="font-bold text-emerald-600 print:text-emerald-700 print:text-[12.5px]">
                             {formatRupiah(trx.nominal)}
                           </span>
                         ) : (
@@ -454,9 +472,9 @@ export default function LaporanKeuanganPage() {
                       </td>
 
                       {/* Kredit */}
-                      <td className="px-3 py-3 text-right whitespace-nowrap w-[1%]" style={{ width: "1%" }}>
+                      <td className="px-3 py-3 print:py-2 text-right whitespace-nowrap w-[1%]" style={{ width: "1%" }}>
                         {trx.jenis === "EXPENSE" ? (
-                          <span className="font-bold text-rose-600">
+                          <span className="font-bold text-rose-600 print:text-rose-700 print:text-[12.5px]">
                             {formatRupiah(trx.nominal)}
                           </span>
                         ) : (
@@ -465,9 +483,9 @@ export default function LaporanKeuanganPage() {
                       </td>
 
                       {/* Saldo */}
-                      <td className="px-3 py-3 text-right whitespace-nowrap w-[1%]" style={{ width: "1%" }}>
-                        <span className="font-bold text-slate-800">
-                          {formatRupiah(trx.saldo_akhir || 0)}
+                      <td className="px-3 py-3 print:py-2 text-right whitespace-nowrap w-[1%]" style={{ width: "1%" }}>
+                        <span className="font-bold text-slate-900 print:text-[12.5px]">
+                          {formatRupiah(trx.saldo_kronologis || trx.saldo_akhir || 0)}
                         </span>
                       </td>
 
@@ -517,17 +535,17 @@ export default function LaporanKeuanganPage() {
 
               {/* ── Baris Total (hanya tampil di akhir tabel / lembar terakhir saat cetak) ─────────────────────────────────────────── */}
               <tfoot className="print:table-row-group">
-                <tr className="bg-slate-50 border-t-2 border-slate-300 font-bold print:break-inside-avoid">
-                  <td colSpan={6} className="px-4 py-4 text-slate-700 text-sm uppercase tracking-wide">
+                <tr className="bg-slate-50 border-t-2 border-slate-300 font-bold print:break-inside-avoid text-sm print:text-[13px]">
+                  <td colSpan={6} className="px-3 py-3 print:py-2 text-slate-800 uppercase tracking-wide font-bold">
                     Total Saldo
                   </td>
-                  <td className="px-3 py-4 text-right whitespace-nowrap text-emerald-600 text-base w-[1%]" style={{ width: "1%" }}>
+                  <td className="px-3 py-3 print:py-2 text-right whitespace-nowrap text-emerald-700 text-base print:text-[13px] w-[1%]" style={{ width: "1%" }}>
                     {formatRupiah(totalDebit)}
                   </td>
-                  <td className="px-3 py-4 text-right whitespace-nowrap text-rose-600 text-base w-[1%]" style={{ width: "1%" }}>
+                  <td className="px-3 py-3 print:py-2 text-right whitespace-nowrap text-rose-700 text-base print:text-[13px] w-[1%]" style={{ width: "1%" }}>
                     {formatRupiah(totalKredit)}
                   </td>
-                  <td className="px-3 py-4 text-right whitespace-nowrap text-slate-800 text-base w-[1%]" style={{ width: "1%" }}>
+                  <td className="px-3 py-3 print:py-2 text-right whitespace-nowrap text-slate-900 text-base print:text-[13px] w-[1%]" style={{ width: "1%" }}>
                     {formatRupiah(totalSaldo)}
                   </td>
                   <td className="w-[180px]" style={{ width: "180px" }} />
