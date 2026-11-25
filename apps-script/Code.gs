@@ -21,6 +21,8 @@ function doPost(e) {
         return Keuangan.deleteTransaction(body, Auth.validateToken(body.token));
       case 'editKeuangan':
         return Keuangan.editTransaction(body, Auth.validateToken(body.token));
+      case 'fixKeuanganSequentialIds':
+        return Keuangan.fixSequentialIds();
       
       // Insert Pendaftaran Routes
       case 'getInsertPendaftaran':
@@ -140,6 +142,8 @@ function doGet(e) {
         return AbsensiPanitia.resetAttendance(e.parameter, Auth.validateToken(e.parameter.token));
       case 'getKeuangan':
         return Keuangan.getTransactions();
+      case 'fixKeuanganSequentialIds':
+        return Keuangan.fixSequentialIds();
       case 'getInsertPendaftaran':
         return InsertPendaftaran.getTransactions();
       case 'getSponsors':

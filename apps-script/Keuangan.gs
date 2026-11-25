@@ -419,5 +419,30 @@ const Keuangan = {
       no: no,
       nota_count: this._splitUrls(currentFileUrl).length
     });
+  },
+
+  // Merapikan ID Transaksi agar berurutan (TRX-001, TRX-002, ...)
+  // HANYA mengubah Kolom C (ID Transaksi), seluruh isi baris lainnya 100% UTUH.
+  fixSequentialIds: function() {
+    const sheet = Utils.getSheet(this.sheetName);
+    if (!sheet) return Response.error('NOT_FOUND', 'Sheet Keuangan tidak ditemukan');
+    
+    const lastRow = sheet.getLastRow();
+    if (lastRow <= 1) return Response.success('Tidak ada data di sheet Keuangan.', { updated: 0 });
+    
+    const numRows = lastRow - 1;
+    const newIds = [];
+    for (let i = 0; i < numRows; i++) {
+      newIds.push(['TRX-' + String(i + 1).padStart(3, '0')]);
+    }
+    
+    // Tulis HANYA ke Kolom C (kolom 3)
+    sheet.getRange(2, 3, numRows, 1).setValues(newIds);
+    
+    return Response.success('Berhasil merapikan ID Transaksi menjadi berurutan.', {
+      total: numRows,
+      start: 'TRX-001',
+      end: 'TRX-' + String(numRows).padStart(3, '0')
+    });
   }
 };
