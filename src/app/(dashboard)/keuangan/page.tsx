@@ -112,6 +112,11 @@ export default function KeuanganPage() {
       const resData = await response.json();
       if (resData.success) {
         toast.success(editTrxId ? "Transaksi berhasil diubah!" : "Transaksi berhasil dicatat!");
+        // Backend versi baru selalu mengirim nota_count. Jika tidak ada, Apps Script belum di-deploy ulang
+        // dan foto yang dipilih TIDAK tersimpan.
+        if (newFiles.length > 0 && resData.data?.nota_count === undefined) {
+          toast.error("Foto nota belum tersimpan: Apps Script belum di-deploy versi terbaru (Deploy > Manage deployments > New version).", { duration: 10000 });
+        }
         setIsModalOpen(false);
         setEditTrxId(null);
         setNewTrx({ ...newTrx, keterangan: "", nominal: "", vol: "", satuan: "", penanggung_jawab: "", status: "Lunas" }); // reset form

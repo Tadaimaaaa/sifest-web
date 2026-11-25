@@ -180,7 +180,10 @@ const Keuangan = {
       logBody
     );
     
-    return Response.success('Transaksi berhasil ditambahkan.', { trx_id: trxId });
+    return Response.success('Transaksi berhasil ditambahkan.', {
+      trx_id: trxId,
+      nota_count: this._splitUrls(fileUrl).length
+    });
   },
   
   deleteTransaction: function(body, user) {
@@ -378,6 +381,9 @@ const Keuangan = {
       logBody
     );
     
-    return Response.success('Transaksi berhasil diubah dan Saldo Akhir disesuaikan.');
+    return Response.success('Transaksi berhasil diubah dan Saldo Akhir disesuaikan.', {
+      trx_id: body.trx_id,
+      nota_count: this._splitUrls(currentFileUrl).length
+    });
   }
 };
