@@ -127,73 +127,85 @@ const Keuangan = {
     if (!body.tanggal || !body.jenis || !body.nominal) {
       return Response.error('BAD_REQUEST', 'Tanggal, jenis, dan nominal wajib diisi.');
     }
-    
-    const sheet = Utils.getSheet(this.sheetName);
-    const trxId = Utils.generateSequentialId(this.sheetName, 'TRX', 3);
-    
-    // Proses upload semua file ke Drive (bisa lebih dari satu nota)
-    const uploadRes = this._uploadFiles(body, trxId);
-    if (uploadRes.error) {
-      return Response.error('UPLOAD_FAILED', 'Gagal mengunggah bukti nota: ' + uploadRes.error);
-    }
-    const fileUrl = this._splitUrls(body.bukti_url).concat(uploadRes.urls).join('\n');
-    
-    // Hitung Nomor, Masuk, Keluar, dan Saldo Akhir
-    const lastRow = sheet.getLastRow();
-    let lastNo = 0;
-    let lastSaldo = 0;
-    
-    if (lastRow > 1) {
-      const lastRowData = sheet.getRange(lastRow, 1, 1, 14).getValues()[0];
-      lastNo = Number(lastRowData[0]) || 0;
-      lastSaldo = Number(lastRowData[10]) || 0;
-    }
-    
-    const no = lastNo + 1;
-    const nominal = Number(body.nominal);
-    const masuk = body.jenis === 'INCOME' ? nominal : 0;
-    const keluar = body.jenis === 'EXPENSE' ? nominal : 0;
-    const saldoAkhir = lastSaldo + masuk - keluar;
-    const jenisText = body.jenis === 'INCOME' ? 'Masuk' : 'Keluar';
-    
-    sheet.appendRow([
-      no,
-      body.tanggal,
-      trxId,
-      body.kategori || 'Lainnya',
-      body.keterangan || '-',
-      jenisText,
-      body.vol || '-',
-      body.satuan || '-',
-      masuk,
-      keluar,
-      saldoAkhir,
-      fileUrl || '-',
-      body.penanggung_jawab || user.name,
-      body.status || 'Lunas'
-    ]);
-    
-    let logBody = { ...body };
-    delete logBody.files;
-    delete logBody.fileData;
-    delete logBody.token;
 
-    ActivityLogs.log(
-      user.user_id, 
-      null, 
-      user.role_id, 
-      'KEUANGAN', 
-      'ADD_TRANSACTION', 
-      `Menambahkan ${jenisText} sebesar Rp${nominal} untuk ${body.kategori}`,
-      null,
-      logBody
-    );
+    // Gunakan LockService agar tidak ada ID ganda saat 2 orang mencatat bersamaan
+    const lock = LockService.getScriptLock();
+    try {
+      lock.waitLock(15000);
+    } catch (e) {
+      return Response.error('SERVER_BUSY', 'Server sedang sibuk, silakan simpan kembali beberapa saat lagi.');
+    }
     
-    return Response.success('Transaksi berhasil ditambahkan.', {
-      trx_id: trxId,
-      no: no,
-      nota_count: this._splitUrls(fileUrl).length
-    });
+    try {
+      const sheet = Utils.getSheet(this.sheetName);
+      const trxId = Utils.generateSequentialId(this.sheetName, 'TRX', 3);
+      
+      // Proses upload semua file ke Drive (bisa lebih dari satu nota)
+      const uploadRes = this._uploadFiles(body, trxId);
+      if (uploadRes.error) {
+        return Response.error('UPLOAD_FAILED', 'Gagal mengunggah bukti nota: ' + uploadRes.error);
+      }
+      const fileUrl = this._splitUrls(body.bukti_url).concat(uploadRes.urls).join('\n');
+      
+      // Hitung Nomor, Masuk, Keluar, dan Saldo Akhir
+      const lastRow = sheet.getLastRow();
+      let lastNo = 0;
+      let lastSaldo = 0;
+      
+      if (lastRow > 1) {
+        const lastRowData = sheet.getRange(lastRow, 1, 1, 14).getValues()[0];
+        lastNo = Number(lastRowData[0]) || 0;
+        lastSaldo = Number(lastRowData[10]) || 0;
+      }
+      
+      const no = lastNo + 1;
+      const nominal = Number(body.nominal);
+      const masuk = body.jenis === 'INCOME' ? nominal : 0;
+      const keluar = body.jenis === 'EXPENSE' ? nominal : 0;
+      const saldoAkhir = lastSaldo + masuk - keluar;
+      const jenisText = body.jenis === 'INCOME' ? 'Masuk' : 'Keluar';
+      
+      sheet.appendRow([
+        no,
+        body.tanggal,
+        trxId,
+        body.kategori || 'Lainnya',
+        body.keterangan || '-',
+        jenisText,
+        body.vol || '-',
+        body.satuan || '-',
+        masuk,
+        keluar,
+        saldoAkhir,
+        fileUrl || '-',
+        body.penanggung_jawab || user.name,
+        body.status || 'Lunas'
+      ]);
+      
+      let logBody = { ...body };
+      delete logBody.files;
+      delete logBody.fileData;
+      delete logBody.token;
+
+      ActivityLogs.log(
+        user.user_id, 
+        null, 
+        user.role_id, 
+        'KEUANGAN', 
+        'ADD_TRANSACTION', 
+        `Menambahkan ${jenisText} sebesar Rp${nominal} untuk ${body.kategori}`,
+        null,
+        logBody
+      );
+      
+      return Response.success('Transaksi berhasil ditambahkan.', {
+        trx_id: trxId,
+        no: no,
+        nota_count: this._splitUrls(fileUrl).length
+      });
+    } finally {
+      lock.releaseLock();
+    }
   },
   
   deleteTransaction: function(body, user) {
