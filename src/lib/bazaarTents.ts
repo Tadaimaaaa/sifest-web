@@ -149,7 +149,7 @@ export function findMatchingBazaarTenant(
 export async function fetchBazaarTenantsFromSheet(): Promise<BazaarTenantFromSheet[]> {
   try {
     const res = await fetch(
-      "https://script.google.com/macros/s/AKfycbw4UVTeqWldKdfsCyfbfYBpepIjjm08PVSndA19MuCqrV30PktJ1y5-1oFD1lL2KYfgEg/exec?action=getBazaarTenants",
+      "https://script.google.com/macros/s/AKfycbysUAIgYgGi6p0R_h_LDdJSrIklW4q_x6UAVYUEsbLiRZ2fR-tqhHxew83Dk0NuTkRsSw/exec?action=getBazaarTenants",
       { next: { revalidate: 30 } }
     );
     if (!res.ok) return [];
