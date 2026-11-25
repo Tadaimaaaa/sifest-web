@@ -25,6 +25,18 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* Aplikasi ini bertema terang (kotak input putih). Tanpa ini, saat browser/OS
+   memakai dark mode, teks input mewarisi warna terang dari body sehingga
+   tulisan terlihat pudar/tidak kebaca. Class text-* tetap bisa menimpa. */
+@layer base {
+  input,
+  select,
+  textarea {
+    color: #1e293b;
+    color-scheme: light;
+  }
+}
+
 @media print {
   @page {
     size: A4 landscape; /* Kunci ukuran kertas wajib A4 Landscape (297mm x 210mm) */
