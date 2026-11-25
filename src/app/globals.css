@@ -59,6 +59,7 @@ body {
     max-width: 100% !important;
     table-layout: auto !important;
     border-collapse: collapse !important;
+    border: 1px solid #000000 !important;
   }
 
   /* Mencegah baris tabel terpotong di tengah pemisah halaman */
@@ -72,6 +73,7 @@ body {
     break-inside: avoid !important;
     page-break-inside: avoid !important;
     word-break: break-word !important;
+    border: 1px solid #000000 !important;
   }
 
   /* Pastikan gambar tidak meluber */
@@ -82,8 +84,8 @@ body {
 
   /* Kolom nota cetak: tampil jelas, proporsional dan berdampingan menyamping tanpa kepotong */
   td img[alt="Nota"] {
-    max-width: 58px !important;
-    max-height: 58px !important;
+    max-width: 82px !important;
+    max-height: 85px !important;
     width: auto !important;
     height: auto !important;
     object-fit: contain !important;
