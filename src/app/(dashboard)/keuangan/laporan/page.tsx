@@ -16,6 +16,7 @@ import {
   ChevronLeft,
   Filter,
   ExternalLink,
+  Search,
 } from "lucide-react";
 import FullPageLoader from "@/components/FullPageLoader";
 import { splitNotaUrls } from "@/lib/nota";
@@ -57,6 +58,7 @@ export default function LaporanKeuanganPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [monthFilter, setMonthFilter] = useState("");
   const [yearFilter, setYearFilter] = useState("2025/2026");
+  const [searchQuery, setSearchQuery] = useState("");
   const [showSignatures, setShowSignatures] = useState(false);
   const printRef = useRef<HTMLDivElement>(null);
 
@@ -83,11 +85,9 @@ export default function LaporanKeuanganPage() {
     fetchTransactions();
   }, []);
 
-  // ── 1. Urutkan seluruh data berdasarkan Tanggal (kronologis: terlama -> terbaru) ──
+  // ── 1. Urutkan seluruh data berdasarkan Nomor Urut Kas (No: 1 -> terakhir) ──
+  // Sesuai urutan buku kas resmi di spreadsheet agar transaksi terbaru selalu berada di baris paling bawah
   const sortedAll = [...transactions].sort((a, b) => {
-    const timeA = new Date(a.tanggal).getTime() || 0;
-    const timeB = new Date(b.tanggal).getTime() || 0;
-    if (timeA !== timeB) return timeA - timeB;
     return Number(a.no || 0) - Number(b.no || 0);
   });
 
@@ -103,7 +103,7 @@ export default function LaporanKeuanganPage() {
     };
   });
 
-  // ── 3. Filter berdasarkan Periode Tahun & Bulan ───────────────────────────
+  // ── 3. Filter berdasarkan Periode Tahun, Bulan & Pencarian ────────────────
   const filtered = allWithSaldo.filter((t) => {
     const d = new Date(t.tanggal);
     if (isNaN(d.getTime())) return false;
@@ -116,7 +116,13 @@ export default function LaporanKeuanganPage() {
         ? tYear === yearFilter
         : true;
     const matchMonth = monthFilter ? tMonth === monthFilter : true;
-    return matchYear && matchMonth;
+    const matchSearch = searchQuery
+      ? (t.keterangan || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (t.kategori || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (t.penanggung_jawab || t.recorded_by || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (t.trx_id || "").toLowerCase().includes(searchQuery.toLowerCase())
+      : true;
+    return matchYear && matchMonth && matchSearch;
   });
 
   // ── Harga Satuan ───────────────────────────────────────────────────────────
@@ -308,14 +314,30 @@ export default function LaporanKeuanganPage() {
               </select>
             </div>
 
+            {/* Cari Transaksi */}
+            <div className="flex flex-col gap-1 min-w-[200px] flex-1 sm:flex-initial">
+              <label className="text-xs font-medium text-slate-500">Cari Keterangan / PJ</label>
+              <div className="relative">
+                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  placeholder="Cari transaksi..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-8 pr-3 py-2 bg-white border border-slate-200 rounded-xl text-sm text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                />
+              </div>
+            </div>
+
             {/* Reset */}
-            {(monthFilter || yearFilter !== "2025/2026") && (
+            {(monthFilter || yearFilter !== "2025/2026" || searchQuery) && (
               <div className="flex flex-col gap-1">
                 <label className="text-xs font-medium text-transparent select-none">Reset</label>
                 <button
                   onClick={() => {
                     setMonthFilter("");
                     setYearFilter("2025/2026");
+                    setSearchQuery("");
                   }}
                   className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-sm font-medium transition-colors border border-slate-200"
                 >
@@ -424,7 +446,7 @@ export default function LaporanKeuanganPage() {
                     >
                       {/* No */}
                       <td className="px-3 py-3 print:py-2 whitespace-nowrap">
-                        <span className="font-semibold text-slate-700 print:text-[12px]">{idx + 1}</span>
+                        <span className="font-semibold text-slate-700 print:text-[12px]">{trx.no || idx + 1}</span>
                       </td>
 
                       {/* Tanggal */}
