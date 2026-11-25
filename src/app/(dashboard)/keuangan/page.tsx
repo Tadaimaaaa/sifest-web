@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import Swal from "sweetalert2";
 import FullPageLoader from "@/components/FullPageLoader";
 import InvoiceModal from "./InvoiceModal";
+import { splitNotaUrls as splitUrls, readAndCompressImage, type NotaFile } from "@/lib/nota";
 
 const getDriveThumbnail = (url: string) => {
   if (!url || url === '-') return null;
@@ -47,10 +48,9 @@ export default function KeuanganPage() {
     satuan: "",
     penanggung_jawab: "",
     status: "Lunas",
-    fileData: "",
-    fileName: "",
-    mimeType: ""
   });
+  const [newFiles, setNewFiles] = useState<NotaFile[]>([]);
+  const [existingUrls, setExistingUrls] = useState<string[]>([]);
 
   const hasAccess = ["ROLE-001", "ROLE-006"].includes(currentUserRole);
   const canPrint = ["ROLE-001", "ROLE-002", "ROLE-003", "ROLE-006"].includes(currentUserRole);
@@ -97,6 +97,8 @@ export default function KeuanganPage() {
       const payload = {
         ...newTrx,
         nominal: parseInt(newTrx.nominal.replace(/\D/g, '') || "0", 10),
+        files: newFiles,
+        bukti_url: existingUrls.join("\n"),
         token,
         ...(editTrxId && { trx_id: editTrxId }) // Tambahkan trx_id jika edit
       };
@@ -112,7 +114,9 @@ export default function KeuanganPage() {
         toast.success(editTrxId ? "Transaksi berhasil diubah!" : "Transaksi berhasil dicatat!");
         setIsModalOpen(false);
         setEditTrxId(null);
-        setNewTrx({ ...newTrx, keterangan: "", nominal: "", vol: "", satuan: "", penanggung_jawab: "", status: "Lunas", fileData: "", fileName: "", mimeType: "" }); // reset form
+        setNewTrx({ ...newTrx, keterangan: "", nominal: "", vol: "", satuan: "", penanggung_jawab: "", status: "Lunas" }); // reset form
+        setNewFiles([]);
+        setExistingUrls([]);
         fetchTransactions(); // Refresh data
       } else {
         toast.error(resData.message);
@@ -136,11 +140,9 @@ export default function KeuanganPage() {
       satuan: trx.satuan && trx.satuan !== "-" ? trx.satuan : "",
       penanggung_jawab: trx.penanggung_jawab || trx.recorded_by || "",
       status: trx.status || "Lunas",
-      fileData: "",
-      fileName: "",
-      mimeType: "",
-      bukti_url: trx.bukti_url && trx.bukti_url !== "-" ? trx.bukti_url : ""
     } as any);
+    setExistingUrls(splitUrls(trx.bukti_url));
+    setNewFiles([]);
     setIsModalOpen(true);
   };
 
@@ -212,25 +214,28 @@ export default function KeuanganPage() {
   const KATEGORI_EXPENSE = ["Logistik", "Konsumsi", "Acara", "Humas", "Pubdok", "Kesekretariatan", "Operasional", "Lainnya"];
   const currentCategories = newTrx.jenis === "INCOME" ? KATEGORI_INCOME : KATEGORI_EXPENSE;
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 3 * 1024 * 1024) { // 3MB limit
-        toast.error("Ukuran file terlalu besar (Maks 3MB). Silakan di-compress terlebih dahulu.");
-        e.target.value = '';
-        return;
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selected = Array.from(e.target.files || []);
+    e.target.value = '';
+    if (selected.length === 0) return;
+
+    const added: NotaFile[] = [];
+    for (const file of selected) {
+      if (!file.type.startsWith('image/')) {
+        toast.error(`"${file.name}" bukan file gambar.`);
+        continue;
       }
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setNewTrx({
-          ...newTrx, 
-          fileData: event.target?.result as string,
-          fileName: file.name,
-          mimeType: file.type
-        });
-      };
-      reader.readAsDataURL(file);
+      if (file.size > 15 * 1024 * 1024) {
+        toast.error(`"${file.name}" terlalu besar (maks 15MB).`);
+        continue;
+      }
+      try {
+        added.push(await readAndCompressImage(file));
+      } catch {
+        toast.error(`Gagal membaca "${file.name}".`);
+      }
     }
+    if (added.length > 0) setNewFiles((prev) => [...prev, ...added]);
   };
 
   const handleExportExcel = () => {
@@ -248,7 +253,7 @@ export default function KeuanganPage() {
         "Saldo Akhir": trx.saldo_akhir,
         "Penanggung Jawab": trx.penanggung_jawab || trx.recorded_by,
         "Status": trx.status || "Lunas",
-        "Link Bukti": trx.bukti_url !== "-" ? trx.bukti_url : "Tidak ada"
+        "Link Bukti": splitUrls(trx.bukti_url).join("\n") || "Tidak ada"
       }));
 
       const worksheet = XLSX.utils.json_to_sheet(exportData);
@@ -471,28 +476,39 @@ export default function KeuanganPage() {
                       <p className="text-slate-800 line-clamp-2 print:line-clamp-none">{trx.keterangan || "-"}</p>
                     </td>
                     <td className="px-6 py-4 text-center">
-                      {trx.bukti_url && trx.bukti_url !== "-" ? (
-                        <div className="flex flex-col items-center justify-center">
-                          {/* Gambar HANYA dimuat dan ditampilkan saat mode Cetak (Print) */}
-                          {getDriveThumbnail(trx.bukti_url) && (
-                            <img 
-                              src={getDriveThumbnail(trx.bukti_url)!} 
-                              alt="Bukti" 
-                              className="hidden print:block h-16 w-auto object-cover rounded border border-slate-200 mb-1" 
-                            />
-                          )}
-                          
-                          {/* Tombol Buka HANYA ditampilkan di layar Web (Sembunyi saat cetak) */}
-                          <div className="print:hidden flex flex-col items-center">
-                            <span className="text-xs text-slate-400">Ada File</span>
-                            <a href={trx.bukti_url} target="_blank" rel="noreferrer" className="text-[10.5px] font-medium text-blue-600 hover:underline mt-0.5">
-                              Lihat Bukti
-                            </a>
+                      {(() => {
+                        const urls = splitUrls(trx.bukti_url);
+                        if (urls.length === 0) return <span className="text-xs text-slate-300">-</span>;
+                        return (
+                          <div className="flex flex-col items-center justify-center">
+                            {/* Gambar HANYA dimuat dan ditampilkan saat mode Cetak (Print) */}
+                            <div className="hidden print:flex flex-wrap justify-center gap-1 mb-1">
+                              {urls.map((u, i) =>
+                                getDriveThumbnail(u) ? (
+                                  <img
+                                    key={`${u}-${i}`}
+                                    src={getDriveThumbnail(u)!}
+                                    alt="Bukti"
+                                    className="h-16 w-auto object-cover rounded border border-slate-200"
+                                  />
+                                ) : null
+                              )}
+                            </div>
+
+                            {/* Tombol Buka HANYA ditampilkan di layar Web (Sembunyi saat cetak) */}
+                            <div className="print:hidden flex flex-col items-center">
+                              <span className="text-xs text-slate-400">{urls.length > 1 ? `${urls.length} File` : 'Ada File'}</span>
+                              <div className="flex flex-wrap justify-center gap-x-2">
+                                {urls.map((u, i) => (
+                                  <a key={`${u}-${i}`} href={u} target="_blank" rel="noreferrer" className="text-[10.5px] font-medium text-blue-600 hover:underline mt-0.5">
+                                    {urls.length > 1 ? `Bukti ${i + 1}` : 'Lihat Bukti'}
+                                  </a>
+                                ))}
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                      ) : (
-                        <span className="text-xs text-slate-300">-</span>
-                      )}
+                        );
+                      })()}
                     </td>
                     <td className="px-6 py-4 text-slate-700">
                       {(trx.vol && trx.vol !== "-" && trx.vol !== "0") ? `${trx.vol} ${trx.satuan || ''}` : (trx.satuan && trx.satuan !== "-" ? trx.satuan : "-")}
@@ -560,7 +576,9 @@ export default function KeuanganPage() {
                 onClick={() => {
                   setIsModalOpen(false);
                   setEditTrxId(null);
-                  setNewTrx({ ...newTrx, keterangan: "", nominal: "", vol: "", satuan: "", penanggung_jawab: "", status: "Lunas", fileData: "", fileName: "", mimeType: "", bukti_url: "" } as any);
+                  setNewTrx({ ...newTrx, keterangan: "", nominal: "", vol: "", satuan: "", penanggung_jawab: "", status: "Lunas" });
+                  setNewFiles([]);
+                  setExistingUrls([]);
                 }}
                 className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
               >
@@ -731,44 +749,73 @@ export default function KeuanganPage() {
 
               <div className="space-y-1.5">
                 <label className="text-sm font-medium text-slate-700">Foto Bukti / Nota <span className="text-slate-400 font-normal">(Opsional)</span></label>
-                {(newTrx as any).bukti_url && (
-                  <div className="mb-2 text-xs text-blue-600 flex items-center">
-                    <span>File saat ini: </span>
-                    <a href={(newTrx as any).bukti_url} target="_blank" rel="noreferrer" className="ml-1 underline hover:text-blue-800">Lihat File</a>
-                  </div>
-                )}
-                
-                {newTrx.fileData ? (
-                  <div className="relative rounded-xl border border-slate-200 bg-slate-50 p-2">
-                    <img src={newTrx.fileData} alt="Preview" className="w-full h-32 object-cover rounded-lg mb-2" />
-                    <button 
-                      type="button"
-                      onClick={() => setNewTrx({...newTrx, fileData: "", fileName: "", mimeType: ""})}
-                      className="absolute top-4 right-4 bg-white/80 backdrop-blur text-slate-700 p-1.5 rounded-full hover:bg-rose-100 hover:text-rose-600 transition-colors shadow-sm"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                    <p className="text-xs text-slate-500 truncate text-center px-2 pb-1">{newTrx.fileName}</p>
-                  </div>
-                ) : (
-                  <div className="relative">
-                    <input 
-                      type="file" 
-                      accept="image/*"
-                      onChange={handleFileChange}
-                      className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/50 focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                    />
-                    <p className="text-xs text-slate-400 mt-1.5">
-                      Bisa mengambil langsung dari kamera perangkat (HP) atau memilih dari Galeri.
-                    </p>
-                    <div className="mt-2 p-2.5 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-2">
-                      <span className="text-[13px] leading-none mt-0.5">⚠️</span>
-                      <p className="text-xs text-amber-700 font-medium leading-relaxed">
-                        Pastikan foto / bukti nota yang diunggah terlihat jelas dan benar (sesuai dengan nominal transaksi).
-                      </p>
+                {existingUrls.length > 0 && (
+                  <div className="mb-3">
+                    <p className="text-xs text-slate-500 mb-1.5">Nota tersimpan ({existingUrls.length})</p>
+                    <div className="grid grid-cols-3 gap-2">
+                      {existingUrls.map((url, i) => (
+                        <div key={`${url}-${i}`} className="relative rounded-lg border border-slate-200 bg-slate-50 p-1">
+                          <a href={url} target="_blank" rel="noreferrer" title="Buka nota">
+                            {getDriveThumbnail(url) ? (
+                              <img src={getDriveThumbnail(url)!} alt="Nota tersimpan" className="w-full h-20 object-contain rounded" />
+                            ) : (
+                              <span className="flex h-20 items-center justify-center text-xs text-blue-600 underline">Lihat File</span>
+                            )}
+                          </a>
+                          <button
+                            type="button"
+                            onClick={() => setExistingUrls(existingUrls.filter((_, idx) => idx !== i))}
+                            className="absolute -top-2 -right-2 bg-white text-slate-600 p-1 rounded-full border border-slate-200 hover:bg-rose-100 hover:text-rose-600 shadow-sm"
+                            title="Hapus nota ini"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 )}
+
+                {newFiles.length > 0 && (
+                  <div className="mb-3">
+                    <p className="text-xs text-slate-500 mb-1.5">Akan diunggah ({newFiles.length})</p>
+                    <div className="grid grid-cols-3 gap-2">
+                      {newFiles.map((f, i) => (
+                        <div key={`${f.fileName}-${i}`} className="relative rounded-lg border border-blue-200 bg-blue-50/40 p-1">
+                          <img src={f.fileData} alt="Preview" className="w-full h-20 object-contain rounded" />
+                          <p className="text-[10px] text-slate-500 truncate text-center mt-0.5">{f.fileName}</p>
+                          <button
+                            type="button"
+                            onClick={() => setNewFiles(newFiles.filter((_, idx) => idx !== i))}
+                            className="absolute -top-2 -right-2 bg-white text-slate-600 p-1 rounded-full border border-slate-200 hover:bg-rose-100 hover:text-rose-600 shadow-sm"
+                            title="Batalkan foto ini"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="relative">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleFileChange}
+                    className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500/50 focus:outline-none file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                  />
+                  <p className="text-xs text-slate-400 mt-1.5">
+                    Bisa pilih banyak foto sekaligus atau tambah lagi berkali-kali. Bisa langsung dari kamera HP atau Galeri.
+                  </p>
+                  <div className="mt-2 p-2.5 bg-amber-50 border border-amber-200 rounded-lg flex items-start gap-2">
+                    <span className="text-[13px] leading-none mt-0.5">⚠️</span>
+                    <p className="text-xs text-amber-700 font-medium leading-relaxed">
+                      Pastikan foto / bukti nota yang diunggah terlihat jelas dan benar (sesuai dengan nominal transaksi).
+                    </p>
+                  </div>
+                </div>
               </div>
 
               <div className="pt-2">

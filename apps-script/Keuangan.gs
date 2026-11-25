@@ -23,6 +23,58 @@ const Keuangan = {
     }
   },
   
+  // Kolom Bukti bisa berisi banyak link (dipisah baris baru)
+  _splitUrls: function(raw) {
+    if (!raw || typeof raw !== 'string') return [];
+    return raw.split(/[\s|,]+/).filter(function(u) { return /^https?:\/\//i.test(u); });
+  },
+
+  // Upload semua file (body.files[] + dukungan lama body.fileData) ke Drive.
+  // Return { urls: [...], error: string|null }. Jika gagal, file yang sudah terunggah dibersihkan.
+  _uploadFiles: function(body, prefix) {
+    const list = [];
+    if (Array.isArray(body.files)) {
+      body.files.forEach(function(f) {
+        if (f && f.fileData && f.fileName) list.push(f);
+      });
+    }
+    if (body.fileData && body.fileName) {
+      list.push({ fileData: body.fileData, fileName: body.fileName, mimeType: body.mimeType });
+    }
+    if (list.length === 0) return { urls: [], error: null };
+
+    const created = [];
+    try {
+      const folderName = 'SIFEST_Bukti_Keuangan';
+      const folderIter = DriveApp.getFoldersByName(folderName);
+      let folder;
+      if (folderIter.hasNext()) {
+        folder = folderIter.next();
+      } else {
+        folder = DriveApp.createFolder(folderName);
+        folder.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      }
+
+      const urls = [];
+      for (let i = 0; i < list.length; i++) {
+        const f = list[i];
+        const base64Data = f.fileData.split(',')[1] || f.fileData;
+        const blob = Utilities.newBlob(
+          Utilities.base64Decode(base64Data),
+          f.mimeType || 'image/jpeg',
+          prefix + '_' + (i + 1) + '_' + f.fileName
+        );
+        const file = folder.createFile(blob);
+        created.push(file);
+        urls.push(file.getUrl());
+      }
+      return { urls: urls, error: null };
+    } catch (e) {
+      created.forEach(function(file) { try { file.setTrashed(true); } catch (err) {} });
+      return { urls: [], error: e.toString() };
+    }
+  },
+
   getTransactions: function() {
     const sheet = Utils.getSheet(this.sheetName);
     if (!sheet) return Response.error('NOT_FOUND', 'Sheet Keuangan tidak ditemukan');
@@ -71,29 +123,12 @@ const Keuangan = {
     const sheet = Utils.getSheet(this.sheetName);
     const trxId = Utils.generateSequentialId(this.sheetName, 'TRX');
     
-    let fileUrl = body.bukti_url || '';
-    
-    // Proses upload file ke Drive
-    if (body.fileData && body.fileName) {
-      try {
-        const folderName = 'SIFEST_Bukti_Keuangan';
-        const folderIter = DriveApp.getFoldersByName(folderName);
-        let folder;
-        if (folderIter.hasNext()) {
-          folder = folderIter.next();
-        } else {
-          folder = DriveApp.createFolder(folderName);
-          folder.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-        }
-        
-        const base64Data = body.fileData.split(',')[1] || body.fileData;
-        const blob = Utilities.newBlob(Utilities.base64Decode(base64Data), body.mimeType || 'image/jpeg', trxId + '_' + body.fileName);
-        const file = folder.createFile(blob);
-        fileUrl = file.getUrl();
-      } catch (e) {
-        return Response.error('UPLOAD_FAILED', 'Gagal mengunggah bukti nota: ' + e.toString());
-      }
+    // Proses upload semua file ke Drive (bisa lebih dari satu nota)
+    const uploadRes = this._uploadFiles(body, trxId);
+    if (uploadRes.error) {
+      return Response.error('UPLOAD_FAILED', 'Gagal mengunggah bukti nota: ' + uploadRes.error);
     }
+    const fileUrl = this._splitUrls(body.bukti_url).concat(uploadRes.urls).join('\n');
     
     // Hitung Nomor, Masuk, Keluar, dan Saldo Akhir
     const lastRow = sheet.getLastRow();
@@ -170,7 +205,8 @@ const Keuangan = {
         deletedData = {
           jenis: data[i][5],
           kategori: data[i][3],
-          nominal: data[i][5] === 'Masuk' ? data[i][8] : data[i][9]
+          nominal: data[i][5] === 'Masuk' ? data[i][8] : data[i][9],
+          bukti_url: data[i][11]
         };
         break;
       }
@@ -181,7 +217,8 @@ const Keuangan = {
       
       // Hapus foto bukti di Google Drive jika ada
       if (deletedData.bukti_url) {
-        this._deleteDriveFile(deletedData.bukti_url);
+        const selfDel = this;
+        this._splitUrls(deletedData.bukti_url).forEach(function(u) { selfDel._deleteDriveFile(u); });
       }
       
       // Hitung ulang No dan Saldo Akhir untuk baris-baris setelahnya
@@ -252,16 +289,6 @@ const Keuangan = {
           bukti_url: data[i][11]
         };
         
-        // Jika tidak ada unggahan baru, pertahankan URL lama
-        // Dan jika user sengaja menghapus foto (misal body.bukti_url === ""), hapus juga di Drive
-        if (!body.fileData) {
-           if (body.bukti_url === "" && oldData.bukti_url !== "-") {
-             this._deleteDriveFile(oldData.bukti_url);
-             currentFileUrl = "";
-           } else {
-             currentFileUrl = body.bukti_url !== undefined ? body.bukti_url : oldData.bukti_url;
-           }
-        }
         break;
       }
     }
@@ -270,32 +297,27 @@ const Keuangan = {
       return Response.error('NOT_FOUND', 'Transaksi tidak ditemukan.');
     }
     
-    // Proses upload file ke Drive JIKA ADA file baru
-    if (body.fileData && body.fileName) {
-      try {
-        const folderName = 'SIFEST_Bukti_Keuangan';
-        const folderIter = DriveApp.getFoldersByName(folderName);
-        let folder;
-        if (folderIter.hasNext()) {
-          folder = folderIter.next();
-        } else {
-          folder = DriveApp.createFolder(folderName);
-          folder.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
-        }
-        
-        const base64Data = body.fileData.split(',')[1] || body.fileData;
-        const blob = Utilities.newBlob(Utilities.base64Decode(base64Data), body.mimeType || 'image/jpeg', body.trx_id + '_' + body.fileName);
-        const file = folder.createFile(blob);
-        currentFileUrl = file.getUrl();
-        
-        // Hapus foto lama di Drive karena sudah diganti baru
-        if (oldData.bukti_url && oldData.bukti_url !== '-') {
-          this._deleteDriveFile(oldData.bukti_url);
-        }
-      } catch (e) {
-        return Response.error('UPLOAD_FAILED', 'Gagal mengunggah bukti nota baru: ' + e.toString());
-      }
+    // Nota lama yang dipertahankan (hanya URL yang memang milik transaksi ini)
+    const oldUrls = this._splitUrls(oldData.bukti_url);
+    let keptUrls = oldUrls;
+    if (body.bukti_url !== undefined && body.bukti_url !== null) {
+      const requested = this._splitUrls(body.bukti_url);
+      keptUrls = oldUrls.filter(function(u) { return requested.indexOf(u) !== -1; });
     }
+
+    // Upload nota baru (bisa banyak) lebih dulu, supaya data lama aman jika upload gagal
+    const uploadRes = this._uploadFiles(body, body.trx_id);
+    if (uploadRes.error) {
+      return Response.error('UPLOAD_FAILED', 'Gagal mengunggah bukti nota baru: ' + uploadRes.error);
+    }
+
+    // Hapus dari Drive nota lama yang dibuang oleh user
+    const self = this;
+    oldUrls.forEach(function(u) {
+      if (keptUrls.indexOf(u) === -1) self._deleteDriveFile(u);
+    });
+
+    currentFileUrl = keptUrls.concat(uploadRes.urls).join('\n');
     
     const nominal = Number(body.nominal);
     const masuk = body.jenis === 'INCOME' ? nominal : 0;

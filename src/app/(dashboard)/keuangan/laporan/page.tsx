@@ -18,6 +18,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import FullPageLoader from "@/components/FullPageLoader";
+import { splitNotaUrls } from "@/lib/nota";
 
 const formatRupiah = (angka: number) =>
   new Intl.NumberFormat("id-ID", {
@@ -196,7 +197,7 @@ export default function LaporanKeuanganPage() {
         Debit: trx.jenis === "INCOME" ? trx.nominal : 0,
         Kredit: trx.jenis === "EXPENSE" ? trx.nominal : 0,
         Saldo: trx.saldo_kronologis || trx.saldo_akhir || 0,
-        Nota: trx.bukti_url && trx.bukti_url !== "-" ? trx.bukti_url : "-",
+        Nota: splitNotaUrls(trx.bukti_url).join("\n") || "-",
         "Penanggung Jawab": trx.penanggung_jawab || trx.recorded_by || "-",
         Status: trx.status || "Lunas",
       }));
@@ -402,7 +403,7 @@ export default function LaporanKeuanganPage() {
                   <th className="px-3 py-3.5 print:py-2.5 whitespace-nowrap text-right text-emerald-700 w-[1%]" style={{ width: "1%" }}>Debit</th>
                   <th className="px-3 py-3.5 print:py-2.5 whitespace-nowrap text-right text-rose-700 w-[1%]" style={{ width: "1%" }}>Kredit</th>
                   <th className="px-3 py-3.5 print:py-2.5 whitespace-nowrap text-right text-slate-900 w-[1%]" style={{ width: "1%" }}>Saldo</th>
-                  <th className="px-2 py-3.5 print:py-2.5 whitespace-nowrap text-center w-[180px] min-w-[170px]" style={{ width: "180px" }}>Nota</th>
+                  <th className="px-2 py-3.5 print:py-2.5 whitespace-nowrap text-center min-w-[180px]">Nota</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -490,41 +491,49 @@ export default function LaporanKeuanganPage() {
                         </span>
                       </td>
 
-                      {/* Nota – tampil utuh di layar dan saat cetak */}
-                      <td className="px-2 py-2 text-center align-middle w-[180px] min-w-[170px]" style={{ width: "180px" }}>
+                      {/* Nota – semua foto berderet, ukuran tiap foto sama */}
+                      <td className="px-2 py-2 text-center align-middle min-w-[180px]">
                         {(() => {
-                          const src = getImageSrc(trx.bukti_url);
-                          if (!src) return <span className="text-xs text-slate-300">-</span>;
+                          const urls = splitNotaUrls(trx.bukti_url);
+                          if (urls.length === 0) return <span className="text-xs text-slate-300">-</span>;
                           return (
-                            <div className="flex flex-col items-center justify-center gap-1">
-                              <a href={trx.bukti_url} target="_blank" rel="noreferrer" title="Klik untuk membuka ukuran penuh">
-                                <img
-                                  src={src}
-                                  alt="Nota"
-                                  loading="eager"
-                                  className="max-h-36 max-w-[165px] w-auto h-auto object-contain rounded-md border border-slate-200 hover:scale-105 transition-transform cursor-zoom-in mx-auto shadow-xs print:max-h-44 print:max-w-[175px]"
-                                  onError={(e) => {
-                                    // Fallback ke thumbnail Google Drive langsung jika proxy server lambat/gagal
-                                    const target = e.currentTarget as HTMLImageElement;
-                                    if (target.src.includes('/api/image-proxy')) {
-                                      const match = trx.bukti_url?.match(/\/d\/([a-zA-Z0-9_-]+)/) || trx.bukti_url?.match(/id=([a-zA-Z0-9_-]+)/);
-                                      if (match && match[1]) {
-                                        target.src = `https://drive.google.com/thumbnail?id=${match[1]}&sz=w800`;
-                                        return;
-                                      }
-                                    }
-                                    target.style.display = "none";
-                                  }}
-                                />
-                              </a>
-                              <a
-                                href={trx.bukti_url}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="print:hidden text-[10.5px] text-blue-600 hover:underline mt-1 font-medium"
-                              >
-                                Lihat Ukuran Penuh
-                              </a>
+                            <div className="flex flex-wrap items-start justify-center gap-2 mx-auto" style={{ maxWidth: "370px" }}>
+                              {urls.map((url, ni) => {
+                                const src = getImageSrc(url);
+                                if (!src) return null;
+                                return (
+                                  <div key={`${url}-${ni}`} className="flex flex-col items-center gap-1">
+                                    <a href={url} target="_blank" rel="noreferrer" title="Klik untuk membuka ukuran penuh">
+                                      <img
+                                        src={src}
+                                        alt="Nota"
+                                        loading="eager"
+                                        className="max-h-36 max-w-[165px] w-auto h-auto object-contain rounded-md border border-slate-200 hover:scale-105 transition-transform cursor-zoom-in mx-auto shadow-xs print:max-h-44 print:max-w-[175px]"
+                                        onError={(e) => {
+                                          // Fallback ke thumbnail Google Drive langsung jika proxy server lambat/gagal
+                                          const target = e.currentTarget as HTMLImageElement;
+                                          if (target.src.includes('/api/image-proxy')) {
+                                            const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
+                                            if (match && match[1]) {
+                                              target.src = `https://drive.google.com/thumbnail?id=${match[1]}&sz=w800`;
+                                              return;
+                                            }
+                                          }
+                                          target.style.display = "none";
+                                        }}
+                                      />
+                                    </a>
+                                    <a
+                                      href={url}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="print:hidden text-[10.5px] text-blue-600 hover:underline font-medium"
+                                    >
+                                      {urls.length > 1 ? `Lihat ${ni + 1}` : "Lihat Ukuran Penuh"}
+                                    </a>
+                                  </div>
+                                );
+                              })}
                             </div>
                           );
                         })()}
@@ -549,7 +558,7 @@ export default function LaporanKeuanganPage() {
                   <td className="px-3 py-3 print:py-2 text-right whitespace-nowrap text-slate-900 text-base print:text-[13px] w-[1%]" style={{ width: "1%" }}>
                     {formatRupiah(totalSaldo)}
                   </td>
-                  <td className="w-[180px]" style={{ width: "180px" }} />
+                  <td className="min-w-[180px]" />
                 </tr>
               </tfoot>
             </table>
