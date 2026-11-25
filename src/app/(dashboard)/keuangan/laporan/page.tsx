@@ -419,7 +419,7 @@ export default function LaporanKeuanganPage() {
                   <th className="px-1 py-2.5 print:py-1.5 text-center w-[30px] print:w-[26px] whitespace-nowrap">No</th>
                   <th className="px-1.5 py-2.5 print:py-1.5 whitespace-nowrap w-[80px] print:w-[68px]">Tanggal</th>
                   <th className="px-1 py-2.5 print:py-1.5 text-center w-[72px] min-w-[65px] max-w-[80px] print:w-[60px]">Kategori</th>
-                  <th className="px-2 py-2.5 print:py-1.5 print:px-1.5">Keterangan</th>
+                  <th className="px-2 py-2.5 print:py-1.5 print:px-1.5 w-[185px] min-w-[170px] max-w-[200px] print:w-[175px] print:max-w-[185px]">Keterangan</th>
                   <th className="px-1 py-2.5 print:py-1.5 text-center w-[60px] min-w-[55px] max-w-[68px] print:w-[50px] whitespace-nowrap">Satuan/Vol</th>
                   <th className="px-1.5 py-2.5 print:py-1.5 whitespace-nowrap text-right w-[80px] print:w-[68px]">Harga Satuan</th>
                   <th className="px-1.5 py-2.5 print:py-1.5 whitespace-nowrap text-right text-emerald-700 w-[85px] print:w-[75px]">Debit</th>
@@ -468,9 +468,9 @@ export default function LaporanKeuanganPage() {
                         </span>
                       </td>
 
-                      {/* Keterangan */}
-                      <td className="px-2 py-1.5 print:px-1.5 print:py-1 text-xs print:text-[9.5px] leading-snug">
-                        <p className="text-slate-800 line-clamp-2 print:line-clamp-none">
+                      {/* Keterangan - Dibatasi lebarnya dan jika teks panjang otomatis geser ke bawah */}
+                      <td className="px-2 py-1.5 print:px-1.5 print:py-1 text-xs print:text-[9.5px] leading-snug w-[185px] min-w-[170px] max-w-[200px] print:w-[175px] print:max-w-[185px]">
+                        <p className="text-slate-800 break-words whitespace-normal">
                           {trx.keterangan || "-"}
                         </p>
                       </td>
