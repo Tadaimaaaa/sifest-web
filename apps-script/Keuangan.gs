@@ -23,13 +23,16 @@ const Keuangan = {
     }
   },
   
-  // Kolom Bukti bisa berisi banyak link (dipisah baris baru)
+  // Kolom Bukti bisa berisi banyak link (dipisah baris baru atau spasi/koma)
   _splitUrls: function(raw) {
-    if (!raw || typeof raw !== 'string') return [];
-    return raw.split(/[\s|,]+/).filter(function(u) { return /^https?:\/\//i.test(u); });
+    if (!raw) return [];
+    return String(raw)
+      .split(/[\s|,]+/)
+      .map(function(u) { return u.trim(); })
+      .filter(function(u) { return /^https?:\/\//i.test(u); });
   },
 
-  // Upload semua file (body.files[] + dukungan lama body.fileData) ke Drive.
+  // Upload semua file (body.files[] + dukungan lama body.fileData) ke Google Drive folder SIFEST_Bukti_Keuangan.
   // Return { urls: [...], error: string|null }. Jika gagal, file yang sudah terunggah dibersihkan.
   _uploadFiles: function(body, prefix) {
     const list = [];
@@ -52,7 +55,9 @@ const Keuangan = {
         folder = folderIter.next();
       } else {
         folder = DriveApp.createFolder(folderName);
-        folder.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+        try {
+          folder.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+        } catch (e) {}
       }
 
       const urls = [];
@@ -65,6 +70,9 @@ const Keuangan = {
           prefix + '_' + (i + 1) + '_' + f.fileName
         );
         const file = folder.createFile(blob);
+        try {
+          file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+        } catch (shareErr) {}
         created.push(file);
         urls.push(file.getUrl());
       }
@@ -84,7 +92,7 @@ const Keuangan = {
     
     // Headers: No(0), Tanggal(1), ID(2), Kategori(3), Detail(4), Jenis(5), Vol(6), Satuan(7), Masuk(8), Keluar(9), Saldo(10), Bukti(11), PJ(12), Status(13)
     for (let i = 1; i < data.length; i++) {
-      if (data[i][2]) { // Cek ID Transaksi
+      if (data[i][2] || data[i][0]) { // Cek ID atau No Transaksi
         transactions.push({
           no: data[i][0],
           tanggal: data[i][1],
@@ -121,7 +129,7 @@ const Keuangan = {
     }
     
     const sheet = Utils.getSheet(this.sheetName);
-    const trxId = Utils.generateSequentialId(this.sheetName, 'TRX');
+    const trxId = Utils.generateSequentialId(this.sheetName, 'TRX', 3);
     
     // Proses upload semua file ke Drive (bisa lebih dari satu nota)
     const uploadRes = this._uploadFiles(body, trxId);
@@ -166,6 +174,7 @@ const Keuangan = {
     ]);
     
     let logBody = { ...body };
+    delete logBody.files;
     delete logBody.fileData;
     delete logBody.token;
 
@@ -182,6 +191,7 @@ const Keuangan = {
     
     return Response.success('Transaksi berhasil ditambahkan.', {
       trx_id: trxId,
+      no: no,
       nota_count: this._splitUrls(fileUrl).length
     });
   },
@@ -192,8 +202,8 @@ const Keuangan = {
       return Response.error('FORBIDDEN', 'Hanya Bendahara, SC, dan Super Admin yang dapat menghapus keuangan.');
     }
     
-    if (!body.trx_id) {
-      return Response.error('BAD_REQUEST', 'ID Transaksi wajib diisi.');
+    if (!body.trx_id && (body.no === undefined || body.no === null || body.no === '')) {
+      return Response.error('BAD_REQUEST', 'ID Transaksi atau Nomor baris wajib diisi.');
     }
     
     const sheet = Utils.getSheet(this.sheetName);
@@ -203,9 +213,19 @@ const Keuangan = {
     let deletedData = null;
     
     for (let i = 1; i < data.length; i++) {
-      if (data[i][2] === body.trx_id) { // Kolom ID Transaksi (index 2)
+      let isMatch = false;
+      // Prioritaskan pencocokan via No baris (kolom 0) jika ada, karena No dijamin unik
+      if (body.no !== undefined && body.no !== null && body.no !== '') {
+        isMatch = Number(data[i][0]) === Number(body.no);
+      } else if (body.trx_id) {
+        isMatch = data[i][2] === body.trx_id;
+      }
+
+      if (isMatch) {
         deletedRowIndex = i + 1;
         deletedData = {
+          no: data[i][0],
+          trx_id: data[i][2],
           jenis: data[i][5],
           kategori: data[i][3],
           nominal: data[i][5] === 'Masuk' ? data[i][8] : data[i][9],
@@ -254,7 +274,7 @@ const Keuangan = {
         user.role_id, 
         'KEUANGAN', 
         'DELETE_TRANSACTION', 
-        `Menghapus transaksi ${deletedData.jenis} sebesar Rp${deletedData.nominal}`,
+        `Menghapus transaksi ${deletedData.trx_id || ''} [No: ${deletedData.no || ''}] ${deletedData.jenis} sebesar Rp${deletedData.nominal}`,
         deletedData,
         null
       );
@@ -271,8 +291,8 @@ const Keuangan = {
       return Response.error('FORBIDDEN', 'Hanya Bendahara, SC, dan Super Admin yang dapat mengedit keuangan.');
     }
     
-    if (!body.trx_id || !body.tanggal || !body.jenis || !body.nominal) {
-      return Response.error('BAD_REQUEST', 'Data tidak lengkap (ID Transaksi, Tanggal, Jenis, Nominal wajib diisi).');
+    if ((!body.trx_id && (body.no === undefined || body.no === null || body.no === '')) || !body.tanggal || !body.jenis || !body.nominal) {
+      return Response.error('BAD_REQUEST', 'Data tidak lengkap (ID Transaksi/No, Tanggal, Jenis, Nominal wajib diisi).');
     }
     
     const sheet = Utils.getSheet(this.sheetName);
@@ -283,15 +303,24 @@ const Keuangan = {
     let currentFileUrl = body.bukti_url || '';
     
     for (let i = 1; i < data.length; i++) {
-      if (data[i][2] === body.trx_id) {
+      let isMatch = false;
+      // Prioritaskan pencocokan via No baris (kolom 0) jika ada, karena No dijamin unik 1-per-1
+      if (body.no !== undefined && body.no !== null && body.no !== '') {
+        isMatch = Number(data[i][0]) === Number(body.no);
+      } else if (body.trx_id) {
+        isMatch = data[i][2] === body.trx_id;
+      }
+
+      if (isMatch) {
         rowIndex = i + 1;
         oldData = {
+          no: data[i][0],
+          trx_id: data[i][2],
           jenis: data[i][5],
           kategori: data[i][3],
           nominal: data[i][5] === 'Masuk' ? data[i][8] : data[i][9],
           bukti_url: data[i][11]
         };
-        
         break;
       }
     }
@@ -302,22 +331,25 @@ const Keuangan = {
     
     // Nota lama yang dipertahankan (hanya URL yang memang milik transaksi ini)
     const oldUrls = this._splitUrls(oldData.bukti_url);
+    const norm = function(u) { return (u || '').trim().replace(/\/+$/, ''); };
     let keptUrls = oldUrls;
     if (body.bukti_url !== undefined && body.bukti_url !== null) {
-      const requested = this._splitUrls(body.bukti_url);
-      keptUrls = oldUrls.filter(function(u) { return requested.indexOf(u) !== -1; });
+      const requestedNorm = this._splitUrls(body.bukti_url).map(norm);
+      keptUrls = oldUrls.filter(function(u) { return requestedNorm.indexOf(norm(u)) !== -1; });
     }
 
     // Upload nota baru (bisa banyak) lebih dulu, supaya data lama aman jika upload gagal
-    const uploadRes = this._uploadFiles(body, body.trx_id);
+    const trxId = oldData.trx_id || body.trx_id || 'TRX';
+    const uploadRes = this._uploadFiles(body, trxId);
     if (uploadRes.error) {
       return Response.error('UPLOAD_FAILED', 'Gagal mengunggah bukti nota baru: ' + uploadRes.error);
     }
 
     // Hapus dari Drive nota lama yang dibuang oleh user
     const self = this;
+    const keptNorm = keptUrls.map(norm);
     oldUrls.forEach(function(u) {
-      if (keptUrls.indexOf(u) === -1) self._deleteDriveFile(u);
+      if (keptNorm.indexOf(norm(u)) === -1) self._deleteDriveFile(u);
     });
 
     currentFileUrl = keptUrls.concat(uploadRes.urls).join('\n');
@@ -326,13 +358,13 @@ const Keuangan = {
     const masuk = body.jenis === 'INCOME' ? nominal : 0;
     const keluar = body.jenis === 'EXPENSE' ? nominal : 0;
     const jenisText = body.jenis === 'INCOME' ? 'Masuk' : 'Keluar';
-    const no = data[rowIndex - 1][0]; // Pertahankan Nomor
+    const no = (oldData && oldData.no !== undefined && oldData.no !== null) ? oldData.no : data[rowIndex - 1][0]; // Pertahankan Nomor
     
     // Perbarui baris yang diedit
     sheet.getRange(rowIndex, 1, 1, 14).setValues([[
       no,
       body.tanggal,
-      body.trx_id,
+      trxId,
       body.kategori || 'Lainnya',
       body.keterangan || '-',
       jenisText,
@@ -367,6 +399,7 @@ const Keuangan = {
     }
     
     let logBody = { ...body };
+    delete logBody.files;
     delete logBody.fileData;
     delete logBody.token;
 
@@ -376,13 +409,14 @@ const Keuangan = {
       user.role_id, 
       'KEUANGAN', 
       'EDIT_TRANSACTION', 
-      `Mengubah transaksi ${body.trx_id} (Sebelumnya: Rp${oldData.nominal}, Sekarang: Rp${nominal})`,
+      `Mengubah transaksi ${trxId} [No: ${no}] (Sebelumnya: Rp${oldData.nominal}, Sekarang: Rp${nominal})`,
       oldData,
       logBody
     );
     
     return Response.success('Transaksi berhasil diubah dan Saldo Akhir disesuaikan.', {
-      trx_id: body.trx_id,
+      trx_id: trxId,
+      no: no,
       nota_count: this._splitUrls(currentFileUrl).length
     });
   }

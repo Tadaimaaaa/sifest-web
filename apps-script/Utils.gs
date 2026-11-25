@@ -26,25 +26,54 @@ const Utils = {
     );
   },
 
-  generateSequentialId: function(sheetName, prefix) {
+  generateSequentialId: function(sheetName, prefix, colIndex) {
     const sheet = this.getSheet(sheetName);
+    if (!sheet) return prefix + "-001";
     const lastRow = sheet.getLastRow();
     
     if (lastRow <= 1) return prefix + "-001";
     
-    // Ambil ID dari baris terakhir untuk menghindari duplikasi saat baris dihapus
-    const lastId = sheet.getRange(lastRow, 1).getValue();
-    let nextNum = lastRow; // Fallback ke row count
-    
-    if (lastId && typeof lastId === 'string' && lastId.includes('-')) {
-      const parts = lastId.split('-');
-      const lastNum = parseInt(parts[parts.length - 1], 10);
-      if (!isNaN(lastNum)) {
-        nextNum = lastNum + 1;
-      }
+    // Tentukan kolom ID: jika diberikan colIndex (1-based), gunakan itu.
+    // Jika tidak, deteksi otomatis dari baris header.
+    let col = colIndex;
+    if (!col) {
+      try {
+        const lastCol = sheet.getLastColumn();
+        if (lastCol >= 1) {
+          const headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+          for (let c = 0; c < headers.length; c++) {
+            const h = String(headers[c] || '').toLowerCase().trim();
+            if (h === 'id' || h === 'trx_id' || h === 'trx id' || h.indexOf('id ') === 0 || h.indexOf('id_') === 0 || h.includes('id transaksi')) {
+              col = c + 1;
+              break;
+            }
+          }
+        }
+      } catch (err) {}
+      if (!col) col = 1;
     }
     
-    return prefix + "-" + nextNum.toString().padStart(3, '0');
+    // Cari angka terbesar dari seluruh baris pada kolom tersebut untuk mencegah ID duplikat
+    let maxNum = 0;
+    try {
+      const colValues = sheet.getRange(2, col, lastRow - 1, 1).getValues();
+      for (let r = 0; r < colValues.length; r++) {
+        const val = String(colValues[r][0] || '').trim();
+        if (val.indexOf(prefix + '-') === 0) {
+          const numPart = parseInt(val.replace(prefix + '-', ''), 10);
+          if (!isNaN(numPart) && numPart > maxNum) {
+            maxNum = numPart;
+          }
+        }
+      }
+    } catch (e) {}
+    
+    // Fallback jika tidak ada pola prefix-
+    if (maxNum === 0) {
+      maxNum = lastRow - 1;
+    }
+    
+    return prefix + "-" + (maxNum + 1).toString().padStart(3, '0');
   },
 
   bytesToHex: function (bytes) {

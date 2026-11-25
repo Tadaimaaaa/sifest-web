@@ -38,6 +38,7 @@ export default function KeuanganPage() {
   const [isInvoiceModalOpen, setIsInvoiceModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [editTrxId, setEditTrxId] = useState<string | null>(null);
+  const [editTrxNo, setEditTrxNo] = useState<number | null>(null);
   const [newTrx, setNewTrx] = useState({
     tanggal: new Date().toISOString().split('T')[0],
     jenis: "INCOME",
@@ -100,7 +101,8 @@ export default function KeuanganPage() {
         files: newFiles,
         bukti_url: existingUrls.join("\n"),
         token,
-        ...(editTrxId && { trx_id: editTrxId }) // Tambahkan trx_id jika edit
+        ...(editTrxId && { trx_id: editTrxId }),
+        ...(editTrxNo !== null && editTrxNo !== undefined && { no: editTrxNo })
       };
 
       let notaResult: { sent: number; expected: number; saved?: number } | null = null;
@@ -132,6 +134,7 @@ export default function KeuanganPage() {
         };
         setIsModalOpen(false);
         setEditTrxId(null);
+        setEditTrxNo(null);
         setNewTrx({ ...newTrx, keterangan: "", nominal: "", vol: "", satuan: "", penanggung_jawab: "", status: "Lunas" }); // reset form
         setNewFiles([]);
         setExistingUrls([]);
@@ -192,6 +195,7 @@ export default function KeuanganPage() {
 
   const handleEditClick = (trx: any) => {
     setEditTrxId(trx.trx_id);
+    setEditTrxNo(trx.no !== undefined && trx.no !== null ? Number(trx.no) : null);
     setNewTrx({
       tanggal: trx.tanggal.split('T')[0],
       jenis: trx.jenis,
@@ -208,7 +212,7 @@ export default function KeuanganPage() {
     setIsModalOpen(true);
   };
 
-  const handleDelete = async (trx_id: string) => {
+  const handleDelete = async (trx: any) => {
     const result = await Swal.fire({
       title: 'Hapus Transaksi?',
       text: "Data yang dihapus tidak dapat dikembalikan!",
@@ -225,19 +229,20 @@ export default function KeuanganPage() {
     
     // Optimistic UI Update
     const previousTransactions = [...transactions];
-    setTransactions(transactions.filter(t => t.trx_id !== trx_id));
+    setTransactions(transactions.filter(t => t !== trx && (t.no !== trx.no || t.trx_id !== trx.trx_id)));
     
     try {
       const token = Cookies.get("session_token") || "";
       const response = await fetch(`${SCRIPT_URL}?action=deleteKeuangan`, {
         method: "POST",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify({ trx_id, token })
+        body: JSON.stringify({ trx_id: trx.trx_id, no: trx.no, token })
       });
       
       const resData = await response.json();
       if (resData.success) {
         toast.success("Transaksi dihapus.");
+        fetchTransactions(); // Refresh
       } else {
         toast.error(resData.message);
         setTransactions(previousTransactions); // Rollback
@@ -609,7 +614,7 @@ export default function KeuanganPage() {
                             </svg>
                           </button>
                           <button
-                            onClick={() => handleDelete(trx.trx_id)}
+                            onClick={() => handleDelete(trx)}
                             className="p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 rounded-lg transition-colors"
                             title="Hapus Transaksi"
                           >
@@ -638,6 +643,7 @@ export default function KeuanganPage() {
                 onClick={() => {
                   setIsModalOpen(false);
                   setEditTrxId(null);
+                  setEditTrxNo(null);
                   setNewTrx({ ...newTrx, keterangan: "", nominal: "", vol: "", satuan: "", penanggung_jawab: "", status: "Lunas" });
                   setNewFiles([]);
                   setExistingUrls([]);
