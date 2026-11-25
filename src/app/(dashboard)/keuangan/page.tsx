@@ -103,6 +103,19 @@ export default function KeuanganPage() {
         ...(editTrxId && { trx_id: editTrxId }) // Tambahkan trx_id jika edit
       };
 
+      let notaResult: { sent: number; expected: number; saved?: number } | null = null;
+
+      if (newFiles.length > 0) {
+        Swal.fire({
+          title: 'Mengunggah foto nota...',
+          html: `Mengirim ${newFiles.length} foto ke Google Drive.<br/>Mohon tunggu, jangan tutup halaman ini.`,
+          allowOutsideClick: false,
+          allowEscapeKey: false,
+          showConfirmButton: false,
+          didOpen: () => Swal.showLoading(),
+        });
+      }
+
       const response = await fetch(`${SCRIPT_URL}?action=${action}`, {
         method: "POST",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
@@ -112,22 +125,66 @@ export default function KeuanganPage() {
       const resData = await response.json();
       if (resData.success) {
         toast.success(editTrxId ? "Transaksi berhasil diubah!" : "Transaksi berhasil dicatat!");
-        // Backend versi baru selalu mengirim nota_count. Jika tidak ada, Apps Script belum di-deploy ulang
-        // dan foto yang dipilih TIDAK tersimpan.
-        if (newFiles.length > 0 && resData.data?.nota_count === undefined) {
-          toast.error("Foto nota belum tersimpan: Apps Script belum di-deploy versi terbaru (Deploy > Manage deployments > New version).", { duration: 10000 });
-        }
+        notaResult = {
+          sent: newFiles.length,
+          expected: existingUrls.length + newFiles.length,
+          saved: resData.data?.nota_count,
+        };
         setIsModalOpen(false);
         setEditTrxId(null);
         setNewTrx({ ...newTrx, keterangan: "", nominal: "", vol: "", satuan: "", penanggung_jawab: "", status: "Lunas" }); // reset form
         setNewFiles([]);
         setExistingUrls([]);
         fetchTransactions(); // Refresh data
+
+        // Dialog hasil upload foto nota (selalu tampil jika ada foto yang dikirim)
+        if (notaResult && notaResult.sent > 0) {
+          if (notaResult.saved === undefined) {
+            // Backend versi baru selalu mengirim nota_count. Kalau tidak ada = Apps Script masih versi lama.
+            await Swal.fire({
+              icon: 'error',
+              title: 'Transaksi tersimpan, tapi foto nota GAGAL',
+              html: 'Server (Apps Script) belum memakai versi terbaru, jadi foto tidak ikut tersimpan.<br/><br/>Buka Apps Script \u2192 <b>Deploy</b> \u2192 <b>Manage deployments</b> \u2192 Edit \u2192 <b>New version</b> \u2192 Deploy.',
+              confirmButtonText: 'Mengerti',
+              confirmButtonColor: '#2563eb',
+            });
+          } else if (notaResult.saved < notaResult.expected) {
+            await Swal.fire({
+              icon: 'warning',
+              title: 'Sebagian foto nota tersimpan',
+              text: `Tersimpan ${notaResult.saved} dari ${notaResult.expected} nota.`,
+              confirmButtonColor: '#2563eb',
+            });
+          } else {
+            await Swal.fire({
+              icon: 'success',
+              title: 'Berhasil disimpan',
+              text: `Transaksi tersimpan dengan ${notaResult.saved} foto nota.`,
+              confirmButtonColor: '#2563eb',
+              timer: 3000,
+              timerProgressBar: true,
+            });
+          }
+        }
       } else {
         toast.error(resData.message);
+        if (newFiles.length > 0) {
+          await Swal.fire({
+            icon: 'error',
+            title: 'Gagal menyimpan',
+            text: resData.message || 'Terjadi kesalahan di server.',
+            confirmButtonColor: '#2563eb',
+          });
+        }
       }
     } catch (error) {
       toast.error("Gagal menghubungi server.");
+      await Swal.fire({
+        icon: 'error',
+        title: 'Gagal menghubungi server',
+        text: 'Periksa koneksi internet lalu coba lagi. Jika foto banyak, coba kirim lebih sedikit foto sekaligus.',
+        confirmButtonColor: '#2563eb',
+      });
     } finally {
       setIsSubmitting(false);
     }
