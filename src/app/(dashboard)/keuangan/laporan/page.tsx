@@ -18,6 +18,7 @@ import {
   ExternalLink,
   Search,
   Loader2,
+  ChevronDown,
 } from "lucide-react";
 import FullPageLoader from "@/components/FullPageLoader";
 import { splitNotaUrls } from "@/lib/nota";
@@ -35,6 +36,8 @@ import {
   BorderStyle,
   ExternalHyperlink,
   ImageRun,
+  HeightRule,
+  VerticalAlign,
 } from "docx";
 
 const formatRupiah = (angka: number) =>
@@ -77,6 +80,16 @@ export default function LaporanKeuanganPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showSignatures, setShowSignatures] = useState(false);
   const printRef = useRef<HTMLDivElement>(null);
+  const [printMode, setPrintMode] = useState<"normal" | "lampiran">("normal");
+  const [openMenu, setOpenMenu] = useState<"word" | "print" | null>(null);
+
+  // Tandai mode cetak di <body> agar CSS print bisa menyesuaikan layout
+  useEffect(() => {
+    document.body.dataset.printMode = printMode;
+    return () => {
+      delete document.body.dataset.printMode;
+    };
+  }, [printMode]);
 
   const fetchTransactions = async () => {
     setIsLoading(true);
@@ -166,32 +179,65 @@ export default function LaporanKeuanganPage() {
     ? "2025/2026"
     : `Tahun ${yearFilter}`;
 
-  const handlePrint = async () => {
+  const handlePrint = async (mode: "normal" | "lampiran" = "normal") => {
+    if (mode === "lampiran") {
+      toast.info("Menyiapkan laporan + lampiran nota...", { id: "print-status" });
+      setPrintMode("lampiran");
+      // Beri waktu React merender lampiran & mengubah layout tabel
+      await new Promise((r) => setTimeout(r, 400));
+    }
+
     // Pastikan gambar nota sudah ter-load sebelum membuka dialog cetak agar tidak kosong/blank
     const images = Array.from(document.querySelectorAll('img[alt="Nota"]')) as HTMLImageElement[];
     const pendingImages = images.filter((img) => !img.complete && img.style.display !== "none");
 
     if (pendingImages.length > 0) {
-      toast.info("Memuat gambar nota sebelum mencetak...");
+      toast.info("Memuat gambar nota sebelum mencetak...", { id: "print-status" });
+      const waitMs = mode === "lampiran" ? 45000 : 2500;
       await Promise.all(
         pendingImages.map(
           (img) =>
             new Promise((resolve) => {
               img.onload = resolve;
               img.onerror = resolve;
-              setTimeout(resolve, 2500);
+              setTimeout(resolve, waitMs);
             })
         )
       );
     }
+    toast.dismiss("print-status");
 
     const originalTitle = document.title;
     document.title = "";
+    if (mode === "lampiran") {
+      window.addEventListener("afterprint", () => setPrintMode("normal"), { once: true });
+    }
     window.print();
     setTimeout(() => {
       document.title = originalTitle;
     }, 1000);
   };
+
+  // ── Data lampiran nota (untuk cetak + lampiran) ────────────────────────────
+  const lampiranItems =
+    printMode === "lampiran"
+      ? filtered.flatMap((trx, idx) => {
+          const urls = splitNotaUrls(trx.bukti_url);
+          return urls.map((url, uIdx) => {
+            const ket = String(trx.keterangan || "-");
+            const ketShort = ket.length > 42 ? ket.slice(0, 40).trim() + "…" : ket;
+            const suffix = urls.length > 1 ? ` (${uIdx + 1}/${urls.length})` : "";
+            return {
+              url,
+              label: `No. ${trx.no || idx + 1} - ${ketShort} - ${formatRupiah(trx.nominal)}${suffix}`,
+            };
+          });
+        })
+      : [];
+  const lampiranPages: { url: string; label: string }[][] = [];
+  for (let i = 0; i < lampiranItems.length; i += 8) {
+    lampiranPages.push(lampiranItems.slice(i, i + 8));
+  }
 
   // ── Tahun tersedia dari data ───────────────────────────────────────────────
   const availableYears = Array.from(
@@ -261,7 +307,8 @@ export default function LaporanKeuanganPage() {
   // Helper fetch gambar untuk disematkan langsung di dokumen Word (.docx)
   const fetchImageForDocx = async (
     url: string,
-    isMultiple: boolean = false
+    isMultiple: boolean = false,
+    box?: { w: number; h: number }
   ): Promise<{ data: Uint8Array; width: number; height: number } | null> => {
     try {
       const proxyUrl = getImageSrc(url);
@@ -284,8 +331,8 @@ export default function LaporanKeuanganPage() {
         if (typeof createImageBitmap === "function") {
           const bmp = await createImageBitmap(new Blob([data]));
           // Ukuran tampil di Word (px): foto nota dibuat besar
-          const maxW = isMultiple ? 145 : 290;
-          const maxH = isMultiple ? 230 : 330;
+          const maxW = box ? box.w : isMultiple ? 145 : 290;
+          const maxH = box ? box.h : isMultiple ? 230 : 330;
           const scale = Math.min(maxW / bmp.width, maxH / bmp.height, 1);
           width = Math.max(30, Math.round(bmp.width * scale));
           height = Math.max(30, Math.round(bmp.height * scale));
@@ -321,10 +368,10 @@ export default function LaporanKeuanganPage() {
   // ── Export Word (.docx) ───────────────────────────────────────────────────
   const [isExportingWord, setIsExportingWord] = useState(false);
 
-  const handleExportWord = async () => {
+  const handleExportWord = async (withLampiran: boolean = false) => {
     try {
       setIsExportingWord(true);
-      toast.info("Mengumpulkan foto nota untuk dokumen Word...", { id: "word-status" });
+      toast.info(withLampiran ? "Mengumpulkan foto nota untuk lampiran Word..." : "Mengumpulkan foto nota untuk dokumen Word...", { id: "word-status" });
 
       // 1. Kumpulkan semua URL nota unik
       const uniqueUrls: { url: string; isMultiple: boolean }[] = [];
@@ -346,7 +393,7 @@ export default function LaporanKeuanganPage() {
         const batch = uniqueUrls.slice(i, i + BATCH_SIZE);
         await Promise.all(
           batch.map(async (item) => {
-            const imgData = await fetchImageForDocx(item.url, item.isMultiple);
+            const imgData = await fetchImageForDocx(item.url, item.isMultiple, withLampiran ? { w: 235, h: 250 } : undefined);
             imageMap.set(item.url, imgData);
           })
         );
@@ -362,81 +409,85 @@ export default function LaporanKeuanganPage() {
       const borders = { top: borderDef, bottom: borderDef, left: borderDef, right: borderDef };
 
       // Header row
+      const COLS = withLampiran
+        ? [3, 9, 9, 28, 8, 9, 10, 10, 14, 0]
+        : [3, 8, 7, 12, 7, 7, 8, 8, 9, 31];
+
       const headerRow = new TableRow({
         tableHeader: true,
         cantSplit: true,
         children: [
           new TableCell({
-            width: { size: 3, type: WidthType.PERCENTAGE },
+            width: { size: COLS[0], type: WidthType.PERCENTAGE },
             borders,
             shading: { fill: "F1F5F9" },
             margins: { top: 100, bottom: 100, left: 60, right: 60 },
             children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "NO", bold: true, size: 16 })] })],
           }),
           new TableCell({
-            width: { size: 8, type: WidthType.PERCENTAGE },
+            width: { size: COLS[1], type: WidthType.PERCENTAGE },
             borders,
             shading: { fill: "F1F5F9" },
             margins: { top: 100, bottom: 100, left: 60, right: 60 },
             children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "TANGGAL", bold: true, size: 16 })] })],
           }),
           new TableCell({
-            width: { size: 7, type: WidthType.PERCENTAGE },
+            width: { size: COLS[2], type: WidthType.PERCENTAGE },
             borders,
             shading: { fill: "F1F5F9" },
             margins: { top: 100, bottom: 100, left: 60, right: 60 },
             children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "KATEGORI", bold: true, size: 16 })] })],
           }),
           new TableCell({
-            width: { size: 12, type: WidthType.PERCENTAGE },
+            width: { size: COLS[3], type: WidthType.PERCENTAGE },
             borders,
             shading: { fill: "F1F5F9" },
             margins: { top: 100, bottom: 100, left: 80, right: 80 },
             children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "KETERANGAN", bold: true, size: 16 })] })],
           }),
           new TableCell({
-            width: { size: 7, type: WidthType.PERCENTAGE },
+            width: { size: COLS[4], type: WidthType.PERCENTAGE },
             borders,
             shading: { fill: "F1F5F9" },
             margins: { top: 100, bottom: 100, left: 60, right: 60 },
             children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "SATUAN/VOL", bold: true, size: 16 })] })],
           }),
           new TableCell({
-            width: { size: 7, type: WidthType.PERCENTAGE },
+            width: { size: COLS[5], type: WidthType.PERCENTAGE },
             borders,
             shading: { fill: "F1F5F9" },
             margins: { top: 100, bottom: 100, left: 60, right: 60 },
             children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "HARGA SATUAN", bold: true, size: 16 })] })],
           }),
           new TableCell({
-            width: { size: 8, type: WidthType.PERCENTAGE },
+            width: { size: COLS[6], type: WidthType.PERCENTAGE },
             borders,
             shading: { fill: "F1F5F9" },
             margins: { top: 100, bottom: 100, left: 60, right: 60 },
             children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "DEBIT", bold: true, size: 16, color: "047857" })] })],
           }),
           new TableCell({
-            width: { size: 8, type: WidthType.PERCENTAGE },
+            width: { size: COLS[7], type: WidthType.PERCENTAGE },
             borders,
             shading: { fill: "F1F5F9" },
             margins: { top: 100, bottom: 100, left: 60, right: 60 },
             children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "KREDIT", bold: true, size: 16, color: "B91C1C" })] })],
           }),
           new TableCell({
-            width: { size: 9, type: WidthType.PERCENTAGE },
+            width: { size: COLS[8], type: WidthType.PERCENTAGE },
             borders,
             shading: { fill: "F1F5F9" },
             margins: { top: 100, bottom: 100, left: 60, right: 60 },
             children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "SALDO", bold: true, size: 16 })] })],
           }),
           new TableCell({
-            width: { size: 31, type: WidthType.PERCENTAGE },
+            width: { size: COLS[9], type: WidthType.PERCENTAGE },
             borders,
             shading: { fill: "F1F5F9" },
             margins: { top: 100, bottom: 100, left: 60, right: 60 },
             children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "NOTA", bold: true, size: 16 })] })],
           }),
-        ],
+        ].slice(0, withLampiran ? -1 : undefined),
       });
 
       // Data rows
@@ -485,43 +536,43 @@ export default function LaporanKeuanganPage() {
           cantSplit: true,
           children: [
             new TableCell({
-              width: { size: 3, type: WidthType.PERCENTAGE },
+              width: { size: COLS[0], type: WidthType.PERCENTAGE },
               borders,
               margins: { top: 80, bottom: 80, left: 60, right: 60 },
               children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: String(trx.no || idx + 1), size: 16 })] })],
             }),
             new TableCell({
-              width: { size: 8, type: WidthType.PERCENTAGE },
+              width: { size: COLS[1], type: WidthType.PERCENTAGE },
               borders,
               margins: { top: 80, bottom: 80, left: 60, right: 60 },
               children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: formatTanggal(trx.tanggal), size: 16 })] })],
             }),
             new TableCell({
-              width: { size: 7, type: WidthType.PERCENTAGE },
+              width: { size: COLS[2], type: WidthType.PERCENTAGE },
               borders,
               margins: { top: 80, bottom: 80, left: 60, right: 60 },
               children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: trx.kategori || "-", size: 16 })] })],
             }),
             new TableCell({
-              width: { size: 12, type: WidthType.PERCENTAGE },
+              width: { size: COLS[3], type: WidthType.PERCENTAGE },
               borders,
               margins: { top: 80, bottom: 80, left: 80, right: 80 },
               children: [new Paragraph({ alignment: AlignmentType.LEFT, children: [new TextRun({ text: trx.keterangan || "-", size: 16 })] })],
             }),
             new TableCell({
-              width: { size: 7, type: WidthType.PERCENTAGE },
+              width: { size: COLS[4], type: WidthType.PERCENTAGE },
               borders,
               margins: { top: 80, bottom: 80, left: 60, right: 60 },
               children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: volText, size: 16 })] })],
             }),
             new TableCell({
-              width: { size: 7, type: WidthType.PERCENTAGE },
+              width: { size: COLS[5], type: WidthType.PERCENTAGE },
               borders,
               margins: { top: 80, bottom: 80, left: 60, right: 60 },
               children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: formatRupiah(hargaSatuan), size: 16 })] })],
             }),
             new TableCell({
-              width: { size: 8, type: WidthType.PERCENTAGE },
+              width: { size: COLS[6], type: WidthType.PERCENTAGE },
               borders,
               margins: { top: 80, bottom: 80, left: 60, right: 60 },
               children: [
@@ -539,7 +590,7 @@ export default function LaporanKeuanganPage() {
               ],
             }),
             new TableCell({
-              width: { size: 8, type: WidthType.PERCENTAGE },
+              width: { size: COLS[7], type: WidthType.PERCENTAGE },
               borders,
               margins: { top: 80, bottom: 80, left: 60, right: 60 },
               children: [
@@ -557,7 +608,7 @@ export default function LaporanKeuanganPage() {
               ],
             }),
             new TableCell({
-              width: { size: 9, type: WidthType.PERCENTAGE },
+              width: { size: COLS[8], type: WidthType.PERCENTAGE },
               borders,
               margins: { top: 80, bottom: 80, left: 60, right: 60 },
               children: [
@@ -574,12 +625,12 @@ export default function LaporanKeuanganPage() {
               ],
             }),
             new TableCell({
-              width: { size: 31, type: WidthType.PERCENTAGE },
+              width: { size: COLS[9], type: WidthType.PERCENTAGE },
               borders,
               margins: { top: 80, bottom: 80, left: 60, right: 60 },
               children: notaParagraphs,
             }),
-          ],
+          ].slice(0, withLampiran ? -1 : undefined),
         });
       });
 
@@ -589,7 +640,7 @@ export default function LaporanKeuanganPage() {
         children: [
           new TableCell({
             columnSpan: 6,
-            width: { size: 44, type: WidthType.PERCENTAGE },
+            width: { size: COLS.slice(0, 6).reduce((a, b) => a + b, 0), type: WidthType.PERCENTAGE },
             borders,
             shading: { fill: "F1F5F9" },
             margins: { top: 100, bottom: 100, left: 80, right: 80 },
@@ -601,7 +652,7 @@ export default function LaporanKeuanganPage() {
             ],
           }),
           new TableCell({
-            width: { size: 8, type: WidthType.PERCENTAGE },
+            width: { size: COLS[6], type: WidthType.PERCENTAGE },
             borders,
             shading: { fill: "F1F5F9" },
             margins: { top: 100, bottom: 100, left: 60, right: 60 },
@@ -613,7 +664,7 @@ export default function LaporanKeuanganPage() {
             ],
           }),
           new TableCell({
-            width: { size: 8, type: WidthType.PERCENTAGE },
+            width: { size: COLS[7], type: WidthType.PERCENTAGE },
             borders,
             shading: { fill: "F1F5F9" },
             margins: { top: 100, bottom: 100, left: 60, right: 60 },
@@ -625,7 +676,7 @@ export default function LaporanKeuanganPage() {
             ],
           }),
           new TableCell({
-            width: { size: 9, type: WidthType.PERCENTAGE },
+            width: { size: COLS[8], type: WidthType.PERCENTAGE },
             borders,
             shading: { fill: "F1F5F9" },
             margins: { top: 100, bottom: 100, left: 60, right: 60 },
@@ -637,13 +688,13 @@ export default function LaporanKeuanganPage() {
             ],
           }),
           new TableCell({
-            width: { size: 31, type: WidthType.PERCENTAGE },
+            width: { size: COLS[9], type: WidthType.PERCENTAGE },
             borders,
             shading: { fill: "F1F5F9" },
             margins: { top: 100, bottom: 100, left: 60, right: 60 },
             children: [new Paragraph({ text: "" })],
           }),
-        ],
+        ].slice(0, withLampiran ? -1 : undefined),
       });
 
       const sectionChildren: (Paragraph | Table)[] = [
@@ -734,6 +785,90 @@ export default function LaporanKeuanganPage() {
         );
       }
 
+      // Lampiran nota: 8 foto per halaman (4 kolom x 2 baris), urut nomor transaksi
+      if (withLampiran) {
+        type LItem = { label: string; url: string; img: { data: Uint8Array; width: number; height: number } | null };
+        const items: LItem[] = [];
+        filtered.forEach((trx, idx) => {
+          const urls = splitNotaUrls(trx.bukti_url);
+          urls.forEach((url, uIdx) => {
+            const ket = String(trx.keterangan || "-");
+            const ketShort = ket.length > 42 ? ket.slice(0, 40).trim() + "…" : ket;
+            const suffix = urls.length > 1 ? ` (${uIdx + 1}/${urls.length})` : "";
+            items.push({
+              url,
+              img: imageMap.get(url) || null,
+              label: `No. ${trx.no || idx + 1} - ${ketShort} - ${formatRupiah(trx.nominal)}${suffix}`,
+            });
+          });
+        });
+
+        if (items.length > 0) {
+          const thin = { style: BorderStyle.SINGLE, size: 2, color: "94A3B8" };
+          const cellBorders = { top: thin, bottom: thin, left: thin, right: thin };
+          const lampiranRows: TableRow[] = [];
+          for (let i = 0; i < items.length; i += 4) {
+            const slice: (LItem | null)[] = items.slice(i, i + 4);
+            while (slice.length < 4) slice.push(null);
+            lampiranRows.push(
+              new TableRow({
+                cantSplit: true,
+                height: { value: 4700, rule: HeightRule.EXACT },
+                children: slice.map(
+                  (it) =>
+                    new TableCell({
+                      width: { size: 25, type: WidthType.PERCENTAGE },
+                      borders: cellBorders,
+                      verticalAlign: VerticalAlign.CENTER,
+                      margins: { top: 40, bottom: 40, left: 40, right: 40 },
+                      children: it
+                        ? [
+                            new Paragraph({
+                              alignment: AlignmentType.CENTER,
+                              spacing: { after: 40 },
+                              children: it.img
+                                ? [
+                                    new ImageRun({
+                                      data: it.img.data,
+                                      transformation: { width: it.img.width, height: it.img.height },
+                                      type: "jpg",
+                                    }),
+                                  ]
+                                : [
+                                    new ExternalHyperlink({
+                                      children: [new TextRun({ text: "[Foto gagal dimuat - buka link]", color: "0563C1", underline: {}, size: 14 })],
+                                      link: it.url,
+                                    }),
+                                  ],
+                            }),
+                            new Paragraph({
+                              alignment: AlignmentType.CENTER,
+                              spacing: { after: 0 },
+                              children: [new TextRun({ text: it.label, bold: true, size: 14 })],
+                            }),
+                          ]
+                        : [new Paragraph({ text: "" })],
+                    })
+                ),
+              })
+            );
+          }
+
+          sectionChildren.push(
+            new Paragraph({
+              pageBreakBefore: true,
+              alignment: AlignmentType.CENTER,
+              spacing: { after: 80 },
+              children: [new TextRun({ text: `LAMPIRAN NOTA – SI FEST 2026 (Periode: ${judulPeriode})`, bold: true, size: 22 })],
+            }),
+            new Table({
+              width: { size: 100, type: WidthType.PERCENTAGE },
+              rows: lampiranRows,
+            })
+          );
+        }
+      }
+
       // Dokumen Word dengan Orientasi LANDSCAPE A4 resmi
       const doc = new Document({
         sections: [
@@ -766,7 +901,7 @@ export default function LaporanKeuanganPage() {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      toast.success("Dokumen Word (.docx) berhasil diunduh! Lengkap dengan foto nota dan format Landscape A4.", { id: "word-status" });
+      toast.success(withLampiran ? "Word + Lampiran Nota berhasil diunduh! Laporan dulu, lalu semua nota di halaman lampiran." : "Dokumen Word (.docx) berhasil diunduh! Lengkap dengan foto nota dan format Landscape A4.", { id: "word-status" });
     } catch (err: any) {
       console.error("Export Word Error:", err);
       toast.error("Gagal mengekspor dokumen Word.", { id: "word-status" });
@@ -801,25 +936,76 @@ export default function LaporanKeuanganPage() {
             <Download className="w-4 h-4" />
             Excel
           </button>
-          <button
-            onClick={handleExportWord}
-            disabled={isExportingWord}
-            className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors border border-blue-200 shadow-sm disabled:opacity-50"
-          >
-            {isExportingWord ? (
-              <Loader2 className="w-4 h-4 animate-spin text-blue-700" />
-            ) : (
-              <FileText className="w-4 h-4" />
+          {/* Dropdown Word */}
+          <div className="relative flex-1 sm:flex-none">
+            <button
+              onClick={() => setOpenMenu(openMenu === "word" ? null : "word")}
+              disabled={isExportingWord}
+              className="w-full flex items-center justify-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors border border-blue-200 shadow-sm disabled:opacity-50"
+            >
+              {isExportingWord ? (
+                <Loader2 className="w-4 h-4 animate-spin text-blue-700" />
+              ) : (
+                <FileText className="w-4 h-4" />
+              )}
+              Word
+              <ChevronDown className="w-3.5 h-3.5" />
+            </button>
+            {openMenu === "word" && (
+              <>
+                <div className="fixed inset-0 z-30" onClick={() => setOpenMenu(null)} />
+                <div className="absolute right-0 mt-2 w-64 bg-white border border-slate-200 rounded-xl shadow-lg z-40 overflow-hidden">
+                  <button
+                    onClick={() => { setOpenMenu(null); handleExportWord(false); }}
+                    className="w-full text-left px-4 py-2.5 hover:bg-slate-50 transition-colors"
+                  >
+                    <div className="text-sm font-medium text-slate-800">Word biasa</div>
+                    <div className="text-xs text-slate-500">Foto nota di dalam tabel</div>
+                  </button>
+                  <button
+                    onClick={() => { setOpenMenu(null); handleExportWord(true); }}
+                    className="w-full text-left px-4 py-2.5 hover:bg-slate-50 transition-colors border-t border-slate-100"
+                  >
+                    <div className="text-sm font-medium text-slate-800">Word + Lampiran Nota</div>
+                    <div className="text-xs text-slate-500">Laporan dulu, semua nota di halaman lampiran</div>
+                  </button>
+                </div>
+              </>
             )}
-            Word
-          </button>
-          <button
-            onClick={handlePrint}
-            className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors border border-slate-200 shadow-sm"
-          >
-            <Printer className="w-4 h-4" />
-            Cetak
-          </button>
+          </div>
+
+          {/* Dropdown Cetak */}
+          <div className="relative flex-1 sm:flex-none">
+            <button
+              onClick={() => setOpenMenu(openMenu === "print" ? null : "print")}
+              className="w-full flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors border border-slate-200 shadow-sm"
+            >
+              <Printer className="w-4 h-4" />
+              Cetak
+              <ChevronDown className="w-3.5 h-3.5" />
+            </button>
+            {openMenu === "print" && (
+              <>
+                <div className="fixed inset-0 z-30" onClick={() => setOpenMenu(null)} />
+                <div className="absolute right-0 mt-2 w-64 bg-white border border-slate-200 rounded-xl shadow-lg z-40 overflow-hidden">
+                  <button
+                    onClick={() => { setOpenMenu(null); handlePrint("normal"); }}
+                    className="w-full text-left px-4 py-2.5 hover:bg-slate-50 transition-colors"
+                  >
+                    <div className="text-sm font-medium text-slate-800">Cetak biasa</div>
+                    <div className="text-xs text-slate-500">4 transaksi + foto nota per halaman</div>
+                  </button>
+                  <button
+                    onClick={() => { setOpenMenu(null); handlePrint("lampiran"); }}
+                    className="w-full text-left px-4 py-2.5 hover:bg-slate-50 transition-colors border-t border-slate-100"
+                  >
+                    <div className="text-sm font-medium text-slate-800">Cetak + Lampiran Nota</div>
+                    <div className="text-xs text-slate-500">Laporan dulu, semua nota 8 per halaman</div>
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
@@ -970,7 +1156,7 @@ export default function LaporanKeuanganPage() {
                   <th className="px-1.5 py-2.5 print:py-1.5 whitespace-nowrap text-right text-emerald-800 w-[85px] print:w-[75px] border border-black print:border-black">Debit</th>
                   <th className="px-1.5 py-2.5 print:py-1.5 whitespace-nowrap text-right text-rose-800 w-[85px] print:w-[75px] border border-black print:border-black">Kredit</th>
                   <th className="px-1.5 py-2.5 print:py-1.5 whitespace-nowrap text-right text-slate-900 w-[88px] print:w-[78px] border border-black print:border-black">Saldo</th>
-                  <th className="px-1 py-2.5 print:py-1.5 whitespace-nowrap text-center w-[220px] min-w-[200px] max-w-[240px] print:w-[210px] print:min-w-[195px] print:max-w-[230px] border border-black print:border-black">Nota</th>
+                  {printMode !== "lampiran" && (<th className="px-1 py-2.5 print:py-1.5 whitespace-nowrap text-center w-[220px] min-w-[200px] max-w-[240px] print:w-[210px] print:min-w-[195px] print:max-w-[230px] border border-black print:border-black">Nota</th>)}
                 </tr>
               </thead>
               <tbody>
@@ -1060,7 +1246,7 @@ export default function LaporanKeuanganPage() {
                       </td>
 
                       {/* Nota – berjejer ke samping kiri-kanan proporsional dan tidak terpotong di print */}
-                      {(() => {
+                      {printMode !== "lampiran" && (() => {
                         const urls = splitNotaUrls(trx.bukti_url);
                         return (
                           <td className="px-1.5 py-2 text-center align-middle w-[220px] min-w-[200px] max-w-[240px] print:w-[210px] print:min-w-[195px] print:max-w-[230px] border border-black print:border-black">
@@ -1137,7 +1323,9 @@ export default function LaporanKeuanganPage() {
                   <td className="px-1.5 py-2 print:py-1.5 text-right whitespace-nowrap text-slate-900 text-xs print:text-[10px] border border-black print:border-black">
                     {formatRupiah(totalSaldo)}
                   </td>
-                  <td className="w-[220px] min-w-[200px] max-w-[240px] print:w-[210px] print:min-w-[195px] print:max-w-[230px] border border-black print:border-black" />
+                  {printMode !== "lampiran" && (
+                    <td className="w-[220px] min-w-[200px] max-w-[240px] print:w-[210px] print:min-w-[195px] print:max-w-[230px] border border-black print:border-black" />
+                  )}
                 </tr>
               </tfoot>
             </table>
@@ -1216,6 +1404,51 @@ export default function LaporanKeuanganPage() {
                 Bupati HMJ-SI
               </p>
             </div>
+          </div>
+        )}
+
+        {/* ── Lampiran Nota (hanya saat Cetak + Lampiran) ── */}
+        {printMode === "lampiran" && lampiranPages.length > 0 && (
+          <div className="hidden print:block lampiran-section">
+            {lampiranPages.map((page, pi) => (
+              <div key={pi} className="lampiran-page">
+                <div className="lampiran-title">
+                  LAMPIRAN NOTA – SI FEST 2026 (Periode: {judulPeriode}) · Halaman {pi + 1}/{lampiranPages.length}
+                </div>
+                <div className="lampiran-grid">
+                  {page.map((item, ii) => {
+                    const src = getImageSrc(item.url);
+                    return (
+                      <div key={`${item.url}-${ii}`} className="lampiran-cell">
+                        <div className="lampiran-imgwrap">
+                          {src && (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={src}
+                              alt="Nota"
+                              loading="eager"
+                              className="lampiran-img"
+                              onError={(e) => {
+                                const target = e.currentTarget as HTMLImageElement;
+                                if (target.src.includes("/api/image-proxy")) {
+                                  const match = item.url.match(/\/d\/([a-zA-Z0-9_-]+)/) || item.url.match(/id=([a-zA-Z0-9_-]+)/);
+                                  if (match && match[1]) {
+                                    target.src = `https://lh3.googleusercontent.com/d/${match[1]}=w1200`;
+                                    return;
+                                  }
+                                }
+                                target.style.display = "none";
+                              }}
+                            />
+                          )}
+                        </div>
+                        <div className="lampiran-caption">{item.label}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
