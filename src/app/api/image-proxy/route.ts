@@ -20,27 +20,28 @@ export async function GET(request: NextRequest) {
       return new NextResponse('Invalid Google Drive URL', { status: 400 });
     }
 
-    // Coba URL export view terlebih dahulu
-    const driveUrl = `https://drive.google.com/uc?export=view&id=${fileId}`;
-    
-    let response = await fetch(driveUrl, {
+    // Ambil resolusi Full HD (2500px) langsung dari Google CDN resmi (lh3.googleusercontent.com)
+    const lh3Url = `https://lh3.googleusercontent.com/d/${fileId}=w2500`;
+    let response = await fetch(lh3Url, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
       }
     });
 
-    let contentType = response.headers.get('content-type') || '';
-
-    // Jika uc?export=view gagal atau mengembalikan HTML (misal virus scan warning / consent page),
-    // fallback ke endpoint thumbnail resmi Google Drive yang selalu mengirim gambar
-    if (!response.ok || contentType.includes('text/html')) {
-      const thumbUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w1000`;
+    // Fallback ke Google Drive thumbnail w2500 jika endpoint utama ada kendala
+    if (!response.ok) {
+      const thumbUrl = `https://drive.google.com/thumbnail?id=${fileId}&sz=w2500`;
       response = await fetch(thumbUrl, {
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         }
       });
-      contentType = response.headers.get('content-type') || 'image/jpeg';
+    }
+
+    // Fallback terakhir: uc?export=download
+    if (!response.ok) {
+      const driveUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
+      response = await fetch(driveUrl);
     }
     
     if (!response.ok) {
@@ -48,11 +49,12 @@ export async function GET(request: NextRequest) {
     }
 
     const buffer = await response.arrayBuffer();
+    const contentType = response.headers.get('content-type') || 'image/jpeg';
 
     return new NextResponse(buffer, {
       headers: {
-        'Content-Type': contentType || 'image/jpeg',
-        'Cache-Control': 'public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800',
+        'Content-Type': contentType,
+        'Cache-Control': 'public, max-age=604800, s-maxage=604800, stale-while-revalidate=86400',
       },
     });
   } catch (error) {

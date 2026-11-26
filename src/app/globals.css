@@ -62,10 +62,21 @@ body {
     border: 1px solid #000000 !important;
   }
 
-  /* Mencegah baris tabel terpotong di tengah pemisah halaman */
-  tr {
+  /* Ulangi header tabel di setiap lembar cetak */
+  thead {
+    display: table-header-group !important;
+  }
+
+  /* Tepat 4 transaksi per lembar kertas A4 Landscape */
+  tbody tr {
+    height: 36mm !important;
     break-inside: avoid !important;
     page-break-inside: avoid !important;
+  }
+
+  tbody tr:nth-child(4n):not(:last-child) {
+    page-break-after: always !important;
+    break-after: page !important;
   }
 
   th, td {
@@ -82,10 +93,10 @@ body {
     height: auto !important;
   }
 
-  /* Kolom nota cetak: tampil jauh lebih besar, jelas dan nominal terbaca tajam */
+  /* Kolom nota cetak: tampil HD, proporsional, dan nominal terbaca tajam */
   td img[alt="Nota"] {
     max-width: 195px !important;
-    max-height: 225px !important;
+    max-height: 33mm !important;
     width: auto !important;
     height: auto !important;
     object-fit: contain !important;
@@ -93,6 +104,8 @@ body {
     display: inline-block !important;
     margin: 0 auto !important;
     vertical-align: middle !important;
+    image-rendering: -webkit-optimize-contrast !important;
+    image-rendering: crisp-edges !important;
     filter: contrast(1.15) brightness(0.96) !important;
   }
 

@@ -535,16 +535,16 @@ export default function LaporanKeuanganPage() {
                                           loading="eager"
                                           className={`w-auto h-auto object-contain rounded border border-slate-300 hover:scale-105 transition-transform cursor-zoom-in shadow-xs ${
                                             urls.length > 1
-                                              ? "max-h-48 max-w-[105px] print:max-h-44 print:max-w-[96px]"
-                                              : "max-h-64 max-w-[205px] print:max-h-56 print:max-w-[190px]"
+                                              ? "max-h-48 max-w-[105px] print:max-h-[30mm] print:max-w-[96px]"
+                                              : "max-h-64 max-w-[205px] print:max-h-[32mm] print:max-w-[190px]"
                                           }`}
                                           onError={(e) => {
-                                            // Fallback ke thumbnail Google Drive langsung jika proxy server lambat/gagal
+                                            // Fallback ke Google CDN Full HD langsung jika proxy server lambat/gagal
                                             const target = e.currentTarget as HTMLImageElement;
                                             if (target.src.includes('/api/image-proxy')) {
                                               const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
                                               if (match && match[1]) {
-                                                target.src = `https://drive.google.com/thumbnail?id=${match[1]}&sz=w800`;
+                                                target.src = `https://lh3.googleusercontent.com/d/${match[1]}=w2500`;
                                                 return;
                                               }
                                             }
