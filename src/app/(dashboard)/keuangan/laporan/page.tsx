@@ -535,8 +535,8 @@ export default function LaporanKeuanganPage() {
                                           loading="eager"
                                           className={`w-auto h-auto object-contain rounded border border-slate-300 hover:scale-105 transition-transform cursor-zoom-in shadow-xs ${
                                             urls.length > 1
-                                              ? "max-h-48 max-w-[105px] print:max-h-[30mm] print:max-w-[96px]"
-                                              : "max-h-64 max-w-[205px] print:max-h-[32mm] print:max-w-[190px]"
+                                              ? "max-h-48 max-w-[105px] print:max-h-[38mm] print:max-w-[96px]"
+                                              : "max-h-64 max-w-[205px] print:max-h-[40mm] print:max-w-[190px]"
                                           }`}
                                           onError={(e) => {
                                             // Fallback ke Google CDN Full HD langsung jika proxy server lambat/gagal
