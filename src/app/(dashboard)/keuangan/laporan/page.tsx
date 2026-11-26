@@ -425,7 +425,7 @@ export default function LaporanKeuanganPage() {
                   <th className="px-1.5 py-2.5 print:py-1.5 whitespace-nowrap text-right text-emerald-800 w-[85px] print:w-[75px] border border-black print:border-black">Debit</th>
                   <th className="px-1.5 py-2.5 print:py-1.5 whitespace-nowrap text-right text-rose-800 w-[85px] print:w-[75px] border border-black print:border-black">Kredit</th>
                   <th className="px-1.5 py-2.5 print:py-1.5 whitespace-nowrap text-right text-slate-900 w-[88px] print:w-[78px] border border-black print:border-black">Saldo</th>
-                  <th className="px-1 py-2.5 print:py-1.5 whitespace-nowrap text-center w-[190px] min-w-[170px] max-w-[210px] print:w-[175px] print:min-w-[165px] print:max-w-[185px] border border-black print:border-black">Nota</th>
+                  <th className="px-1 py-2.5 print:py-1.5 whitespace-nowrap text-center w-[220px] min-w-[200px] max-w-[240px] print:w-[210px] print:min-w-[195px] print:max-w-[230px] border border-black print:border-black">Nota</th>
                 </tr>
               </thead>
               <tbody>
@@ -518,7 +518,7 @@ export default function LaporanKeuanganPage() {
                       {(() => {
                         const urls = splitNotaUrls(trx.bukti_url);
                         return (
-                          <td className="px-1.5 py-1.5 text-center align-middle w-[190px] min-w-[170px] max-w-[210px] print:w-[175px] print:min-w-[165px] print:max-w-[185px] border border-black print:border-black">
+                          <td className="px-1.5 py-2 text-center align-middle w-[220px] min-w-[200px] max-w-[240px] print:w-[210px] print:min-w-[195px] print:max-w-[230px] border border-black print:border-black">
                             {urls.length === 0 ? (
                               <span className="text-xs text-slate-300">-</span>
                             ) : (
@@ -535,8 +535,8 @@ export default function LaporanKeuanganPage() {
                                           loading="eager"
                                           className={`w-auto h-auto object-contain rounded border border-slate-300 hover:scale-105 transition-transform cursor-zoom-in shadow-xs ${
                                             urls.length > 1
-                                              ? "max-h-24 max-w-[88px] print:max-h-20 print:max-w-[78px]"
-                                              : "max-h-32 max-w-[135px] print:max-h-24 print:max-w-[110px]"
+                                              ? "max-h-48 max-w-[105px] print:max-h-44 print:max-w-[96px]"
+                                              : "max-h-64 max-w-[205px] print:max-h-56 print:max-w-[190px]"
                                           }`}
                                           onError={(e) => {
                                             // Fallback ke thumbnail Google Drive langsung jika proxy server lambat/gagal
@@ -552,6 +552,10 @@ export default function LaporanKeuanganPage() {
                                           }}
                                         />
                                       </a>
+                                      {/* Teks nominal tercetak jelas di bawah foto nota saat cetak */}
+                                      <span className="hidden print:inline-block text-[9px] font-bold text-slate-900 mt-0.5 tracking-tight">
+                                        {formatRupiah(trx.nominal)}
+                                      </span>
                                       <a
                                         href={url}
                                         target="_blank"
@@ -588,7 +592,7 @@ export default function LaporanKeuanganPage() {
                   <td className="px-1.5 py-2 print:py-1.5 text-right whitespace-nowrap text-slate-900 text-xs print:text-[10px] border border-black print:border-black">
                     {formatRupiah(totalSaldo)}
                   </td>
-                  <td className="w-[190px] min-w-[170px] max-w-[210px] print:w-[175px] print:min-w-[165px] print:max-w-[185px] border border-black print:border-black" />
+                  <td className="w-[220px] min-w-[200px] max-w-[240px] print:w-[210px] print:min-w-[195px] print:max-w-[230px] border border-black print:border-black" />
                 </tr>
               </tfoot>
             </table>

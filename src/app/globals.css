@@ -82,17 +82,18 @@ body {
     height: auto !important;
   }
 
-  /* Kolom nota cetak: tampil jelas, proporsional dan berdampingan menyamping tanpa kepotong */
+  /* Kolom nota cetak: tampil jauh lebih besar, jelas dan nominal terbaca tajam */
   td img[alt="Nota"] {
-    max-width: 82px !important;
-    max-height: 85px !important;
+    max-width: 195px !important;
+    max-height: 225px !important;
     width: auto !important;
     height: auto !important;
     object-fit: contain !important;
     border-radius: 3px !important;
     display: inline-block !important;
-    margin: 0 !important;
+    margin: 0 auto !important;
     vertical-align: middle !important;
+    filter: contrast(1.15) brightness(0.96) !important;
   }
 
   /* Jangan ulang tfoot di setiap lembar cetak, hanya tampil sekali di lembar terakhir */
