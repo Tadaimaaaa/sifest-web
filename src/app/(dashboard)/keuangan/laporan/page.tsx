@@ -726,25 +726,71 @@ export default function LaporanKeuanganPage() {
         }),
       ];
 
-      // Signatures
-      if (showSignatures) {
-        const noBorder = { style: BorderStyle.NONE, size: 0, color: "FFFFFF" };
-        const transparentBorders = {
-          top: noBorder,
-          bottom: noBorder,
-          left: noBorder,
-          right: noBorder,
+      // Lembar pengesahan / tanda tangan (sama dengan tampilan web & cetak)
+      // Nama & jabatan selalu tampil; gambar TTD hanya jika "Sertakan Tanda Tangan Digital" dicentang
+      {
+        const loadSig = async (path: string) => {
+          if (!showSignatures) return null;
+          try {
+            const res = await fetch(path);
+            if (!res.ok) return null;
+            const data = new Uint8Array(await res.arrayBuffer());
+            let width = 120;
+            let height = 60;
+            try {
+              const bmp = await createImageBitmap(new Blob([data]));
+              const scale = Math.min(150 / bmp.width, 70 / bmp.height, 1);
+              width = Math.max(20, Math.round(bmp.width * scale));
+              height = Math.max(20, Math.round(bmp.height * scale));
+              bmp.close();
+            } catch {
+              // pakai ukuran standar
+            }
+            return { data, width, height };
+          } catch {
+            return null;
+          }
         };
 
-        const todayStr = new Date().toLocaleDateString("id-ID", {
-          day: "numeric",
-          month: "long",
-          year: "numeric",
-        });
+        const [sigDilan, sigZhara] = await Promise.all([
+          loadSig("/signatures/ttd-dilan.png"),
+          loadSig("/signatures/ttd-zhara.png"),
+        ]);
+
+        const noBorder = { style: BorderStyle.NONE, size: 0, color: "FFFFFF" };
+        const transparentBorders = { top: noBorder, bottom: noBorder, left: noBorder, right: noBorder };
+
+        const sigBlock = (
+          sig: { data: Uint8Array; width: number; height: number } | null,
+          nama: string,
+          jabatan: string
+        ): Paragraph[] => [
+          new Paragraph({
+            alignment: AlignmentType.CENTER,
+            spacing: { after: 0 },
+            children: sig
+              ? [new ImageRun({ data: sig.data, transformation: { width: sig.width, height: sig.height }, type: "png" })]
+              : [new TextRun({ text: " ", size: 90 })],
+          }),
+          new Paragraph({
+            alignment: AlignmentType.CENTER,
+            spacing: { after: 0 },
+            children: [new TextRun({ text: nama, bold: true, underline: {}, size: 20 })],
+          }),
+          new Paragraph({
+            alignment: AlignmentType.CENTER,
+            spacing: { after: 0 },
+            children: [new TextRun({ text: jabatan, size: 18, color: "334155" })],
+          }),
+        ];
 
         sectionChildren.push(
           new Paragraph({ text: "" }),
-          new Paragraph({ text: "" }),
+          new Paragraph({
+            alignment: AlignmentType.CENTER,
+            keepNext: true,
+            children: [new TextRun({ text: "Hormat kami,", size: 20 })],
+          }),
           new Table({
             width: { size: 100, type: WidthType.PERCENTAGE },
             borders: transparentBorders,
@@ -755,32 +801,38 @@ export default function LaporanKeuanganPage() {
                   new TableCell({
                     width: { size: 50, type: WidthType.PERCENTAGE },
                     borders: transparentBorders,
-                    children: [
-                      new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Mengetahui,", size: 18 })] }),
-                      new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Ketua Pelaksana SI FEST 2026", bold: true, size: 18 })] }),
-                      new Paragraph({ text: "" }),
-                      new Paragraph({ text: "" }),
-                      new Paragraph({ text: "" }),
-                      new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Muhammad Farraz", bold: true, underline: {}, size: 18 })] }),
-                      new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "NIM: 22101152610123", color: "64748B", size: 16 })] }),
-                    ],
+                    children: sigBlock(sigDilan, "Dilan Afri Jones", "Ketua Pelaksana"),
                   }),
                   new TableCell({
                     width: { size: 50, type: WidthType.PERCENTAGE },
                     borders: transparentBorders,
-                    children: [
-                      new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: `Padang, ${todayStr}`, size: 18 })] }),
-                      new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Bendahara Pelaksana SI FEST 2026", bold: true, size: 18 })] }),
-                      new Paragraph({ text: "" }),
-                      new Paragraph({ text: "" }),
-                      new Paragraph({ text: "" }),
-                      new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Ahlazzikri Azamud Dhuha", bold: true, underline: {}, size: 18 })] }),
-                      new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "NIM: 22101152610124", color: "64748B", size: 16 })] }),
-                    ],
+                    children: sigBlock(sigZhara, "Zhara Delvian Putri", "Bendahara I"),
                   }),
                 ],
               }),
             ],
+          }),
+          new Paragraph({ text: "" }),
+          new Paragraph({
+            alignment: AlignmentType.CENTER,
+            keepNext: true,
+            children: [new TextRun({ text: "Mengetahui,", size: 20 })],
+          }),
+          new Paragraph({
+            alignment: AlignmentType.CENTER,
+            keepNext: true,
+            children: [new TextRun({ text: " ", size: 90 })],
+          }),
+          new Paragraph({
+            alignment: AlignmentType.CENTER,
+            keepNext: true,
+            spacing: { after: 0 },
+            children: [new TextRun({ text: "Farras Amar Zaim Fasha Khoeroni", bold: true, underline: {}, size: 20 })],
+          }),
+          new Paragraph({
+            alignment: AlignmentType.CENTER,
+            spacing: { after: 0 },
+            children: [new TextRun({ text: "Bupati HMJ-SI", size: 18, color: "334155" })],
           })
         );
       }
