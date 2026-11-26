@@ -113,6 +113,14 @@ body {
     page-break-inside: avoid !important;
   }
 
+  /* Sembunyikan notifikasi (toast) agar tidak ikut tercetak ke PDF */
+  [data-sonner-toaster],
+  [data-sonner-toast],
+  section[aria-label*="otification"] {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
   /* ── Mode "Cetak + Lampiran Nota": laporan tanpa foto, nota dilampirkan 8 per halaman ── */
   body[data-print-mode="lampiran"] tbody tr {
     height: auto !important;

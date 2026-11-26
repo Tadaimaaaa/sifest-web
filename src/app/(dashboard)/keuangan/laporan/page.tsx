@@ -206,6 +206,8 @@ export default function LaporanKeuanganPage() {
       );
     }
     toast.dismiss("print-status");
+    // Beri waktu toast hilang sepenuhnya sebelum dialog cetak terbuka
+    await new Promise((r) => setTimeout(r, 600));
 
     const originalTitle = document.title;
     document.title = "";
