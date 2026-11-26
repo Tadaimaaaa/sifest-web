@@ -17,9 +17,24 @@ import {
   Filter,
   ExternalLink,
   Search,
+  Loader2,
 } from "lucide-react";
 import FullPageLoader from "@/components/FullPageLoader";
 import { splitNotaUrls } from "@/lib/nota";
+import {
+  Document,
+  Packer,
+  Paragraph,
+  Table,
+  TableRow,
+  TableCell,
+  TextRun,
+  WidthType,
+  AlignmentType,
+  PageOrientation,
+  BorderStyle,
+  ExternalHyperlink,
+} from "docx";
 
 const formatRupiah = (angka: number) =>
   new Intl.NumberFormat("id-ID", {
@@ -242,12 +257,97 @@ export default function LaporanKeuanganPage() {
     }
   };
 
-  // ── Export Word (.doc) ───────────────────────────────────────────────────
-  const handleExportWord = () => {
-    try {
-      toast.info("Menyiapkan dokumen Word...");
+  // ── Export Word (.docx) ───────────────────────────────────────────────────
+  const [isExportingWord, setIsExportingWord] = useState(false);
 
-      const tableRows = filtered.map((trx, idx) => {
+  const handleExportWord = async () => {
+    try {
+      setIsExportingWord(true);
+      toast.info("Menyiapkan dokumen Word (.docx)...");
+
+      const borderDef = { style: BorderStyle.SINGLE, size: 4, color: "000000" };
+      const borders = { top: borderDef, bottom: borderDef, left: borderDef, right: borderDef };
+
+      // Header row
+      const headerRow = new TableRow({
+        tableHeader: true,
+        cantSplit: true,
+        children: [
+          new TableCell({
+            width: { size: 4, type: WidthType.PERCENTAGE },
+            borders,
+            shading: { fill: "F1F5F9" },
+            margins: { top: 100, bottom: 100, left: 60, right: 60 },
+            children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "NO", bold: true, size: 16 })] })],
+          }),
+          new TableCell({
+            width: { size: 9, type: WidthType.PERCENTAGE },
+            borders,
+            shading: { fill: "F1F5F9" },
+            margins: { top: 100, bottom: 100, left: 60, right: 60 },
+            children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "TANGGAL", bold: true, size: 16 })] })],
+          }),
+          new TableCell({
+            width: { size: 9, type: WidthType.PERCENTAGE },
+            borders,
+            shading: { fill: "F1F5F9" },
+            margins: { top: 100, bottom: 100, left: 60, right: 60 },
+            children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "KATEGORI", bold: true, size: 16 })] })],
+          }),
+          new TableCell({
+            width: { size: 27, type: WidthType.PERCENTAGE },
+            borders,
+            shading: { fill: "F1F5F9" },
+            margins: { top: 100, bottom: 100, left: 80, right: 80 },
+            children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "KETERANGAN", bold: true, size: 16 })] })],
+          }),
+          new TableCell({
+            width: { size: 8, type: WidthType.PERCENTAGE },
+            borders,
+            shading: { fill: "F1F5F9" },
+            margins: { top: 100, bottom: 100, left: 60, right: 60 },
+            children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "SATUAN/VOL", bold: true, size: 16 })] })],
+          }),
+          new TableCell({
+            width: { size: 9, type: WidthType.PERCENTAGE },
+            borders,
+            shading: { fill: "F1F5F9" },
+            margins: { top: 100, bottom: 100, left: 60, right: 60 },
+            children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "HARGA SATUAN", bold: true, size: 16 })] })],
+          }),
+          new TableCell({
+            width: { size: 9, type: WidthType.PERCENTAGE },
+            borders,
+            shading: { fill: "F1F5F9" },
+            margins: { top: 100, bottom: 100, left: 60, right: 60 },
+            children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "DEBIT", bold: true, size: 16, color: "047857" })] })],
+          }),
+          new TableCell({
+            width: { size: 9, type: WidthType.PERCENTAGE },
+            borders,
+            shading: { fill: "F1F5F9" },
+            margins: { top: 100, bottom: 100, left: 60, right: 60 },
+            children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "KREDIT", bold: true, size: 16, color: "B91C1C" })] })],
+          }),
+          new TableCell({
+            width: { size: 10, type: WidthType.PERCENTAGE },
+            borders,
+            shading: { fill: "F1F5F9" },
+            margins: { top: 100, bottom: 100, left: 60, right: 60 },
+            children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "SALDO", bold: true, size: 16 })] })],
+          }),
+          new TableCell({
+            width: { size: 6, type: WidthType.PERCENTAGE },
+            borders,
+            shading: { fill: "F1F5F9" },
+            margins: { top: 100, bottom: 100, left: 60, right: 60 },
+            children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "NOTA", bold: true, size: 16 })] })],
+          }),
+        ],
+      });
+
+      // Data rows
+      const dataRows = filtered.map((trx, idx) => {
         const volText =
           trx.vol && trx.vol !== "-" && trx.vol !== "0"
             ? `${trx.vol} ${trx.satuan || ""}`.trim()
@@ -258,177 +358,345 @@ export default function LaporanKeuanganPage() {
         const hargaSatuan = getHargaSatuan(trx);
         const urls = splitNotaUrls(trx.bukti_url);
 
-        let notaHtml = "-";
+        // Nota cell children
+        const notaParagraphs: Paragraph[] = [];
         if (urls.length > 0) {
-          notaHtml = urls
-            .map((url) => {
-              let directImgUrl = url;
-              const match = url.match(/\/d\/([a-zA-Z0-9_-]+)/) || url.match(/id=([a-zA-Z0-9_-]+)/);
-              if (match && match[1]) {
-                directImgUrl = `https://lh3.googleusercontent.com/d/${match[1]}=w1000`;
-              }
-              return `
-                <div style="text-align: center; margin: 4pt 0;">
-                  <img src="${directImgUrl}" alt="Nota" style="max-height: 120pt; max-width: 140pt; height: auto; width: auto; border: 1pt solid #cbd5e1;" /><br/>
-                  <span style="font-size: 8.5pt; font-weight: bold; color: #0f172a;">${formatRupiah(trx.nominal)}</span><br/>
-                  <a href="${url}" style="font-size: 8pt; color: #2563eb; text-decoration: underline;">Buka Foto Asli</a>
-                </div>
-              `;
+          urls.forEach((url, uIdx) => {
+            const label = urls.length > 1 ? `[Foto ${uIdx + 1}]` : "[Lihat Foto]";
+            notaParagraphs.push(
+              new Paragraph({
+                alignment: AlignmentType.CENTER,
+                children: [
+                  new ExternalHyperlink({
+                    children: [
+                      new TextRun({
+                        text: label,
+                        color: "0563C1",
+                        underline: {},
+                        size: 15,
+                        bold: true,
+                      }),
+                    ],
+                    link: url,
+                  }),
+                ],
+              })
+            );
+          });
+          notaParagraphs.push(
+            new Paragraph({
+              alignment: AlignmentType.CENTER,
+              children: [
+                new TextRun({
+                  text: formatRupiah(trx.nominal),
+                  size: 14,
+                  bold: true,
+                  color: "334155",
+                }),
+              ],
             })
-            .join("");
+          );
+        } else {
+          notaParagraphs.push(
+            new Paragraph({
+              alignment: AlignmentType.CENTER,
+              children: [new TextRun({ text: "-", size: 16 })],
+            })
+          );
         }
 
-        return `
-          <tr>
-            <td style="text-align: center; border: 1pt solid #000000; padding: 4pt 3pt; font-size: 8.5pt;">${trx.no || idx + 1}</td>
-            <td style="border: 1pt solid #000000; padding: 4pt 3pt; font-size: 8.5pt; white-space: nowrap;">${formatTanggal(trx.tanggal)}</td>
-            <td style="text-align: center; border: 1pt solid #000000; padding: 4pt 3pt; font-size: 8.5pt;">${trx.kategori}</td>
-            <td style="border: 1pt solid #000000; padding: 4pt 4pt; font-size: 8.5pt; word-break: break-word; max-width: 160pt;">${trx.keterangan || "-"}</td>
-            <td style="text-align: center; border: 1pt solid #000000; padding: 4pt 3pt; font-size: 8.5pt;">${volText}</td>
-            <td style="text-align: right; border: 1pt solid #000000; padding: 4pt 3pt; font-size: 8.5pt; white-space: nowrap;">${formatRupiah(hargaSatuan)}</td>
-            <td style="text-align: right; border: 1pt solid #000000; padding: 4pt 3pt; font-size: 8.5pt; color: #047857; font-weight: bold; white-space: nowrap;">${trx.jenis === "INCOME" ? formatRupiah(trx.nominal) : "-"}</td>
-            <td style="text-align: right; border: 1pt solid #000000; padding: 4pt 3pt; font-size: 8.5pt; color: #b91c1c; font-weight: bold; white-space: nowrap;">${trx.jenis === "EXPENSE" ? formatRupiah(trx.nominal) : "-"}</td>
-            <td style="text-align: right; border: 1pt solid #000000; padding: 4pt 3pt; font-size: 8.5pt; font-weight: bold; white-space: nowrap;">${formatRupiah(trx.saldo_kronologis || trx.saldo_akhir || 0)}</td>
-            <td style="text-align: center; border: 1pt solid #000000; padding: 4pt 3pt; font-size: 8.5pt; max-width: 170pt;">${notaHtml}</td>
-          </tr>
-        `;
-      }).join("");
-
-      const signaturesHtml = showSignatures ? `
-        <div style="margin-top: 24pt; width: 100%;">
-          <table style="width: 100%; border: none; margin-top: 20pt;">
-            <tr style="border: none;">
-              <td style="border: none; width: 50%; text-align: center; font-size: 10pt;">
-                <p style="margin: 0;">Mengetahui,</p>
-                <p style="font-weight: bold; margin: 0 0 50pt 0;">Ketua Pelaksana SI FEST 2026</p>
-                <p style="font-weight: bold; text-decoration: underline; margin: 0;">Muhammad Farraz</p>
-                <p style="margin: 0; font-size: 9pt; color: #64748b;">NIM: 22101152610123</p>
-              </td>
-              <td style="border: none; width: 50%; text-align: center; font-size: 10pt;">
-                <p style="margin: 0;">Padang, ${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
-                <p style="font-weight: bold; margin: 0 0 50pt 0;">Bendahara Pelaksana SI FEST 2026</p>
-                <p style="font-weight: bold; text-decoration: underline; margin: 0;">Ahlazzikri Azamud Dhuha</p>
-                <p style="margin: 0; font-size: 9pt; color: #64748b;">NIM: 22101152610124</p>
-              </td>
-            </tr>
-          </table>
-        </div>
-      ` : "";
-
-      const wordHtml = `
-        <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
-        <head>
-          <meta charset='utf-8'>
-          <title>Laporan Keuangan SI FEST 2026</title>
-          <!--[if gte mso 9]>
-          <xml>
-            <w:WordDocument>
-              <w:View>Print</w:View>
-              <w:Zoom>100</w:Zoom>
-              <w:DoNotOptimizeForBrowser/>
-            </w:WordDocument>
-          </xml>
-          <![endif]-->
-          <style>
-            @page Section1 {
-              size: 841.95pt 595.35pt;
-              mso-page-orientation: landscape;
-              margin: 28.35pt 28.35pt 28.35pt 28.35pt;
-            }
-            div.Section1 {
-              page: Section1;
-            }
-            body {
-              font-family: 'Calibri', 'Arial', sans-serif;
-              font-size: 9.5pt;
-              color: #0f172a;
-            }
-            table {
-              border-collapse: collapse;
-              width: 100%;
-              mso-table-layout-alt: fixed;
-            }
-            th {
-              background-color: #f1f5f9;
-              border: 1pt solid #000000;
-              padding: 5pt 3pt;
-              font-size: 8.5pt;
-              font-weight: bold;
-              text-align: center;
-              color: #0f172a;
-              text-transform: uppercase;
-            }
-            td {
-              border: 1pt solid #000000;
-              padding: 4pt 3pt;
-              font-size: 8.5pt;
-              vertical-align: middle;
-            }
-          </style>
-        </head>
-        <body>
-          <div class="Section1">
-            <div style="text-align: center; margin-bottom: 14pt;">
-              <h2 style="font-size: 15pt; font-weight: bold; margin: 0; color: #0f172a; text-transform: uppercase;">
-                LAPORAN KEUANGAN – SI FEST 2026
-              </h2>
-              <p style="font-size: 10pt; font-weight: bold; margin: 3pt 0 0 0; color: #334155;">
-                Periode: ${judulPeriode}
-              </p>
-            </div>
-
-            <table>
-              <thead>
-                <tr>
-                  <th style="width: 25pt;">NO</th>
-                  <th style="width: 55pt;">TANGGAL</th>
-                  <th style="width: 50pt;">KATEGORI</th>
-                  <th>KETERANGAN</th>
-                  <th style="width: 45pt;">SATUAN/VOL</th>
-                  <th style="width: 55pt;">HARGA SATUAN</th>
-                  <th style="width: 60pt; color: #047857;">DEBIT</th>
-                  <th style="width: 60pt; color: #b91c1c;">KREDIT</th>
-                  <th style="width: 65pt;">SALDO</th>
-                  <th style="width: 130pt;">NOTA</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${tableRows}
-              </tbody>
-              <tfoot>
-                <tr style="background-color: #f1f5f9; font-weight: bold;">
-                  <td colspan="6" style="border: 1pt solid #000000; padding: 5pt; font-weight: bold; text-transform: uppercase;">TOTAL SALDO</td>
-                  <td style="border: 1pt solid #000000; padding: 5pt; text-align: right; color: #047857; font-weight: bold;">${formatRupiah(totalDebit)}</td>
-                  <td style="border: 1pt solid #000000; padding: 5pt; text-align: right; color: #b91c1c; font-weight: bold;">${formatRupiah(totalKredit)}</td>
-                  <td style="border: 1pt solid #000000; padding: 5pt; text-align: right; font-weight: bold;">${formatRupiah(totalSaldo)}</td>
-                  <td style="border: 1pt solid #000000;"></td>
-                </tr>
-              </tfoot>
-            </table>
-
-            ${signaturesHtml}
-          </div>
-        </body>
-        </html>
-      `;
-
-      const blob = new Blob(["\ufeff" + wordHtml], {
-        type: "application/msword;charset=utf-8",
+        return new TableRow({
+          cantSplit: true,
+          children: [
+            new TableCell({
+              width: { size: 4, type: WidthType.PERCENTAGE },
+              borders,
+              margins: { top: 80, bottom: 80, left: 60, right: 60 },
+              children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: String(trx.no || idx + 1), size: 16 })] })],
+            }),
+            new TableCell({
+              width: { size: 9, type: WidthType.PERCENTAGE },
+              borders,
+              margins: { top: 80, bottom: 80, left: 60, right: 60 },
+              children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: formatTanggal(trx.tanggal), size: 16 })] })],
+            }),
+            new TableCell({
+              width: { size: 9, type: WidthType.PERCENTAGE },
+              borders,
+              margins: { top: 80, bottom: 80, left: 60, right: 60 },
+              children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: trx.kategori || "-", size: 16 })] })],
+            }),
+            new TableCell({
+              width: { size: 27, type: WidthType.PERCENTAGE },
+              borders,
+              margins: { top: 80, bottom: 80, left: 80, right: 80 },
+              children: [new Paragraph({ alignment: AlignmentType.LEFT, children: [new TextRun({ text: trx.keterangan || "-", size: 16 })] })],
+            }),
+            new TableCell({
+              width: { size: 8, type: WidthType.PERCENTAGE },
+              borders,
+              margins: { top: 80, bottom: 80, left: 60, right: 60 },
+              children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: volText, size: 16 })] })],
+            }),
+            new TableCell({
+              width: { size: 9, type: WidthType.PERCENTAGE },
+              borders,
+              margins: { top: 80, bottom: 80, left: 60, right: 60 },
+              children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: formatRupiah(hargaSatuan), size: 16 })] })],
+            }),
+            new TableCell({
+              width: { size: 9, type: WidthType.PERCENTAGE },
+              borders,
+              margins: { top: 80, bottom: 80, left: 60, right: 60 },
+              children: [
+                new Paragraph({
+                  alignment: AlignmentType.RIGHT,
+                  children: [
+                    new TextRun({
+                      text: trx.jenis === "INCOME" ? formatRupiah(trx.nominal) : "-",
+                      size: 16,
+                      bold: trx.jenis === "INCOME",
+                      color: trx.jenis === "INCOME" ? "047857" : "000000",
+                    }),
+                  ],
+                }),
+              ],
+            }),
+            new TableCell({
+              width: { size: 9, type: WidthType.PERCENTAGE },
+              borders,
+              margins: { top: 80, bottom: 80, left: 60, right: 60 },
+              children: [
+                new Paragraph({
+                  alignment: AlignmentType.RIGHT,
+                  children: [
+                    new TextRun({
+                      text: trx.jenis === "EXPENSE" ? formatRupiah(trx.nominal) : "-",
+                      size: 16,
+                      bold: trx.jenis === "EXPENSE",
+                      color: trx.jenis === "EXPENSE" ? "B91C1C" : "000000",
+                    }),
+                  ],
+                }),
+              ],
+            }),
+            new TableCell({
+              width: { size: 10, type: WidthType.PERCENTAGE },
+              borders,
+              margins: { top: 80, bottom: 80, left: 60, right: 60 },
+              children: [
+                new Paragraph({
+                  alignment: AlignmentType.RIGHT,
+                  children: [
+                    new TextRun({
+                      text: formatRupiah(trx.saldo_kronologis || trx.saldo_akhir || 0),
+                      size: 16,
+                      bold: true,
+                    }),
+                  ],
+                }),
+              ],
+            }),
+            new TableCell({
+              width: { size: 6, type: WidthType.PERCENTAGE },
+              borders,
+              margins: { top: 80, bottom: 80, left: 60, right: 60 },
+              children: notaParagraphs,
+            }),
+          ],
+        });
       });
 
+      // Total row
+      const totalRow = new TableRow({
+        cantSplit: true,
+        children: [
+          new TableCell({
+            columnSpan: 6,
+            width: { size: 66, type: WidthType.PERCENTAGE },
+            borders,
+            shading: { fill: "F1F5F9" },
+            margins: { top: 100, bottom: 100, left: 80, right: 80 },
+            children: [
+              new Paragraph({
+                alignment: AlignmentType.LEFT,
+                children: [new TextRun({ text: "TOTAL SALDO", bold: true, size: 17 })],
+              }),
+            ],
+          }),
+          new TableCell({
+            width: { size: 9, type: WidthType.PERCENTAGE },
+            borders,
+            shading: { fill: "F1F5F9" },
+            margins: { top: 100, bottom: 100, left: 60, right: 60 },
+            children: [
+              new Paragraph({
+                alignment: AlignmentType.RIGHT,
+                children: [new TextRun({ text: formatRupiah(totalDebit), bold: true, size: 17, color: "047857" })],
+              }),
+            ],
+          }),
+          new TableCell({
+            width: { size: 9, type: WidthType.PERCENTAGE },
+            borders,
+            shading: { fill: "F1F5F9" },
+            margins: { top: 100, bottom: 100, left: 60, right: 60 },
+            children: [
+              new Paragraph({
+                alignment: AlignmentType.RIGHT,
+                children: [new TextRun({ text: formatRupiah(totalKredit), bold: true, size: 17, color: "B91C1C" })],
+              }),
+            ],
+          }),
+          new TableCell({
+            width: { size: 10, type: WidthType.PERCENTAGE },
+            borders,
+            shading: { fill: "F1F5F9" },
+            margins: { top: 100, bottom: 100, left: 60, right: 60 },
+            children: [
+              new Paragraph({
+                alignment: AlignmentType.RIGHT,
+                children: [new TextRun({ text: formatRupiah(totalSaldo), bold: true, size: 17 })],
+              }),
+            ],
+          }),
+          new TableCell({
+            width: { size: 6, type: WidthType.PERCENTAGE },
+            borders,
+            shading: { fill: "F1F5F9" },
+            margins: { top: 100, bottom: 100, left: 60, right: 60 },
+            children: [new Paragraph({ text: "" })],
+          }),
+        ],
+      });
+
+      const sectionChildren: (Paragraph | Table)[] = [
+        new Paragraph({
+          alignment: AlignmentType.CENTER,
+          children: [
+            new TextRun({
+              text: "LAPORAN KEUANGAN – SI FEST 2026",
+              bold: true,
+              size: 26,
+            }),
+          ],
+        }),
+        new Paragraph({
+          alignment: AlignmentType.CENTER,
+          children: [
+            new TextRun({
+              text: `Periode: ${judulPeriode}`,
+              bold: true,
+              size: 18,
+              color: "334155",
+            }),
+          ],
+        }),
+        new Paragraph({ text: "" }),
+        new Table({
+          width: { size: 100, type: WidthType.PERCENTAGE },
+          rows: [headerRow, ...dataRows, totalRow],
+        }),
+      ];
+
+      // Signatures
+      if (showSignatures) {
+        const noBorder = { style: BorderStyle.NONE, size: 0, color: "FFFFFF" };
+        const transparentBorders = {
+          top: noBorder,
+          bottom: noBorder,
+          left: noBorder,
+          right: noBorder,
+        };
+
+        const todayStr = new Date().toLocaleDateString("id-ID", {
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        });
+
+        sectionChildren.push(
+          new Paragraph({ text: "" }),
+          new Paragraph({ text: "" }),
+          new Table({
+            width: { size: 100, type: WidthType.PERCENTAGE },
+            borders: transparentBorders,
+            rows: [
+              new TableRow({
+                cantSplit: true,
+                children: [
+                  new TableCell({
+                    width: { size: 50, type: WidthType.PERCENTAGE },
+                    borders: transparentBorders,
+                    children: [
+                      new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Mengetahui,", size: 18 })] }),
+                      new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Ketua Pelaksana SI FEST 2026", bold: true, size: 18 })] }),
+                      new Paragraph({ text: "" }),
+                      new Paragraph({ text: "" }),
+                      new Paragraph({ text: "" }),
+                      new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Muhammad Farraz", bold: true, underline: {}, size: 18 })] }),
+                      new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "NIM: 22101152610123", color: "64748B", size: 16 })] }),
+                    ],
+                  }),
+                  new TableCell({
+                    width: { size: 50, type: WidthType.PERCENTAGE },
+                    borders: transparentBorders,
+                    children: [
+                      new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: `Padang, ${todayStr}`, size: 18 })] }),
+                      new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Bendahara Pelaksana SI FEST 2026", bold: true, size: 18 })] }),
+                      new Paragraph({ text: "" }),
+                      new Paragraph({ text: "" }),
+                      new Paragraph({ text: "" }),
+                      new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "Ahlazzikri Azamud Dhuha", bold: true, underline: {}, size: 18 })] }),
+                      new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "NIM: 22101152610124", color: "64748B", size: 16 })] }),
+                    ],
+                  }),
+                ],
+              }),
+            ],
+          })
+        );
+      }
+
+      const doc = new Document({
+        sections: [
+          {
+            properties: {
+              page: {
+                size: {
+                  orientation: PageOrientation.LANDSCAPE,
+                  width: 16838,
+                  height: 11906,
+                },
+                margin: {
+                  top: 720,
+                  right: 720,
+                  bottom: 720,
+                  left: 720,
+                },
+              },
+            },
+            children: sectionChildren,
+          },
+        ],
+      });
+
+      const blob = await Packer.toBlob(doc);
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `Laporan_Keuangan_SIFEST_2026_${judulPeriode.replace(/[^a-zA-Z0-9]/g, "_")}.doc`;
+      a.download = `Laporan_Keuangan_SIFEST_2026_${judulPeriode.replace(/[^a-zA-Z0-9]/g, "_")}.docx`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      toast.success("Dokumen Word (.doc) berhasil diunduh! Siap dibuka dan diedit di Microsoft Word.");
+      toast.success("Dokumen Word (.docx) berhasil diunduh! Format Landscape A4 rapi dan siap diedit.");
     } catch (err: any) {
+      console.error("Export Word Error:", err);
       toast.error("Gagal mengekspor dokumen Word.");
-      console.error(err);
+    } finally {
+      setIsExportingWord(false);
     }
   };
 
@@ -460,9 +728,14 @@ export default function LaporanKeuanganPage() {
           </button>
           <button
             onClick={handleExportWord}
-            className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors border border-blue-200 shadow-sm"
+            disabled={isExportingWord}
+            className="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-blue-50 hover:bg-blue-100 text-blue-700 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors border border-blue-200 shadow-sm disabled:opacity-50"
           >
-            <FileText className="w-4 h-4" />
+            {isExportingWord ? (
+              <Loader2 className="w-4 h-4 animate-spin text-blue-700" />
+            ) : (
+              <FileText className="w-4 h-4" />
+            )}
             Word
           </button>
           <button
