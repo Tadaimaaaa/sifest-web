@@ -34,6 +34,7 @@ import {
   PageOrientation,
   BorderStyle,
   ExternalHyperlink,
+  ImageRun,
 } from "docx";
 
 const formatRupiah = (angka: number) =>
@@ -257,13 +258,88 @@ export default function LaporanKeuanganPage() {
     }
   };
 
+  // Helper fetch gambar untuk disematkan langsung di dokumen Word (.docx)
+  const fetchImageForDocx = async (
+    url: string,
+    isMultiple: boolean = false
+  ): Promise<{ data: Uint8Array; width: number; height: number } | null> => {
+    try {
+      const proxyUrl = getImageSrc(url);
+      if (!proxyUrl) return null;
+
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 6000);
+
+      const res = await fetch(proxyUrl, { signal: controller.signal });
+      clearTimeout(timeout);
+
+      if (!res.ok) return null;
+      const arrayBuffer = await res.arrayBuffer();
+      const data = new Uint8Array(arrayBuffer);
+
+      let width = isMultiple ? 75 : 130;
+      let height = isMultiple ? 100 : 160;
+
+      try {
+        if (typeof createImageBitmap === "function") {
+          const bmp = await createImageBitmap(new Blob([data]));
+          const maxW = isMultiple ? 80 : 140;
+          const maxH = isMultiple ? 110 : 170;
+          const scale = Math.min(maxW / bmp.width, maxH / bmp.height, 1);
+          width = Math.max(30, Math.round(bmp.width * scale));
+          height = Math.max(30, Math.round(bmp.height * scale));
+          bmp.close();
+        }
+      } catch {
+        // fallback ke ukuran standar
+      }
+
+      return { data, width, height };
+    } catch (err) {
+      console.warn("Gagal memuat gambar nota untuk Word:", url, err);
+      return null;
+    }
+  };
+
   // ── Export Word (.docx) ───────────────────────────────────────────────────
   const [isExportingWord, setIsExportingWord] = useState(false);
 
   const handleExportWord = async () => {
     try {
       setIsExportingWord(true);
-      toast.info("Menyiapkan dokumen Word (.docx)...");
+      toast.info("Mengumpulkan foto nota untuk dokumen Word...", { id: "word-status" });
+
+      // 1. Kumpulkan semua URL nota unik
+      const uniqueUrls: { url: string; isMultiple: boolean }[] = [];
+      const seen = new Set<string>();
+      filtered.forEach((trx) => {
+        const urls = splitNotaUrls(trx.bukti_url);
+        urls.forEach((u) => {
+          if (u && !seen.has(u)) {
+            seen.add(u);
+            uniqueUrls.push({ url: u, isMultiple: urls.length > 1 });
+          }
+        });
+      });
+
+      // 2. Pre-fetch semua foto nota secara paralel (batch ukuran 8)
+      const imageMap = new Map<string, { data: Uint8Array; width: number; height: number } | null>();
+      const BATCH_SIZE = 8;
+      for (let i = 0; i < uniqueUrls.length; i += BATCH_SIZE) {
+        const batch = uniqueUrls.slice(i, i + BATCH_SIZE);
+        await Promise.all(
+          batch.map(async (item) => {
+            const imgData = await fetchImageForDocx(item.url, item.isMultiple);
+            imageMap.set(item.url, imgData);
+          })
+        );
+        const progress = Math.min(i + BATCH_SIZE, uniqueUrls.length);
+        if (uniqueUrls.length > 0) {
+          toast.info(`Memproses foto nota (${progress}/${uniqueUrls.length})...`, { id: "word-status" });
+        }
+      }
+
+      toast.info("Menyusun lembar kerja Word A4 Landscape...", { id: "word-status" });
 
       const borderDef = { style: BorderStyle.SINGLE, size: 4, color: "000000" };
       const borders = { top: borderDef, bottom: borderDef, left: borderDef, right: borderDef };
@@ -274,70 +350,70 @@ export default function LaporanKeuanganPage() {
         cantSplit: true,
         children: [
           new TableCell({
-            width: { size: 4, type: WidthType.PERCENTAGE },
+            width: { size: 3, type: WidthType.PERCENTAGE },
             borders,
             shading: { fill: "F1F5F9" },
             margins: { top: 100, bottom: 100, left: 60, right: 60 },
             children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "NO", bold: true, size: 16 })] })],
           }),
           new TableCell({
-            width: { size: 9, type: WidthType.PERCENTAGE },
+            width: { size: 8, type: WidthType.PERCENTAGE },
             borders,
             shading: { fill: "F1F5F9" },
             margins: { top: 100, bottom: 100, left: 60, right: 60 },
             children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "TANGGAL", bold: true, size: 16 })] })],
           }),
           new TableCell({
-            width: { size: 9, type: WidthType.PERCENTAGE },
+            width: { size: 8, type: WidthType.PERCENTAGE },
             borders,
             shading: { fill: "F1F5F9" },
             margins: { top: 100, bottom: 100, left: 60, right: 60 },
             children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "KATEGORI", bold: true, size: 16 })] })],
           }),
           new TableCell({
-            width: { size: 27, type: WidthType.PERCENTAGE },
+            width: { size: 22, type: WidthType.PERCENTAGE },
             borders,
             shading: { fill: "F1F5F9" },
             margins: { top: 100, bottom: 100, left: 80, right: 80 },
             children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "KETERANGAN", bold: true, size: 16 })] })],
           }),
           new TableCell({
-            width: { size: 8, type: WidthType.PERCENTAGE },
+            width: { size: 7, type: WidthType.PERCENTAGE },
             borders,
             shading: { fill: "F1F5F9" },
             margins: { top: 100, bottom: 100, left: 60, right: 60 },
             children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "SATUAN/VOL", bold: true, size: 16 })] })],
           }),
           new TableCell({
-            width: { size: 9, type: WidthType.PERCENTAGE },
+            width: { size: 8, type: WidthType.PERCENTAGE },
             borders,
             shading: { fill: "F1F5F9" },
             margins: { top: 100, bottom: 100, left: 60, right: 60 },
             children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "HARGA SATUAN", bold: true, size: 16 })] })],
           }),
           new TableCell({
-            width: { size: 9, type: WidthType.PERCENTAGE },
+            width: { size: 8, type: WidthType.PERCENTAGE },
             borders,
             shading: { fill: "F1F5F9" },
             margins: { top: 100, bottom: 100, left: 60, right: 60 },
             children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "DEBIT", bold: true, size: 16, color: "047857" })] })],
           }),
           new TableCell({
-            width: { size: 9, type: WidthType.PERCENTAGE },
+            width: { size: 8, type: WidthType.PERCENTAGE },
             borders,
             shading: { fill: "F1F5F9" },
             margins: { top: 100, bottom: 100, left: 60, right: 60 },
             children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "KREDIT", bold: true, size: 16, color: "B91C1C" })] })],
           }),
           new TableCell({
-            width: { size: 10, type: WidthType.PERCENTAGE },
+            width: { size: 9, type: WidthType.PERCENTAGE },
             borders,
             shading: { fill: "F1F5F9" },
             margins: { top: 100, bottom: 100, left: 60, right: 60 },
             children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: "SALDO", bold: true, size: 16 })] })],
           }),
           new TableCell({
-            width: { size: 6, type: WidthType.PERCENTAGE },
+            width: { size: 19, type: WidthType.PERCENTAGE },
             borders,
             shading: { fill: "F1F5F9" },
             margins: { top: 100, bottom: 100, left: 60, right: 60 },
@@ -358,11 +434,29 @@ export default function LaporanKeuanganPage() {
         const hargaSatuan = getHargaSatuan(trx);
         const urls = splitNotaUrls(trx.bukti_url);
 
-        // Nota cell children
+        // Nota cell children (foto nota disematkan langsung)
         const notaParagraphs: Paragraph[] = [];
         if (urls.length > 0) {
           urls.forEach((url, uIdx) => {
-            const label = urls.length > 1 ? `[Foto ${uIdx + 1}]` : "[Lihat Foto]";
+            const cachedImg = imageMap.get(url);
+            if (cachedImg) {
+              notaParagraphs.push(
+                new Paragraph({
+                  alignment: AlignmentType.CENTER,
+                  children: [
+                    new ImageRun({
+                      data: cachedImg.data,
+                      transformation: {
+                        width: cachedImg.width,
+                        height: cachedImg.height,
+                      },
+                      type: "jpg",
+                    }),
+                  ],
+                })
+              );
+            }
+            const label = urls.length > 1 ? `[Buka Foto ${uIdx + 1}]` : "[Buka Foto Asli (HD)]";
             notaParagraphs.push(
               new Paragraph({
                 alignment: AlignmentType.CENTER,
@@ -373,8 +467,7 @@ export default function LaporanKeuanganPage() {
                         text: label,
                         color: "0563C1",
                         underline: {},
-                        size: 15,
-                        bold: true,
+                        size: 14,
                       }),
                     ],
                     link: url,
@@ -391,7 +484,7 @@ export default function LaporanKeuanganPage() {
                   text: formatRupiah(trx.nominal),
                   size: 14,
                   bold: true,
-                  color: "334155",
+                  color: "0F172A",
                 }),
               ],
             })
@@ -409,43 +502,43 @@ export default function LaporanKeuanganPage() {
           cantSplit: true,
           children: [
             new TableCell({
-              width: { size: 4, type: WidthType.PERCENTAGE },
+              width: { size: 3, type: WidthType.PERCENTAGE },
               borders,
               margins: { top: 80, bottom: 80, left: 60, right: 60 },
               children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: String(trx.no || idx + 1), size: 16 })] })],
             }),
             new TableCell({
-              width: { size: 9, type: WidthType.PERCENTAGE },
+              width: { size: 8, type: WidthType.PERCENTAGE },
               borders,
               margins: { top: 80, bottom: 80, left: 60, right: 60 },
               children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: formatTanggal(trx.tanggal), size: 16 })] })],
             }),
             new TableCell({
-              width: { size: 9, type: WidthType.PERCENTAGE },
+              width: { size: 8, type: WidthType.PERCENTAGE },
               borders,
               margins: { top: 80, bottom: 80, left: 60, right: 60 },
               children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: trx.kategori || "-", size: 16 })] })],
             }),
             new TableCell({
-              width: { size: 27, type: WidthType.PERCENTAGE },
+              width: { size: 22, type: WidthType.PERCENTAGE },
               borders,
               margins: { top: 80, bottom: 80, left: 80, right: 80 },
               children: [new Paragraph({ alignment: AlignmentType.LEFT, children: [new TextRun({ text: trx.keterangan || "-", size: 16 })] })],
             }),
             new TableCell({
-              width: { size: 8, type: WidthType.PERCENTAGE },
+              width: { size: 7, type: WidthType.PERCENTAGE },
               borders,
               margins: { top: 80, bottom: 80, left: 60, right: 60 },
               children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: volText, size: 16 })] })],
             }),
             new TableCell({
-              width: { size: 9, type: WidthType.PERCENTAGE },
+              width: { size: 8, type: WidthType.PERCENTAGE },
               borders,
               margins: { top: 80, bottom: 80, left: 60, right: 60 },
               children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: formatRupiah(hargaSatuan), size: 16 })] })],
             }),
             new TableCell({
-              width: { size: 9, type: WidthType.PERCENTAGE },
+              width: { size: 8, type: WidthType.PERCENTAGE },
               borders,
               margins: { top: 80, bottom: 80, left: 60, right: 60 },
               children: [
@@ -463,7 +556,7 @@ export default function LaporanKeuanganPage() {
               ],
             }),
             new TableCell({
-              width: { size: 9, type: WidthType.PERCENTAGE },
+              width: { size: 8, type: WidthType.PERCENTAGE },
               borders,
               margins: { top: 80, bottom: 80, left: 60, right: 60 },
               children: [
@@ -481,7 +574,7 @@ export default function LaporanKeuanganPage() {
               ],
             }),
             new TableCell({
-              width: { size: 10, type: WidthType.PERCENTAGE },
+              width: { size: 9, type: WidthType.PERCENTAGE },
               borders,
               margins: { top: 80, bottom: 80, left: 60, right: 60 },
               children: [
@@ -498,7 +591,7 @@ export default function LaporanKeuanganPage() {
               ],
             }),
             new TableCell({
-              width: { size: 6, type: WidthType.PERCENTAGE },
+              width: { size: 19, type: WidthType.PERCENTAGE },
               borders,
               margins: { top: 80, bottom: 80, left: 60, right: 60 },
               children: notaParagraphs,
@@ -513,7 +606,7 @@ export default function LaporanKeuanganPage() {
         children: [
           new TableCell({
             columnSpan: 6,
-            width: { size: 66, type: WidthType.PERCENTAGE },
+            width: { size: 56, type: WidthType.PERCENTAGE },
             borders,
             shading: { fill: "F1F5F9" },
             margins: { top: 100, bottom: 100, left: 80, right: 80 },
@@ -525,7 +618,7 @@ export default function LaporanKeuanganPage() {
             ],
           }),
           new TableCell({
-            width: { size: 9, type: WidthType.PERCENTAGE },
+            width: { size: 8, type: WidthType.PERCENTAGE },
             borders,
             shading: { fill: "F1F5F9" },
             margins: { top: 100, bottom: 100, left: 60, right: 60 },
@@ -537,7 +630,7 @@ export default function LaporanKeuanganPage() {
             ],
           }),
           new TableCell({
-            width: { size: 9, type: WidthType.PERCENTAGE },
+            width: { size: 8, type: WidthType.PERCENTAGE },
             borders,
             shading: { fill: "F1F5F9" },
             margins: { top: 100, bottom: 100, left: 60, right: 60 },
@@ -549,7 +642,7 @@ export default function LaporanKeuanganPage() {
             ],
           }),
           new TableCell({
-            width: { size: 10, type: WidthType.PERCENTAGE },
+            width: { size: 9, type: WidthType.PERCENTAGE },
             borders,
             shading: { fill: "F1F5F9" },
             margins: { top: 100, bottom: 100, left: 60, right: 60 },
@@ -561,7 +654,7 @@ export default function LaporanKeuanganPage() {
             ],
           }),
           new TableCell({
-            width: { size: 6, type: WidthType.PERCENTAGE },
+            width: { size: 19, type: WidthType.PERCENTAGE },
             borders,
             shading: { fill: "F1F5F9" },
             margins: { top: 100, bottom: 100, left: 60, right: 60 },
@@ -658,6 +751,7 @@ export default function LaporanKeuanganPage() {
         );
       }
 
+      // Dokumen Word dengan Orientasi LANDSCAPE A4 resmi
       const doc = new Document({
         sections: [
           {
@@ -665,8 +759,6 @@ export default function LaporanKeuanganPage() {
               page: {
                 size: {
                   orientation: PageOrientation.LANDSCAPE,
-                  width: 16838,
-                  height: 11906,
                 },
                 margin: {
                   top: 720,
@@ -691,10 +783,10 @@ export default function LaporanKeuanganPage() {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
 
-      toast.success("Dokumen Word (.docx) berhasil diunduh! Format Landscape A4 rapi dan siap diedit.");
+      toast.success("Dokumen Word (.docx) berhasil diunduh! Lengkap dengan foto nota dan format Landscape A4.", { id: "word-status" });
     } catch (err: any) {
       console.error("Export Word Error:", err);
-      toast.error("Gagal mengekspor dokumen Word.");
+      toast.error("Gagal mengekspor dokumen Word.", { id: "word-status" });
     } finally {
       setIsExportingWord(false);
     }
