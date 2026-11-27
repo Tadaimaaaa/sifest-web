@@ -114,9 +114,20 @@ export default function LaporanKeuanganPage() {
     fetchTransactions();
   }, []);
 
-  // ── 1. Urutkan seluruh data berdasarkan Nomor Urut Kas (No: 1 -> terakhir) ──
-  // Sesuai urutan buku kas resmi di spreadsheet agar transaksi terbaru selalu berada di baris paling bawah
+  // ── 1. Urutkan seluruh data berdasarkan Tanggal (kronologis: terlama -> terbaru) ──
+  // Jika tanggal sama, urutkan berdasarkan urutan pencatatan buku kas (No)
   const sortedAll = [...transactions].sort((a, b) => {
+    const timeA = new Date(a.tanggal).getTime();
+    const timeB = new Date(b.tanggal).getTime();
+    const validA = !isNaN(timeA);
+    const validB = !isNaN(timeB);
+
+    if (validA && validB) {
+      if (timeA !== timeB) return timeA - timeB;
+      return Number(a.no || 0) - Number(b.no || 0);
+    }
+    if (validA) return -1;
+    if (validB) return 1;
     return Number(a.no || 0) - Number(b.no || 0);
   });
 
@@ -234,7 +245,7 @@ export default function LaporanKeuanganPage() {
             const suffix = urls.length > 1 ? ` (${uIdx + 1}/${urls.length})` : "";
             return {
               url,
-              label: `No. ${trx.no || idx + 1} - ${ketShort} - ${formatRupiah(trx.nominal)}${suffix}`,
+              label: `No. ${idx + 1} - ${ketShort} - ${formatRupiah(trx.nominal)}${suffix}`,
             };
           });
         })
@@ -544,7 +555,7 @@ export default function LaporanKeuanganPage() {
               width: { size: COLS[0], type: WidthType.PERCENTAGE },
               borders,
               margins: { top: 80, bottom: 80, left: 60, right: 60 },
-              children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: String(trx.no || idx + 1), size: 16 })] })],
+              children: [new Paragraph({ alignment: AlignmentType.CENTER, children: [new TextRun({ text: String(idx + 1), size: 16 })] })],
             }),
             new TableCell({
               width: { size: COLS[1], type: WidthType.PERCENTAGE },
@@ -855,7 +866,7 @@ export default function LaporanKeuanganPage() {
             items.push({
               url,
               img: imageMap.get(url) || null,
-              label: `No. ${trx.no || idx + 1} - ${ketShort} - ${formatRupiah(trx.nominal)}${suffix}`,
+              label: `No. ${idx + 1} - ${ketShort} - ${formatRupiah(trx.nominal)}${suffix}`,
             });
           });
         });
@@ -1234,7 +1245,7 @@ export default function LaporanKeuanganPage() {
                     >
                       {/* No */}
                       <td className="px-1 py-1.5 print:py-1 text-center whitespace-nowrap text-xs print:text-[9.5px] font-semibold text-slate-800 border border-black print:border-black">
-                        {trx.no || idx + 1}
+                        {idx + 1}
                       </td>
 
                       {/* Tanggal */}
