@@ -47,6 +47,7 @@ export default function KeuanganPage() {
     nominal: "",
     vol: "",
     satuan: "",
+    harga_satuan: "",
     penanggung_jawab: "",
     status: "Lunas",
   });
@@ -98,6 +99,7 @@ export default function KeuanganPage() {
       const payload = {
         ...newTrx,
         nominal: parseInt(newTrx.nominal.replace(/\D/g, '') || "0", 10),
+        harga_satuan: newTrx.harga_satuan ? parseInt(newTrx.harga_satuan.replace(/\D/g, '') || "0", 10) : 0,
         files: newFiles,
         bukti_url: existingUrls.join("\n"),
         token,
@@ -135,7 +137,7 @@ export default function KeuanganPage() {
         setIsModalOpen(false);
         setEditTrxId(null);
         setEditTrxNo(null);
-        setNewTrx({ ...newTrx, keterangan: "", nominal: "", vol: "", satuan: "", penanggung_jawab: "", status: "Lunas" }); // reset form
+        setNewTrx({ ...newTrx, keterangan: "", nominal: "", vol: "", satuan: "", harga_satuan: "", penanggung_jawab: "", status: "Lunas" }); // reset form
         setNewFiles([]);
         setExistingUrls([]);
         fetchTransactions(); // Refresh data
@@ -196,6 +198,14 @@ export default function KeuanganPage() {
   const handleEditClick = (trx: any) => {
     setEditTrxId(trx.trx_id);
     setEditTrxNo(trx.no !== undefined && trx.no !== null ? Number(trx.no) : null);
+    
+    let hs = "";
+    if (trx.harga_satuan && Number(trx.harga_satuan) > 0) {
+      hs = Number(trx.harga_satuan).toLocaleString('id-ID');
+    } else if (trx.vol && parseFloat(trx.vol) > 0 && trx.nominal) {
+      hs = Math.round(Number(trx.nominal) / parseFloat(trx.vol)).toLocaleString('id-ID');
+    }
+
     setNewTrx({
       tanggal: trx.tanggal.split('T')[0],
       jenis: trx.jenis,
@@ -204,12 +214,39 @@ export default function KeuanganPage() {
       nominal: (trx.nominal || 0).toLocaleString('id-ID'),
       vol: trx.vol && trx.vol !== "-" ? trx.vol : "",
       satuan: trx.satuan && trx.satuan !== "-" ? trx.satuan : "",
+      harga_satuan: hs,
       penanggung_jawab: trx.penanggung_jawab || trx.recorded_by || "",
       status: trx.status || "Lunas",
     } as any);
     setExistingUrls(splitUrls(trx.bukti_url));
     setNewFiles([]);
     setIsModalOpen(true);
+  };
+
+  const handleVolChange = (val: string) => {
+    setNewTrx(prev => {
+      const updated = { ...prev, vol: val };
+      const numVol = parseFloat(val);
+      const numHs = parseInt(prev.harga_satuan.replace(/\D/g, '') || "0", 10);
+      if (!isNaN(numVol) && numVol > 0 && numHs > 0) {
+        updated.nominal = Math.round(numVol * numHs).toLocaleString('id-ID');
+      }
+      return updated;
+    });
+  };
+
+  const handleHargaSatuanChange = (val: string) => {
+    const raw = val.replace(/\D/g, '');
+    const formatted = raw ? parseInt(raw, 10).toLocaleString('id-ID') : '';
+    setNewTrx(prev => {
+      const updated = { ...prev, harga_satuan: formatted };
+      const numVol = parseFloat(prev.vol);
+      const numHs = parseInt(raw || "0", 10);
+      if (!isNaN(numVol) && numVol > 0 && numHs > 0) {
+        updated.nominal = Math.round(numVol * numHs).toLocaleString('id-ID');
+      }
+      return updated;
+    });
   };
 
   const handleDelete = async (trx: any) => {
@@ -315,6 +352,9 @@ export default function KeuanganPage() {
         "Keterangan": trx.keterangan || "-",
         "Jenis": trx.jenis === 'INCOME' ? 'Pemasukan' : 'Pengeluaran',
         "Volume": trx.vol !== "-" && trx.vol ? `${trx.vol} ${trx.satuan}` : "-",
+        "Harga Satuan": trx.harga_satuan && Number(trx.harga_satuan) > 0
+          ? Number(trx.harga_satuan)
+          : (trx.vol && parseFloat(trx.vol) > 0 && trx.nominal ? Math.round(Number(trx.nominal) / parseFloat(trx.vol)) : "-"),
         "Masuk": trx.jenis === 'INCOME' ? trx.nominal : 0,
         "Keluar": trx.jenis === 'EXPENSE' ? trx.nominal : 0,
         "Saldo Akhir": trx.saldo_akhir,
@@ -506,6 +546,7 @@ export default function KeuanganPage() {
                 <th className="px-6 py-4 font-semibold">Kategori & Keterangan</th>
                 <th className="px-6 py-4 font-semibold text-center">Foto / Bukti</th>
                 <th className="px-6 py-4 font-semibold">Vol</th>
+                <th className="px-6 py-4 font-semibold text-right">Harga Satuan</th>
                 <th className="px-6 py-4 font-semibold text-right">Nominal</th>
                 <th className="px-6 py-4 font-semibold text-right">Saldo</th>
                 <th className="px-6 py-4 font-semibold">PJ & Status</th>
@@ -515,13 +556,13 @@ export default function KeuanganPage() {
             <tbody className="divide-y divide-slate-100">
               {isLoading ? (
                 <tr>
-                  <td colSpan={10} className="h-64 relative p-0">
+                  <td colSpan={11} className="h-64 relative p-0">
                     <FullPageLoader message="Memuat Data Keuangan..." fullScreen={false} />
                   </td>
                 </tr>
               ) : filteredTransactions.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="px-6 py-12 text-center text-slate-500">
+                  <td colSpan={10} className="px-6 py-12 text-center text-slate-500">
                     Tidak ada transaksi yang ditemukan.
                   </td>
                 </tr>
@@ -579,6 +620,13 @@ export default function KeuanganPage() {
                     </td>
                     <td className="px-6 py-4 text-slate-700">
                       {(trx.vol && trx.vol !== "-" && trx.vol !== "0") ? `${trx.vol} ${trx.satuan || ''}` : (trx.satuan && trx.satuan !== "-" ? trx.satuan : "-")}
+                    </td>
+                    <td className="px-6 py-4 text-right whitespace-nowrap text-slate-700 font-medium">
+                      {trx.harga_satuan && Number(trx.harga_satuan) > 0
+                        ? formatRupiah(Number(trx.harga_satuan))
+                        : (trx.vol && parseFloat(trx.vol) > 0 && trx.nominal
+                            ? formatRupiah(Math.round(Number(trx.nominal) / parseFloat(trx.vol)))
+                            : "-")}
                     </td>
                     <td className="px-6 py-4 text-right whitespace-nowrap">
                       <p className={`font-bold ${trx.jenis === 'INCOME' ? 'text-emerald-600' : 'text-rose-600'}`}>
@@ -644,7 +692,7 @@ export default function KeuanganPage() {
                   setIsModalOpen(false);
                   setEditTrxId(null);
                   setEditTrxNo(null);
-                  setNewTrx({ ...newTrx, keterangan: "", nominal: "", vol: "", satuan: "", penanggung_jawab: "", status: "Lunas" });
+                  setNewTrx({ ...newTrx, keterangan: "", nominal: "", vol: "", satuan: "", harga_satuan: "", penanggung_jawab: "", status: "Lunas" });
                   setNewFiles([]);
                   setExistingUrls([]);
                 }}
@@ -703,21 +751,6 @@ export default function KeuanganPage() {
                 </div>
               </div>
 
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium text-slate-700">Nominal Total (Rp)</label>
-                <input 
-                  type="text"
-                  required
-                  placeholder="Contoh: 1500000"
-                  value={newTrx.nominal}
-                  onChange={(e) => {
-                    const val = e.target.value.replace(/\D/g, '');
-                    setNewTrx({...newTrx, nominal: val ? parseInt(val).toLocaleString('id-ID') : ''})
-                  }}
-                  className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 font-semibold focus:ring-2 focus:ring-blue-500/50 focus:outline-none placeholder:text-slate-400"
-                />
-              </div>
-
               {newTrx.kategori?.trim().toLowerCase() === 'pendaftaran' ? (
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
@@ -726,7 +759,7 @@ export default function KeuanganPage() {
                       type="number"
                       placeholder="Contoh: 1"
                       value={newTrx.vol}
-                      onChange={(e) => setNewTrx({...newTrx, vol: e.target.value})}
+                      onChange={(e) => handleVolChange(e.target.value)}
                       className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 focus:ring-2 focus:ring-blue-500/50 focus:outline-none placeholder:text-slate-400"
                     />
                   </div>
@@ -757,7 +790,7 @@ export default function KeuanganPage() {
                       type="number"
                       placeholder="Contoh: 10"
                       value={newTrx.vol}
-                      onChange={(e) => setNewTrx({...newTrx, vol: e.target.value})}
+                      onChange={(e) => handleVolChange(e.target.value)}
                       className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 focus:ring-2 focus:ring-blue-500/50 focus:outline-none placeholder:text-slate-400"
                     />
                   </div>
@@ -773,6 +806,37 @@ export default function KeuanganPage() {
                   </div>
                 </div>
               )}
+
+              {/* Harga Satuan & Nominal Total */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-slate-700">Harga Satuan (Rp)</label>
+                    <span className="text-[11px] text-slate-400 font-normal">Opsional</span>
+                  </div>
+                  <input 
+                    type="text"
+                    placeholder="Contoh: 5.000"
+                    value={newTrx.harga_satuan}
+                    onChange={(e) => handleHargaSatuanChange(e.target.value)}
+                    className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 font-semibold focus:ring-2 focus:ring-blue-500/50 focus:outline-none placeholder:text-slate-400"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium text-slate-700">Nominal Total (Rp)</label>
+                  <input 
+                    type="text"
+                    required
+                    placeholder="Contoh: 1.500.000"
+                    value={newTrx.nominal}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/\D/g, '');
+                      setNewTrx({...newTrx, nominal: val ? parseInt(val).toLocaleString('id-ID') : ''});
+                    }}
+                    className="w-full px-4 py-2.5 bg-white border border-slate-200 rounded-xl text-sm text-slate-800 font-semibold focus:ring-2 focus:ring-blue-500/50 focus:outline-none placeholder:text-slate-400"
+                  />
+                </div>
+              </div>
 
               <div className="space-y-1.5">
                 <label className="text-sm font-medium text-slate-700">Detail / Keterangan</label>

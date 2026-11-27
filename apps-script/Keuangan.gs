@@ -90,9 +90,30 @@ const Keuangan = {
     const data = sheet.getDataRange().getValues();
     const transactions = [];
     
-    // Headers: No(0), Tanggal(1), ID(2), Kategori(3), Detail(4), Jenis(5), Vol(6), Satuan(7), Masuk(8), Keluar(9), Saldo(10), Bukti(11), PJ(12), Status(13)
+    // Headers: No(0), Tanggal(1), ID(2), Kategori(3), Detail(4), Jenis(5), Vol(6), Satuan(7), Masuk(8), Keluar(9), Saldo(10), Bukti(11), PJ(12), Status(13), Harga Satuan(14)
+    let hsColIdx = -1;
+    if (data.length > 0 && data[0]) {
+      for (let c = 0; c < data[0].length; c++) {
+        const h = String(data[0][c] || '').toLowerCase();
+        if (h.indexOf('harga') !== -1 || h.indexOf('satuan (rp)') !== -1) {
+          hsColIdx = c;
+          break;
+        }
+      }
+      if (hsColIdx === -1 && data[0].length >= 15) {
+        hsColIdx = 14;
+      }
+    }
+
     for (let i = 1; i < data.length; i++) {
       if (data[i][2] || data[i][0]) { // Cek ID atau No Transaksi
+        let hsVal = '';
+        if (hsColIdx !== -1 && data[i].length > hsColIdx) {
+          const rawHs = data[i][hsColIdx];
+          if (rawHs !== undefined && rawHs !== null && rawHs !== '' && rawHs !== '-') {
+            hsVal = Number(rawHs) || 0;
+          }
+        }
         transactions.push({
           no: data[i][0],
           tanggal: data[i][1],
@@ -102,6 +123,7 @@ const Keuangan = {
           jenis: data[i][5] === 'Masuk' ? 'INCOME' : 'EXPENSE',
           vol: data[i][6],
           satuan: data[i][7],
+          harga_satuan: hsVal,
           nominal: data[i][5] === 'Masuk' ? data[i][8] : data[i][9],
           saldo_akhir: data[i][10],
           bukti_url: data[i][11],
@@ -165,6 +187,25 @@ const Keuangan = {
       const saldoAkhir = lastSaldo + masuk - keluar;
       const jenisText = body.jenis === 'INCOME' ? 'Masuk' : 'Keluar';
       
+      // Deteksi atau buat header kolom Harga Satuan jika belum ada
+      const headerRow = sheet.getRange(1, 1, 1, Math.max(sheet.getLastColumn(), 14)).getValues()[0];
+      let hsColIdx = -1;
+      for (let c = 0; c < headerRow.length; c++) {
+        const h = String(headerRow[c] || '').toLowerCase();
+        if (h.indexOf('harga') !== -1 || h.indexOf('satuan (rp)') !== -1) {
+          hsColIdx = c;
+          break;
+        }
+      }
+      if (hsColIdx === -1) {
+        hsColIdx = 14;
+        sheet.getRange(1, 15).setValue('Harga Satuan (Rp)');
+      }
+
+      const hargaSatuanVal = (body.harga_satuan !== undefined && body.harga_satuan !== null && body.harga_satuan !== '' && Number(body.harga_satuan) > 0)
+        ? Number(body.harga_satuan)
+        : '-';
+
       sheet.appendRow([
         no,
         body.tanggal,
@@ -179,7 +220,8 @@ const Keuangan = {
         saldoAkhir,
         fileUrl || '-',
         body.penanggung_jawab || user.name,
-        body.status || 'Lunas'
+        body.status || 'Lunas',
+        hargaSatuanVal
       ]);
       
       let logBody = { ...body };
@@ -372,6 +414,25 @@ const Keuangan = {
     const jenisText = body.jenis === 'INCOME' ? 'Masuk' : 'Keluar';
     const no = (oldData && oldData.no !== undefined && oldData.no !== null) ? oldData.no : data[rowIndex - 1][0]; // Pertahankan Nomor
     
+    // Deteksi atau buat header kolom Harga Satuan jika belum ada
+    const headerRow = data[0];
+    let hsColIdx = -1;
+    for (let c = 0; c < headerRow.length; c++) {
+      const h = String(headerRow[c] || '').toLowerCase();
+      if (h.indexOf('harga') !== -1 || h.indexOf('satuan (rp)') !== -1) {
+        hsColIdx = c;
+        break;
+      }
+    }
+    if (hsColIdx === -1) {
+      hsColIdx = 14;
+      sheet.getRange(1, 15).setValue('Harga Satuan (Rp)');
+    }
+
+    const hargaSatuanVal = (body.harga_satuan !== undefined && body.harga_satuan !== null && body.harga_satuan !== '' && Number(body.harga_satuan) > 0)
+      ? Number(body.harga_satuan)
+      : '-';
+
     // Perbarui baris yang diedit
     sheet.getRange(rowIndex, 1, 1, 14).setValues([[
       no,
@@ -389,6 +450,9 @@ const Keuangan = {
       body.penanggung_jawab || user.name,
       body.status || 'Lunas'
     ]]);
+
+    // Perbarui kolom Harga Satuan
+    sheet.getRange(rowIndex, hsColIdx + 1).setValue(hargaSatuanVal);
     
     // Cascading Update Saldo
     const lastRow = sheet.getLastRow();

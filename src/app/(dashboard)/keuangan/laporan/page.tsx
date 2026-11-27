@@ -156,11 +156,14 @@ export default function LaporanKeuanganPage() {
 
   // ── Harga Satuan ───────────────────────────────────────────────────────────
   const getHargaSatuan = (trx: any) => {
+    if (trx.harga_satuan && Number(trx.harga_satuan) > 0) {
+      return Number(trx.harga_satuan);
+    }
     const vol = parseFloat(trx.vol);
     if (!isNaN(vol) && vol > 0 && trx.vol !== "-") {
       return trx.nominal / vol;
     }
-    return trx.nominal;
+    return 0;
   };
 
   // ── Totals ─────────────────────────────────────────────────────────────────
@@ -263,7 +266,7 @@ export default function LaporanKeuanganPage() {
           : trx.satuan && trx.satuan !== "-"
           ? trx.satuan
           : "-",
-        "Harga Satuan": getHargaSatuan(trx),
+        "Harga Satuan": getHargaSatuan(trx) > 0 ? getHargaSatuan(trx) : "-",
         Debit: trx.jenis === "INCOME" ? trx.nominal : 0,
         Kredit: trx.jenis === "EXPENSE" ? trx.nominal : 0,
         Saldo: trx.saldo_kronologis || trx.saldo_akhir || 0,
@@ -571,7 +574,7 @@ export default function LaporanKeuanganPage() {
               width: { size: COLS[5], type: WidthType.PERCENTAGE },
               borders,
               margins: { top: 80, bottom: 80, left: 60, right: 60 },
-              children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: formatRupiah(hargaSatuan), size: 16 })] })],
+              children: [new Paragraph({ alignment: AlignmentType.RIGHT, children: [new TextRun({ text: hargaSatuan > 0 ? formatRupiah(hargaSatuan) : "-", size: 16 })] })],
             }),
             new TableCell({
               width: { size: COLS[6], type: WidthType.PERCENTAGE },
@@ -1267,7 +1270,7 @@ export default function LaporanKeuanganPage() {
 
                       {/* Harga Satuan */}
                       <td className="px-1.5 py-1.5 print:py-1 text-right whitespace-nowrap text-slate-800 font-medium text-xs print:text-[9.5px] border border-black print:border-black">
-                        {formatRupiah(hargaSatuan)}
+                        {hargaSatuan > 0 ? formatRupiah(hargaSatuan) : "-"}
                       </td>
 
                       {/* Debit */}
